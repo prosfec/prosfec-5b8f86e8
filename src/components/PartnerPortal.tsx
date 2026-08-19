@@ -422,10 +422,8 @@ const fetchCatalogClientSide = async () => {
 
   let fetchedCatalog: any[] = [];
   try {
-    const url = "https://kqfciyqklrosqmgjzjtb.supabase.co/functions/v1/integrador-api-catalogo";
-    const response = await fetch(url, {
-      headers: { "x-api-key": "intg_Rx5O65qGdNeY6vR1RFjSiKYH0AmXqE0GYFitRYiqf-c" }
-    });
+    const url = "/api/proxy/integrador-catalogo";
+    const response = await fetch(url);
     if (response.ok) {
       const result = await response.json();
       const fetchedData = result.data || result.results || result;
