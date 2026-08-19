@@ -954,11 +954,10 @@ export function createExpressApp() {
 
       // 3.4 Call RedeBe API
       console.log(`Calling RedeBe API endpoint for document ${cleanDoc}...`);
-      const HARDCODED_TOKEN = "ctk_6626261e8e3c6a7ecae118fa6415975852cc6d3b73dabca9fc7f3748eb216851";
-      const envToken = process.env.REDEBE_TOKEN ? process.env.REDEBE_TOKEN.trim() : "";
-      const tokenToUse = (envToken.startsWith("ctk_") || envToken.length > 20)
-        ? envToken.replace(/^Bearer\s+/i, "").trim()
-        : HARDCODED_TOKEN;
+      const tokenToUse = (process.env.REDEBE_TOKEN || "").replace(/^Bearer\s+/i, "").trim();
+      if (!tokenToUse) {
+        return res.status(500).json({ error: "REDEBE_TOKEN não configurado." });
+      }
 
       let apiResult: any = null;
       let isSuccess = false;
