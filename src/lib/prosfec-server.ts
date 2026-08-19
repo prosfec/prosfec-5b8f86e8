@@ -45,7 +45,11 @@ export function createExpressApp() {
       req.headers["Token"] || 
       req.query.token;
 
-    const expectedToken = process.env.HUBLA_WEBHOOK_TOKEN || "Jl5VcHn9iBKUL6vYC69troB6ssOG32pRvVmKC9VYZXe48QooWL9IxUxJ4iCwuP1n";
+    const expectedToken = process.env.HUBLA_WEBHOOK_TOKEN;
+    if (!expectedToken) {
+      console.error("HUBLA_WEBHOOK_TOKEN não configurado.");
+      return res.status(500).json({ error: "HUBLA_WEBHOOK_TOKEN não configurado." });
+    }
 
     // Clean Bearer prefix if present
     let cleanClientToken = typeof clientToken === "string" ? clientToken : "";
