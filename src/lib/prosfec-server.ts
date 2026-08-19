@@ -812,18 +812,14 @@ export function createExpressApp() {
   });
 
   // --- CREDIT QUERY API INTEGRATION (REDEBE API) ---
-  let REDEBE_TOKEN = process.env.REDEBE_TOKEN || "ctk_6626261e8e3c6a7ecae118fa6415975852cc6d3b73dabca9fc7f3748eb216851";
+  let REDEBE_TOKEN = (process.env.REDEBE_TOKEN || "").replace(/^Bearer\s+/i, "").trim();
   const REDEBE_API_URL = "https://consultas.redebe.com.br/api/v1/credito/diagnostico-inteligente";
 
-  let INTEGRADOR_API_KEY = process.env.INTEGRADOR_API_KEY || "intg_Rx5O65qGdNeY6vR1RFjSiKYH0AmXqE0GYFitRYiqf-c";
-  if (INTEGRADOR_API_KEY === "Tony@3419") {
-    INTEGRADOR_API_KEY = "intg_Rx5O65qGdNeY6vR1RFjSiKYH0AmXqE0GYFitRYiqf-c";
-  }
+  const INTEGRADOR_API_KEY = (process.env.INTEGRADOR_API_KEY || "").trim();
 
-  let INTEGRADOR_BASE_URL = process.env.INTEGRADOR_API_BASE_URL || "https://kqfciyqklrosqmgjzjtb.supabase.co/functions/v1";
-  if (!INTEGRADOR_BASE_URL || !INTEGRADOR_BASE_URL.startsWith("http")) {
-    console.warn(`Invalid or empty INTEGRADOR_API_BASE_URL "${INTEGRADOR_BASE_URL}". Falling back to production URL.`);
-    INTEGRADOR_BASE_URL = "https://kqfciyqklrosqmgjzjtb.supabase.co/functions/v1";
+  const INTEGRADOR_BASE_URL = (process.env.INTEGRADOR_API_BASE_URL || "").trim();
+  if (!INTEGRADOR_BASE_URL.startsWith("http")) {
+    console.warn("INTEGRADOR_API_BASE_URL não configurada corretamente.");
   }
 
   const FALLBACK_CATALOG = [
