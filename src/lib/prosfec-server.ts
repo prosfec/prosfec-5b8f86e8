@@ -1,5 +1,5 @@
 // @ts-nocheck
-import express from "./lib/mini-express";
+import express from "./mini-express";
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
