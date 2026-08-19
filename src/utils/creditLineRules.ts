@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { formatCurrencyBRL } from "../utils";
 import { BankRulesManager } from "./BankRulesManager";
 

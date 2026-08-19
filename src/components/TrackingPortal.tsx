@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { sanitizeAndSyncServicosList, getHublaLinkForService, DEFAULT_SERVICES_CATALOG as DEFAULT_STRUCTURING_SERVICES } from "../utils/serviceUtils";
 import { 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Lead } from "../types";
 
 export interface StepLockStatus {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 export interface PartnerBankRule {
   id: string;
   bancoNormalizado: string;

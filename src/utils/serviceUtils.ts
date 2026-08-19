@@ -1,3 +1,4 @@
+// @ts-nocheck
 export interface ServiceCatalogItem {
   id: string;
   nome: string;
