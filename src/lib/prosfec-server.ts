@@ -2040,5 +2040,76 @@ Gere a análise do Consultor de Crédito Governamental em JSON estruturado com a
     }
   });
 
+  // --- SECURE PROXIES (mantêm as chaves fora do navegador) ---
+  app.get("/api/proxy/integrador-catalogo", async (req, res) => {
+    try {
+      if (!INTEGRADOR_API_KEY) return res.status(500).json({ error: "INTEGRADOR_API_KEY não configurada." });
+      const r = await fetch(`${INTEGRADOR_BASE_URL}/integrador-api-catalogo`, {
+        headers: { "x-api-key": INTEGRADOR_API_KEY }
+      });
+      const data = await r.json().catch(() => null);
+      return res.status(r.status).json(data);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Erro ao consultar catálogo." });
+    }
+  });
+
+  app.post("/api/proxy/supplier-consulta", async (req, res) => {
+    try {
+      const { produto_code, documento } = req.body || {};
+      if (!documento) return res.status(400).json({ error: "documento é obrigatório." });
+
+      if (produto_code === "REDEBE_DIAGNOSTICO_360") {
+        const token = (process.env.REDEBE_TOKEN || "").replace(/^Bearer\s+/i, "").trim();
+        if (!token) return res.status(500).json({ error: "REDEBE_TOKEN não configurado." });
+        const r = await fetch(REDEBE_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+            "X-Api-Token": token
+          },
+          body: JSON.stringify({ documento })
+        });
+        const data = await r.json().catch(() => null);
+        return res.status(r.status).json(data);
+      }
+
+      if (!INTEGRADOR_API_KEY) return res.status(500).json({ error: "INTEGRADOR_API_KEY não configurada." });
+      const r = await fetch(`${INTEGRADOR_BASE_URL}/integrador-api-consultas`, {
+        method: "POST",
+        headers: { "x-api-key": INTEGRADOR_API_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ produto_code, input_data: { documento } })
+      });
+      const data = await r.json().catch(() => null);
+      return res.status(r.status).json(data);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Erro ao executar consulta." });
+    }
+  });
+
+  app.post("/api/proxy/places-search", async (req, res) => {
+    try {
+      const key = process.env.GOOGLE_MAPS_API_KEY || process.env.PLACES_API_KEY;
+      if (!key) return res.status(500).json({ error: "GOOGLE_MAPS_API_KEY não configurada." });
+      const { textQuery, pageSize, pageToken } = req.body || {};
+      const payload: any = { textQuery, pageSize: Math.min(20, Number(pageSize) || 10) };
+      if (pageToken) payload.pageToken = pageToken;
+      const r = await fetch("https://places.googleapis.com/v1/places:searchText", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": key,
+          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,nextPageToken"
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json().catch(() => null);
+      return res.status(r.status).json(data);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Erro na busca de leads." });
+    }
+  });
+
   return app;
 }
