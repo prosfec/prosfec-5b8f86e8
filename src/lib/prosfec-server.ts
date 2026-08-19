@@ -475,7 +475,10 @@ export function createExpressApp() {
       const queryStr = `${keyword} em ${city}${state ? ` - ${state}` : ""}`;
       console.log(`[Google Places API] Initiating lead hunt for: "${queryStr}" with limit ${limit}`);
 
-      const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.PLACES_API_KEY || "AIzaSyBLYM0vO54g1hos2EC6OEHu1oPw974t5mU";
+      const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.PLACES_API_KEY;
+      if (!GOOGLE_MAPS_KEY) {
+        return res.status(500).json({ error: "GOOGLE_MAPS_API_KEY não configurada." });
+      }
 
       const requestedLimit = Math.min(Math.max(Number(limit), 1), 20);
       const allResults: any[] = [];
