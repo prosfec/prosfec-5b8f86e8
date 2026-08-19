@@ -1,13 +1,11 @@
 // @ts-nocheck
-import express from "express";
-import path from "path";
-import { createServer as createViteServer } from "vite";
-import { initializeApp } from "firebase/app";
+import express from "./lib/mini-express";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc } from "firebase/firestore";
-import firebaseConfig from "./firebase-applet-config.json";
+import firebaseConfig from "../firebase-applet-config.json";
 import { GoogleGenAI, Type } from "@google/genai";
-import { getBankSpecificRules } from "./src/utils/creditLineRules";
-import { BankRulesManager } from "./src/utils/BankRulesManager";
+import { getBankSpecificRules } from "../utils/creditLineRules";
+import { BankRulesManager } from "../utils/BankRulesManager";
 
 export function createExpressApp() {
   const app = express();
@@ -27,7 +25,7 @@ export function createExpressApp() {
   });
 
   // Initialize Firebase App and Firestore for webhook handler
-  const firebaseApp = initializeApp(firebaseConfig);
+  const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const db = (firebaseConfig as any).firestoreDatabaseId
     ? getFirestore(firebaseApp, (firebaseConfig as any).firestoreDatabaseId)
     : getFirestore(firebaseApp);
@@ -2041,32 +2039,4 @@ Gere a análise do Consultor de Crédito Governamental em JSON estruturado com a
   });
 
   return app;
-}
-
-export async function startServer() {
-  const app = createExpressApp();
-  const PORT = 3000;
-
-  // Serve static frontend files in production or use Vite middleware in development
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
-
-if (!process.env.NETLIFY) {
-  startServer();
 }
