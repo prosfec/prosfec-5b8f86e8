@@ -8,7 +8,7 @@ Sim, dá para aplicar quase tudo. Duas ressalvas importantes antes:
 ## O que será feito
 
 ### 1. `firestore.rules` (novo arquivo)
-Regras com deny-all no topo; `request.auth != null` para read/update/delete em leads, parceiros, comunicados, recargas, leads_vistos_parceiro, leads_distribuidos, notificacoes, consultas_realizadas, configuracoes, historico_buscas_caca_leads e subcoleção pendencias; `create` público mantido apenas em leads e parceiros com validação de campos obrigatórios; update/delete administrativos restritos a `request.auth.token.admin == true`; comentários explicando cada bloco.
+Regras com deny-all no topo; `request.auth != null` para qualquer read/update/delete em leads, parceiros, comunicados, recargas, leads_vistos_parceiro, leads_distribuidos, notificacoes, consultas_realizadas, configuracoes, historico_buscas_caca_leads e subcoleção pendencias; `create` público mantido apenas em leads e parceiros com validação de campos obrigatórios; update/delete administrativos restritos a `request.auth.token.admin == true`; comentários explicando cada bloco.
 
 ### 2. Login de admin (`AdminDashboard.tsx`)
 - Remove `correctEmail/correctPassword/contadorEmail/contadorPassword`.
@@ -30,11 +30,30 @@ Regras com deny-all no topo; `request.auth != null` para read/update/delete em l
 - `prosfec-server.ts` passa a importar dali (leitura sempre dentro dos handlers, exigência do runtime edge).
 - Validação do webhook Hubla passa a usar comparação de tempo constante (`crypto.timingSafeEqual`, tamanhos diferentes = inválido, sem exceção).
 
-## Ponto que preciso confirmar com você
+## O que consigo fazer automaticamente SEM ação sua no Firebase
 
-Os parceiros existentes hoje só têm senha em texto no Firestore — eles **não existem no Firebase Auth**. Ao trocar o login, esses parceiros perdem acesso até serem criados no Auth. Opções: (a) eu incluo um script/rotina única de migração criando os usuários no Auth a partir dos documentos atuais, ou (b) você recria os acessos manualmente no Console. Me diga qual prefere — sigo com (a) se não houver preferência.
+Tudo que é alteração de código neste repositório:
 
-## Configuração manual sua depois
+1. Reescrever `firestore.rules` e deixar o arquivo pronto para você publicar.
+2. Trocar o login do admin para `signInWithEmailAndPassword` do Firebase Auth.
+3. Trocar o login do parceiro para `signInWithEmailAndPassword`.
+4. Trocar cadastro/troca de senha do parceiro para `createUserWithEmailAndPassword` / `updatePassword`.
+5. Remover gravação do campo `senha` em texto puro no Firestore.
+6. Centralizar leitura obrigatória de secrets em `src/utils/env.ts`.
+7. Aplicar `timingSafeEqual` na validação do webhook Hubla.
 
-- Firebase Console: habilitar provedor Email/Senha; criar `adm.prosfec@gmail.com` e `contador.prosfec@gmail.com`; configurar custom claims `role`/`admin` (Cloud Function ou Admin SDK); publicar as `firestore.rules`.
-- Rotacionar como comprometidos (já estavam no código): REDEBE_TOKEN, INTEGRADOR_API_KEY, HUBLA_WEBHOOK_TOKEN, GOOGLE_MAPS_API_KEY, e as senhas admin/contador que estavam no bundle.
+## O que NÃO consigo fazer sem ação manual sua no Firebase
+
+- **Publicar as `firestore.rules`**: só crio o arquivo; o deploy é via Firebase CLI ou Console.
+- **Habilitar o provedor Email/Senha no Authentication**: só o Console faz isso.
+- **Criar os usuários admin/contador no Firebase Auth**: precisa do Console ou de um Admin SDK com service account.
+- **Configurar custom claims (`role: admin` / `role: contador`)**: exige Cloud Function ou Admin SDK; não dá pelo cliente web.
+- **Migrar parceiros existentes**: as senhas deles estão em texto no Firestore, mas não existem no Firebase Auth. Só dá para criar esses usuários via Admin SDK/Cloud Function; o navegador não pode.
+
+## Sugestão de caminho
+
+1. Eu aplico todas as mudanças de código agora.
+2. Você faz só o essencial no Console: habilitar Email/Senha, criar os 2 usuários admin, publicar as regras.
+3. Custom claims e migração de parceiros existentes podem vir depois — enquanto isso, o login novo já funciona para usuários criados manualmente.
+
+Quer que eu prossiga com as alterações de código?
