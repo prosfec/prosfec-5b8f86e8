@@ -522,35 +522,12 @@ const executeCreditQueryClientSide = async (partnerId: string, partnerNome: stri
     throw new Error(`Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${currentBalance.toFixed(2).replace(".", ",")}. Realize uma transferência Pix para recarregar.`);
   }
 
-  // 4. Call Credit Supplier API directly from client!
-  const isRedeBe = selectedQueryCode === "REDEBE_DIAGNOSTICO_360";
-  const REDEBE_TOKEN = "ctk_6626261e8e3c6a7ecae118fa6415975852cc6d3b73dabca9fc7f3748eb216851";
-
-  let response: Response;
-  if (isRedeBe) {
-    response = await fetch("https://consultas.redebe.com.br/api/v1/credito/diagnostico-inteligente", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${REDEBE_TOKEN}`,
-        "X-Api-Token": REDEBE_TOKEN
-      },
-      body: JSON.stringify({ documento: docClean })
-    });
-  } else {
-    const url = "https://kqfciyqklrosqmgjzjtb.supabase.co/functions/v1/integrador-api-consultas";
-    response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "x-api-key": "intg_Rx5O65qGdNeY6vR1RFjSiKYH0AmXqE0GYFitRYiqf-c",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        produto_code: selectedQueryCode,
-        input_data: { documento: docClean }
-      })
-    });
-  }
+  // 4. Call Credit Supplier API through the secure server proxy
+  const response: Response = await fetch("/api/proxy/supplier-consulta", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ produto_code: selectedQueryCode, documento: docClean })
+  });
 
   const rawText = await response.text();
   let apiResult: any = null;
@@ -626,20 +603,15 @@ const executeCacaLeadsClientSide = async (keyword: string, city: string, limit: 
   const queryStr = `${keyword} em ${city}`;
   console.log(`Executing client-side Google Places API search for: "${queryStr}"`);
 
-  const GOOGLE_MAPS_KEY = "AIzaSyBLYM0vO54g1hos2EC6OEHu1oPw974t5mU";
   const payload: any = {
     textQuery: queryStr,
     pageSize: Math.min(20, limit)
   };
   if (pageToken) payload.pageToken = pageToken;
 
-  const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
+  const response = await fetch("/api/proxy/places-search", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": GOOGLE_MAPS_KEY,
-      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,nextPageToken"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
