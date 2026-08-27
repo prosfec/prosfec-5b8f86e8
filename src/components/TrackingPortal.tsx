@@ -281,12 +281,14 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
   useEffect(() => {
     const fetchCatalog = async () => {
       try {
-        const snap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
-        if (snap.exists() && snap.data().servicos && Array.isArray(snap.data().servicos)) {
-          setCatalogServices(snap.data().servicos);
-        }
+        // A leitura de configuracoes exige sessão nas regras do Firestore;
+        // o cliente ainda não está logado, então o servidor entrega o catálogo.
+        const resp = await fetch("/api/portal/precos");
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (Array.isArray(data?.servicos)) setCatalogServices(data.servicos);
       } catch (err) {
-        console.warn("Could not load price catalog in TrackingPortal:", err);
+        console.warn("Could not load price catalog in TrackingPortal.");
       }
     };
     fetchCatalog();
