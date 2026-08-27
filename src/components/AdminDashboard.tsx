@@ -1551,55 +1551,32 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       // 1. First attempt: Authenticate directly with Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, cleanPassword);
       const user = userCredential.user;
+      const detectedRole = resolveRole(user);
 
-      let detectedRole: "admin" | "contador" = "admin";
-
-      if (user.uid === ADMIN_UID || normalizedEmail.includes("adm")) {
-        detectedRole = "admin";
-      } else if (user.uid === CONTADOR_UID || normalizedEmail.includes("contador")) {
-        detectedRole = "contador";
-      } else {
-        // Default check based on UID or email pattern
-        detectedRole = "admin";
+      if (!detectedRole) {
+        await signOut(auth);
+        setLoginError("Esta conta não tem permissão de acesso ao painel administrativo.");
+        return;
       }
 
-      sessionStorage.setItem("admin_authenticated", "true");
-      sessionStorage.setItem("admin_role", detectedRole);
-      sessionStorage.setItem("admin_firebase_uid", user.uid);
       setUserRole(detectedRole);
       setIsAuthenticated(true);
+      setPasswordInput("");
     } catch (authErr: any) {
-      console.warn("Firebase Auth attempt failed, evaluating fallback credentials:", authErr?.code, authErr?.message);
-
-      // 2. Fallback attempt for predefined master credentials if offline or transitional
-      const correctEmail = "adm.prosfec@gmail.com";
-      const correctPassword = "PROSFEC@empcap2026";
-
-      const contadorEmail = "contador.prosfec@gmail.com";
-      const contadorPassword = "CONTADOR@prosfec2026";
-
-      if (normalizedEmail === correctEmail && cleanPassword === correctPassword) {
-        sessionStorage.setItem("admin_authenticated", "true");
-        sessionStorage.setItem("admin_role", "admin");
-        sessionStorage.setItem("admin_firebase_uid", ADMIN_UID);
-        setUserRole("admin");
-        setIsAuthenticated(true);
-      } else if (normalizedEmail === contadorEmail && cleanPassword === contadorPassword) {
-        sessionStorage.setItem("admin_authenticated", "true");
-        sessionStorage.setItem("admin_role", "contador");
-        sessionStorage.setItem("admin_firebase_uid", CONTADOR_UID);
-        setUserRole("contador");
-        setIsAuthenticated(true);
+      const code = authErr?.code || "";
+      if (
+        code === "auth/invalid-credential" ||
+        code === "auth/wrong-password" ||
+        code === "auth/user-not-found" ||
+        code === "auth/invalid-email"
+      ) {
+        setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
+      } else if (code === "auth/too-many-requests") {
+        setLoginError("Muitas tentativas malsucedidas. Por segurança, tente novamente em alguns instantes.");
+      } else if (code === "auth/network-request-failed") {
+        setLoginError("Falha de conexão. Verifique sua internet e tente novamente.");
       } else {
-        if (authErr?.code === "auth/invalid-credential" || authErr?.code === "auth/wrong-password" || authErr?.code === "auth/user-not-found") {
-          setLoginError("E-mail ou senha incorretos no Firebase Authentication. Verifique suas credenciais.");
-        } else if (authErr?.code === "auth/too-many-requests") {
-          setLoginError("Muitas tentativas malsucedidas. Por segurança, tente novamente em alguns instantes.");
-        } else if (authErr?.message) {
-          setLoginError(`Falha na autenticação: ${authErr.message}`);
-        } else {
-          setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
-        }
+        setLoginError("Não foi possível concluir a autenticação. Tente novamente.");
       }
     } finally {
       setLoggingIn(false);
@@ -1610,11 +1587,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     try {
       await signOut(auth);
     } catch (err) {
-      console.warn("Error signing out from Firebase Auth:", err);
+      console.warn("Error signing out from Firebase Auth.");
     }
-    sessionStorage.removeItem("admin_authenticated");
-    sessionStorage.removeItem("admin_role");
-    sessionStorage.removeItem("admin_firebase_uid");
     setIsAuthenticated(false);
     setUserRole("admin");
     setEmailInput("");
