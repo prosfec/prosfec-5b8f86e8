@@ -78,19 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#0A3D2E" },
-      { title: "PROSFEC - Estruturação de Crédito Corporativo | Pronampe 2026" },
-      {
-        name: "description",
-        content:
-          "PROSFEC - Simulador de Crédito Pronampe 2026. Diagnóstico em tempo real e liberação de crédito corporativo para MEI, ME e EPP.",
-      },
-      { property: "og:title", content: "PROSFEC - Pronampe 2026 & Estruturação de Crédito" },
-      {
-        property: "og:description",
-        content:
-          "Simule o limite de crédito Pronampe da sua empresa em segundos e receba suporte consultivo para fomento.",
-      },
-      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "PROSFEC" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [

@@ -26,9 +26,11 @@ export const Route = createFileRoute("/")({
           "Simule o limite de crédito Pronampe da sua empresa em segundos e receba suporte consultivo para fomento.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://prosfec.lovable.app/" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#0A3D2E" },
     ],
+    links: [{ rel: "canonical", href: "https://prosfec.lovable.app/" }],
   }),
 });
 
