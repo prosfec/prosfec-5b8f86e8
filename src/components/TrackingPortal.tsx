@@ -441,6 +441,15 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
     }
   }, [initialLeadId]);
 
+  // Observa sessão Firebase Auth persistente (login real do Modelo B).
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setFirebaseUser(user);
+      setSessionMode(user ? "firebase" : "server");
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [clientIp, setClientIp] = useState<string>("");
   const [signName, setSignName] = useState("");
   const [signCpf, setSignCpf] = useState("");
