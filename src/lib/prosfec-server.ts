@@ -1,4 +1,6 @@
 // @ts-nocheck
+import { timingSafeEqual } from "node:crypto";
+import { Buffer } from "node:buffer";
 import express from "./mini-express";
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc, runTransaction } from "firebase/firestore";
