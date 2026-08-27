@@ -290,35 +290,43 @@ export default function FichaRatingCreditoForm({
     });
   };
 
-  // Upload handler for CPF documents (Images / Documents)
-  const handleSocioFileUpload = async (
+  // Grava o LINK do documento do sócio (mesmo campo do Firestore, agora com URL)
+  const handleSocioLinkChange = (
     socioIndex: number,
     fieldName: keyof SocioRatingCPF,
-    file: File | null
+    url: string,
+    label: string
   ) => {
-    if (!file) return;
     setSaveError(null);
-
-    const validation = await validateUploadedFile(file, ["pdf", "image"], 10);
-    if (!validation.valid) {
-      setSaveError(validation.error || "Arquivo inválido.");
-      return;
-    }
-
-    try {
-      const { base64, name } = await readFileAsBase64(file);
-      const updated = [...socios];
-      updated[socioIndex] = {
-        ...updated[socioIndex],
-        [fieldName]: base64,
-        [`${String(fieldName)}Nome`]: name
-      };
-      setSocios(updated);
-    } catch (err) {
-      console.error("Erro ao processar arquivo:", err);
-      setSaveError("Erro ao processar o arquivo. Tente novamente.");
-    }
+    const value = (url || "").trim();
+    setSocios(prev =>
+      prev.map((s, i) =>
+        i !== socioIndex
+          ? s
+          : {
+              ...s,
+              [fieldName]: value,
+              [`${String(fieldName)}Nome`]: value ? `${label} (link externo)` : ""
+            }
+      )
+    );
   };
+
+  // Grava o LINK dos documentos do CNPJ
+  const handleCNPJLinkChange = (
+    fieldName: keyof DadosRatingCNPJ,
+    url: string,
+    label: string
+  ) => {
+    setSaveError(null);
+    const value = (url || "").trim();
+    setDadosCNPJ(prev => ({
+      ...prev,
+      [fieldName]: value,
+      [`${String(fieldName)}Nome`]: value ? `${label} (link externo)` : ""
+    }));
+  };
+
 
   // Upload handler for CNPJ documents (strictly validating PDF if field is a PDF field)
   const handleCNPJFileUpload = async (
