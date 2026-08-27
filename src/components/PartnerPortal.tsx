@@ -11532,17 +11532,26 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             chavePix: payoutPixKey.trim(),
                             valor: valorDigitado,
                             status: "pendente",
+                            origem: origemAtual,
+                            origemLabel: isVendas ? "Comissões de Vendas (Planos)" : "Comissões de Serviços (Passo 6)",
                             dataSolicitacao: new Date().toISOString(),
-                            detalhes: {
-                              saldoDisponivelMomento: saldoLiquidoDisponivel,
-                              comissaoTotalLiberada: totalLiberada,
-                              comissaoTotalPaga: totalPaga,
-                              comissaoAguardandoCompensacao: totalCompensando,
-                              leadsEnvolvidos: leadNomesLiberados
-                            }
+                            detalhes: isVendas
+                              ? {
+                                  saldoDisponivelMomento: saldoLiquidoDisponivel,
+                                  comissaoTotalLiberada: salesCommissionStats.totalPaid,
+                                  comissaoPendente: salesCommissionStats.totalPending,
+                                  leadsEnvolvidos: salesCommissionStats.leadsPagos
+                                }
+                              : {
+                                  saldoDisponivelMomento: saldoLiquidoDisponivel,
+                                  comissaoTotalLiberada: totalLiberada,
+                                  comissaoTotalPaga: totalPaga,
+                                  comissaoAguardandoCompensacao: totalCompensando,
+                                  leadsEnvolvidos: leadNomesLiberados
+                                }
                           });
 
-                          setCommissionPayoutSuccess(`Solicitação de saque de ${formatCurrencyBRL(valorDigitado)} enviada com sucesso! O valor foi transferido para análise e o repasse será feito via Pix.`);
+                          setCommissionPayoutSuccess(`Solicitação de saque de ${formatCurrencyBRL(valorDigitado)} (${isVendas ? "Comissões de Vendas" : "Serviços Passo 6"}) enviada com sucesso! O repasse será feito via Pix.`);
                         } catch (err) {
                           console.error("Erro ao solicitar comissao:", err);
                           alert("Ocorreu um erro ao registrar sua solicitação no Firestore. Tente novamente.");
