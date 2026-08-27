@@ -2495,7 +2495,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                               <input
                                 type="text"
                                 readOnly
-                                value={`https://prosfec.com.br/?leadTrack=${createdLeadId}`}
+                                value={`https://prosfec.com.br/portal-cliente?lead=${createdLeadId}`}
                                 className="flex-1 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-[11px] px-3 py-2 rounded-xl select-all outline-none font-bold"
                               />
                               <button
