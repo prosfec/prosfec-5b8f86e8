@@ -53,6 +53,16 @@ Mantém `/api/auth/cliente-login` + `/api/portal/salvar-lead` intactos. Nenhuma 
 
 Nenhuma alteração em `PartnerPortal.tsx` ou `AdminDashboard.tsx`, além de trocar a URL gerada nos links de acompanhamento. As regras dos parceiros e do staff permanecem literalmente as mesmas.
 
+## O que é automático e o que exige ação sua
+
+| Automático (eu faço no código) | Manual (você faz no console) |
+| --- | --- |
+| Criar a rota `/portal-cliente` e redirecionar `?acompanhamento=` | Publicar o `firestore.rules` atualizado no Console do Firebase |
+| Criar `/api/auth/cliente-provision` e ajustar login/senha | Habilitar "Email/Password" no Firebase Authentication (já deve estar ativo) |
+| Atualizar `TrackingPortal.tsx` para usar sessão real | Liberar domínios de preview/produção nas restrições da chave web do Google Cloud, se aparecer erro 403 de referrer |
+| Atualizar todos os links gerados no Admin/Parceiro/Simulador | — |
+| Entregar o `firestore.rules` completo e testado em bloco de código | — |
+
 ## O que muda para o cliente
 
 Ele passa a acessar `prosfec.com.br/portal-cliente`, entra com e-mail e senha, continua logado ao voltar, vê o andamento atualizando em tempo real e pode recuperar a senha sozinho por e-mail.
