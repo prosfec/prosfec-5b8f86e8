@@ -20,9 +20,11 @@ import {
   limit,
   getDoc,
   onSnapshot,
-  arrayUnion
+  arrayUnion,
+  deleteField
 } from "firebase/firestore";
-import { db, handleFirestoreError, OperationType, createNotification } from "../firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
 import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain } from "../utils";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import LeadRegisterForm from "./LeadRegisterForm";
