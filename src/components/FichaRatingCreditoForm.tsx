@@ -1091,25 +1091,28 @@ export default function FichaRatingCreditoForm({
                       label="Foto CNH ou RG (Frente)"
                       value={socios[activeSocioTab].fotoCnhRgFrente}
                       onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoCnhRgFrente", url, "CNH/RG Frente")}
-                      hint="Compartilhe o arquivo no Google Drive com permissão de visualização e cole o link."
+                      hint="Recomendamos Google Drive. Certifique-se de configurar o compartilhamento como 'Qualquer pessoa com o link pode visualizar', senão o time da Prosfec não conseguirá abrir."
                     />
 
                     <DocLinkInput
                       label="Foto CNH ou RG (Verso)"
                       value={socios[activeSocioTab].fotoCnhRgVerso}
                       onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoCnhRgVerso", url, "CNH/RG Verso")}
+                      hint="Recomendamos Google Drive. Certifique-se de configurar o compartilhamento como 'Qualquer pessoa com o link pode visualizar', senão o time da Prosfec não conseguirá abrir."
                     />
 
                     <DocLinkInput
                       label="Selfie segurando o documento"
                       value={socios[activeSocioTab].selfieComDocumento}
                       onChange={(url) => handleSocioLinkChange(activeSocioTab, "selfieComDocumento", url, "Selfie com documento")}
+                      hint="Recomendamos Google Drive. Certifique-se de configurar o compartilhamento como 'Qualquer pessoa com o link pode visualizar', senão o time da Prosfec não conseguirá abrir."
                     />
 
                     <DocLinkInput
                       label="Foto de Título de Eleitor"
                       value={socios[activeSocioTab].fotoTituloEleitor}
                       onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoTituloEleitor", url, "Título de Eleitor")}
+                      hint="Recomendamos Google Drive. Certifique-se de configurar o compartilhamento como 'Qualquer pessoa com o link pode visualizar', senão o time da Prosfec não conseguirá abrir."
                     />
 
 
