@@ -2969,6 +2969,33 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     return { ok: r.ok, status: r.status, data };
   };
 
+  const FIREBASE_PROJECT_ID = (firebaseConfig as any).projectId;
+  const FIRESTORE_DB_ID = (firebaseConfig as any).firestoreDatabaseId || "(default)";
+
+  // Remove o campo `senha` e grava o authUid usando a REST do Firestore
+  // autenticada com o idToken do próprio parceiro (as regras só permitem a
+  // remoção da senha pelo dono do documento).
+  const limparSenhaFirestore = async (partnerId: string, idToken: string, localId: string) => {
+    const url =
+      `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}` +
+      `/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents/parceiros/${partnerId}` +
+      `?updateMask.fieldPaths=senha&updateMask.fieldPaths=authUid&updateMask.fieldPaths=authMigradoEm`;
+    const r = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({
+        fields: {
+          authUid: { stringValue: localId || "" },
+          authMigradoEm: { stringValue: new Date().toISOString() },
+        },
+      }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore PATCH ${r.status}: ${detail.slice(0, 200)}`);
+    }
+  };
+
   // Cria (ou vincula) a conta no Firebase Auth de um parceiro e apaga a senha
   // em texto puro do Firestore.
   const provisionParceiro = async (partnerId: string, email: string, senha: string) => {
@@ -2979,18 +3006,20 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
 
     let localId: string | null = null;
+    let idToken: string | null = null;
     let created = false;
 
     const signUp = await authRest("signUp", {
       email: normalizedEmail,
       password: plainPassword,
-      returnSecureToken: false,
+      returnSecureToken: true,
     });
 
     if (signUp.ok) {
       localId = signUp.data?.localId || null;
+      idToken = signUp.data?.idToken || null;
       created = true;
-    } else if (signUp.data?.error?.message?.startsWith("EMAIL_EXISTS")) {
+    } else if (String(signUp.data?.error?.message || "").startsWith("EMAIL_EXISTS")) {
       // Já existe no Auth: valida se a senha atual bate para vincular o uid.
       const signIn = await authRest("signInWithPassword", {
         email: normalizedEmail,
@@ -2999,29 +3028,31 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       });
       if (signIn.ok) {
         localId = signIn.data?.localId || null;
+        idToken = signIn.data?.idToken || null;
       } else {
-        // Conta existe com outra senha — não sobrescrevemos; só limpamos depois
-        // que o parceiro conseguir entrar pelo Auth.
+        // Conta existe com outra senha — não sobrescrevemos.
         return { ok: false, reason: "EMAIL_EXISTS_DIFFERENT_PASSWORD" };
       }
     } else {
       return { ok: false, reason: signUp.data?.error?.message || "Falha ao criar conta." };
     }
 
-    if (partnerId) {
+    if (partnerId && idToken) {
       try {
-        await updateDoc(doc(db, "parceiros", partnerId), {
-          authUid: localId || null,
-          authMigradoEm: new Date().toISOString(),
-          senha: deleteField(),
-        });
+        await limparSenhaFirestore(partnerId, idToken, localId || "");
       } catch (err: any) {
-        return { ok: true, created, localId, warning: `Conta criada, mas falha ao limpar senha: ${err?.message}` };
+        return {
+          ok: true,
+          created,
+          localId,
+          warning: `Conta criada, mas falha ao limpar senha: ${err?.message}`,
+        };
       }
     }
 
     return { ok: true, created, localId };
   };
+
 
   // Provisionamento individual (usado no cadastro e na lazy migration do login)
   app.post("/api/auth/provision-parceiro", async (req, res) => {
