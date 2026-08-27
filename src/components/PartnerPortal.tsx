@@ -23,7 +23,7 @@ import {
   arrayUnion,
   deleteField
 } from "firebase/firestore";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
 import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain } from "../utils";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
@@ -3330,6 +3330,23 @@ export default function PartnerPortal({
 
       const isAfiliado = regPlan === "AFILIADO";
 
+      // Cria a conta no Firebase Auth (nenhuma senha vai para o Firestore)
+      let newAuthUid = "";
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, normalizedEmail, regPassword);
+        newAuthUid = cred.user.uid;
+      } catch (authErr: any) {
+        if (authErr?.code === "auth/email-already-in-use") {
+          setErrorMsg("Este e-mail já possui cadastro. Faça login ou use \'Esqueci minha senha\'.");
+        } else if (authErr?.code === "auth/weak-password") {
+          setErrorMsg("A senha deve ter no mínimo 6 caracteres.");
+        } else {
+          setErrorMsg("Não foi possível criar seu acesso. Tente novamente.");
+        }
+        setLoading(false);
+        return;
+      }
+
       const newPartnerDoc = {
         nome: regName,
         email: normalizedEmail,
@@ -3339,7 +3356,7 @@ export default function PartnerPortal({
         dataNascimento: regBirthDate || "",
         chavePix: regPix || "",
         plano: regPlan,
-        senha: regPassword, // Stored securely in Firestore
+        authUid: newAuthUid,
         aceitouTermos: regAcceptedTerms,
         status: isAfiliado ? "ativo" : "novo",
         interesse: "ser parceiro",
