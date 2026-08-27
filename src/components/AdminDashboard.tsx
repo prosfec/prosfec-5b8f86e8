@@ -3600,6 +3600,26 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                               {/* Attribution Handshake / Directing Button */}
                               {lead.parceiroId ? (
+                                partners.length > 0 && !partners.find(p => p.id === lead.parceiroId) ? (
+                                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-2 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                                      <div className="min-w-0 flex-1">
+                                        <span className="text-[8px] text-rose-800 font-black block uppercase tracking-wider">Lead órfão</span>
+                                        <p className="text-[10px] text-rose-900 font-bold truncate">
+                                          {lead.parceiroNome ? `${lead.parceiroNome} (removido)` : "Parceiro removido do sistema"}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => setAssigningLead(lead)}
+                                      className="text-[9px] font-black text-white bg-rose-600 hover:bg-rose-700 px-1.5 py-0.5 rounded-md cursor-pointer shrink-0 transition-colors"
+                                      title="Reatribuir este lead a um Parceiro Master ativo"
+                                    >
+                                      Reatribuir
+                                    </button>
+                                  </div>
+                                ) : (
                                 <div className="bg-emerald-50/60 border border-emerald-100/70 rounded-xl p-2 flex items-center justify-between gap-2">
                                   <div className="flex items-center gap-2 min-w-0">
                                     <Handshake className="w-3.5 h-3.5 text-[#00A86B] shrink-0" />
@@ -3618,6 +3638,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     Alterar
                                   </button>
                                 </div>
+                                )
                               ) : (
                                 <button
                                   onClick={() => setAssigningLead(lead)}

@@ -281,12 +281,14 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
   useEffect(() => {
     const fetchCatalog = async () => {
       try {
-        const snap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
-        if (snap.exists() && snap.data().servicos && Array.isArray(snap.data().servicos)) {
-          setCatalogServices(snap.data().servicos);
-        }
+        // A leitura de configuracoes exige sessão nas regras do Firestore;
+        // o cliente ainda não está logado, então o servidor entrega o catálogo.
+        const resp = await fetch("/api/portal/precos");
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (Array.isArray(data?.servicos)) setCatalogServices(data.servicos);
       } catch (err) {
-        console.warn("Could not load price catalog in TrackingPortal:", err);
+        console.warn("Could not load price catalog in TrackingPortal.");
       }
     };
     fetchCatalog();
@@ -1171,48 +1173,28 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
     try {
       let fetchedLead: Lead | null = null;
 
-      // 1. Try to fetch directly by Doc ID
-      const docRef = doc(db, "leads", idOrCnpj.trim());
-      const docSnap = await getDoc(docRef);
+      // A busca do cliente acontece antes de qualquer login, e as regras do
+      // Firestore não permitem leitura anônima de /leads. O servidor faz a
+      // consulta (protocolo, CNPJ ou WhatsApp) e devolve só campos não sensíveis.
+      const resp = await fetch("/api/portal/buscar-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ termo: idOrCnpj.trim() })
+      });
 
-      if (docSnap.exists()) {
-        fetchedLead = { id: docSnap.id, ...docSnap.data() } as Lead;
+      if (resp.status === 429) {
+        setError("Muitas buscas seguidas. Aguarde um minuto e tente novamente.");
+        setLead(null);
+        setCandidateLead(null);
+        setLoading(false);
+        return;
       }
 
-      // 2. If doc ID search failed, try searching by CNPJ (exact match on cleaned string)
-      if (!fetchedLead && cleanedSearch.length > 0) {
-        const leadsRef = collection(db, "leads");
-        const q = query(leadsRef, where("cnpj", "==", idOrCnpj.trim()));
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-          const firstDoc = querySnapshot.docs[0];
-          fetchedLead = { id: firstDoc.id, ...firstDoc.data() } as Lead;
-        } else {
-          // Try with cleaned CNPJ if the saved one didn't match the original
-          const qCleaned = query(leadsRef, where("cnpj", "==", cleanedSearch));
-          const querySnapshotCleaned = await getDocs(qCleaned);
-          if (!querySnapshotCleaned.empty) {
-            const firstDoc = querySnapshotCleaned.docs[0];
-            fetchedLead = { id: firstDoc.id, ...firstDoc.data() } as Lead;
-          }
-        }
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data?.lead?.id) fetchedLead = data.lead as Lead;
       }
 
-      // 3. Fallback: Search by WhatsApp number if it looks like a phone number
-      if (!fetchedLead && cleanedSearch.length >= 8) {
-        const leadsRef = collection(db, "leads");
-        const querySnapshot = await getDocs(leadsRef);
-        const match = querySnapshot.docs.find(d => {
-          const data = d.data();
-          const savedPhone = (data.whatsapp || "").replace(/\D/g, "");
-          return savedPhone.includes(cleanedSearch) || cleanedSearch.includes(savedPhone);
-        });
-
-        if (match) {
-          fetchedLead = { id: match.id, ...match.data() } as Lead;
-        }
-      }
 
       if (!fetchedLead) {
         setError("Solicitação não encontrada. Por favor, verifique o ID ou CNPJ digitado.");
