@@ -48,7 +48,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
           <div className="col-span-1 md:col-span-5 space-y-4">
             <div className="flex items-center gap-2.5">
               <div className="bg-white p-2 rounded-lg text-brand-primary">
-                <Landmark className="w-5 h-5 text-brand-accent" />
+                <Landmark className="w-5 h-5 text-brand-accent" strokeWidth={2} />
               </div>
               <span className="font-display font-extrabold text-lg text-white block">
                 PROSFEC — Assessoria em Crédito Governamental
@@ -60,7 +60,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
             </p>
 
             <div className="flex items-center gap-2 text-xs text-emerald-400 font-bold bg-white/5 p-2.5 rounded-lg w-fit border border-white/5">
-              <ShieldCheck className="w-4 h-4 shrink-0" />
+              <ShieldCheck className="w-4 h-4 shrink-0" strokeWidth={2} />
               <span>Diagnóstico de Viabilidade 100% Gratuito</span>
             </div>
           </div>
@@ -127,7 +127,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
             
             <ul className="space-y-3 text-xs text-gray-400">
               <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
+                <Phone className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2} />
                 {referredByPartnerWhatsapp ? (
                   <a
                     href={`https://api.whatsapp.com/send?phone=${referredByPartnerWhatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(referredByPartnerNome || "")}!%20Gostaria%20de%20falar%20com%20voc%C3%AA%20sobre%20o%20Pronampe%202026.`}
@@ -149,7 +149,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
                 )}
               </li>
               <li className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+                <Mail className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2} />
                 <span>contato@prosfec.com.br</span>
               </li>
             </ul>
@@ -226,7 +226,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
               <div id="terms-modal-header" className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-2xl">
                 <div className="flex items-center gap-3">
                   <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600">
-                    <FileText className="w-5 h-5" />
+                    <FileText className="w-5 h-5" strokeWidth={2} />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 leading-none">Termos de Uso</h3>
@@ -239,7 +239,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
                   className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                   aria-label="Fechar"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5" strokeWidth={2} />
                 </button>
               </div>
 
@@ -287,7 +287,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
               <div id="privacy-modal-header" className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-2xl">
                 <div className="flex items-center gap-3">
                   <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600">
-                    <ShieldCheck className="w-5 h-5" />
+                    <ShieldCheck className="w-5 h-5" strokeWidth={2} />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 leading-none">Política de Privacidade</h3>
@@ -300,7 +300,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
                   className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                   aria-label="Fechar"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5" strokeWidth={2} />
                 </button>
               </div>
 

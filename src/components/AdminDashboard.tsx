@@ -12,7 +12,8 @@ import {
   setDoc,
   getDoc
 } from "firebase/firestore";
-import { db, createNotification } from "../firebase";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+import { db, auth, createNotification } from "../firebase";
 import { PendenciaItem, SolicitacaoComissao } from "../types";
 import { 
   Users, 
@@ -67,7 +68,10 @@ import {
   ChevronUp,
   CheckCircle2,
   AlertCircle,
-  XCircle
+  XCircle,
+  Save,
+  Link2,
+  Calculator
 } from "lucide-react";
 import { 
   formatCurrencyBRL, 
@@ -78,11 +82,13 @@ import {
   getServiceCommissionRate, 
   getMasterTeamServiceOverrideRate, 
   isFranquiaDigital, 
-  getPlanServiceLabel 
+  getPlanServiceLabel
 } from "../utils";
+import { FintechDiagnosisView } from "./FintechDiagnosisView";
 import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
 import FunnelAnalyticsDashboard from "./FunnelAnalyticsDashboard";
+import AdminServicosContabilidadeTab from "./AdminServicosContabilidadeTab";
 
 const getStatusLabel = (status: string) => {
   switch (status.toLowerCase()) {
@@ -203,6 +209,8 @@ interface Partner {
   inativoPorInatividade?: boolean;
   motivoInativacao?: string;
   dataReativacao?: string;
+  statusManual?: string;
+  dataAtualizacaoStatus?: string;
   cacaLeadsCredits?: number;
   cacaLeadsCount?: number;
   cacaLeadsLastDate?: string;
@@ -259,6 +267,20 @@ export const getCommissionDetailText = (plano?: string) => {
 
 export const getSubscriptionStatus = (partner: Partner) => {
   const isTeamMember = partner.isTeamMember === true || (partner.plano && (partner.plano.toUpperCase().includes("CONSULTOR") || partner.plano.toUpperCase().includes("EQUIPE")));
+  const isAfiliado = !!(partner.plano && partner.plano.toUpperCase().includes("AFILIADO"));
+
+  if (isAfiliado) {
+    return {
+      status: "ativa" as const,
+      daysLeft: 9999,
+      expiryDate: new Date(Date.now() + 9999 * 24 * 60 * 60 * 1000),
+      formattedExpiry: "Isento (Afiliado)",
+      isTrial: false,
+      isExempt: true,
+      isManualBlocked: false
+    };
+  }
+
   if (partner.parentPartnerId && isTeamMember) {
     return {
       status: "ativa" as const,
@@ -266,23 +288,39 @@ export const getSubscriptionStatus = (partner: Partner) => {
       expiryDate: new Date(Date.now() + 9999 * 24 * 60 * 60 * 1000),
       formattedExpiry: "Isento (Vendedor)",
       isTrial: false,
-      isExempt: true
+      isExempt: true,
+      isManualBlocked: false
+    };
+  }
+
+  // Se bloqueado explicitamente pela administração
+  if (partner.statusManual === "bloqueado" || partner.status === "bloqueado") {
+    return {
+      status: "vencida" as const,
+      daysLeft: 0,
+      expiryDate: new Date(),
+      formattedExpiry: "Bloqueado pelo ADM",
+      isTrial: false,
+      isExempt: false,
+      isManualBlocked: true
     };
   }
 
   const hasPaid = !!partner.dataUltimoPagamento;
+  const isManualActive = partner.statusManual === "ativo" || partner.status === "ativo";
   const baseDateStr = partner.dataUltimoPagamento || partner.dataCriacao;
   if (!baseDateStr) {
     return {
       status: "ativa" as const,
       daysLeft: 3,
       formattedExpiry: "-",
-      isTrial: true
+      isTrial: !isManualActive,
+      isManualBlocked: false
     };
   }
   
   const baseDate = new Date(baseDateStr);
-  const duration = partner.duracaoDias !== undefined ? partner.duracaoDias : (hasPaid ? 365 : 3);
+  const duration = partner.duracaoDias !== undefined ? partner.duracaoDias : (hasPaid || isManualActive ? 365 : 3);
   
   const expiryDate = new Date(baseDate.getTime() + duration * 24 * 60 * 60 * 1000);
   const today = new Date();
@@ -298,28 +336,38 @@ export const getSubscriptionStatus = (partner: Partner) => {
   // For standard 30 days we warn with 5 days left. For a 3 day trial, we warn when there is <= 1 day left or expired.
   const warningThreshold = duration <= 3 ? 1 : 5;
   if (diffDays <= 0) {
-    status = "vencida";
+    if (isManualActive && !hasPaid) {
+      status = "ativa";
+    } else {
+      status = "vencida";
+    }
   } else if (diffDays <= warningThreshold) {
     status = "vencendo";
   }
   
   return {
     status,
-    daysLeft: diffDays,
+    daysLeft: diffDays <= 0 && isManualActive && !hasPaid ? 365 : diffDays,
     expiryDate,
     formattedExpiry: expiryDate.toLocaleDateString("pt-BR"),
-    isTrial: !hasPaid
+    isTrial: !hasPaid && !isManualActive,
+    isManualBlocked: false
   };
 };
 
-import { DEFAULT_SERVICES_CATALOG, sanitizeAndSyncServicosList } from "../utils/serviceUtils";
+import { 
+  DEFAULT_SERVICES_CATALOG, 
+  sanitizeAndSyncServicosList, 
+  ServiceCatalogItem, 
+  HUBLA_SERVICE_LINKS, 
+  getHublaLinkForService, 
+  isServiceWithoutUpfrontCost,
+  isDemandAccountingService,
+  cleanForFirestore,
+  sanitizeServiceCatalogForFirestore
+} from "../utils/serviceUtils";
 export { DEFAULT_SERVICES_CATALOG };
-
-export interface ServiceCatalogItem {
-  id: string;
-  nome: string;
-  valor: number;
-}
+export type { ServiceCatalogItem };
 
 export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -332,6 +380,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [passwordInput, setPasswordInput] = useState("");
   const [loginError, setLoginError] = useState("");
 
+  const [loggingIn, setLoggingIn] = useState(false);
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -343,7 +393,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [comissaoReceiptText, setComissaoReceiptText] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"leads" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "funnel" | "resets">("leads");
+  const [activeTab, setActiveTab] = useState<"leads" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel" | "resets">("leads");
   const [resetNewPasswords, setResetNewPasswords] = useState<Record<string, string>>({});
   const [savingResetLeadId, setSavingResetLeadId] = useState<string | null>(null);
   const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
@@ -356,6 +406,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [customServices, setCustomServices] = useState<ServiceCatalogItem[]>(DEFAULT_SERVICES_CATALOG);
   const [newServNome, setNewServNome] = useState("");
   const [newServValor, setNewServValor] = useState<number | "">("");
+  const [newServHublaLink, setNewServHublaLink] = useState("");
 
   const CREDIT_PRODUCTS = [
     { code: "REDEBE_DIAGNOSTICO_360", name: "Rating de Crédito + Diagnóstico Finan. 360", defaultPrice: 49.90 }
@@ -780,6 +831,77 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
+  const syncAllExistingLeadsWithCatalog = async (activeCatalog: ServiceCatalogItem[]): Promise<number> => {
+    try {
+      const leadsSnap = await getDocs(collection(db, "leads"));
+      const batchPromises: Promise<any>[] = [];
+      let updatedCount = 0;
+
+      for (const d of leadsSnap.docs) {
+        const leadData = d.data();
+        let changed = false;
+        const updates: any = {};
+
+        if (Array.isArray(leadData.servicosRecomendados) && leadData.servicosRecomendados.length > 0) {
+          const synced = sanitizeAndSyncServicosList(leadData.servicosRecomendados, activeCatalog);
+          updates.servicosRecomendados = synced;
+          changed = true;
+        }
+
+        if (Array.isArray(leadData.subEtapasPasso6) && leadData.subEtapasPasso6.length > 0) {
+          const synced = sanitizeAndSyncServicosList(leadData.subEtapasPasso6, activeCatalog);
+          updates.subEtapasPasso6 = synced;
+          changed = true;
+        }
+
+        if (changed) {
+          const rawForMultilevel = updates.subEtapasPasso6 || updates.servicosRecomendados;
+          const commPayload = buildLeadMultilevelFirestorePayload(
+            { ...leadData, ...updates, id: d.id },
+            partners,
+            null,
+            rawForMultilevel
+          );
+          updates.subEtapasPasso6 = commPayload.subEtapasPasso6;
+          updates.comissaoMultinivel = commPayload.comissaoMultinivel;
+
+          batchPromises.push(updateDoc(d.ref, cleanForFirestore(updates)));
+          updatedCount++;
+        }
+      }
+
+      if (batchPromises.length > 0) {
+        await Promise.all(batchPromises);
+      }
+      return updatedCount;
+    } catch (e) {
+      console.error("Error batch updating existing leads:", e);
+      return 0;
+    }
+  };
+
+  const handleSyncAllLeadsManual = async () => {
+    if (userRole === "contador") {
+      alert("Acesso Restrito: Contadores não possuem permissão para alterar preços.");
+      return;
+    }
+    if (!confirm("Deseja sincronizar os preços do catálogo atual em todos os leads cadastrados no painel? Os valores dos serviços e as comissões multinível serão recalculados.")) {
+      return;
+    }
+    try {
+      setLoading(true);
+      const sanitizedServices = sanitizeServiceCatalogForFirestore(customServices);
+      const count = await syncAllExistingLeadsWithCatalog(sanitizedServices);
+      alert(`Sincronização concluída com sucesso! ${count} lead(s) foram atualizados com a tabela de preços vigente.`);
+      await fetchData();
+    } catch (err) {
+      console.error("Erro na sincronização manual de leads:", err);
+      alert("Erro ao sincronizar leads: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSavePrices = async () => {
     if (userRole === "contador") {
       alert("Acesso Restrito: Contadores não possuem permissão para alterar preços das consultas.");
@@ -789,18 +911,35 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     try {
       setLoading(true);
       const configRef = doc(db, "configuracoes", "precos_consultas");
-      await setDoc(configRef, {
-        precos: editPrices,
-        servicos: customServices,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
 
-      setCustomBasePrices(editPrices);
-      alert("Tabela de preços de consultas e catálogo de serviços atualizada com sucesso!");
+      const sanitizedServices = sanitizeServiceCatalogForFirestore(customServices);
+      const sanitizedPrices: Record<string, number> = {};
+      if (editPrices && typeof editPrices === "object") {
+        for (const [k, v] of Object.entries(editPrices)) {
+          if (v !== undefined && v !== null && !isNaN(Number(v))) {
+            sanitizedPrices[k] = Number(v);
+          }
+        }
+      }
+
+      const payload = cleanForFirestore({
+        precos: sanitizedPrices,
+        servicos: sanitizedServices,
+        updatedAt: new Date().toISOString()
+      });
+
+      await setDoc(configRef, payload, { merge: true });
+
+      // Synchronize all existing leads in the database with updated catalog prices & commissions
+      const updatedLeadsCount = await syncAllExistingLeadsWithCatalog(sanitizedServices);
+
+      setCustomBasePrices(sanitizedPrices);
+      setCustomServices(sanitizedServices);
+      alert(`Tabela de preços de consultas e catálogo de serviços atualizada com sucesso!${updatedLeadsCount > 0 ? `\n\n${updatedLeadsCount} lead(s) cadastrados no painel tiveram seus serviços e comissões atualizados automaticamente.` : ''}`);
       await fetchData();
     } catch (err) {
       console.error("Error saving prices:", err);
-      alert("Erro ao salvar preços no Firestore.");
+      alert("Erro ao salvar preços no Firestore: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -812,27 +951,34 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       return;
     }
 
-    if (!confirm("Tem certeza que deseja restaurar os preços e serviços para a tabela padrão?")) {
+    if (!confirm("Tem certeza que deseja restaurar os preços e serviços para a tabela padrão? Isso também atualizará os serviços nos leads cadastrados.")) {
       return;
     }
 
     try {
       setLoading(true);
       const configRef = doc(db, "configuracoes", "precos_consultas");
-      await setDoc(configRef, {
+      const defaultSanitized = sanitizeServiceCatalogForFirestore(DEFAULT_SERVICES_CATALOG);
+
+      const payload = cleanForFirestore({
         precos: {},
-        servicos: DEFAULT_SERVICES_CATALOG,
+        servicos: defaultSanitized,
         updatedAt: new Date().toISOString()
-      }, { merge: true });
+      });
+
+      await setDoc(configRef, payload, { merge: true });
+
+      // Synchronize all existing leads in the database with default catalog prices & commissions
+      const updatedLeadsCount = await syncAllExistingLeadsWithCatalog(defaultSanitized);
 
       setCustomBasePrices({});
       setEditPrices({});
-      setCustomServices(DEFAULT_SERVICES_CATALOG);
-      alert("Preços e catálogo de serviços restaurados para o padrão!");
+      setCustomServices(defaultSanitized);
+      alert(`Preços e catálogo de serviços restaurados para o padrão!${updatedLeadsCount > 0 ? `\n\n${updatedLeadsCount} lead(s) sincronizados com o padrão.` : ''}`);
       await fetchData();
     } catch (err) {
       console.error("Error resetting prices:", err);
-      alert("Erro ao restaurar preços padrão.");
+      alert("Erro ao restaurar preços padrão: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -847,11 +993,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     const newServ: ServiceCatalogItem = {
       id: `serv_custom_${Date.now()}`,
       nome: newServNome.trim(),
-      valor: val
+      valor: val,
+      ...(newServHublaLink.trim() ? { hublaLink: newServHublaLink.trim() } : {})
     };
     setCustomServices(prev => [...prev, newServ]);
     setNewServNome("");
     setNewServValor("");
+    setNewServHublaLink("");
   };
 
   const handleRemoveCustomService = (id: string) => {
@@ -866,7 +1014,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
     const isConsulta = refill.tipo === "consultas";
     const confirmMsg = isConsulta
-      ? `Deseja aprovar e liberar R$ ${refill.valor.toFixed(2).replace(".", ",")} de saldo de consultas para o parceiro ${refill.partnerNome}?`
+      ? `Deseja aprovar e liberar R$ ${refill.valor.toFixed(2).replace(".", ",")} de saldo geral (Consultas & Contabilidade) para o parceiro ${refill.partnerNome}?`
       : `Deseja aprovar e liberar ${refill.buscas} buscas para o parceiro ${refill.partnerNome}?`;
 
     if (!confirm(confirmMsg)) {
@@ -886,9 +1034,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const partner = partners.find(p => p.id === refill.partnerId);
 
       if (isConsulta) {
-        const currentBalance = partner?.saldoConsultas !== undefined ? Number(partner.saldoConsultas) : 0.00;
+        const currentBalance = partner?.saldoGeral !== undefined ? Number(partner.saldoGeral) : (partner?.saldoConsultas !== undefined ? Number(partner.saldoConsultas) : 0.00);
         const newBalance = Number((currentBalance + refill.valor).toFixed(2));
         await updateDoc(partnerRef, {
+          saldoGeral: newBalance,
           saldoConsultas: newBalance
         });
         
@@ -897,8 +1046,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           await addDoc(collection(db, "notificacoes"), {
             recipientId: refill.partnerId,
             recipientType: "parceiro",
-            titulo: "Saldo de Consultas Liberado",
-            mensagem: `Sua recarga de R$ ${refill.valor.toFixed(2).replace(".", ",")} de saldo de consultas foi aprovada e já está disponível!`,
+            titulo: "Saldo Geral Liberado",
+            mensagem: `Sua recarga de R$ ${refill.valor.toFixed(2).replace(".", ",")} de saldo geral foi aprovada e já está disponível para Consultas de Crédito e Serviços de Contabilidade!`,
             tipo: "success",
             lida: false,
             dataCriacao: new Date().toISOString()
@@ -907,7 +1056,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           console.error("Erro ao criar notificação de recarga aprovada:", notifErr);
         }
 
-        alert(`Recarga de R$ ${refill.valor.toFixed(2).replace(".", ",")} de saldo de consultas liberada com sucesso para ${refill.partnerNome}!`);
+        alert(`Recarga de R$ ${refill.valor.toFixed(2).replace(".", ",")} de saldo geral liberada com sucesso para ${refill.partnerNome}!`);
       } else {
         const currentCredits = partner?.cacaLeadsCredits || 0;
         const newCredits = currentCredits + refill.buscas;
@@ -1223,12 +1372,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           const data = configSnap.data();
           setCustomBasePrices(data.precos || {});
           if (data.servicos && Array.isArray(data.servicos) && data.servicos.length > 0) {
-            // Remove obsolete items: "Diagnóstico de Crédito — CPF ou CNPJ" and "Recarga do Caça-Leads"
+            // Remove obsolete items: "Diagnóstico de Crédito — CPF ou CNPJ", "Recarga do Caça-Leads" e BACEN avulso legado
             const rawServs = data.servicos.filter((s: any) => 
               s.id !== "serv_diagnostico" && 
               s.id !== "serv_caca_leads" && 
+              s.id !== "serv_bacen" &&
               !s.nome?.toLowerCase().includes("diagnóstico de crédito") &&
-              !s.nome?.toLowerCase().includes("caça-leads")
+              !s.nome?.toLowerCase().includes("caça-leads") &&
+              !s.nome?.toLowerCase().includes("atuação administrativa bacen")
             );
             const hasSeparate = rawServs.some((s: any) => 
               s.id === "serv_score" || 
@@ -1236,6 +1387,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               (s.nome && s.nome.toLowerCase().includes("score") && !s.nome.toLowerCase().includes("rating")) ||
               (s.nome && s.nome.toLowerCase().includes("rating") && !s.nome.toLowerCase().includes("score"))
             );
+            let processedCatalog = rawServs;
             if (hasSeparate) {
               let scoreVal = 400;
               let ratingVal = 700;
@@ -1254,13 +1406,37 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 filtered.splice(1, 0, {
                   id: "serv_rating_score",
                   nome: "Melhoria e Adequação de Rating e Score",
-                  valor: scoreVal + ratingVal
+                  valor: scoreVal + ratingVal,
+                  hublaLink: HUBLA_SERVICE_LINKS.serv_rating_score
                 });
               }
-              setCustomServices(filtered);
-            } else {
-              setCustomServices(rawServs);
+              processedCatalog = filtered;
             }
+
+            // Garantir presença do Programa de Reabilitação Financeira e Creditícia (R$ 2.000,00)
+            const hasReabilitacao = processedCatalog.some((s: any) =>
+              s.id === "serv_reabilitacao" ||
+              s.nome?.toLowerCase().includes("reabilitação") ||
+              s.nome?.toLowerCase().includes("reabilitacao")
+            );
+            if (!hasReabilitacao) {
+              processedCatalog.unshift({
+                id: "serv_reabilitacao",
+                nome: "Programa de Reabilitação Financeira e Creditícia",
+                valor: 2000,
+                hublaLink: HUBLA_SERVICE_LINKS.serv_reabilitacao
+              });
+            }
+
+            // Atribuir links padrão para serviços pré-definidos caso não tenham link customizado
+            processedCatalog = processedCatalog.map((s: any) => {
+              if (!s.hublaLink && s.id && (HUBLA_SERVICE_LINKS as any)[s.id]) {
+                return { ...s, hublaLink: (HUBLA_SERVICE_LINKS as any)[s.id] };
+              }
+              return s;
+            });
+
+            setCustomServices(processedCatalog);
           } else {
             setCustomServices(DEFAULT_SERVICES_CATALOG);
           }
@@ -1286,35 +1462,145 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   }, [isAuthenticated]);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const ADMIN_UID = "FbYFfsN8igZzNUxcDzBfxX0Anlj1";
+  const CONTADOR_UID = "vKZFCNniHJfzJ9B3yWlzErNC3892";
+
+  // Real-time synchronization with Firebase Authentication state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        let detectedRole: "admin" | "contador" = "admin";
+        const email = (user.email || "").toLowerCase();
+        if (user.uid === ADMIN_UID || email.includes("adm")) {
+          detectedRole = "admin";
+        } else if (user.uid === CONTADOR_UID || email.includes("contador")) {
+          detectedRole = "contador";
+        }
+        sessionStorage.setItem("admin_authenticated", "true");
+        sessionStorage.setItem("admin_role", detectedRole);
+        sessionStorage.setItem("admin_firebase_uid", user.uid);
+        setUserRole(detectedRole);
+        setIsAuthenticated(true);
+      } else {
+        // If user logged out of Firebase auth
+        const wasAuth = sessionStorage.getItem("admin_authenticated") === "true";
+        if (wasAuth && !auth.currentUser) {
+          // If was relying on Firebase Auth session
+          const storedUid = sessionStorage.getItem("admin_firebase_uid");
+          if (storedUid) {
+            sessionStorage.removeItem("admin_authenticated");
+            sessionStorage.removeItem("admin_role");
+            sessionStorage.removeItem("admin_firebase_uid");
+            setIsAuthenticated(false);
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Security: Inactivity auto-logout (30 minutes of no user interaction)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+    let inactivityTimer: NodeJS.Timeout;
+
+    const resetInactivityTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        console.warn("[Segurança] Sessão administrativa encerrada por inatividade.");
+        handleLogout();
+      }, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
+    events.forEach(evt => window.addEventListener(evt, resetInactivityTimer, { passive: true }));
+    resetInactivityTimer();
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      events.forEach(evt => window.removeEventListener(evt, resetInactivityTimer));
+    };
+  }, [isAuthenticated]);
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
+    setLoggingIn(true);
 
     const normalizedEmail = emailInput.trim().toLowerCase();
-    const correctEmail = "adm.prosfec@gmail.com";
-    const correctPassword = "PROSFEC@empcap2026";
+    const cleanPassword = passwordInput.trim();
 
-    const contadorEmail = "contador.prosfec@gmail.com";
-    const contadorPassword = "CONTADOR@prosfec2026";
+    try {
+      // 1. First attempt: Authenticate directly with Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, cleanPassword);
+      const user = userCredential.user;
 
-    if (normalizedEmail === correctEmail && passwordInput === correctPassword) {
+      let detectedRole: "admin" | "contador" = "admin";
+
+      if (user.uid === ADMIN_UID || normalizedEmail.includes("adm")) {
+        detectedRole = "admin";
+      } else if (user.uid === CONTADOR_UID || normalizedEmail.includes("contador")) {
+        detectedRole = "contador";
+      } else {
+        // Default check based on UID or email pattern
+        detectedRole = "admin";
+      }
+
       sessionStorage.setItem("admin_authenticated", "true");
-      sessionStorage.setItem("admin_role", "admin");
-      setUserRole("admin");
+      sessionStorage.setItem("admin_role", detectedRole);
+      sessionStorage.setItem("admin_firebase_uid", user.uid);
+      setUserRole(detectedRole);
       setIsAuthenticated(true);
-    } else if (normalizedEmail === contadorEmail && passwordInput === contadorPassword) {
-      sessionStorage.setItem("admin_authenticated", "true");
-      sessionStorage.setItem("admin_role", "contador");
-      setUserRole("contador");
-      setIsAuthenticated(true);
-    } else {
-      setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
+    } catch (authErr: any) {
+      console.warn("Firebase Auth attempt failed, evaluating fallback credentials:", authErr?.code, authErr?.message);
+
+      // 2. Fallback attempt for predefined master credentials if offline or transitional
+      const correctEmail = "adm.prosfec@gmail.com";
+      const correctPassword = "PROSFEC@empcap2026";
+
+      const contadorEmail = "contador.prosfec@gmail.com";
+      const contadorPassword = "CONTADOR@prosfec2026";
+
+      if (normalizedEmail === correctEmail && cleanPassword === correctPassword) {
+        sessionStorage.setItem("admin_authenticated", "true");
+        sessionStorage.setItem("admin_role", "admin");
+        sessionStorage.setItem("admin_firebase_uid", ADMIN_UID);
+        setUserRole("admin");
+        setIsAuthenticated(true);
+      } else if (normalizedEmail === contadorEmail && cleanPassword === contadorPassword) {
+        sessionStorage.setItem("admin_authenticated", "true");
+        sessionStorage.setItem("admin_role", "contador");
+        sessionStorage.setItem("admin_firebase_uid", CONTADOR_UID);
+        setUserRole("contador");
+        setIsAuthenticated(true);
+      } else {
+        if (authErr?.code === "auth/invalid-credential" || authErr?.code === "auth/wrong-password" || authErr?.code === "auth/user-not-found") {
+          setLoginError("E-mail ou senha incorretos no Firebase Authentication. Verifique suas credenciais.");
+        } else if (authErr?.code === "auth/too-many-requests") {
+          setLoginError("Muitas tentativas malsucedidas. Por segurança, tente novamente em alguns instantes.");
+        } else if (authErr?.message) {
+          setLoginError(`Falha na autenticação: ${authErr.message}`);
+        } else {
+          setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
+        }
+      }
+    } finally {
+      setLoggingIn(false);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.warn("Error signing out from Firebase Auth:", err);
+    }
     sessionStorage.removeItem("admin_authenticated");
     sessionStorage.removeItem("admin_role");
+    sessionStorage.removeItem("admin_firebase_uid");
     setIsAuthenticated(false);
     setUserRole("admin");
     setEmailInput("");
@@ -1680,11 +1966,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         validatedSubEtapas
       );
 
-      const docRef = doc(db, "leads", selectedLead.id);
-      await updateDoc(docRef, {
+      const firestoreUpdate = cleanForFirestore({
         subEtapasPasso6: commissionPayload.subEtapasPasso6,
         comissaoMultinivel: commissionPayload.comissaoMultinivel
       });
+
+      const docRef = doc(db, "leads", selectedLead.id);
+      await updateDoc(docRef, firestoreUpdate);
       setLeads(prev => prev.map(item => item.id === selectedLead.id ? { ...item, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : item));
       setSelectedLead(prev => prev ? { ...prev, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : null);
       alert("Sub-etapas do Passo 6 verificadas e comissões multinível salvas com sucesso!");
@@ -1702,15 +1990,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     try {
       const syncedSubEtapas = editingServicosRecomendados.map((s: any, idx: number) => {
         const existing = editingSubEtapasPasso6.find(sub => sub.id === s.id || sub.titulo === s.nome);
-        return {
+        const item: any = {
           id: s.id || `sub_${Date.now()}_${idx + 1}`,
           titulo: s.nome || s.servico || `Serviço ${idx + 1}`,
           concluida: existing ? existing.concluida : (s.status === "concluido" || false),
           preco: typeof s.valor === "number" ? s.valor : (parseFloat(s.valor) || 0),
           statusPagamento: existing?.statusPagamento || (s.status === "concluido" ? "pago" : "pendente"),
-          formaPagamento: existing?.formaPagamento,
-          dataPagamento: existing?.dataPagamento
         };
+        if (s.hublaLink || existing?.hublaLink) item.hublaLink = s.hublaLink || existing?.hublaLink;
+        if (existing?.formaPagamento || s.formaPagamento) item.formaPagamento = existing?.formaPagamento || s.formaPagamento;
+        if (existing?.dataPagamento || s.dataPagamento) item.dataPagamento = existing?.dataPagamento || s.dataPagamento;
+        return item;
       });
 
       const commissionPayload = buildLeadMultilevelFirestorePayload(
@@ -1720,12 +2010,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         syncedSubEtapas
       );
 
-      const docRef = doc(db, "leads", selectedLead.id);
-      await updateDoc(docRef, {
+      const firestoreUpdate = cleanForFirestore({
         servicosRecomendados: editingServicosRecomendados,
         subEtapasPasso6: commissionPayload.subEtapasPasso6,
         comissaoMultinivel: commissionPayload.comissaoMultinivel
       });
+
+      const docRef = doc(db, "leads", selectedLead.id);
+      await updateDoc(docRef, firestoreUpdate);
       setEditingSubEtapasPasso6(commissionPayload.subEtapasPasso6);
       setLeads(prev => prev.map(item => item.id === selectedLead.id ? { ...item, servicosRecomendados: editingServicosRecomendados, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : item));
       setSelectedLead(prev => prev ? { ...prev, servicosRecomendados: editingServicosRecomendados, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : null);
@@ -1755,8 +2047,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     updated[idx] = {
       ...updated[idx],
       statusPagamento: newPaidState ? "pago" : "pendente",
-      formaPagamento: newPaidState ? "manual_adm" : undefined,
-      dataPagamento: newPaidState ? new Date().toISOString() : undefined,
+      formaPagamento: newPaidState ? "manual_adm" : null,
+      dataPagamento: newPaidState ? new Date().toISOString() : null,
       pago: newPaidState,
       concluida: newPaidState ? true : updated[idx].concluida
     } as any;
@@ -1771,11 +2063,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     setEditingSubEtapasPasso6(commissionPayload.subEtapasPasso6);
 
     try {
-      const leadRef = doc(db, "leads", selectedLead.id);
-      await updateDoc(leadRef, { 
+      const firestoreUpdate = cleanForFirestore({ 
         subEtapasPasso6: commissionPayload.subEtapasPasso6,
         comissaoMultinivel: commissionPayload.comissaoMultinivel
       });
+      const leadRef = doc(db, "leads", selectedLead.id);
+      await updateDoc(leadRef, firestoreUpdate);
       setSelectedLead(prev => prev ? { ...prev, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : null);
       setLeads(prev => prev.map(l => l.id === selectedLead.id ? { ...l, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : l));
       alert(newPaidState ? "Pagamento verificado e confirmado manualmente com sucesso!" : "Status de pagamento alterado para pendente.");
@@ -1946,11 +2239,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       return;
     }
 
-    if (!confirmDelete) {
-      setIsDeletingId(id);
-      setConfirmDelete(true);
-      return;
-    }
+    const itemType = collectionName === "leads" ? "este Lead" : "este Parceiro";
+    const confirmed = window.confirm(`Tem certeza que deseja excluir definitivamente ${itemType} do banco de dados Firestore? Esta ação não poderá ser desfeita.`);
+    if (!confirmed) return;
 
     try {
       const docRef = doc(db, collectionName, id);
@@ -1969,7 +2260,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setStats(prev => {
         if (collectionName === "leads") {
           const removedLead = leads.find(l => l.id === id);
-          const newLeadsCount = prev.totalLeads - 1;
+          const newLeadsCount = Math.max(0, prev.totalLeads - 1);
           const newCredit = prev.totalCreditSimulated - (removedLead?.limiteEstimado || 0);
           return {
             ...prev,
@@ -1979,7 +2270,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         } else {
           return {
             ...prev,
-            totalPartners: prev.totalPartners - 1
+            totalPartners: Math.max(0, prev.totalPartners - 1)
           };
         }
       });
@@ -1987,35 +2278,42 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       // Reset delete state
       setIsDeletingId(null);
       setConfirmDelete(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error deleting document from Firestore:", err);
-      alert("Falha ao excluir o documento no Firestore.");
+      alert(`Falha ao excluir o documento no Firestore: ${err?.message || "Erro desconhecido"}`);
     }
   };
 
   const handleTogglePartnerStatus = async (partner: Partner, targetStatus?: "ativo" | "bloqueado") => {
     try {
-      const currentStatus = (partner as any).statusManual || partner.status || "ativo";
+      const currentStatus = (partner as any).statusManual || (partner.status === "bloqueado" ? "bloqueado" : "ativo");
       const newStatus = targetStatus || (currentStatus === "bloqueado" ? "ativo" : "bloqueado");
       const docRef = doc(db, "parceiros", partner.id);
       
-      await updateDoc(docRef, { 
+      const nowStr = new Date().toISOString();
+      const updates: any = { 
         statusManual: newStatus,
         status: newStatus === "bloqueado" ? "bloqueado" : "ativo",
-        dataAtualizacaoStatus: new Date().toISOString()
-      });
+        dataAtualizacaoStatus: nowStr
+      };
+
+      // Quando ativa/desbloqueia manualmente, garante a liberação da licença por 365 dias
+      if (newStatus === "ativo") {
+        updates.dataUltimoPagamento = nowStr;
+        updates.duracaoDias = 365;
+      }
+
+      await updateDoc(docRef, updates);
 
       setPartners(prev => prev.map(p => p.id === partner.id ? { 
         ...p, 
-        statusManual: newStatus,
-        status: newStatus === "bloqueado" ? "bloqueado" : "ativo" 
+        ...updates
       } : p));
 
       if (selectedPartner?.id === partner.id) {
         setSelectedPartner(prev => prev ? { 
           ...prev, 
-          statusManual: newStatus,
-          status: newStatus === "bloqueado" ? "bloqueado" : "ativo" 
+          ...updates
         } : null);
       }
     } catch (err) {
@@ -2197,33 +2495,36 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const getStatusBadgeClass = (status?: string) => {
     switch (status?.toLowerCase()) {
       case "novo":
-        return "bg-blue-100 text-blue-800 border border-blue-200";
+        return "bg-blue-50 text-blue-700 border border-blue-200 font-semibold";
       case "em atendimento":
       case "atendimento":
-        return "bg-amber-100 text-amber-800 border border-amber-200";
+        return "bg-amber-50 text-amber-700 border border-amber-200 font-semibold";
       case "concluido":
       case "concluído":
       case "parceria ativa":
-        return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+      case "aprovado":
+        return "bg-emerald-50 text-[#00A86B] border border-emerald-200 font-semibold";
       case "perdido":
+      case "recusado":
+      case "cancelado":
+        return "bg-rose-50 text-rose-700 border border-rose-200 font-semibold";
       case "arquivado":
-        return "bg-gray-100 text-gray-800 border border-gray-200";
       default:
-        return "bg-slate-100 text-slate-800 border border-slate-200";
+        return "bg-slate-50 text-slate-700 border border-slate-200 font-semibold";
     }
   };
 
   const getPreparationBadgeClass = (level?: string) => {
     switch (level?.toLowerCase()) {
       case "alto":
-        return "bg-emerald-100 text-emerald-800 font-bold";
+        return "bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold";
       case "medio":
       case "médio":
-        return "bg-amber-100 text-amber-800 font-bold";
+        return "bg-amber-50 text-amber-800 border border-amber-200 font-semibold";
       case "baixo":
-        return "bg-rose-100 text-rose-800 font-bold";
+        return "bg-rose-50 text-rose-800 border border-rose-200 font-semibold";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-slate-100 text-slate-700 border border-slate-200 font-medium";
     }
   };
 
@@ -2365,9 +2666,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               <div>
                 <button
                   type="submit"
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl text-sm font-black text-white bg-[#0A3D2E] hover:bg-[#00A86B] focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-[#00A86B] transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-98"
+                  disabled={loggingIn}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-transparent rounded-xl text-sm font-black text-white bg-[#0A3D2E] hover:bg-[#00A86B] focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-[#00A86B] transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-98 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Acessar Painel Seguro
+                  {loggingIn ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-emerald-300" />
+                      <span>Autenticando no Firebase...</span>
+                    </>
+                  ) : (
+                    <span>Acessar Painel Seguro</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -2380,29 +2689,29 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   return (
     <div className="min-h-screen flex flex-col font-sans bg-slate-50 text-slate-800">
       {/* Top Banner Header */}
-      <header className="bg-gradient-to-r from-[#022118] via-[#033a2a] to-[#022118] text-slate-100 border-b border-emerald-800/40 py-3.5 px-6 sticky top-0 z-40 shadow-lg backdrop-blur-md">
+      <header className="bg-[#0A3D2E] text-slate-100 border-b border-emerald-800/50 py-3.5 px-4 sm:px-6 sticky top-0 z-40 shadow-sm backdrop-blur-md">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-950/60 p-2.5 rounded-2xl text-emerald-300 border border-emerald-700/40 shadow-xs">
+            <div className="bg-emerald-950/70 p-2.5 rounded-xl text-emerald-300 border border-emerald-700/40 shadow-xs">
               <TrendingUp className="w-5.5 h-5.5 text-emerald-300" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-black tracking-tight text-slate-100 font-display">Painel Administrativo</h1>
+                <h1 className="text-lg font-black tracking-tight text-white font-display">Painel Administrativo</h1>
                 {userRole === "contador" ? (
-                  <span className="text-[9px] bg-amber-500/20 text-amber-300 font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider font-mono border border-amber-400/30">
+                  <span className="text-[11px] bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider border border-amber-400/30">
                     Área do Contador
                   </span>
                 ) : (
-                  <span className="text-[9px] bg-emerald-900/40 text-emerald-300 font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider font-mono border border-emerald-700/40">
+                  <span className="text-[11px] bg-emerald-500/20 text-[#00A86B] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider border border-emerald-500/30">
                     Engine PROSFEC IA v2.6
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-[10px] text-emerald-300/90 font-bold tracking-wider uppercase font-mono mt-0.5">
+              <div className="flex items-center gap-2 text-[11px] text-emerald-300/90 font-bold tracking-wider uppercase font-mono mt-0.5">
                 <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00A86B] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00A86B]"></span>
                 </span>
                 <span>Mesa de Crédito &bull; PRONAMPE 2026 Online</span>
               </div>
@@ -2412,16 +2721,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
             <button 
               onClick={fetchData}
-              className="py-2 px-3.5 bg-emerald-950/60 hover:bg-emerald-900/80 active:bg-emerald-800 text-emerald-200 rounded-xl border border-emerald-800/40 transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer shadow-xs"
+              className="py-2 px-3.5 bg-emerald-950/60 hover:bg-emerald-900/80 active:bg-emerald-800 text-emerald-200 rounded-xl border border-emerald-800/40 transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer shadow-xs min-h-[40px]"
               title="Sincronizar dados"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-emerald-300 ${loading ? 'animate-spin' : ''}`} />
-              <span className="font-mono hidden sm:inline">Sincronizar</span>
+              <span className="hidden sm:inline">Sincronizar</span>
             </button>
 
             <button
               onClick={handleLogout}
-              className="py-2 px-3.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-200 font-bold rounded-xl border border-rose-400/30 text-xs transition-all cursor-pointer"
+              className="py-2 px-3.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-200 font-bold rounded-xl border border-rose-400/30 text-xs transition-all cursor-pointer min-h-[40px]"
             >
               Sair
             </button>
@@ -2438,11 +2747,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           {/* Sidebar Left Column */}
           <div className="w-full lg:w-80 shrink-0 space-y-6 lg:sticky lg:top-24">
             {/* Admin Profile/Control Card */}
-            <div className="bg-gradient-to-r from-[#022118] via-[#033a2a] to-[#022118] text-slate-100 p-6 rounded-3xl relative overflow-hidden shadow-md flex flex-col justify-between border border-emerald-800/40 min-h-[160px]">
+            <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-xs flex flex-col justify-between border border-emerald-500/20 min-h-[160px]">
               <div className="absolute right-[-40px] top-[-40px] w-36 h-36 rounded-full bg-emerald-400/10 pointer-events-none" />
               <div className="space-y-4 relative z-10">
                 <div className="flex items-start justify-between">
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-200 font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider border border-emerald-400/30">
+                  <span className="text-[11px] bg-emerald-500/20 text-[#00A86B] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-emerald-500/30">
                     {userRole === "contador" ? "Contador" : "Administrador"}
                   </span>
                   <TrendingUp className="w-5 h-5 text-emerald-300" />
@@ -2451,7 +2760,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   <h2 className="font-display font-extrabold text-lg leading-tight text-white">
                     {userRole === "contador" ? "Painel Contábil" : "Painel Executivo"}
                   </h2>
-                  <p className="text-xs text-emerald-100/90 mt-1 truncate">PROSFEC PRONAMPE</p>
+                  <p className="text-xs text-emerald-200/90 mt-1 truncate">PROSFEC PRONAMPE</p>
                 </div>
               </div>
             </div>
@@ -2469,10 +2778,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <TrendingUp className={`w-4 h-4 ${activeTab === "funnel" ? "text-emerald-700" : "text-slate-400"}`} />
+                  <TrendingUp className={`w-5 h-5 ${activeTab === "funnel" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
                   Funil & Conversão
                 </span>
-                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${activeTab === "funnel" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} />
+                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "funnel" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
               </button>
 
               <button
@@ -2484,10 +2793,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <Users className={`w-4 h-4 ${activeTab === "leads" ? "text-emerald-700" : "text-slate-400"}`} />
+                  <Users className={`w-5 h-5 ${activeTab === "leads" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
                   Leads ({leads.length})
                 </span>
-                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} />
+                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
               </button>
 
               <button
@@ -2499,10 +2808,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <Handshake className={`w-4 h-4 ${activeTab === "partners" ? "text-emerald-700" : "text-slate-400"}`} />
+                  <Handshake className={`w-5 h-5 ${activeTab === "partners" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
                   Parceiros ({partners.length})
                 </span>
-                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${activeTab === "partners" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} />
+                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "partners" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
               </button>
 
               <button
@@ -2514,10 +2823,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <Megaphone className={`w-4 h-4 ${activeTab === "announcements" ? "text-emerald-700" : "text-slate-400"}`} />
+                  <Megaphone className={`w-5 h-5 ${activeTab === "announcements" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
                   Comunicados
                 </span>
-                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${activeTab === "announcements" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} />
+                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "announcements" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
               </button>
 
               <button
@@ -2529,7 +2838,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <Coins className={`w-4 h-4 ${activeTab === "recargas" ? "text-emerald-700" : "text-slate-400"}`} />
+                  <Coins className={`w-5 h-5 ${activeTab === "recargas" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
                   Recargas
                   {recargas.filter(r => r.status === "pendente").length > 0 && (
                     <span className="bg-amber-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
@@ -2537,7 +2846,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </span>
                   )}
                 </span>
-                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${activeTab === "recargas" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} />
+                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "recargas" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
               </button>
 
               <button
@@ -2549,7 +2858,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <Receipt className={`w-4 h-4 ${activeTab === "comissoes" ? "text-emerald-700" : "text-slate-400"}`} />
+                  <Receipt className={`w-5 h-5 ${activeTab === "comissoes" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
                   Comissões & Saques
                   {comissoes.filter(c => c.status === "pendente").length > 0 && (
                     <span className="bg-emerald-600 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse shadow-xs">
@@ -2557,7 +2866,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </span>
                   )}
                 </span>
-                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${activeTab === "comissoes" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} />
+                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "comissoes" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
               </button>
 
               <button
@@ -2569,10 +2878,25 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <DollarSign className={`w-4 h-4 ${activeTab === "precos" ? "text-emerald-700" : "text-slate-400"}`} />
+                  <DollarSign className={`w-5 h-5 ${activeTab === "precos" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
                   Preços & Serviços
                 </span>
-                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${activeTab === "precos" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} />
+                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "precos" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+              </button>
+
+              <button
+                onClick={() => { setActiveTab("servicos_contabilidade"); setSearchTerm(""); setStatusFilter("todos"); }}
+                className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
+                  activeTab === "servicos_contabilidade"
+                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Calculator className={`w-5 h-5 ${activeTab === "servicos_contabilidade" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={1.75} />
+                  Serviços de Contabilidade
+                </span>
+                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "servicos_contabilidade" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
               </button>
 
               <button
@@ -2584,7 +2908,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <Key className={`w-4 h-4 ${activeTab === "resets" ? "text-emerald-700" : "text-slate-400"}`} />
+                  <Key className={`w-5 h-5 ${activeTab === "resets" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
                   Reset de Senhas
                   {leads.filter(l => l.solicitacaoResetSenha?.pendente).length > 0 && (
                     <span className="bg-rose-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse shadow-xs">
@@ -2592,7 +2916,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </span>
                   )}
                 </span>
-                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${activeTab === "resets" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} />
+                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "resets" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
               </button>
             </div>
           </div>
@@ -2613,13 +2937,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     {activeTab === "recargas" && <><Coins className="w-4 h-4 text-emerald-600" /> Solicitações de Recarga</>}
                     {activeTab === "comissoes" && <><Receipt className="w-4 h-4 text-emerald-600" /> Painel Financeiro &amp; Solicitações de Saque de Comissões</>}
                     {activeTab === "precos" && <><DollarSign className="w-4 h-4 text-emerald-600" /> Preços de Consultas &amp; Catálogo de Serviços</>}
+                    {activeTab === "servicos_contabilidade" && <><Calculator className="w-4 h-4 text-emerald-600" /> Catálogo de Serviços de Contabilidade</>}
                     {activeTab === "funnel" && <><TrendingUp className="w-4 h-4 text-emerald-600" /> Funil de Conversão do Simulador</>}
                     {activeTab === "resets" && <><Key className="w-4 h-4 text-emerald-600" /> Central de Senhas &amp; Reset do Portal do Cliente</>}
                   </h3>
                 </div>
      
                 {/* Export action */}
-                {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "funnel" && activeTab !== "resets" && (
+                {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" && activeTab !== "funnel" && activeTab !== "resets" && (
                   <button
                     onClick={exportToCSV}
                     disabled={loading || (activeTab === "leads" ? leads.length === 0 : partners.length === 0)}
@@ -2637,7 +2962,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </div>
 
               {/* Filtering controls bar */}
-          {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "funnel" && activeTab !== "resets" ? (
+          {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" && activeTab !== "funnel" && activeTab !== "resets" ? (
             <div className="p-4 bg-white border-b border-slate-100 space-y-3">
               {/* Primary Search & Quick Filter Row */}
               <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
@@ -2668,11 +2993,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       onClick={() => setQuickFilter("todos")}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                         quickFilter === "todos"
-                          ? "bg-slate-900 text-white shadow-xs"
-                          : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                          ? "bg-[#0A3D2E] text-white shadow-xs"
+                          : "bg-slate-100 hover:bg-slate-200 text-slate-700"
                       }`}
                     >
-                      Todos ({leads.length})
+                      Todos <span className="font-mono font-bold">({leads.length})</span>
                     </button>
 
                     {(() => {
@@ -2688,7 +3013,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           }`}
                         >
                           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                          Pendências ({pendCount})
+                          Pendências <span className="font-mono font-bold">({pendCount})</span>
                         </button>
                       );
                     })()}
@@ -2701,7 +3026,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           : "bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100"
                       }`}
                     >
-                      Novos ({leads.filter(l => l.status === "novo").length})
+                      Novos <span className="font-mono font-bold">({leads.filter(l => l.status === "novo").length})</span>
                     </button>
 
                     <button
@@ -2712,18 +3037,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           : "bg-amber-50 text-amber-700 border border-amber-100 hover:bg-amber-100"
                       }`}
                     >
-                      Em Atendimento ({leads.filter(l => l.status === "em atendimento" || l.status === "atendimento").length})
+                      Em Atendimento <span className="font-mono font-bold">({leads.filter(l => l.status === "em atendimento" || l.status === "atendimento").length})</span>
                     </button>
 
                     <button
                       onClick={() => setQuickFilter(quickFilter === "concluidos" ? "todos" : "concluidos")}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                         quickFilter === "concluidos"
-                          ? "bg-emerald-600 text-white shadow-xs"
-                          : "bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100"
+                          ? "bg-[#00A86B] text-white shadow-xs"
+                          : "bg-emerald-50 text-[#00A86B] border border-emerald-200 hover:bg-emerald-100"
                       }`}
                     >
-                      Concluídos ({leads.filter(l => l.status === "concluido" || l.status === "concluído").length})
+                      Concluídos <span className="font-mono font-bold">({leads.filter(l => l.status === "concluido" || l.status === "concluído").length})</span>
                     </button>
                   </div>
                 )}
@@ -2983,22 +3308,22 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     ];
 
                     return (
-                      <div className="mx-4 mt-4 mb-4 bg-slate-50/70 p-3.5 rounded-2xl border border-slate-200/70 shadow-2xs">
-                        <div className="flex justify-between items-center mb-2.5">
-                          <h4 className="text-[11px] font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                            <Activity className="w-3.5 h-3.5 text-[#00A86B]" />
+                      <div className="mx-4 mt-4 mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <Activity className="w-5 h-5 text-[#00A86B]" strokeWidth={2} />
                             Pipeline de Vendas ({leads.length} Leads Ativos)
                           </h4>
                           {etapaFilter !== "todos" && (
                             <button
                               onClick={() => setEtapaFilter("todos")}
-                              className="text-[10px] bg-white hover:bg-slate-200 text-slate-600 font-bold px-2 py-0.5 rounded-md border border-slate-200 transition-all cursor-pointer"
+                              className="text-xs bg-white hover:bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg border border-slate-200 transition-all cursor-pointer shadow-xs"
                             >
                               Mostrar Todas Etapas
                             </button>
                           )}
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
                           {shortEtapas.map((name, idx) => {
                             const stageNum = idx + 1;
                             const count = countsByStage[idx];
@@ -3007,29 +3332,29 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               <button
                                 key={idx}
                                 onClick={() => setEtapaFilter(isActive ? "todos" : String(stageNum))}
-                                className={`p-2 rounded-xl border text-left transition-all relative cursor-pointer flex flex-col justify-between min-h-[58px] ${
+                                className={`p-2.5 rounded-xl border text-left transition-all duration-150 relative cursor-pointer flex flex-col justify-between min-h-[62px] ${
                                   isActive
-                                    ? "bg-[#0A3D2E] text-white border-[#00A86B] shadow-xs ring-2 ring-emerald-500/20"
+                                    ? "bg-[#0A3D2E] text-white border-[#00A86B] shadow-xs ring-2 ring-[#00A86B]/20"
                                     : count > 0
-                                      ? "bg-white hover:bg-slate-100/80 border-slate-200/90 text-slate-700"
-                                      : "bg-slate-50/50 border-slate-100 text-slate-400 hover:border-slate-200"
+                                      ? "bg-white hover:bg-slate-50 border-slate-200 text-slate-800"
+                                      : "bg-slate-50/60 border-slate-200/60 text-slate-400 hover:border-slate-300"
                                 }`}
                               >
                                 <div className="flex justify-between items-center w-full">
-                                  <span className={`text-[9px] font-mono px-1 rounded-sm font-black ${isActive ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${isActive ? 'bg-[#00A86B] text-white' : 'bg-slate-100 text-slate-700'}`}>
                                     {stageNum}
                                   </span>
-                                  <span className={`text-[11px] font-black px-1.5 rounded-full ${
+                                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                                     isActive
                                       ? 'bg-white text-[#0A3D2E]'
                                       : count > 0 
-                                        ? 'bg-[#00A86B]/15 text-[#0A3D2E]' 
+                                        ? 'bg-emerald-50 text-[#0A3D2E] border border-emerald-200' 
                                         : 'bg-slate-100 text-slate-400'
                                   }`}>
                                     {count}
                                   </span>
                                 </div>
-                                <p className="text-[10px] font-bold leading-tight line-clamp-1 mt-1" title={name}>{name}</p>
+                                <p className="text-xs font-semibold leading-tight line-clamp-1 mt-1.5" title={name}>{name}</p>
                               </button>
                             );
                           })}
@@ -3047,17 +3372,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     if (pendingLeads.length === 0) return null;
 
                     return (
-                      <div className="mx-4 mb-4 bg-amber-50/60 border border-amber-200/80 rounded-2xl p-3.5 shadow-2xs">
+                      <div className="mx-4 mb-4 bg-amber-50/70 border border-amber-200 rounded-2xl p-4 sm:p-5 shadow-xs">
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <div className="bg-amber-500 text-white p-1 rounded-md">
-                              <AlertTriangle className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                              <AlertTriangle className="w-5 h-5" strokeWidth={2} />
                             </div>
                             <div>
-                              <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                              <h4 className="text-xs font-bold text-amber-950 uppercase tracking-wider">
                                 Atenção Requerida ({pendingLeads.length} {pendingLeads.length === 1 ? "Pendência Ativa" : "Pendências Ativas"})
                               </h4>
-                              <p className="text-[10px] text-slate-500 font-medium">
+                              <p className="text-xs text-amber-800/80 font-normal">
                                 Leads aguardando conferência documental ou validação de respostas enviadas pelo parceiro.
                               </p>
                             </div>
@@ -3066,71 +3391,71 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           <button
                             type="button"
                             onClick={() => setIsPendingPanelCollapsed(!isPendingPanelCollapsed)}
-                            className="px-2.5 py-1 text-[11px] font-bold text-amber-800 bg-amber-100/70 hover:bg-amber-200 rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1"
+                            className="px-3 py-1.5 text-xs font-semibold text-amber-900 bg-white/80 hover:bg-white rounded-lg border border-amber-200 transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 shadow-xs"
                           >
                             <span>{isPendingPanelCollapsed ? "Expandir" : "Recolher"}</span>
-                            {isPendingPanelCollapsed ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+                            {isPendingPanelCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                           </button>
                         </div>
 
                         {!isPendingPanelCollapsed && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-3 pt-3 border-t border-amber-200/60">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4 pt-3.5 border-t border-amber-200/80">
                             {pendingLeads.slice(0, 6).map((lead) => {
                               const isAnswered = !!lead.pendencias?.resposta;
                               return (
                                 <div 
                                   key={lead.id} 
-                                  className={`bg-white p-3 rounded-xl border transition-all ${
+                                  className={`bg-white p-4 rounded-xl border transition-all ${
                                     isAnswered 
-                                      ? "border-emerald-300 shadow-2xs ring-2 ring-emerald-500/10" 
-                                      : "border-slate-200/80 hover:border-amber-300 shadow-2xs"
+                                      ? "border-emerald-300 shadow-xs ring-2 ring-emerald-500/10" 
+                                      : "border-slate-200 hover:border-amber-300 shadow-xs"
                                   }`}
                                 >
                                   <div className="flex justify-between items-start gap-1">
                                     <div className="min-w-0 flex-1">
-                                      <h5 className="font-extrabold text-xs text-slate-900 truncate" title={lead.razaoSocial || lead.nome}>
+                                      <h5 className="font-bold text-xs text-slate-900 truncate" title={lead.razaoSocial || lead.nome}>
                                         {lead.razaoSocial || lead.nome}
                                       </h5>
-                                      <p className="text-[9px] text-slate-400 font-medium mt-0.5 truncate">
+                                      <p className="text-[11px] text-slate-500 font-medium mt-0.5 truncate">
                                         Indicador: {lead.parceiroNome || partners.find(p => p.id === lead.parceiroId)?.nome || "Direto / Sem parceiro"}
                                       </p>
                                     </div>
                                     {isAnswered ? (
-                                      <span className="bg-emerald-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shrink-0">
+                                      <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                                         RESPONDIDO
                                       </span>
                                     ) : (
-                                      <span className="bg-amber-100 text-amber-800 text-[8px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0">
+                                      <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                                         PENDENTE
                                       </span>
                                     )}
                                   </div>
 
-                                  <div className="mt-2 bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px] text-slate-600">
-                                    <span className="font-extrabold text-[9px] uppercase text-slate-400 block mb-0.5">Motivo:</span>
+                                  <div className="mt-2.5 bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-xs text-slate-600">
+                                    <span className="font-semibold text-[10px] uppercase text-slate-400 block mb-0.5">Motivo:</span>
                                     <span className="line-clamp-2">{lead.pendencias?.mensagem || lead.pendenciaDescricao || "Documento ou login inválido."}</span>
                                   </div>
 
                                   {isAnswered && (
-                                    <div className="mt-1.5 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100 text-[11px] text-emerald-800">
-                                      <span className="font-extrabold text-[9px] uppercase text-emerald-600 block mb-0.5">Resposta do Parceiro:</span>
+                                    <div className="mt-2 bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-100 text-xs text-emerald-900">
+                                      <span className="font-semibold text-[10px] uppercase text-emerald-700 block mb-0.5">Resposta do Parceiro:</span>
                                       <span className="italic line-clamp-2">"{lead.pendencias?.resposta}"</span>
                                     </div>
                                   )}
 
-                                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex gap-2 justify-end">
+                                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex gap-2 justify-end">
                                     <a
                                       href={`https://api.whatsapp.com/send?phone=${lead.whatsapp.replace(/\D/g, "")}&text=${encodeURIComponent(`Olá! Referente ao lead ${lead.razaoSocial || lead.nome}, precisamos verificar a seguinte pendência: ${lead.pendencias?.mensagem || lead.pendenciaDescricao || ""}`)}`}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="px-2.5 py-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-[#25D366] hover:text-white rounded-md transition-all flex items-center gap-1 cursor-pointer"
+                                      className="px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-[#00A86B] hover:text-white rounded-lg border border-emerald-200 transition-all flex items-center gap-1.5 cursor-pointer"
                                     >
-                                      <Phone className="w-3 h-3" />
+                                      <Phone className="w-4 h-4" strokeWidth={2} />
                                       Cobrar
                                     </a>
                                     <button
                                       onClick={() => setSelectedLead(lead)}
-                                      className="px-2.5 py-1 text-[10px] font-black text-white bg-[#0A3D2E] hover:bg-[#00A86B] rounded-md transition-all cursor-pointer"
+                                      className="px-3 py-1.5 text-xs font-semibold text-white bg-[#0A3D2E] hover:bg-[#00A86B] rounded-lg transition-all duration-150 cursor-pointer shadow-xs active:scale-95"
                                     >
                                       Resolver
                                     </button>
@@ -3139,9 +3464,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               );
                             })}
                             {pendingLeads.length > 6 && (
-                              <div className="bg-slate-100/70 p-3 rounded-xl border border-dashed border-slate-300 flex flex-col justify-center items-center text-center">
-                                <p className="text-xs font-extrabold text-slate-700">+{pendingLeads.length - 6} outras pendências</p>
-                                <p className="text-[10px] text-slate-400 mt-0.5">Filtre por "Pendências" para ver todas.</p>
+                              <div className="bg-slate-50 p-4 rounded-xl border border-dashed border-slate-300 flex flex-col justify-center items-center text-center">
+                                <p className="text-xs font-bold text-slate-800">+{pendingLeads.length - 6} outras pendências</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Filtre por "Pendências" para ver todas.</p>
                               </div>
                             )}
                           </div>
@@ -3152,10 +3477,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                   {/* MAIN CONTENT ACCORDING TO VIEW MODE TOGGLE */}
                   {filteredLeads.length === 0 ? (
-                    <div className="p-16 text-center text-slate-400">
-                      <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                      <p className="font-bold text-slate-600">Nenhum lead encontrado</p>
-                      <p className="text-xs mt-1">Tente ajustar seus filtros de busca.</p>
+                    <div className="py-20 px-6 text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200/80 flex items-center justify-center mx-auto mb-4 text-slate-400">
+                        <Users className="w-8 h-8" />
+                      </div>
+                      <h4 className="text-base font-bold text-slate-800">Nenhum lead encontrado</h4>
+                      <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                        Não encontramos nenhum registro correspondente aos filtros ou termo de busca aplicados.
+                      </p>
                     </div>
                   ) : leadsViewMode === "grid" ? (
                     /* GRID CARDS VIEW FOR LEADS */
@@ -3178,13 +3507,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           >
                             {/* Decorative status-based top line accent */}
                             <div className={`h-1.5 w-full ${
-                              lead.status === "concluido" 
-                                ? "bg-emerald-500" 
-                                : lead.status === "em atendimento" 
+                              lead.status === "concluido" || lead.status === "concluído" || lead.status === "aprovado"
+                                ? "bg-[#00A86B]" 
+                                : lead.status === "em atendimento" || lead.status === "atendimento"
                                   ? "bg-amber-500" 
-                                  : lead.status === "arquivado" 
-                                    ? "bg-slate-400" 
-                                    : "bg-blue-500"
+                                  : lead.status === "perdido" || lead.status === "recusado" || lead.status === "cancelado"
+                                    ? "bg-rose-500"
+                                    : lead.status === "arquivado" 
+                                      ? "bg-slate-400" 
+                                      : "bg-blue-500"
                             }`}></div>
 
                             {/* Header details */}
@@ -3201,7 +3532,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <select
                                   value={lead.status || "novo"}
                                   onChange={(e) => handleUpdateStatus(lead.id, "leads", e.target.value)}
-                                  className={`text-[10px] px-2 py-0.5 rounded-full font-black focus:outline-hidden cursor-pointer ${getStatusBadgeClass(lead.status)}`}
+                                  className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full cursor-pointer focus:outline-hidden transition-all ${getStatusBadgeClass(lead.status)}`}
                                 >
                                   <option value="novo">Novo</option>
                                   <option value="em atendimento">Atendimento</option>
@@ -3214,7 +3545,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                                 <div className="flex justify-between items-center mb-1.5">
                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Progresso do Funil</span>
-                                  <span className="text-[10px] font-bold text-[#0A3D2E]">Passo {stageNum}/8</span>
+                                  <span className="text-[10px] font-bold text-[#0A3D2E] font-mono">Passo {stageNum}/8</span>
                                 </div>
                                 
                                 {/* Mini-blocks progress bar */}
@@ -3252,7 +3583,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
                                   <span className="text-[8px] text-slate-400 font-black block uppercase tracking-wider">Limite Estimado</span>
-                                  <span className="text-xs font-black text-[#0A3D2E] truncate block">
+                                  <span className="text-xs font-bold font-mono text-[#0A3D2E] truncate block">
                                     {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "N/D"}
                                   </span>
                                 </div>
@@ -3260,11 +3591,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   <span className="text-[8px] text-slate-400 font-black block uppercase tracking-wider">Certificado</span>
                                   <span className="truncate block mt-0.5">
                                     {lead.certificadoFileBase64 ? (
-                                      <span className="bg-emerald-50 text-emerald-800 text-[9px] font-extrabold px-1.5 py-0.2 rounded-md border border-emerald-100">Anexado</span>
+                                      <span className="bg-emerald-50 text-[#00A86B] text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md border border-emerald-200">Anexado</span>
                                     ) : lead.certificadoSenha ? (
-                                      <span className="bg-amber-50 text-amber-800 text-[9px] font-extrabold px-1.5 py-0.2 rounded-md border border-amber-100">Pendente</span>
+                                      <span className="bg-amber-50 text-amber-700 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md border border-amber-200">Pendente</span>
                                     ) : (
-                                      <span className="bg-slate-100 text-slate-500 text-[9px] font-medium px-1.5 py-0.2 rounded-md">Ausente</span>
+                                      <span className="bg-slate-100 text-slate-600 text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-md border border-slate-200">Ausente</span>
                                     )}
                                   </span>
                                 </div>
@@ -3383,25 +3714,30 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-50/80 text-slate-600 text-[11px] font-extrabold uppercase tracking-wider border-b border-slate-200/80">
-                            <th className="py-3 px-4">Empresa / Razão</th>
-                            <th className="py-3 px-3">Porte</th>
-                            <th className="py-3 px-3">Limite Est.</th>
-                            <th className="py-3 px-3">Preparação</th>
-                            <th className="py-3 px-3">Certificado</th>
-                            <th className="py-3 px-3">Etapa</th>
-                            <th className="py-3 px-3">Status</th>
-                            <th className="py-3 px-4 text-right">Ações</th>
+                          <tr className="bg-slate-100/80 text-slate-600 text-[11px] font-extrabold uppercase tracking-wider border-b border-slate-200">
+                            <th className="py-3.5 px-4 font-extrabold">Empresa / Razão</th>
+                            <th className="py-3.5 px-3 font-extrabold">Porte</th>
+                            <th className="py-3.5 px-3 font-extrabold">Limite Est.</th>
+                            <th className="py-3.5 px-3 font-extrabold">Preparação</th>
+                            <th className="py-3.5 px-3 font-extrabold">Certificado</th>
+                            <th className="py-3.5 px-3 font-extrabold">Etapa</th>
+                            <th className="py-3.5 px-3 font-extrabold">Status</th>
+                            <th className="py-3.5 px-4 text-right font-extrabold">Ações</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-xs md:text-sm">
-                          {paginatedLeads.map((lead) => (
-                            <tr key={lead.id} className="hover:bg-slate-50/80 transition-colors">
-                              <td className="py-3 px-4">
+                          {paginatedLeads.map((lead, idx) => (
+                            <tr 
+                              key={lead.id} 
+                              className={`transition-colors hover:bg-emerald-50/40 ${
+                                idx % 2 === 1 ? "bg-slate-50/50" : "bg-white"
+                              }`}
+                            >
+                              <td className="py-3.5 px-4">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <div className="font-bold text-slate-900">{lead.razaoSocial || lead.nome || "Não informado"}</div>
                                   {lead.pendencias?.resposta && (lead.pendencias?.status === "pendente" || lead.pendente) && (
-                                    <span className="inline-flex items-center gap-1 bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md animate-pulse shadow-xs shrink-0" title="Parceiro respondeu à pendência!">
+                                    <span className="inline-flex items-center gap-1 bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md animate-pulse shadow-xs shrink-0" title="Parceiro respondeu à pendência!">
                                       <MessageSquare className="w-2.5 h-2.5 text-white fill-white/20" />
                                       <span>RESPONDIDO</span>
                                     </span>
@@ -3431,37 +3767,37 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   </button>
                                 )}
                               </td>
-                              <td className="py-3 px-3 whitespace-nowrap">
-                                <span className="bg-slate-100 text-slate-800 font-bold text-[11px] px-2 py-0.5 rounded-md">
+                              <td className="py-3.5 px-3 whitespace-nowrap">
+                                <span className="bg-slate-100 text-slate-700 border border-slate-200 font-semibold text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-md">
                                   {lead.porte || "N/A"}
                                 </span>
                               </td>
-                              <td className="py-3 px-3 whitespace-nowrap font-black text-[#0A3D2E]">
+                              <td className="py-3.5 px-3 whitespace-nowrap font-bold font-mono text-[#0A3D2E]">
                                 {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Simulação Indisp."}
                               </td>
-                              <td className="py-3 px-3 whitespace-nowrap">
-                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full capitalize ${getPreparationBadgeClass(lead.nivelPreparacao)}`}>
+                              <td className="py-3.5 px-3 whitespace-nowrap">
+                                <span className={`text-[11px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md ${getPreparationBadgeClass(lead.nivelPreparacao)}`}>
                                   {lead.nivelPreparacao || "-"}
                                 </span>
                               </td>
-                              <td className="py-3 px-3 whitespace-nowrap">
+                              <td className="py-3.5 px-3 whitespace-nowrap">
                                 {lead.certificadoFileBase64 ? (
-                                  <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-50 border border-emerald-100 text-emerald-700 font-extrabold px-2 py-0.5 rounded-full" title={lead.certificadoFileName}>
+                                  <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-50 border border-emerald-200 text-[#00A86B] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md" title={lead.certificadoFileName}>
                                     <FileText className="w-3 h-3 shrink-0" />
                                     <span>Anexado</span>
                                   </span>
                                 ) : lead.certificadoSenha ? (
-                                  <span className="inline-flex items-center gap-1 text-[10px] bg-amber-50 border border-amber-100 text-amber-600 font-extrabold px-2 py-0.5 rounded-full" title="Senha informada mas arquivo pendente">
+                                  <span className="inline-flex items-center gap-1 text-[10px] bg-amber-50 border border-amber-200 text-amber-700 font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md" title="Senha informada mas arquivo pendente">
                                     <Clock className="w-3 h-3 shrink-0" />
                                     <span>Pendente</span>
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[10px] bg-slate-100 text-slate-400 font-medium px-2 py-0.5 rounded-full">
+                                  <span className="inline-flex items-center gap-1 text-[10px] bg-slate-100 border border-slate-200 text-slate-500 font-medium uppercase tracking-wider px-2 py-0.5 rounded-md">
                                     <span>Ausente</span>
                                   </span>
                                 )}
                               </td>
-                              <td className="py-3 px-3 whitespace-nowrap">
+                              <td className="py-3.5 px-3 whitespace-nowrap">
                                 <select
                                   value={lead.etapa || 1}
                                   onChange={(e) => handleUpdateEtapa(lead.id, Number(e.target.value))}
@@ -3477,11 +3813,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   <option value={8}>8. Aprovado/Recusado</option>
                                 </select>
                               </td>
-                              <td className="py-3 px-3 whitespace-nowrap">
+                              <td className="py-3.5 px-3 whitespace-nowrap">
                                 <select
                                   value={lead.status || "novo"}
                                   onChange={(e) => handleUpdateStatus(lead.id, "leads", e.target.value)}
-                                  className={`text-[11px] px-2.5 py-1 rounded-full font-black cursor-pointer focus:outline-hidden ${getStatusBadgeClass(lead.status)}`}
+                                  className={`text-[11px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-md cursor-pointer focus:outline-hidden transition-all ${getStatusBadgeClass(lead.status)}`}
                                 >
                                   <option value="novo">Novo</option>
                                   <option value="em atendimento">Atendimento</option>
@@ -3489,7 +3825,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   <option value="arquivado">Arquivado</option>
                                 </select>
                               </td>
-                              <td className="py-3 px-4 whitespace-nowrap text-right space-x-1.5">
+                              <td className="py-3.5 px-4 whitespace-nowrap text-right space-x-1.5">
                                 <button
                                   onClick={() => setSelectedLead(lead)}
                                   className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#0A3D2E] text-slate-700 hover:text-white rounded-lg font-bold transition-all cursor-pointer"
@@ -3522,7 +3858,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   href={`https://api.whatsapp.com/send?phone=${lead.whatsapp.replace(/\D/g, "")}`}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="inline-flex items-center justify-center p-1 bg-[#25D366]/10 hover:bg-[#25D366] text-[#20ba5a] hover:text-white rounded-lg transition-all"
+                                  className="inline-flex items-center justify-center p-1.5 bg-[#25D366]/10 hover:bg-[#25D366] text-[#20ba5a] hover:text-white rounded-lg transition-all"
                                   title="Falar no WhatsApp"
                                 >
                                   <Phone className="w-3.5 h-3.5 fill-current" />
@@ -3531,7 +3867,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <button
                                   onClick={() => handleDeleteRecord(lead.id, "leads")}
                                   disabled={userRole === "contador"}
-                                  className={`p-1 rounded-lg transition-all inline-flex items-center ${
+                                  className={`p-1.5 rounded-lg transition-all inline-flex items-center ${
                                     userRole === "contador"
                                       ? "bg-slate-100 text-slate-300 cursor-not-allowed opacity-60"
                                       : isDeletingId === lead.id && confirmDelete 
@@ -3554,9 +3890,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   {filteredLeads.length > itemsPerPage && (
                     <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl">
                       <div className="text-xs text-slate-500 font-medium">
-                        Mostrando <span className="font-bold text-slate-700">{((leadsPage - 1) * itemsPerPage) + 1}</span> a{" "}
-                        <span className="font-bold text-slate-700">{Math.min(leadsPage * itemsPerPage, filteredLeads.length)}</span> de{" "}
-                        <span className="font-bold text-slate-700">{filteredLeads.length}</span> leads
+                        Mostrando <span className="font-bold font-mono text-slate-700">{((leadsPage - 1) * itemsPerPage) + 1}</span> a{" "}
+                        <span className="font-bold font-mono text-slate-700">{Math.min(leadsPage * itemsPerPage, filteredLeads.length)}</span> de{" "}
+                        <span className="font-bold font-mono text-slate-700">{filteredLeads.length}</span> leads
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button
@@ -3570,7 +3906,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           <button
                             key={i}
                             onClick={() => setLeadsPage(i + 1)}
-                            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 text-xs font-bold font-mono rounded-lg transition-all cursor-pointer ${
                               leadsPage === i + 1
                                 ? "bg-[#0A3D2E] text-white"
                                 : "text-slate-600 bg-white hover:bg-slate-50 border border-slate-200"
@@ -3692,6 +4028,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 {(() => {
                                   const isConsultant = !!partner.parentPartnerId || partner.isTeamMember === true || (partner.plano && (partner.plano.toUpperCase().includes("CONSULTOR") || partner.plano.toUpperCase().includes("EQUIPE")));
                                   const isBlocked = partner.statusManual === "bloqueado" || partner.status === "bloqueado";
+                                  const sub = getSubscriptionStatus(partner);
 
                                   if (isConsultant) {
                                     const lastActiveStr = partner.dataUltimoAcesso || partner.dataCriacao;
@@ -3724,6 +4061,20 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                         Parceiro Bloqueado
                                       </span>
                                     );
+                                  } else if (sub.status === "vencida") {
+                                    return (
+                                      <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-amber-200">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                                        {sub.isTrial ? "Trial Vencido" : "Licença Vencida"}
+                                      </span>
+                                    );
+                                  } else if (sub.isTrial) {
+                                    return (
+                                      <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-amber-200">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                                        Teste Grátis ({sub.daysLeft}d)
+                                      </span>
+                                    );
                                   } else {
                                     return (
                                       <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-emerald-100">
@@ -3733,6 +4084,26 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     );
                                   }
                                 })()}
+                              </div>
+                            </div>
+
+                            {/* Balances Strip: Saldo Geral & Caça-Leads */}
+                            <div className="grid grid-cols-2 gap-2 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100/90 text-left">
+                              <div>
+                                <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider block">Saldo Geral</span>
+                                <span className="text-xs font-mono font-extrabold text-emerald-800 block truncate">
+                                  {formatCurrencyBRL(
+                                    partner.saldoGeral !== undefined
+                                      ? Number(partner.saldoGeral)
+                                      : (partner.saldoConsultas !== undefined ? Number(partner.saldoConsultas) : 0)
+                                  )}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider block">Caça-Leads</span>
+                                <span className="text-xs font-mono font-extrabold text-slate-700 block truncate">
+                                  {partner.cacaLeadsCredits || 0} <span className="text-[9px] font-normal text-slate-500">buscas</span>
+                                </span>
                               </div>
                             </div>
 
@@ -3824,6 +4195,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           <th className="py-3.5 px-4">Cidade / UF</th>
                           <th className="py-3.5 px-4">Chave Pix</th>
                           <th className="py-3.5 px-4">Plano</th>
+                          <th className="py-3.5 px-4">Saldos da Conta</th>
                           <th className="py-3.5 px-4">Situação / Acesso</th>
                           <th className="py-3.5 px-4">Status</th>
                           <th className="py-3.5 px-4 text-right">Ações</th>
@@ -3863,9 +4235,30 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </span>
                             </td>
                             <td className="py-3 px-4 whitespace-nowrap text-left">
+                              <div className="flex flex-col gap-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase">Geral:</span>
+                                  <span className="font-mono font-extrabold text-emerald-800 text-xs">
+                                    {formatCurrencyBRL(
+                                      partner.saldoGeral !== undefined
+                                        ? Number(partner.saldoGeral)
+                                        : (partner.saldoConsultas !== undefined ? Number(partner.saldoConsultas) : 0)
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase">Buscas:</span>
+                                  <span className="font-mono font-bold text-slate-700 text-xs">
+                                    {partner.cacaLeadsCredits || 0}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 whitespace-nowrap text-left">
                               {(() => {
                                 const isConsultant = !!partner.parentPartnerId || partner.isTeamMember === true || (partner.plano && (partner.plano.toUpperCase().includes("CONSULTOR") || partner.plano.toUpperCase().includes("EQUIPE")));
                                 const isBlocked = partner.statusManual === "bloqueado" || partner.status === "bloqueado";
+                                const sub = getSubscriptionStatus(partner);
 
                                 if (isConsultant) {
                                   const lastActiveStr = partner.dataUltimoAcesso || partner.dataCriacao;
@@ -3896,6 +4289,20 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     <span className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-full border border-rose-100">
                                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
                                       Parceiro Bloqueado
+                                    </span>
+                                  );
+                                } else if (sub.status === "vencida") {
+                                  return (
+                                    <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-200">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                                      {sub.isTrial ? "Trial Vencido" : "Licença Vencida"}
+                                    </span>
+                                  );
+                                } else if (sub.isTrial) {
+                                  return (
+                                    <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-200">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                                      Teste Grátis ({sub.daysLeft}d)
                                     </span>
                                   );
                                 } else {
@@ -4179,7 +4586,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <div>
                       <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
                         <Coins className="w-5 h-5 text-emerald-600" />
-                        Aprovação de Recargas (Caça-Leads)
+                        Aprovação de Recargas (Saldo Geral &amp; Caça-Leads)
                       </h2>
                       <p className="text-slate-500 text-xs mt-1">
                         Aprove ou cancele as solicitações de recarga enviadas manualmente pelos parceiros.
@@ -4215,8 +4622,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </td>
                               <td className="py-3 px-4">
                                 {refill.tipo === "consultas" ? (
-                                  <span className="font-black text-blue-800 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 uppercase tracking-wide">
-                                    Saldo Consultas
+                                  <span className="font-black text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 uppercase tracking-wide">
+                                    Saldo Geral (Consultas / Contab.)
                                   </span>
                                 ) : (
                                   <>
@@ -4777,7 +5184,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         Adicionar Novo Serviço ao Catálogo
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                        <div className="sm:col-span-7">
+                        <div className="sm:col-span-4">
                           <label className="block text-[11px] font-bold text-slate-600 mb-1">Nome do Serviço / Solução</label>
                           <input
                             type="text"
@@ -4787,8 +5194,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-emerald-500"
                           />
                         </div>
-                        <div className="sm:col-span-3">
-                          <label className="block text-[11px] font-bold text-slate-600 mb-1">Valor do Serviço (R$)</label>
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">Valor (R$)</label>
                           <input
                             type="number"
                             step="0.01"
@@ -4798,6 +5205,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             placeholder="350.00"
                             className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500"
                           />
+                        </div>
+                        <div className="sm:col-span-4">
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">Link de Checkout LastLink (Opcional)</label>
+                          <div className="relative">
+                            <input
+                              type="url"
+                              value={newServHublaLink}
+                              onChange={(e) => setNewServHublaLink(e.target.value)}
+                              placeholder="https://lastlink.com/p/..."
+                              className="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 font-mono"
+                            />
+                            <Link2 className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                          </div>
                         </div>
                         <div className="sm:col-span-2">
                           <button
@@ -4817,14 +5237,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <thead>
                           <tr className="bg-slate-50 text-[11px] font-bold tracking-wider text-slate-500 uppercase border-b border-slate-100">
                             <th className="py-3 px-4">Nome do Serviço</th>
-                            <th className="py-3 px-4 w-48">Valor do Serviço (R$)</th>
-                            <th className="py-3 px-4 w-28 text-center">Ações</th>
+                            <th className="py-3 px-4 w-36">Valor (R$)</th>
+                            <th className="py-3 px-4">Link Checkout LastLink</th>
+                            <th className="py-3 px-4 w-20 text-center">Ações</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-xs">
                           {customServices.length === 0 ? (
                             <tr>
-                              <td colSpan={3} className="py-6 text-center text-slate-400 font-medium">
+                              <td colSpan={4} className="py-6 text-center text-slate-400 font-medium">
                                 Nenhum serviço cadastrado no catálogo. Adicione novos serviços acima.
                               </td>
                             </tr>
@@ -4843,8 +5264,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   />
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className="relative rounded-lg shadow-xs max-w-[140px]">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5">
+                                  <div className="relative rounded-lg shadow-xs max-w-[130px]">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2">
                                       <span className="text-slate-400 text-[11px] font-medium">R$</span>
                                     </div>
                                     <input
@@ -4856,8 +5277,45 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                         const val = parseFloat(e.target.value) || 0;
                                         setCustomServices(prev => prev.map((item, idx) => idx === sIdx ? { ...item, valor: val } : item));
                                       }}
-                                      className="block w-full rounded-lg border border-slate-200 py-1 pl-7 pr-2 text-xs focus:border-[#00A86B] focus:ring-[#00A86B]/30 focus:outline-hidden font-bold text-slate-800 bg-slate-50/50"
+                                      className="block w-full rounded-lg border border-slate-200 py-1 pl-6 pr-2 text-xs focus:border-[#00A86B] focus:ring-[#00A86B]/30 focus:outline-hidden font-bold text-slate-800 bg-slate-50/50"
                                     />
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="relative flex-1">
+                                      <input
+                                        type="url"
+                                        value={serv.hublaLink || ""}
+                                        placeholder="https://lastlink.com/p/..."
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setCustomServices(prev => prev.map((item, idx) => {
+                                            if (idx !== sIdx) return item;
+                                            const updated = { ...item };
+                                            if (val.trim()) {
+                                              updated.hublaLink = val.trim();
+                                            } else {
+                                              delete updated.hublaLink;
+                                            }
+                                            return updated;
+                                          }));
+                                        }}
+                                        className="w-full rounded-lg border border-slate-200 py-1 pl-7 pr-2 text-xs font-mono text-slate-700 bg-slate-50/50 focus:bg-white focus:border-emerald-500 focus:outline-none"
+                                      />
+                                      <Link2 className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" />
+                                    </div>
+                                    {serv.hublaLink && serv.hublaLink.startsWith("http") && (
+                                      <a
+                                        href={serv.hublaLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-1.5 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 rounded-lg transition-colors shrink-0"
+                                        title="Testar Link de Checkout"
+                                      >
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                      </a>
+                                    )}
                                   </div>
                                 </td>
                                 <td className="py-3 px-4 text-center">
@@ -4876,6 +5334,34 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         </tbody>
                       </table>
                     </div>
+
+                    {/* Botão de Salvar Rápido do Catálogo e Sincronização */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                      <p className="text-[11px] text-slate-500">
+                        {customServices.length} serviço(s) configurado(s) no catálogo de saneamento e adequação.
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                        <button
+                          type="button"
+                          onClick={handleSyncAllLeadsManual}
+                          disabled={loading || userRole === "contador"}
+                          className="w-full sm:w-auto px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                          title="Recalcula preços e comissões de todos os leads cadastrados no painel usando o catálogo atual"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Sincronizar Leads Existentes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSavePrices}
+                          disabled={loading || userRole === "contador"}
+                          className="w-full sm:w-auto px-4 py-2 bg-[#00A86B] hover:bg-[#008f5b] disabled:opacity-50 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <Save className="w-4 h-4" />
+                          {loading ? "Salvando no Firestore..." : "Salvar Catálogo & Preços"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -4888,6 +5374,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     onRefresh={fetchData}
                   />
                 </div>
+              )}
+
+              {/* Tab SERVIÇOS DE CONTABILIDADE */}
+              {activeTab === "servicos_contabilidade" && (
+                <AdminServicosContabilidadeTab userRole={userRole} />
               )}
 
               {/* Tab GESTÃO DE SENHAS & RESETS DO PORTAL DO CLIENTE */}
@@ -5163,7 +5654,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           {/* Table Footer count info */}
           <div className="p-4 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 font-medium flex justify-between items-center">
             <div>
-              Exibindo {activeTab === "leads" ? filteredLeads.length : activeTab === "recargas" ? recargas.length : activeTab === "precos" ? CREDIT_PRODUCTS.length : activeTab === "funnel" ? leads.length : activeTab === "resets" ? leads.length : activeTab === "partners" ? filteredPartners.length : partners.length} registros
+              Exibindo {activeTab === "leads" ? filteredLeads.length : activeTab === "recargas" ? recargas.length : activeTab === "precos" ? CREDIT_PRODUCTS.length : activeTab === "servicos_contabilidade" ? 33 : activeTab === "funnel" ? leads.length : activeTab === "resets" ? leads.length : activeTab === "partners" ? filteredPartners.length : partners.length} registros
             </div>
             <div>
               Desenvolvido de forma segura &bull; Firestore ativo
@@ -6108,11 +6599,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 {/* Texto do Diagnóstico IA e Serviços Recomendados (Apenas se Passo 3 concluído) */}
                 {selectedLead.diagnosticoPROSFEC ? (
                   <>
-                    <div className="bg-white border border-slate-200/80 rounded-xl p-4 space-y-3 shadow-2xs">
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 border-b border-slate-100 pb-2">
-                        <span className="font-bold text-emerald-800 flex items-center gap-1">
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4 shadow-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 border-b border-slate-100 pb-2.5">
+                        <span className="font-bold text-emerald-800 flex items-center gap-1.5">
                           <CheckCircle className="w-4 h-4 text-emerald-600" />
-                          Diagnóstico IA Concluído
+                          Resultado da Perícia & Diagnóstico PROSFEC IA
                         </span>
                         <div className="flex items-center gap-2 text-[11px]">
                           {selectedLead.diagnosticoPROSFEC.dataGeracao && (
@@ -6123,34 +6614,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </span>
                         </div>
                       </div>
-                      <div className="text-xs text-slate-700 leading-relaxed max-h-72 overflow-y-auto pr-2 font-sans space-y-2 bg-slate-50/80 p-3.5 rounded-xl border border-slate-200/80">
-                        {selectedLead.diagnosticoPROSFEC.texto.split("\n").map((line: string, idx: number) => {
-                          const trimmed = line.trim();
-                          if (!trimmed) return <div key={idx} className="h-1" />;
-                          if (trimmed.startsWith("###") || trimmed.startsWith("##") || trimmed.startsWith("#")) {
-                            return (
-                              <div key={idx} className="font-extrabold text-[#0A3D2E] uppercase text-[11px] pt-2 pb-1 border-b border-emerald-200/60 flex items-center gap-1.5">
-                                <span className="w-1.5 h-3 bg-[#00A86B] rounded-full shrink-0" />
-                                {trimmed.replace(/^#+\s*/, "")}
-                              </div>
-                            );
-                          }
-                          if (trimmed.startsWith("-") || trimmed.startsWith("*")) {
-                            const content = trimmed.replace(/^[-*]\s*/, "");
-                            return (
-                              <div key={idx} className="flex items-start gap-2 pl-1 text-slate-800 my-1">
-                                <span className="text-[#00A86B] font-extrabold shrink-0 mt-0.5">•</span>
-                                <span>{content.replace(/\*\*/g, "")}</span>
-                              </div>
-                            );
-                          }
-                          return (
-                            <p key={idx} className="text-slate-700 leading-relaxed my-1">
-                              {trimmed.replace(/\*\*/g, "")}
-                            </p>
-                          );
-                        })}
-                      </div>
+
+                      <FintechDiagnosisView
+                        lead={selectedLead}
+                        diagnostico={selectedLead.diagnosticoPROSFEC}
+                        consultas={[]}
+                      />
                     </div>
 
                     {/* Lista de Serviços Recomendados do Lead */}
@@ -6635,32 +7104,71 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                               {/* Botão de Confirmar Pagamento Manual */}
                               <div className="flex items-center gap-2 shrink-0">
-                                {isPaid ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-extrabold rounded-lg flex items-center gap-1">
-                                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                                      Pago (Manual ADM)
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleManualPaymentForSubEtapa(idx)}
-                                      className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
-                                      title="Estornar/Voltar para Pendente"
-                                    >
-                                      Estornar
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleManualPaymentForSubEtapa(idx)}
-                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold rounded-lg shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                                    title="Confirmar recebimento do pagamento manual via PIX/Transferência para esta sub-etapa"
-                                  >
-                                    <CheckCircle className="w-3.5 h-3.5 text-white" />
-                                    <span>Confirmar Pagamento Manual</span>
-                                  </button>
-                                )}
+                                {(() => {
+                                  const isDemand = isDemandAccountingService(sub);
+                                  const rawPrice = typeof sub.preco === "number" ? sub.preco : typeof (sub as any).valor === "number" ? (sub as any).valor : parseFloat(sub.preco || (sub as any).valor || 0);
+                                  const hasCost = !isNaN(rawPrice) && rawPrice > 0;
+                                  const isZeroCost = isServiceWithoutUpfrontCost(sub) || !hasCost;
+
+                                  if (isZeroCost) {
+                                    return (
+                                      <div className="flex items-center gap-1.5">
+                                        {isDemand ? (
+                                          <span className="px-2.5 py-1 bg-indigo-50 text-indigo-800 border border-indigo-200 text-[10px] font-extrabold rounded-lg">
+                                            📋 Serviços Contratados por demanda
+                                          </span>
+                                        ) : (
+                                          <span className="px-2.5 py-1 bg-blue-50 text-blue-800 border border-blue-200 text-[10px] font-extrabold rounded-lg">
+                                            🎯 Sem Custo Inicial (Remuneração no Êxito)
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  }
+
+                                  if (isPaid) {
+                                    return (
+                                      <div className="flex items-center gap-1.5">
+                                        {isDemand && (
+                                          <span className="px-2.5 py-1 bg-indigo-50 text-indigo-800 border border-indigo-200 text-[10px] font-extrabold rounded-lg">
+                                            📋 Serviços Contratados por demanda
+                                          </span>
+                                        )}
+                                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-extrabold rounded-lg flex items-center gap-1">
+                                          <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                                          Pago (Manual ADM)
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleManualPaymentForSubEtapa(idx)}
+                                          className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                                          title="Estornar/Voltar para Pendente"
+                                        >
+                                          Estornar
+                                        </button>
+                                      </div>
+                                    );
+                                  }
+
+                                  return (
+                                    <div className="flex items-center gap-1.5">
+                                      {isDemand && (
+                                        <span className="px-2.5 py-1 bg-indigo-50 text-indigo-800 border border-indigo-200 text-[10px] font-extrabold rounded-lg">
+                                          📋 Serviços Contratados por demanda
+                                        </span>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleManualPaymentForSubEtapa(idx)}
+                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold rounded-lg shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                        title="Confirmar recebimento do pagamento manual via PIX/Transferência para esta sub-etapa"
+                                      >
+                                        <CheckCircle className="w-3.5 h-3.5 text-white" />
+                                        <span>Confirmar Pagamento Manual</span>
+                                      </button>
+                                    </div>
+                                  );
+                                })()}
 
                                 <button
                                   type="button"
@@ -6952,6 +7460,43 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 </div>
               </div>
 
+              {/* Saldos e Créditos da Conta */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">Saldos e Créditos da Conta</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-slate-100 p-4 rounded-xl bg-white shadow-xs">
+                  <div className="bg-emerald-50/60 border border-emerald-100 p-3.5 rounded-xl text-left">
+                    <div className="flex items-center gap-2 text-emerald-800">
+                      <Coins className="w-4 h-4" />
+                      <span className="text-xs font-bold uppercase tracking-wide">Saldo Geral (Consultas &amp; Serviços)</span>
+                    </div>
+                    <span className="text-2xl font-black font-mono text-emerald-950 block mt-1.5">
+                      {formatCurrencyBRL(
+                        selectedPartner.saldoGeral !== undefined
+                          ? Number(selectedPartner.saldoGeral)
+                          : (selectedPartner.saldoConsultas !== undefined ? Number(selectedPartner.saldoConsultas) : 0)
+                      )}
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-medium block mt-0.5">
+                      Válido para consultas SPC/Serasa e serviços contábeis
+                    </span>
+                  </div>
+
+                  <div className="bg-teal-50/60 border border-teal-100 p-3.5 rounded-xl text-left">
+                    <div className="flex items-center gap-2 text-teal-800">
+                      <Search className="w-4 h-4" />
+                      <span className="text-xs font-bold uppercase tracking-wide">Saldo Caça Leads (buscas)</span>
+                    </div>
+                    <span className="text-2xl font-black font-mono text-teal-950 block mt-1.5">
+                      {selectedPartner.cacaLeadsCredits || 0}{" "}
+                      <span className="text-xs font-bold font-sans uppercase text-teal-700">buscas</span>
+                    </span>
+                    <span className="text-[10px] text-teal-700 font-medium block mt-0.5">
+                      Créditos de prospecção e busca de empresas em tempo real
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Se for Franquia Digital, mostrar equipe e override */}
               {(() => {
                 const isFranquia = selectedPartner.plano?.toUpperCase().includes("FRANQUIA") || selectedPartner.plano?.toUpperCase().includes("DIGITAL") || selectedPartner.plano?.toUpperCase().includes("MASTER") || selectedPartner.plano?.toUpperCase() === "PLATINUM";
@@ -7122,7 +7667,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   <UserX className="w-3.5 h-3.5 text-rose-600" />
                                   Acesso Bloqueado
                                 </span>
-                              ) : sub.isTrial && sub.status === "ativa" ? (
+                              ) : sub.status === "vencida" ? (
+                                <span className="bg-rose-100 text-rose-800 text-[11px] font-bold px-2 py-0.5 rounded-md border border-rose-200 flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5 text-rose-600" />
+                                  {sub.isTrial ? "Trial Vencido (Expirado)" : "Licença Anual Vencida"}
+                                </span>
+                              ) : sub.isTrial ? (
                                 <span className="bg-amber-100 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded-md border border-amber-200 flex items-center gap-1">
                                   <Clock className="w-3.5 h-3.5 text-amber-600" />
                                   Teste Grátis Ativo ({sub.daysLeft}d restantes)
@@ -7130,7 +7680,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               ) : (
                                 <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
                                   <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-                                  Acesso Liberado / Ativo
+                                  Acesso Liberado ({sub.daysLeft}d restantes - até {sub.formattedExpiry})
                                 </span>
                               )}
                             </span>
@@ -7138,23 +7688,32 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         </div>
 
                         {/* Quick action buttons for Activation / Blocking */}
-                        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-2">
-                          {isManualBlocked ? (
+                        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-2 flex-wrap">
+                          {isManualBlocked || sub.status === "vencida" ? (
                             <button
                               onClick={() => handleTogglePartnerStatus(selectedPartner, "ativo")}
                               className="w-full sm:flex-1 py-2.5 px-4 bg-[#00A86B] hover:bg-[#008f5a] text-white text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md active:scale-98"
                             >
                               <UserCheck className="w-4 h-4" />
-                              <span>Ativar / Desbloquear Acesso do Parceiro</span>
+                              <span>Ativar / Liberar Acesso do Parceiro (1 Ano)</span>
                             </button>
                           ) : (
-                            <button
-                              onClick={() => handleTogglePartnerStatus(selectedPartner, "bloqueado")}
-                              className="w-full sm:flex-1 py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md active:scale-98"
-                            >
-                              <UserX className="w-4 h-4" />
-                              <span>Bloquear Acesso do Parceiro</span>
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleRenewSubscription(selectedPartner.id)}
+                                className="w-full sm:flex-1 py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+                              >
+                                <Clock className="w-4 h-4 text-emerald-600" />
+                                <span>Renovar Licença (+1 Ano)</span>
+                              </button>
+                              <button
+                                onClick={() => handleTogglePartnerStatus(selectedPartner, "bloqueado")}
+                                className="w-full sm:w-auto py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md active:scale-98"
+                              >
+                                <UserX className="w-4 h-4" />
+                                <span>Bloquear Acesso</span>
+                              </button>
+                            </>
                           )}
 
                           <a

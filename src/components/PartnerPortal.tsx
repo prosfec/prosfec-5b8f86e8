@@ -33,6 +33,8 @@ import LeadWorkspaceModal from "./LeadWorkspaceModal";
 import LeadStepTimeline from "./LeadStepTimeline";
 import { calculateLeadStepStatus } from "../utils/stepValidation";
 import { TeamPerformanceChart } from "./TeamPerformanceChart";
+import PartnerServicosContabilidadeTab from "./PartnerServicosContabilidadeTab";
+import { sanitizeAndSyncServicosList, ServiceCatalogItem, DEFAULT_SERVICES_CATALOG } from "../utils/serviceUtils";
 import { 
   Handshake, 
   Copy, 
@@ -60,6 +62,7 @@ import {
   Briefcase,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   ShieldAlert,
   ShieldCheck,
   UserCheck,
@@ -93,7 +96,10 @@ import {
   CreditCard,
   ArrowUpRight,
   Wallet,
-  XCircle
+  XCircle,
+  ArrowLeft,
+  ArrowRight,
+  QrCode
 } from "lucide-react";
 
 interface Announcement {
@@ -183,6 +189,8 @@ interface Partner {
   inativoPorInatividade?: boolean;
   motivoInativacao?: string;
   dataReativacao?: string;
+  statusManual?: string;
+  dataAtualizacaoStatus?: string;
   hotmartLink?: string;
   hotmartCode?: string;
   hublaCodeStarter?: string;
@@ -290,7 +298,8 @@ const getSubscriptionStatus = (partner: Partner) => {
       expiryDate: new Date(Date.now() + 9999 * 24 * 60 * 60 * 1000),
       formattedExpiry: "Isento (Afiliado)",
       isTrial: false,
-      isExempt: true
+      isExempt: true,
+      isManualBlocked: false
     };
   }
 
@@ -301,23 +310,39 @@ const getSubscriptionStatus = (partner: Partner) => {
       expiryDate: new Date(Date.now() + 9999 * 24 * 60 * 60 * 1000),
       formattedExpiry: "Isento (Vendedor)",
       isTrial: false,
-      isExempt: true
+      isExempt: true,
+      isManualBlocked: false
+    };
+  }
+
+  // Se bloqueado explicitamente pela administração
+  if (partner.statusManual === "bloqueado" || partner.status === "bloqueado") {
+    return {
+      status: "vencida" as const,
+      daysLeft: 0,
+      expiryDate: new Date(),
+      formattedExpiry: "Bloqueado pelo ADM",
+      isTrial: false,
+      isExempt: false,
+      isManualBlocked: true
     };
   }
 
   const hasPaid = !!partner.dataUltimoPagamento;
+  const isManualActive = partner.statusManual === "ativo" || partner.status === "ativo";
   const baseDateStr = partner.dataUltimoPagamento || partner.dataCriacao;
   if (!baseDateStr) {
     return {
       status: "ativa" as const,
       daysLeft: 3,
       formattedExpiry: "-",
-      isTrial: true
+      isTrial: !isManualActive,
+      isManualBlocked: false
     };
   }
   
   const baseDate = new Date(baseDateStr);
-  const duration = partner.duracaoDias !== undefined ? partner.duracaoDias : (hasPaid ? 365 : 3);
+  const duration = partner.duracaoDias !== undefined ? partner.duracaoDias : (hasPaid || isManualActive ? 365 : 3);
   
   const expiryDate = new Date(baseDate.getTime() + duration * 24 * 60 * 60 * 1000);
   const today = new Date();
@@ -331,17 +356,22 @@ const getSubscriptionStatus = (partner: Partner) => {
   let status: "ativa" | "vencendo" | "vencida" = "ativa";
   const warningThreshold = duration <= 3 ? 1 : 5;
   if (diffDays <= 0) {
-    status = "vencida";
+    if (isManualActive && !hasPaid) {
+      status = "ativa";
+    } else {
+      status = "vencida";
+    }
   } else if (diffDays <= warningThreshold) {
     status = "vencendo";
   }
   
   return {
     status,
-    daysLeft: diffDays,
+    daysLeft: diffDays <= 0 && isManualActive && !hasPaid ? 365 : diffDays,
     expiryDate,
     formattedExpiry: expiryDate.toLocaleDateString("pt-BR"),
-    isTrial: !hasPaid
+    isTrial: !hasPaid && !isManualActive,
+    isManualBlocked: false
   };
 };
 
@@ -405,213 +435,25 @@ const CITIES_BY_STATE: Record<string, string[]> = {
   TO: ["Palmas", "Araguaína", "Gurupi", "Porto Nacional"]
 };
 
-const FALLBACK_CATALOG_LIST = [
-  { code: "REDEBE_DIAGNOSTICO_360", name: "Rating de Crédito + Diagnóstico Finan. 360", price: 49.90 }
-];
-
-const fetchCatalogClientSide = async () => {
-  let customBasePrices: Record<string, number> = {};
-  try {
-    const configSnap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
-    if (configSnap.exists()) {
-      customBasePrices = configSnap.data().precos || {};
-    }
-  } catch (err) {
-    console.warn("Could not load custom base prices from config client-side:", err);
-  }
-
-  let fetchedCatalog: any[] = [];
-  try {
-    const url = "/api/proxy/integrador-catalogo";
-    const response = await fetch(url);
-    if (response.ok) {
-      const result = await response.json();
-      const fetchedData = result.data || result.results || result;
-      if (Array.isArray(fetchedData)) {
-        fetchedCatalog = fetchedData;
-      }
-    }
-  } catch (err) {
-    console.warn("Error calling direct integrator catalog API, using local fallback", err);
-  }
-
-  return FALLBACK_CATALOG_LIST.map((item: any) => {
-    const fetchedItem = fetchedCatalog.find((f: any) => {
-      const fCode = f.code || f.codigo || f.produto_code;
-      return fCode === item.code;
-    });
-
-    let origPrice = item.price;
-    if (customBasePrices[item.code] !== undefined) {
-      origPrice = Number(customBasePrices[item.code]);
-    } else if (fetchedItem) {
-      origPrice = typeof fetchedItem.price === "number" ? fetchedItem.price : (typeof fetchedItem.valor === "number" ? fetchedItem.valor : item.price);
-    }
-
-    const name = fetchedItem
-      ? (fetchedItem.name || fetchedItem.nome || item.name)
-      : item.name;
-
-    const partnerPrice = Number((origPrice / 0.60).toFixed(2));
-    return {
-      code: item.code,
-      name: name,
-      originalPrice: origPrice,
-      price: partnerPrice
-    };
-  });
-};
-
-const executeCreditQueryClientSide = async (partnerId: string, partnerNome: string, selectedQueryCode: string, docClean: string) => {
-  // 1. Retrieve partner from Firestore
-  const partnerRef = doc(db, "parceiros", partnerId);
-  const partnerSnap = await getDoc(partnerRef);
-
-  if (!partnerSnap.exists()) {
-    throw new Error("Parceiro não encontrado no sistema.");
-  }
-
-  const partnerData = partnerSnap.data();
-  const currentBalance = partnerData?.saldoConsultas !== undefined ? Number(partnerData.saldoConsultas) : 0.00;
-
-  // 2. Retrieve custom base prices from Firestore
-  let customBasePrices: Record<string, number> = {};
-  try {
-    const configSnap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
-    if (configSnap.exists()) {
-      customBasePrices = configSnap.data().precos || {};
-    }
-  } catch (err) {
-    console.warn("Could not load custom base prices from config:", err);
-  }
-
-  // 3. Determine product price
-  let fetchedCatalog: any[] = [];
-  try {
-    const catUrl = "/api/proxy/integrador-catalogo";
-    const catRes = await fetch(catUrl);
-    if (catRes.ok) {
-      const result = await catRes.json();
-      const fetchedData = result.data || result.results || result;
-      if (Array.isArray(fetchedData)) {
-        fetchedCatalog = fetchedData;
-      }
-    }
-  } catch (catErr) {
-    console.warn("Could not load fresh catalog for client-side price check.", catErr);
-  }
-
-  const fallbackProduct = FALLBACK_CATALOG_LIST.find((item: any) => item.code === selectedQueryCode);
-  const fetchedProduct = fetchedCatalog.find((item: any) => {
-    const fCode = item.code || item.codigo || item.produto_code;
-    return fCode === selectedQueryCode;
-  });
-
-  let origPrice = fallbackProduct ? fallbackProduct.price : 5.00;
-  if (customBasePrices[selectedQueryCode] !== undefined) {
-    origPrice = Number(customBasePrices[selectedQueryCode]);
-  } else if (fetchedProduct) {
-    origPrice = typeof fetchedProduct.price === "number" ? fetchedProduct.price : (typeof fetchedProduct.valor === "number" ? fetchedProduct.valor : (fallbackProduct ? fallbackProduct.price : 5.00));
-  }
-
-  const partnerPrice = Number((origPrice / 0.60).toFixed(2));
-  const produtoNome = fetchedProduct?.name || fetchedProduct?.nome || fallbackProduct?.name || "Consulta de Crédito";
-
-  // Validate balance
-  if (currentBalance < partnerPrice) {
-    throw new Error(`Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${currentBalance.toFixed(2).replace(".", ",")}. Realize uma transferência Pix para recarregar.`);
-  }
-
-  // 4. Call Credit Supplier API through the secure server proxy
-  const response: Response = await fetch("/api/proxy/supplier-consulta", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ produto_code: selectedQueryCode, documento: docClean })
-  });
-
-  const rawText = await response.text();
-  let apiResult: any = null;
-  try {
-    apiResult = JSON.parse(rawText);
-  } catch {
-    throw new Error(`A API de consultas retornou uma resposta inesperada do servidor (Status ${response.status}).`);
-  }
-
-  if (!response.ok) {
-    console.error("Supplier API returned error client-side:", rawText);
-    throw new Error(apiResult?.error || "Erro retornado pela API de consultas de crédito. Seu saldo não foi debitado.");
-  }
-
-  console.log("Query response received client-side:", JSON.stringify(apiResult));
-
-  if (apiResult.success === false) {
-    throw new Error(apiResult.error || "O provedor de consultas de crédito retornou uma falha.");
-  }
-
-  // 5. Deduct balance in Firestore
-  const newBalance = Number((currentBalance - partnerPrice).toFixed(2));
-  await updateDoc(partnerRef, {
-    saldoConsultas: newBalance
-  });
-
-  // 6. Register the consultation in Firestore
-  const consultaDoc = {
-    partnerId,
-    partnerNome: partnerNome || partnerData?.nome || "Parceiro",
-    produto_code: selectedQueryCode,
-    produto_nome: produtoNome || "Consulta de Crédito",
-    documento: docClean,
-    preco_original: origPrice,
-    preco_parceiro: partnerPrice,
-    dataConsulta: new Date().toISOString(),
-    status: apiResult.status || "sucesso",
-    request_id: apiResult.request_id || `req_${Date.now()}`,
-    consulta_id: apiResult.meta?.consulta_id || apiResult.request_id || `id_${Date.now()}`,
-    resultado: apiResult.data || apiResult
-  };
-
-  const consultaRef = await addDoc(collection(db, "consultas_realizadas"), consultaDoc);
-
-  // Create local notification for the partner
-  try {
-    await addDoc(collection(db, "notificacoes"), {
-      recipientId: partnerId,
-      recipientType: "parceiro",
-      titulo: "Consulta Realizada",
-      mensagem: `Sua consulta (${consultaDoc.produto_nome}) foi concluída. Valor de R$ ${partnerPrice.toFixed(2).replace(".", ",")} debitado de seu saldo.`,
-      tipo: "success",
-      lida: false,
-      dataCriacao: new Date().toISOString()
-    });
-  } catch (notifErr) {
-    console.error("Failed to create notification client-side:", notifErr);
-  }
-
-  return {
-    success: true,
-    consulta_id: consultaRef.id,
-    newBalance: newBalance,
-    data: apiResult.data || apiResult,
-    meta: {
-      ...apiResult.meta,
-      price: partnerPrice
-    }
-  };
-};
 
 const executeCacaLeadsClientSide = async (keyword: string, city: string, limit: number, pageToken?: string) => {
   const queryStr = `${keyword} em ${city}`;
   console.log(`Executing client-side Google Places API search for: "${queryStr}"`);
 
+  const GOOGLE_MAPS_KEY = "AIzaSyBLYM0vO54g1hos2EC6OEHu1oPw974t5mU";
   const payload: any = {
     textQuery: queryStr,
     pageSize: Math.min(20, limit)
   };
   if (pageToken) payload.pageToken = pageToken;
 
-  const response = await fetch("/api/proxy/places-search", {
+  const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": GOOGLE_MAPS_KEY,
+      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,nextPageToken"
+    },
     body: JSON.stringify(payload)
   });
 
@@ -658,10 +500,11 @@ export default function PartnerPortal({
     return saved ? JSON.parse(saved) : null;
   });
 
-  const isSubMember = !!(currentPartner?.parentPartnerId && (
-    currentPartner.isTeamMember === true || 
-    (currentPartner.plano && (currentPartner.plano.toUpperCase().includes("CONSULTOR") || currentPartner.plano.toUpperCase().includes("EQUIPE")))
-  ));
+  const isSubMember = !!(
+    currentPartner?.parentPartnerId || 
+    currentPartner?.isTeamMember === true || 
+    (currentPartner?.plano && (currentPartner.plano.toUpperCase().includes("CONSULTOR") || currentPartner.plano.toUpperCase().includes("EQUIPE")))
+  );
 
   // Announcement States
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -687,7 +530,8 @@ export default function PartnerPortal({
     const q = query(
       collection(db, "notificacoes"),
       where("recipientId", "==", currentPartner.id),
-      where("recipientType", "==", "parceiro")
+      where("recipientType", "==", "parceiro"),
+      limit(25)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -759,74 +603,6 @@ export default function PartnerPortal({
     }
   };
 
-  const handleExecuteCreditQuery = async () => {
-    if (!currentPartner?.id) return;
-    if (!selectedQueryCode) {
-      setQueryError("Por favor, selecione um tipo de consulta.");
-      return;
-    }
-    const docClean = queryDocument.replace(/[^\d]/g, "");
-    if (!docClean || (docClean.length !== 11 && docClean.length !== 14)) {
-      setQueryError("Por favor, informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.");
-      return;
-    }
-
-    setExecutingQuery(true);
-    setQueryError(null);
-    setQuerySuccessData(null);
-
-    try {
-      let result;
-      let ok = false;
-      try {
-        const response = await fetch("/api/credit/consultas", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            partnerId: currentPartner.id,
-            partnerNome: currentPartner.nome || "Parceiro",
-            produto_code: selectedQueryCode,
-            input_data: {
-              documento: docClean
-            }
-          })
-        });
-
-        const respText = await response.text();
-        let parsed: any = null;
-        try {
-          parsed = JSON.parse(respText);
-        } catch {
-          throw new Error(`A API do servidor retornou status ${response.status}.`);
-        }
-
-        if (response.ok) {
-          result = parsed;
-          ok = true;
-        } else {
-          throw new Error(parsed?.error || `Houve uma falha ao processar a consulta de crédito (${response.status}).`);
-        }
-      } catch (apiErr: any) {
-        console.error("Erro na API de consulta de crédito:", apiErr);
-        throw apiErr;
-      }
-
-      if (ok && result) {
-        setQuerySuccessData(result.data || result);
-        setDetailedConsulta(result.data || result);
-        setViewingConsultaModal(true);
-        setQueryDocument(""); // Clear input on success
-      }
-    } catch (err: any) {
-      console.error("Erro ao executar consulta:", err);
-      setQueryError(err.message || "Erro de conexão ao servidor.");
-    } finally {
-      setExecutingQuery(false);
-    }
-  };
-
   const handleMarkNotificationRead = async (notifId: string) => {
     try {
       // Deletar a notificação diretamente do Firestore para economizar espaço e evitar acúmulo no banco
@@ -875,6 +651,39 @@ export default function PartnerPortal({
     }
   }, [initialPlan]);
 
+  // Dynamic Price Catalog loaded from ADM Settings (configuracoes/precos_consultas)
+  // Optimized with sessionStorage cache to prevent repeated real-time reads on static prices
+  const [catalogServices, setCatalogServices] = useState<ServiceCatalogItem[]>(() => {
+    try {
+      const cached = sessionStorage.getItem("cached_precos_consultas");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_SERVICES_CATALOG;
+  });
+
+  useEffect(() => {
+    // Check if we have valid fresh cache in this session
+    const cachedTime = sessionStorage.getItem("cached_precos_consultas_time");
+    const now = Date.now();
+    if (cachedTime && now - parseInt(cachedTime, 10) < 1000 * 60 * 30) {
+      // Use cached for 30 minutes without reading Firestore
+      return;
+    }
+
+    getDoc(doc(db, "configuracoes", "precos_consultas")).then((snap) => {
+      if (snap.exists() && snap.data().servicos && Array.isArray(snap.data().servicos)) {
+        setCatalogServices(snap.data().servicos);
+        sessionStorage.setItem("cached_precos_consultas", JSON.stringify(snap.data().servicos));
+        sessionStorage.setItem("cached_precos_consultas_time", String(Date.now()));
+      }
+    }).catch((err) => {
+      console.warn("Could not load price catalog in PartnerPortal:", err);
+    });
+  }, []);
+
   // Dashboard Data
   const [leads, setLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -886,62 +695,13 @@ export default function PartnerPortal({
   const [leadsPage, setLeadsPage] = useState(1);
   const itemsPerPage = 10;
 
-  // --- Credit Consultation States ---
-  const [creditCatalog, setCreditCatalog] = useState<any[]>([]);
-  const [catalogLoading, setCatalogLoading] = useState(false);
-  const [creditHistory, setCreditHistory] = useState<any[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [selectedConsultaId, setSelectedConsultaId] = useState<string | null>(null);
-  const [detailedConsulta, setDetailedConsulta] = useState<any | null>(null);
-  const [selectedConsultaItem, setSelectedConsultaItem] = useState<any | null>(null);
-  const [viewingConsultaModal, setViewingConsultaModal] = useState(false);
-
-  // PROSFEC IA credit query direct simulation states
-  const [prosfecDiagnosisResult, setProsfecDiagnosisResult] = useState<any | null>(null);
-  const [prosfecDiagnosisLoading, setProsfecDiagnosisLoading] = useState(false);
-  const [prosfecDiagnosisError, setProsfecDiagnosisError] = useState<string | null>(null);
-  
   // Create recharge solicitation states
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [rechargeStep, setRechargeStep] = useState<1 | 2>(1);
   const [rechargeAmount, setRechargeAmount] = useState<number>(140);
   const [notifyingRecharge, setNotifyingRecharge] = useState(false);
   const [rechargeNotifySuccess, setRechargeNotifySuccess] = useState(false);
-  
-  // Perform query states
-  const [selectedQueryCode, setSelectedQueryCode] = useState("");
-  const [queryDocument, setQueryDocument] = useState("");
-  const [executingQuery, setExecutingQuery] = useState(false);
-  const [queryError, setQueryError] = useState<string | null>(null);
-  const [querySuccessData, setQuerySuccessData] = useState<any | null>(null);
-
-  // Sync creditHistory with consultas_realizadas collection in real-time
-  React.useEffect(() => {
-    if (!isAuthenticated || !currentPartner?.id) {
-      setCreditHistory([]);
-      return;
-    }
-
-    setHistoryLoading(true);
-    const q = query(
-      collection(db, "consultas_realizadas"),
-      where("partnerId", "==", currentPartner.id)
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as any[];
-      // Sort client-side by dataConsulta desc
-      list.sort((a, b) => new Date(b.dataConsulta).getTime() - new Date(a.dataConsulta).getTime());
-      setCreditHistory(list);
-      setHistoryLoading(false);
-    }, (error) => {
-      console.error("Error listening to credit history:", error);
-      setHistoryLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [isAuthenticated, currentPartner]);
+  const [rechargeCopiedPix, setRechargeCopiedPix] = useState(false);
 
   // Sync solicitacoesComissao with Firestore in real-time
   React.useEffect(() => {
@@ -970,128 +730,13 @@ export default function PartnerPortal({
     return () => unsubscribe();
   }, [isAuthenticated, currentPartner]);
 
-  // Trigger PROSFEC IA credit query direct simulation diagnosis
-  const handleGenerateProsfecSimuladorDiagnosis = async (consulta: any) => {
-    if (!consulta) return;
-    
-    const docNum = String(consulta.documento || consulta.cnpj || consulta.cpf || "").replace(/\D/g, "");
-    if (docNum.length !== 14) {
-      setProsfecDiagnosisResult(null);
-      setProsfecDiagnosisError("O documento consultado não é um CNPJ válido para simulação de linhas de fomento governamentais (como Pronampe, Fungetur ou Finep).");
-      return;
-    }
-
-    setProsfecDiagnosisLoading(true);
-    setProsfecDiagnosisError(null);
-    setProsfecDiagnosisResult(null);
-
-    try {
-      const companyName = consulta.nome || consulta.razao_social || consulta.data?.nome || consulta.data?.razao_social || "Empresa Consultada";
-      const stateUf = consulta.uf || consulta.data?.uf || consulta.data?.endereco?.uf || "SP";
-      const porte = consulta.porte || consulta.data?.porte || "ME";
-      const ramo = consulta.ramo || consulta.data?.ramo || consulta.data?.ramo_atividade || "Geral / Comércio";
-      
-      const capitalSocial = Number(consulta.capital_social || consulta.data?.capital_social || 100000);
-      const faturamentoAnual = Number(consulta.faturamento_anual || consulta.data?.faturamento_anual || consulta.data?.faturamento || 120000);
-
-      const response = await fetch("/api/credit/diagnostico-simulador", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          cnpj: docNum,
-          razaoSocial: companyName,
-          porte: porte,
-          uf: stateUf,
-          ramo: ramo,
-          menosDe12Meses: false,
-          capitalSocial: capitalSocial,
-          mediaReceitaMensal: Math.round(faturamentoAnual / 12),
-          faturamentoAnual: faturamentoAnual,
-          seloEmpregaMulher: false
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro ao obter resposta do servidor de simulação.");
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setProsfecDiagnosisResult(data);
-      } else {
-        throw new Error(data.error || "Erro desconhecido na análise.");
-      }
-    } catch (err: any) {
-      console.error("Erro no diagnóstico de crédito direto:", err);
-      setProsfecDiagnosisError(err.message || "Não foi possível gerar o diagnóstico da PROSFEC IA neste momento.");
-    } finally {
-      setProsfecDiagnosisLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    if (viewingConsultaModal && detailedConsulta) {
-      const docNum = String(detailedConsulta.documento || detailedConsulta.cnpj || detailedConsulta.cpf || "").replace(/\D/g, "");
-      if (docNum.length === 14) {
-        handleGenerateProsfecSimuladorDiagnosis(detailedConsulta);
-      } else {
-        setProsfecDiagnosisResult(null);
-        setProsfecDiagnosisError(null);
-      }
-    } else {
-      setProsfecDiagnosisResult(null);
-      setProsfecDiagnosisError(null);
-      setProsfecDiagnosisLoading(false);
-    }
-  }, [viewingConsultaModal, detailedConsulta]);
-
-  // Load Credit Catalog once upon authentication
-  React.useEffect(() => {
-    if (!isAuthenticated) return;
-    
-    const loadCatalog = async () => {
-      setCatalogLoading(true);
-      try {
-        const res = await fetch("/api/credit/catalogo");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.catalog) {
-            setCreditCatalog(data.catalog);
-            if (data.catalog.length > 0) {
-              setSelectedQueryCode(data.catalog[0].code);
-            }
-          }
-        } else {
-          throw new Error("API catalog not available or returned non-ok status");
-        }
-      } catch (err) {
-        console.warn("Error loading credit catalog from API, trying client-side fallback:", err);
-        try {
-          const clientCatalog = await fetchCatalogClientSide();
-          setCreditCatalog(clientCatalog);
-          if (clientCatalog.length > 0) {
-            setSelectedQueryCode(clientCatalog[0].code);
-          }
-        } catch (fallbackErr) {
-          console.error("Failed client-side catalog fallback as well:", fallbackErr);
-        }
-      } finally {
-        setCatalogLoading(false);
-      }
-    };
-
-    loadCatalog();
-  }, [isAuthenticated]);
-
   React.useEffect(() => {
     setLeadsPage(1);
   }, [searchTerm, statusFilter, etapaFilter]);
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "consultas" | "perfil">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
   const [showLeadRegisterForm, setShowLeadRegisterForm] = useState(false);
 
   // Helper function to check if consultant/partner profile is completely filled out
@@ -1127,7 +772,7 @@ export default function PartnerPortal({
   }, [isAuthenticated, currentPartner]);
 
   // Tab switch handler with profile completion guard
-  const handleTabClick = (tab: "dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "consultas" | "perfil") => {
+  const handleTabClick = (tab: "dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil") => {
     if (isAuthenticated && currentPartner && !isProfileComplete(currentPartner) && tab !== "perfil") {
       setProfileErrorMsg("Para sua segurança, é obrigatório preencher e salvar todos os seus dados cadastrais (Nome, CPF/CNPJ, WhatsApp, Cidade e Chave Pix) antes de acessar as outras funções do sistema.");
       setActiveTab("perfil");
@@ -1401,12 +1046,14 @@ export default function PartnerPortal({
   const [addingNoteForLeadId, setAddingNoteForLeadId] = useState<string | null>(null);
   const [expandedNotesLeadId, setExpandedNotesLeadId] = useState<string | null>(null);
   
-  // Refill search limit states
+  // Refill search limit states (Caça-Leads)
   const [showRefillModal, setShowRefillModal] = useState(false);
+  const [refillStep, setRefillStep] = useState<1 | 2>(1);
   const [refillPackage, setRefillPackage] = useState<"Bronze" | "Prata" | "Ouro">("Bronze");
+  const [refillCopiedPix, setRefillCopiedPix] = useState(false);
+  const [refillNotifySuccess, setRefillNotifySuccess] = useState(false);
   const [myRefills, setMyRefills] = useState<any[]>([]);
   const [refillSubmitting, setRefillSubmitting] = useState(false);
-  const [refillSuccessMessage, setRefillSuccessMessage] = useState<string | null>(null);
 
   // Step 6 Services Performance & Financial Control states
   const [dashboardServiceFilter, setDashboardServiceFilter] = useState<"todos" | "pendente" | "pago" | "cancelado">("todos");
@@ -1530,6 +1177,13 @@ export default function PartnerPortal({
   const [copiedTeamMemberLinkId, setCopiedTeamMemberLinkId] = useState<string | null>(null);
   const [assigningLead, setAssigningLead] = useState<Lead | null>(null);
 
+  // Franchise Team Accordion and Search States
+  const [isTeamMembersExpanded, setIsTeamMembersExpanded] = useState(false);
+  const [isTeamPipelineExpanded, setIsTeamPipelineExpanded] = useState(false);
+  const [teamMemberSearchTerm, setTeamMemberSearchTerm] = useState("");
+  const [teamPipelineSearchTerm, setTeamPipelineSearchTerm] = useState("");
+  const [teamPipelineStatusFilter, setTeamPipelineStatusFilter] = useState("todos");
+
   // Franchise lead distribution states
   const [distributedLeadsMap, setDistributedLeadsMap] = useState<Record<string, { teamMemberName: string, date: string, status: string, id: string }>>({});
   const [allParentDistributedLeads, setAllParentDistributedLeads] = useState<any[]>([]);
@@ -1551,6 +1205,7 @@ export default function PartnerPortal({
   const [bulkReassignMode, setBulkReassignMode] = useState<"single" | "equal">("single");
   const [bulkReassigningLoading, setBulkReassigningLoading] = useState(false);
   const [distributeEquallyLoading, setDistributeEquallyLoading] = useState(false);
+  const [bulkDeletingDiscardedLoading, setBulkDeletingDiscardedLoading] = useState(false);
 
   // Calculator states
   const [calcLeadsCount, setCalcLeadsCount] = useState(3);
@@ -2096,6 +1751,73 @@ export default function PartnerPortal({
     }
   };
 
+  // Handle permanent deletion of a single distributed lead from Firestore
+  const handleDeleteDistributedLeadPermanent = async (leadId: string) => {
+    if (!confirm("Deseja excluir definitivamente este lead da carteira? Esta ação removerá o registro permanentemente do banco de dados e atualizará o saldo.")) return;
+    try {
+      const docRef = doc(db, "leads_distribuidos", leadId);
+      await deleteDoc(docRef);
+
+      // Update local states
+      setLeadsDistributedToMe(prev => prev.filter(l => l.id !== leadId));
+      setAllParentDistributedLeads(prev => prev.filter(l => l.id !== leadId));
+      setDistributedLeadsMap(prev => {
+        const copy = { ...prev };
+        const key = Object.keys(copy).find(k => copy[k].id === leadId);
+        if (key) {
+          delete copy[key];
+        }
+        return copy;
+      });
+    } catch (error) {
+      console.error("Erro ao excluir lead permanentemente:", error);
+      alert("Erro ao excluir o lead definitivamente.");
+    }
+  };
+
+  // Handle bulk permanent deletion of ALL discarded leads for a specific consultant
+  const handleBulkDeleteDiscardedLeadsForConsultant = async (consultantId: string, consultantName: string) => {
+    const discardedLeads = allParentDistributedLeads.filter(
+      l => l.teamMemberId === consultantId && l.status === "descartado"
+    );
+
+    if (discardedLeads.length === 0) {
+      alert("Não há leads descartados para este consultor.");
+      return;
+    }
+
+    const confirmMsg = `Deseja excluir definitivamente todos os ${discardedLeads.length} leads descartados pelo consultor ${consultantName}?\n\nEsta ação removerá todos os registros permanentemente do banco de dados e liberará o saldo do seu painel.`;
+    if (!confirm(confirmMsg)) return;
+
+    setBulkDeletingDiscardedLoading(true);
+    try {
+      const deletePromises = discardedLeads.map(l => deleteDoc(doc(db, "leads_distribuidos", l.id)));
+      await Promise.all(deletePromises);
+
+      const discardedIds = new Set(discardedLeads.map(l => l.id));
+
+      // Update local states
+      setAllParentDistributedLeads(prev => prev.filter(l => !discardedIds.has(l.id)));
+      setLeadsDistributedToMe(prev => prev.filter(l => !discardedIds.has(l.id)));
+      setDistributedLeadsMap(prev => {
+        const copy = { ...prev };
+        for (const [key, value] of Object.entries(copy)) {
+          if (value && discardedIds.has((value as any).id)) {
+            delete copy[key];
+          }
+        }
+        return copy;
+      });
+
+      alert(`Exclusão concluída! ${discardedLeads.length} lead(s) descartado(s) foram excluídos definitivamente com sucesso.`);
+    } catch (error) {
+      console.error("Erro ao excluir leads descartados em lote:", error);
+      alert("Ocorreu um erro ao excluir os leads descartados.");
+    } finally {
+      setBulkDeletingDiscardedLoading(false);
+    }
+  };
+
   // Handle reassigning an individual distributed lead to a new consultant
   const handleReassignDistributedLead = async () => {
     if (!leadToReassign || !reassignTargetMemberId || !currentPartner) return;
@@ -2470,12 +2192,10 @@ export default function PartnerPortal({
     }
   };
 
-  const handleRequestRefill = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPartner) return;
+  const handleNotifyCacaLeadsRefill = async () => {
+    if (!currentPartner?.id) return;
 
     setRefillSubmitting(true);
-    setRefillSuccessMessage(null);
 
     const packDetails = {
       Bronze: { buscas: 10, valor: 59.90 },
@@ -2486,8 +2206,10 @@ export default function PartnerPortal({
     try {
       await addDoc(collection(db, "recargas"), {
         partnerId: currentPartner.id,
-        partnerNome: currentPartner.nome,
+        partnerNome: currentPartner.nome || "Parceiro",
+        partnerWhatsapp: currentPartner.whatsapp || "N/A",
         pacote: refillPackage,
+        tipo: "caca_leads",
         buscas: packDetails.buscas,
         valor: packDetails.valor,
         status: "pendente",
@@ -2495,10 +2217,11 @@ export default function PartnerPortal({
         dataAprovacao: null
       });
 
-      setRefillSuccessMessage(`Solicitação de recarga do pacote ${refillPackage} (${packDetails.buscas} buscas) criada com sucesso! Realize o pagamento de R$ ${packDetails.valor.toFixed(2).replace(".", ",")} e aguarde a liberação.`);
+      setRefillNotifySuccess(true);
       fetchPartnerRefills(currentPartner.id);
     } catch (err) {
-      console.error("Erro ao solicitar recarga:", err);
+      console.error("Erro ao solicitar recarga do Caça-Leads:", err);
+      alert("Erro ao enviar notificação de recarga.");
     } finally {
       setRefillSubmitting(false);
     }
@@ -4093,35 +3816,64 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   return (
     <div className="min-h-screen flex flex-col font-sans bg-slate-50 text-slate-900">
       {/* Dynamic Header */}
-      <header className="bg-[#022118] text-slate-100 py-4 px-6 border-b border-emerald-800/40 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-emerald-950/80 p-2 rounded-lg text-emerald-300 border border-emerald-700/40">
-            <Handshake className="w-5 h-5 text-emerald-300" />
-          </div>
-          <div>
-            <h1 className="font-display font-extrabold text-lg tracking-tight text-slate-100">PROSFEC</h1>
-            <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-400">Portal de Afiliados e Parceiros</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {isAuthenticated && currentPartner && (
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden md:block">
-                <span className="text-xs text-emerald-200 block font-bold">Parceiro Conectado</span>
-                <span className="text-sm font-extrabold text-emerald-50">{currentPartner.nome}</span>
+      <header className="bg-[#0A3D2E] text-slate-100 py-3.5 px-4 sm:px-6 border-b border-emerald-800/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center justify-between w-full sm:w-auto gap-3">
+          <div className="flex items-center gap-3">
+            <div className="bg-emerald-950/80 p-2.5 rounded-xl text-emerald-300 border border-emerald-700/40 shrink-0">
+              <Handshake className="w-5 h-5 text-emerald-300" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="font-extrabold text-lg tracking-tight text-white">PROSFEC</h1>
+                <span className="bg-emerald-500/20 text-[#00A86B] text-[11px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md border border-emerald-500/30">
+                  Parceiros
+                </span>
               </div>
-              
-              {/* Notification Bell Dropdown */}
+              <p className="text-[11px] uppercase font-bold tracking-wider text-emerald-400/90 mt-0.5">Portal de Afiliados e Consultores</p>
+            </div>
+          </div>
+
+          {/* Mobile Right Controls */}
+          <div className="flex items-center gap-2 sm:hidden">
+            {isAuthenticated && currentPartner && (
               <div className="relative">
                 <button
                   onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
-                  className="relative p-2 rounded-lg text-emerald-100 hover:text-white hover:bg-emerald-900/40 transition-all cursor-pointer flex items-center justify-center"
+                  className="relative p-2.5 rounded-xl text-emerald-100 hover:text-white hover:bg-emerald-900/40 transition-all cursor-pointer flex items-center justify-center min-h-[44px] min-w-[44px]"
                   title="Notificações"
                 >
                   <Bell className="w-5 h-5" />
                   {notifications.filter(n => !n.lida).length > 0 && (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center animate-pulse">
+                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold font-mono rounded-full flex items-center justify-center animate-pulse">
+                      {notifications.filter(n => !n.lida).length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2.5 sm:gap-3 pt-2 sm:pt-0 border-t border-emerald-900/40 sm:border-t-0">
+          {isAuthenticated && currentPartner && (
+            <div className="flex items-center gap-3">
+              <div className="text-left sm:text-right">
+                <span className="text-[10px] text-emerald-300/80 block font-semibold uppercase tracking-wider">Parceiro Conectado</span>
+                <span className="text-xs sm:text-sm font-bold text-emerald-50 truncate max-w-[160px] sm:max-w-[200px] block" title={currentPartner.nome}>
+                  {currentPartner.nome}
+                </span>
+              </div>
+              
+              {/* Notification Bell Dropdown (Desktop) */}
+              <div className="relative hidden sm:block">
+                <button
+                  onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
+                  className="relative p-2.5 rounded-xl text-emerald-100 hover:text-white hover:bg-emerald-900/40 transition-all cursor-pointer flex items-center justify-center min-h-[40px] min-w-[40px]"
+                  title="Notificações"
+                >
+                  <Bell className="w-5 h-5" />
+                  {notifications.filter(n => !n.lida).length > 0 && (
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold font-mono rounded-full flex items-center justify-center animate-pulse">
                       {notifications.filter(n => !n.lida).length}
                     </span>
                   )}
@@ -4144,7 +3896,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       >
                         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                           <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
-                            <Bell className="w-4 h-4 text-emerald-600" />
+                            <Bell className="w-4 h-4 text-[#00A86B]" />
                             Notificações Internas
                           </h3>
                           {notifications.length > 0 && (
@@ -4153,7 +3905,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 e.stopPropagation();
                                 handleMarkAllNotificationsRead();
                               }}
-                              className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer"
+                              className="text-[11px] font-bold text-[#00A86B] hover:text-[#0A3D2E] transition-colors cursor-pointer"
                               title="Limpar e excluir todas as notificações"
                             >
                               Limpar todas
@@ -4161,7 +3913,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           )}
                         </div>
 
-                        <div className="max-h-80 overflow-y-auto">
+                        <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
                           {notifications.length === 0 ? (
                             <div className="p-8 text-center text-slate-400">
                               <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
@@ -4170,17 +3922,17 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           ) : (
                             notifications.map((notif) => {
                               // Type-specific styles
-                              let iconBg = "bg-blue-50 text-blue-600";
-                              let borderLeft = "border-l-4 border-l-blue-500";
+                              let iconBg = "bg-blue-50 text-blue-700";
+                              let borderLeft = "border-l-4 border-l-blue-600";
                               if (notif.tipo === "success") {
-                                iconBg = "bg-emerald-50 text-emerald-600";
-                                borderLeft = "border-l-4 border-l-emerald-500";
+                                iconBg = "bg-emerald-50 text-[#00A86B]";
+                                borderLeft = "border-l-4 border-l-[#00A86B]";
                               } else if (notif.tipo === "warning") {
-                                iconBg = "bg-amber-50 text-amber-600";
+                                iconBg = "bg-amber-50 text-amber-700";
                                 borderLeft = "border-l-4 border-l-amber-500";
                               } else if (notif.tipo === "error") {
-                                iconBg = "bg-red-50 text-red-600";
-                                borderLeft = "border-l-4 border-l-red-500";
+                                iconBg = "bg-rose-50 text-rose-700";
+                                borderLeft = "border-l-4 border-l-rose-600";
                               }
 
                               return (
@@ -4190,24 +3942,24 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     e.stopPropagation();
                                     handleMarkNotificationRead(notif.id);
                                   }}
-                                  className={`p-4 border-b border-slate-100 flex gap-3 hover:bg-slate-50 transition-colors cursor-pointer ${borderLeft} ${!notif.lida ? "bg-emerald-50/25" : ""}`}
+                                  className={`p-3.5 flex gap-3 hover:bg-slate-50 transition-colors cursor-pointer ${borderLeft} ${!notif.lida ? "bg-emerald-50/30" : "bg-white"}`}
                                 >
                                   <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${iconBg}`}>
                                     <Bell className="w-4 h-4" />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between gap-1 mb-0.5">
-                                      <p className={`text-xs font-bold truncate ${!notif.lida ? "text-slate-950" : "text-slate-600"}`}>
+                                      <p className={`text-xs font-bold truncate ${!notif.lida ? "text-slate-950" : "text-slate-700"}`}>
                                         {notif.titulo}
                                       </p>
                                       {!notif.lida && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5 animate-pulse" />
+                                        <span className="w-2 h-2 rounded-full bg-[#00A86B] shrink-0 mt-1 animate-pulse" />
                                       )}
                                     </div>
                                     <p className="text-xs text-slate-600 leading-relaxed mb-1">
                                       {notif.mensagem}
                                     </p>
-                                    <span className="text-[9px] text-slate-400 font-bold font-mono">
+                                    <span className="text-[10px] text-slate-400 font-semibold font-mono">
                                       {new Date(notif.dataCriacao).toLocaleString("pt-BR", {
                                         day: "2-digit",
                                         month: "2-digit",
@@ -4229,17 +3981,17 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
               <button
                 onClick={handleLogout}
-                className="bg-emerald-900/40 hover:bg-red-900/20 border border-emerald-700/50 hover:border-red-500/30 text-white hover:text-red-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                className="bg-emerald-900/40 hover:bg-rose-900/30 border border-emerald-700/50 hover:border-rose-500/40 text-white hover:text-rose-200 px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[40px]"
                 title="Sair do Portal"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                Sair
+                <span>Sair</span>
               </button>
             </div>
           )}
           <button
             onClick={onBackToHome}
-            className="bg-white/10 hover:bg-white/15 text-white border border-white/10 px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer"
+            className="bg-white/10 hover:bg-white/15 text-white border border-white/15 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[40px] shrink-0"
           >
             Voltar ao Site
           </button>
@@ -4583,57 +4335,109 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               animate={{ opacity: 1, scale: 1 }}
               className="bg-white rounded-3xl border border-rose-100 shadow-xl p-8 max-w-md w-full text-center space-y-6"
             >
-              <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto text-rose-500 animate-pulse">
-                <Lock className="w-8 h-8" />
-              </div>
-              
-              <div className="space-y-2">
-                <h2 className="font-display font-extrabold text-xl text-slate-800 leading-tight">
-                  {getSubscriptionStatus(currentPartner).isTrial ? "Período de Teste de 3 Dias Finalizado" : "Licença Anual Vencida"}
-                </h2>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  Olá, <strong className="text-slate-700">{currentPartner.nome}</strong>. 
-                  {getSubscriptionStatus(currentPartner).isTrial ? (
-                    " Seu período de teste gratuito de 3 dias chegou ao fim. Para liberar o seu acesso por 1 ano completo e continuar indicando empresas, acompanhando seus ganhos e usando o Caça-Leads, efetue o pagamento do seu plano."
-                  ) : (
-                    " A sua licença anual do Portal de Parceiros expirou. Regularize o seu pagamento para garantir acesso completo e irrestrito por mais 1 ano."
-                  )}
-                </p>
-              </div>
+              {(() => {
+                const sub = getSubscriptionStatus(currentPartner);
+                const isManualBlocked = sub.isManualBlocked || currentPartner.statusManual === "bloqueado" || currentPartner.status === "bloqueado";
 
-              <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 text-xs text-amber-800 flex items-start gap-3 text-left">
-                <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold">Como funciona a liberação?</p>
-                  <p className="mt-1 text-amber-700/90 leading-relaxed">
-                    Você pode efetuar o pagamento diretamente via Hubla usando o botão abaixo. Assim que aprovado, seu painel será liberado de forma totalmente automática!
-                  </p>
-                </div>
-              </div>
+                if (isManualBlocked) {
+                  return (
+                    <>
+                      <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto text-rose-500 animate-pulse">
+                        <Lock className="w-8 h-8" />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h2 className="font-display font-extrabold text-xl text-slate-800 leading-tight">
+                          Acesso Suspenso / Bloqueado
+                        </h2>
+                        <p className="text-sm text-slate-500 leading-relaxed">
+                          Olá, <strong className="text-slate-700">{currentPartner.nome}</strong>. O seu acesso ao Portal de Parceiros foi temporariamente suspenso ou bloqueado pela administração da PROSFEC.
+                        </p>
+                      </div>
 
-              <div className="pt-2 space-y-3">
-                <a
-                  href={getPaymentLinkForPlan(currentPartner.plano || "STARTER")}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold py-3.5 px-6 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Coins className="w-4 h-4" />
-                  Efetuar Pagamento na Hubla
-                </a>
+                      <div className="bg-rose-50/70 border border-rose-100 rounded-2xl p-4 text-xs text-rose-800 flex items-start gap-3 text-left">
+                        <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold">Como reativar o acesso?</p>
+                          <p className="mt-1 text-rose-700/90 leading-relaxed">
+                            Para consultar o motivo do bloqueio ou solicitar a liberação do seu painel, entre em contato direto com a administração.
+                          </p>
+                        </div>
+                      </div>
 
-                <a
-                  href={`https://api.whatsapp.com/send?phone=5598987353253&text=${encodeURIComponent(
-                    `Olá, sou o parceiro ${currentPartner.nome} (ID: ${currentPartner.id}) e gostaria de regularizar minha assinatura no Portal de Parceiros da PROSFEC para reativar meu acesso!`
-                  )}`}
-                  target="_blank"
-                  referrerPolicy="no-referrer"
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3 px-6 rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Send className="w-4 h-4" />
-                  Regularizar via WhatsApp
-                </a>
-              </div>
+                      <div className="pt-2 space-y-3">
+                        <a
+                          href={`https://api.whatsapp.com/send?phone=5598987353253&text=${encodeURIComponent(
+                            `Olá, sou o parceiro ${currentPartner.nome} (ID: ${currentPartner.id}) e meu acesso ao Portal de Parceiros está bloqueado. Gostaria de solicitar a análise e reativação da minha conta.`
+                          )}`}
+                          target="_blank"
+                          referrerPolicy="no-referrer"
+                          className="w-full bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold py-3.5 px-6 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Send className="w-4 h-4" />
+                          Falar com o Suporte / Administração
+                        </a>
+                      </div>
+                    </>
+                  );
+                }
+
+                return (
+                  <>
+                    <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto text-rose-500 animate-pulse">
+                      <Lock className="w-8 h-8" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h2 className="font-display font-extrabold text-xl text-slate-800 leading-tight">
+                        {sub.isTrial ? "Período de Teste de 3 Dias Finalizado" : "Licença Anual Vencida"}
+                      </h2>
+                      <p className="text-sm text-slate-500 leading-relaxed">
+                        Olá, <strong className="text-slate-700">{currentPartner.nome}</strong>. 
+                        {sub.isTrial ? (
+                          " Seu período de teste gratuito de 3 dias chegou ao fim. Para liberar o seu acesso por 1 ano completo e continuar indicando empresas, acompanhando seus ganhos e usando o Caça-Leads, efetue o pagamento do seu plano."
+                        ) : (
+                          " A sua licença anual do Portal de Parceiros expirou. Regularize o seu pagamento para garantir acesso completo e irrestrito por mais 1 ano."
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 text-xs text-amber-800 flex items-start gap-3 text-left">
+                      <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">Como funciona a liberação?</p>
+                        <p className="mt-1 text-amber-700/90 leading-relaxed">
+                          Você pode efetuar o pagamento diretamente via Hubla usando o botão abaixo. Assim que aprovado, seu painel será liberado de forma totalmente automática!
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 space-y-3">
+                      <a
+                        href={getPaymentLinkForPlan(currentPartner.plano || "STARTER")}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold py-3.5 px-6 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Coins className="w-4 h-4" />
+                        Efetuar Pagamento na Hubla
+                      </a>
+
+                      <a
+                        href={`https://api.whatsapp.com/send?phone=5598987353253&text=${encodeURIComponent(
+                          `Olá, sou o parceiro ${currentPartner.nome} (ID: ${currentPartner.id}) e gostaria de regularizar minha assinatura no Portal de Parceiros da PROSFEC para reativar meu acesso!`
+                        )}`}
+                        target="_blank"
+                        referrerPolicy="no-referrer"
+                        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3 px-6 rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Send className="w-4 h-4" />
+                        Regularizar via WhatsApp
+                      </a>
+                    </div>
+                  </>
+                );
+              })()}
             </motion.div>
           </div>
         ) : (
@@ -4644,41 +4448,43 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             {/* Sidebar Left Column */}
             <div className="contents lg:flex lg:flex-col lg:w-80 shrink-0 lg:space-y-6 lg:sticky lg:top-6">
               {/* Profile Card & Commission Info */}
-              <div className="order-1 lg:order-none bg-[#0A3D2E] text-white p-6 rounded-3xl relative overflow-hidden shadow-md flex flex-col justify-between border border-emerald-500/15 min-h-[220px]">
-                <div className="absolute right-[-40px] top-[-40px] w-36 h-36 rounded-full bg-emerald-600/10 pointer-events-none" />
-                <div className="space-y-4">
+              <div className="order-1 lg:order-none bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-sm flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
+                <div className="absolute right-[-30px] top-[-30px] w-32 h-32 rounded-full bg-emerald-500/10 pointer-events-none" />
+                <div className="space-y-4 relative z-10">
                   <div className="flex items-start justify-between">
-                    <span className="bg-emerald-500/20 text-emerald-300 font-extrabold text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-full">
+                    <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md border border-emerald-500/30">
                       Área do Parceiro
                     </span>
-                    <Handshake className="w-5 h-5 text-emerald-400" />
+                    <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300">
+                      <Handshake className="w-5 h-5 text-emerald-300" />
+                    </div>
                   </div>
                   <div>
-                    <h2 className="font-display font-extrabold text-lg leading-tight text-white">{currentPartner?.nome}</h2>
-                    <p className="text-xs text-emerald-200 mt-1 truncate">E-mail: {currentPartner?.email}</p>
-                    <p className="text-[10px] text-emerald-300 font-mono mt-0.5">ID: {currentPartner?.id}</p>
+                    <h2 className="font-extrabold text-lg leading-tight text-white">{currentPartner?.nome}</h2>
+                    <p className="text-xs text-emerald-200/90 mt-1 truncate">E-mail: {currentPartner?.email}</p>
+                    <p className="text-[11px] text-emerald-300/80 font-mono mt-0.5">ID: {currentPartner?.id}</p>
                   </div>
                 </div>
 
-                <div className="mt-6 border-t border-emerald-800/60 pt-4 grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-[10px] text-emerald-300 uppercase block font-bold">Sua Comissão</span>
+                <div className="mt-5 border-t border-emerald-800/60 pt-4 grid grid-cols-2 gap-3 relative z-10">
+                  <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
+                    <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Sua Comissão</span>
                     {isFranquiaDigital(currentPartner?.plano) ? (
-                      <div className="space-y-0.5 mt-0.5">
-                        <span className="text-base font-black text-emerald-100 block">3,0% Direto</span>
+                      <div className="space-y-0.5 mt-1">
+                        <span className="text-base font-extrabold text-emerald-100 font-mono block">3,0% Direto</span>
                         <span className="text-[9px] text-emerald-300 font-medium block leading-tight">
-                          Repasse Equipe: 1,5% s/ Exec / 2,5% s/ Starter
+                          Equipe: 1,5% Exec / 2,5% Start
                         </span>
                       </div>
                     ) : (
-                      <span className="text-base font-black text-emerald-100 block mt-1">
+                      <span className="text-base font-extrabold text-emerald-100 font-mono block mt-1">
                         {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%
                       </span>
                     )}
                   </div>
-                  <div>
-                    <span className="text-[10px] text-emerald-300 uppercase block font-bold">Chave Pix</span>
-                    <span className="text-xs font-mono font-bold text-emerald-200 truncate block" title={currentPartner?.chavePix}>
+                  <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
+                    <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Chave Pix</span>
+                    <span className="text-xs font-mono font-bold text-emerald-200 truncate block mt-1" title={currentPartner?.chavePix}>
                       {currentPartner?.chavePix || "Não informada"}
                     </span>
                   </div>
@@ -4686,8 +4492,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               </div>
 
               {/* Vertical Navigation Tabs */}
-              <div className="order-3 lg:order-none bg-white rounded-3xl border border-slate-200/80 p-3 shadow-xs flex flex-col gap-1 text-left">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 py-1 mb-1 block">Navegação do Portal</span>
+              <div className="order-3 lg:order-none bg-white rounded-2xl border border-slate-200/80 p-2.5 shadow-xs flex flex-col gap-1 text-left">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 mb-0.5 block">Navegação do Portal</span>
                 
                 <button
                   onClick={() => handleTabClick("dashboard")}
@@ -4698,13 +4504,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <LayoutDashboard className={`w-4 h-4 ${activeTab === "dashboard" ? "text-[#00A86B]" : "text-slate-400"}`} />
+                    <LayoutDashboard className={`w-5 h-5 ${activeTab === "dashboard" ? "text-[#00A86B]" : "text-slate-400"}`} strokeWidth={2} />
                     Dashboard
                   </span>
                   {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                   ) : (
-                    <ChevronRight className={`w-3.5 h-3.5 text-slate-300 transition-transform ${activeTab === "dashboard" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} />
+                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "dashboard" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                   )}
                 </button>
 
@@ -4717,13 +4523,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <ClipboardList className={`w-4 h-4 ${activeTab === "leads" ? "text-[#00A86B]" : "text-slate-400"}`} />
+                    <ClipboardList className={`w-5 h-5 ${activeTab === "leads" ? "text-[#00A86B]" : "text-slate-400"}`} strokeWidth={2} />
                     Meus Leads ({leads.length})
                   </span>
                   {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                   ) : (
-                    <ChevronRight className={`w-3.5 h-3.5 text-slate-300 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} />
+                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                   )}
                 </button>
 
@@ -4737,16 +4543,16 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     }`}
                   >
                     <span className="flex items-center gap-2.5">
-                      <Search className={`w-4 h-4 ${activeTab === "caca-leads" ? "text-[#00A86B] animate-pulse" : "text-emerald-600"}`} />
+                      <Search className={`w-5 h-5 ${activeTab === "caca-leads" ? "text-[#00A86B] animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
                       <span className="flex items-center gap-1">
                         Caça Leads
                         <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
                       </span>
                     </span>
                     {!isProfileComplete(currentPartner) ? (
-                      <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                     ) : (
-                      <ChevronRight className={`w-3.5 h-3.5 text-slate-300 transition-transform ${activeTab === "caca-leads" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} />
+                      <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "caca-leads" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                     )}
                   </button>
                 )}
@@ -4761,40 +4567,38 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     }`}
                   >
                     <span className="flex items-center gap-2.5">
-                      <Users className={`w-4 h-4 ${activeTab === "equipe" ? "text-[#00A86B] animate-pulse" : "text-emerald-600"}`} />
+                      <Users className={`w-5 h-5 ${activeTab === "equipe" ? "text-[#00A86B] animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
                       Minha Equipe ({teamMembers.length})
                     </span>
                     {!isProfileComplete(currentPartner) ? (
-                      <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                     ) : (
-                      <ChevronRight className={`w-3.5 h-3.5 text-slate-300 transition-transform ${activeTab === "equipe" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} />
+                      <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "equipe" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                     )}
                   </button>
                 )}
 
-                {!currentPartner?.plano?.toUpperCase().includes("AFILIADO") && (
-                  <button
-                    onClick={() => handleTabClick("consultas")}
-                    className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer text-left flex items-center justify-between group ${
-                      activeTab === "consultas"
-                        ? "bg-emerald-50 text-[#0A3D2E] border-l-4 border-[#00A86B]"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Coins className={`w-4 h-4 ${activeTab === "consultas" ? "text-[#00A86B] animate-pulse" : "text-blue-600"}`} />
-                      <span className="flex items-center gap-1">
-                        Consultas de Crédito
-                        <span className="bg-blue-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
-                      </span>
+                <button
+                  onClick={() => handleTabClick("servicos-contabilidade")}
+                  className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer text-left flex items-center justify-between group ${
+                    activeTab === "servicos-contabilidade"
+                      ? "bg-emerald-50 text-[#0A3D2E] border-l-4 border-[#00A86B]"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent"
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Calculator className={`w-5 h-5 ${activeTab === "servicos-contabilidade" ? "text-[#00A86B] animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
+                    <span className="flex items-center gap-1">
+                      Serviços Contábeis
+                      <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
                     </span>
-                    {!isProfileComplete(currentPartner) ? (
-                      <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                    ) : (
-                      <ChevronRight className={`w-3.5 h-3.5 text-slate-300 transition-transform ${activeTab === "consultas" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} />
-                    )}
-                  </button>
-                )}
+                  </span>
+                  {!isProfileComplete(currentPartner) ? (
+                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+                  ) : (
+                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "servicos-contabilidade" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+                  )}
+                </button>
 
                 <button
                   onClick={() => handleTabClick("perfil")}
@@ -4805,13 +4609,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <User className={`w-4 h-4 ${activeTab === "perfil" ? "text-[#00A86B]" : "text-slate-400"}`} />
+                    <User className={`w-5 h-5 ${activeTab === "perfil" ? "text-[#00A86B]" : "text-slate-400"}`} strokeWidth={2} />
                     Meu Perfil
                     {!isProfileComplete(currentPartner) && (
                       <span className="bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase ml-1 animate-pulse">Obrigatório</span>
                     )}
                   </span>
-                  <ChevronRight className={`w-3.5 h-3.5 text-slate-300 transition-transform ${activeTab === "perfil" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} />
+                  <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "perfil" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                 </button>
 
                 <button
@@ -4823,13 +4627,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <FileText className={`w-4 h-4 ${activeTab === "terms" ? "text-[#00A86B]" : "text-slate-400"}`} />
+                    <FileText className={`w-5 h-5 ${activeTab === "terms" ? "text-[#00A86B]" : "text-slate-400"}`} strokeWidth={2} />
                     Contrato de Parceria
                   </span>
                   {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                   ) : (
-                    <ChevronRight className={`w-3.5 h-3.5 text-slate-300 transition-transform ${activeTab === "terms" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} />
+                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "terms" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                   )}
                 </button>
               </div>
@@ -4838,17 +4642,19 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             {/* Content Right Column */}
             <div className="contents lg:flex lg:flex-col lg:flex-grow lg:w-full lg:space-y-6 lg:min-w-0">
               {/* Unique Indicator Link Card */}
-              <div className="order-2 lg:order-none bg-gradient-to-r from-[#064e3b] via-[#047857] to-[#064e3b] text-white p-6 rounded-3xl border border-emerald-400/30 shadow-lg flex flex-col justify-between relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-400/20 transition-all" />
+              <div className="order-2 lg:order-none bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl border border-emerald-500/20 shadow-sm flex flex-col justify-between relative overflow-hidden">
                 <div className="space-y-4 relative z-10">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="bg-emerald-500/20 p-2 rounded-xl text-emerald-300 border border-emerald-400/30">
+                      <div className="bg-emerald-950/70 p-2.5 rounded-xl text-emerald-300 border border-emerald-700/40 shrink-0">
                         <TrendingUp className="w-5 h-5 text-emerald-300" />
                       </div>
-                      <h3 className="font-display font-extrabold text-base text-white">Seu Link Exclusivo de Indicação</h3>
+                      <div>
+                        <h3 className="font-extrabold text-base text-white">Seu Link Exclusivo de Indicação</h3>
+                        <p className="text-[11px] text-emerald-300/80 font-medium">Divulgação com rastreamento persistente</p>
+                      </div>
                     </div>
-                    <span className="text-[9px] bg-emerald-500/20 text-emerald-200 font-mono font-extrabold px-2.5 py-1 rounded-full border border-emerald-400/30 uppercase tracking-widest">
+                    <span className="text-[10px] bg-emerald-500/20 text-[#00A86B] font-mono font-bold px-2.5 py-1 rounded-md border border-emerald-500/30 uppercase tracking-wider">
                       Rastreamento Ativo
                     </span>
                   </div>
@@ -4857,32 +4663,44 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     Divulgue seu link para sua carteira de clientes, contatos de WhatsApp, contadores e redes sociais. Todo faturamento e simulação gerados por meio desse link serão vinculados automaticamente a você na nossa base de dados.
                   </p>
 
-                  <div className="bg-[#032e22]/90 p-4 rounded-2xl border border-emerald-500/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-inner">
-                    <span className="text-xs font-mono font-bold text-emerald-300 select-all break-all pr-4 py-1">
-                      {window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref={currentPartner?.id}
-                    </span>
+                  <div className="bg-emerald-950/60 p-3.5 sm:p-4 rounded-xl border border-emerald-800/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">URL do seu Link</span>
+                      <span className="text-xs font-mono font-bold text-emerald-200 select-all break-all block mt-0.5" title={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref=${currentPartner?.id}`}>
+                        {window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref={currentPartner?.id}
+                      </span>
+                    </div>
                     <button
                       onClick={copyReferralLink}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0 ${
+                      className={`px-4 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-2 shrink-0 min-h-[44px] ${
                         copiedLink 
-                          ? "bg-emerald-400 text-slate-950 animate-pulse font-mono" 
-                          : "bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black shadow-md"
+                          ? "bg-emerald-400 text-slate-950 font-bold font-mono" 
+                          : "bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold shadow-sm"
                       }`}
                     >
-                      <Copy className="w-3.5 h-3.5" />
-                      {copiedLink ? "Copiado!" : "Copiar Link"}
+                      {copiedLink ? (
+                        <>
+                          <Check className="w-4 h-4 text-slate-950" />
+                          <span>Link Copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 text-slate-950" />
+                          <span>Copiar Link</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-emerald-800/60 flex flex-wrap gap-4 text-xs relative z-10 font-mono">
-                  <div className="flex items-center gap-1.5 text-emerald-300 text-[11px]">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    <span>Afiliação Ativa &bull; Token Seguro</span>
+                <div className="mt-4 pt-3.5 border-t border-emerald-800/60 flex flex-wrap gap-4 text-xs relative z-10 font-mono">
+                  <div className="flex items-center gap-2 text-emerald-300 text-[11px]">
+                    <div className="w-2 h-2 rounded-full bg-[#00A86B] animate-pulse" />
+                    <span>Afiliação Ativa &bull; ID: {currentPartner?.id}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-emerald-200/80 text-[11px]">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span>Rastreamento persistente via navegador (Cookies/LocalState)</span>
+                  <div className="flex items-center gap-2 text-emerald-200/80 text-[11px]">
+                    <div className="w-2 h-2 rounded-full bg-[#00A86B]" />
+                    <span>Rastreamento persistente via navegador</span>
                   </div>
                 </div>
               </div>
@@ -4993,8 +4811,28 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </div>
                   )}
 
-                  {/* Status Indicator Cards */}
+                  {/* Status & Quick Metrics Cards */}
                   {(() => {
+                    if (fetchLoading) {
+                      return (
+                        <div className="space-y-4">
+                          {/* Skeletons 3 Cards Quick Metrics */}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+                            <div className="bg-slate-200/70 animate-pulse rounded-2xl h-24 w-full border border-slate-200" />
+                            <div className="bg-slate-200/70 animate-pulse rounded-2xl h-24 w-full border border-slate-200" />
+                            <div className="bg-slate-200/70 animate-pulse rounded-2xl h-24 w-full border border-slate-200" />
+                          </div>
+                          {/* Skeleton 2 Cards Saldos */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+                            <div className="bg-slate-200/70 animate-pulse rounded-2xl h-28 w-full border border-slate-200" />
+                            <div className="bg-slate-200/70 animate-pulse rounded-2xl h-28 w-full border border-slate-200" />
+                          </div>
+                          {/* Skeleton Saldo / Comissão Hero Card */}
+                          <div className="bg-slate-200/70 animate-pulse rounded-2xl h-44 sm:h-36 w-full border border-slate-200" />
+                        </div>
+                      );
+                    }
+
                     const directMultiplier = getDirectCommissionMultiplier(currentPartner?.plano);
                     
                     // Direct commission stats (Calculated both from servicoPago/comissaoPaga and comissaoMultinivel snapshot)
@@ -5043,147 +4881,214 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       .reduce((acc, l) => acc + (l.valorAprovado || 0), 0);
 
                     return (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0">
-                          <div className="bg-emerald-50 p-2.5 rounded-xl text-emerald-700 border border-emerald-200/60 shrink-0">
-                            <Users className="w-5 h-5" />
+                      <div className="space-y-4">
+                        {/* LINHA 1: Quick Metrics Grid (Desempenho: Total Indicados, Em Atendimento, Crédito Aprovado Real) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                          {/* Card 1: Total Indicados */}
+                          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3.5 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
+                              <Users className="w-5 h-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide truncate">Total Indicados</span>
+                              <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 mt-0.5 block truncate">{leads.length}</span>
+                              <span className="text-[10px] text-slate-400 font-medium block truncate">Empresas cadastradas</span>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-[10px] text-slate-400 uppercase block font-bold font-mono truncate">Total Indicados</span>
-                            <span className="text-xl font-black text-slate-800 font-display mt-0.5 block truncate">{leads.length}</span>
+
+                          {/* Card 2: Em Atendimento */}
+                          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3.5 relative overflow-hidden group hover:border-amber-500/40 transition-all min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0">
+                              <RefreshCw className="w-5 h-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide truncate">Em Atendimento</span>
+                              <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 mt-0.5 block truncate">
+                                {leads.filter(l => l.status === "em atendimento" || l.status === "novo").length}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium block truncate">Esteira em andamento</span>
+                            </div>
+                          </div>
+
+                          {/* Card 3: Crédito Aprovado Real */}
+                          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3.5 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0 sm:col-span-2 lg:col-span-1">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
+                              <CheckCircle2 className="w-5 h-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide truncate">Crédito Aprovado Real</span>
+                              <span className="text-xl sm:text-2xl font-extrabold font-mono text-[#00A86B] block mt-0.5 truncate" title={formatCurrencyBRL(totalApprovedCredit)}>
+                                {formatCurrencyBRL(totalApprovedCredit)}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium block mt-0.5 truncate">
+                                {leads.filter(l => l.etapa === 7 || l.status === "concluido").length} empresas aprovadas
+                              </span>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0">
-                          <div className="bg-emerald-50 p-2.5 rounded-xl text-emerald-700 border border-emerald-200/60 shrink-0">
-                            <RefreshCw className="w-5 h-5" />
+                        {/* LINHA 2: Dedicated Saldos Grid (Recargas e Saldos: Saldo Geral vs. Saldo Caça-Leads) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 text-left">
+                          {/* Saldo Geral (Consultas e Serviços) */}
+                          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
+                                  <Wallet className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide">
+                                    Saldo Geral (Consultas e Serviços)
+                                  </span>
+                                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                                    Cobre Consultas de Crédito e Serviços Contábeis
+                                  </p>
+                                </div>
+                              </div>
+                              <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-100 uppercase tracking-wider shrink-0">
+                                Unificado
+                              </span>
+                            </div>
+
+                            <div className="flex items-baseline justify-between pt-1 border-t border-slate-50">
+                              <div>
+                                <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 block truncate">
+                                  {formatCurrencyBRL(
+                                    currentPartner?.saldoGeral !== undefined
+                                      ? Number(currentPartner.saldoGeral)
+                                      : (currentPartner?.saldoConsultas !== undefined ? Number(currentPartner.saldoConsultas) : 0)
+                                  )}
+                                </span>
+                                <span className="text-[10px] text-emerald-700 font-bold block mt-0.5">
+                                  Disponível para uso imediato
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setShowRechargeModal(true)}
+                                className="px-3.5 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-extrabold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px]"
+                              >
+                                <Coins className="w-3.5 h-3.5 text-emerald-300" />
+                                <span>Adicionar Saldo</span>
+                              </button>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-[10px] text-slate-400 uppercase block font-bold font-mono truncate">Em Atendimento</span>
-                            <span className="text-xl font-black text-slate-800 font-display mt-0.5 block truncate">
-                              {leads.filter(l => l.status === "em atendimento" || l.status === "novo").length}
-                            </span>
+
+                          {/* Saldo Caça Leads (buscas) */}
+                          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-100 flex items-center justify-center shrink-0">
+                                  <Search className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide">
+                                    Saldo Caça Leads (buscas)
+                                  </span>
+                                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                                    Buscas de empresas e sócios ativas em tempo real
+                                  </p>
+                                </div>
+                              </div>
+                              <span className="bg-teal-50 text-teal-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-teal-100 uppercase tracking-wider shrink-0">
+                                Por Pacotes
+                              </span>
+                            </div>
+
+                            <div className="flex items-baseline justify-between pt-1 border-t border-slate-50">
+                              <div>
+                                <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 block truncate">
+                                  {currentPartner?.cacaLeadsCredits || 0}{" "}
+                                  <span className="text-xs text-slate-500 font-bold uppercase font-sans">buscas</span>
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
+                                  Retorno de até 20 leads/busca
+                                </span>
+                              </div>
+                              {isSubMember ? (
+                                <div 
+                                  className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-slate-400 text-[11px] font-bold rounded-xl flex items-center gap-1.5 shrink-0 cursor-not-allowed select-none"
+                                  title="Seus créditos de busca são gerenciados e distribuídos pelo seu Líder/Master de equipe."
+                                >
+                                  <Lock className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Distribuído pelo Master</span>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setRefillNotifySuccess(false);
+                                    setRefillStep(1);
+                                    setRefillCopiedPix(false);
+                                    setShowRefillModal(true);
+                                  }}
+                                  className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px]"
+                                >
+                                  <Coins className="w-3.5 h-3.5 text-amber-300" />
+                                  <span>Adquirir Recarga</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
 
-                        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0">
-                          <div className="bg-emerald-50 p-2.5 rounded-xl text-emerald-700 border border-emerald-200/60 shrink-0">
-                            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-[10px] text-slate-400 uppercase block font-bold font-mono truncate">Crédito Aprovado Real</span>
-                            <span className="text-sm font-black text-emerald-700 block mt-0.5 truncate font-display" title={formatCurrencyBRL(totalApprovedCredit)}>
-                              {formatCurrencyBRL(totalApprovedCredit)}
-                            </span>
-                            <span className="text-[9px] text-slate-400 block mt-0.5 font-mono truncate">
-                              {leads.filter(l => l.etapa === 7 || l.status === "concluido").length} empresas aprovadas
-                            </span>
-                          </div>
-                        </div>
+                        {/* LINHA 3: Saldo e Comissões Hero Card (Suas Comissões & Repasses) */}
+                        <div className="bg-gradient-to-br from-[#0A3D2E] via-[#064E3B] to-[#047857] text-white p-5 sm:p-6 rounded-2xl border border-emerald-400/30 shadow-md relative overflow-hidden">
+                          <div className="absolute right-0 top-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+                          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+                            <div className="space-y-2 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-emerald-300 shrink-0">
+                                  <Coins className="w-5 h-5 text-emerald-300" />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-emerald-300 block">
+                                    Suas Comissões & Repasses
+                                  </span>
+                                  <span className="text-xs text-emerald-100/90 font-medium">Saldo total liberado e pendente de liquidação</span>
+                                </div>
+                              </div>
 
-                        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0">
-                          <div className="bg-emerald-50 p-2.5 rounded-xl text-emerald-700 border border-emerald-200/60 shrink-0">
-                            <Coins className="w-5 h-5 text-emerald-600" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="text-[10px] text-slate-400 uppercase block font-bold font-mono truncate">Suas Comissões</span>
+                              <div className="pt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                                <div className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight" title={formatCurrencyBRL(totalPaidCommissions)}>
+                                  {formatCurrencyBRL(totalPaidCommissions)}
+                                </div>
+                                <span className="text-xs font-bold font-mono text-emerald-300 bg-emerald-950/60 px-2.5 py-0.5 rounded-md border border-emerald-500/30">
+                                  Pagas e Liberadas
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Secondary sub-metrics and CTA */}
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                              <div className="bg-emerald-950/70 border border-emerald-500/30 p-3 rounded-xl min-w-[170px]">
+                                <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider block">
+                                  Comissões Pendentes
+                                </span>
+                                <span className="text-lg font-extrabold font-mono text-amber-300 block mt-0.5" title={formatCurrencyBRL(totalPendingCommissions)}>
+                                  {formatCurrencyBRL(totalPendingCommissions)}
+                                </span>
+                                <span className="text-[10px] text-emerald-200/80 font-medium block">Aguardando liquidação</span>
+                              </div>
+
                               <button
                                 onClick={() => {
                                   setPayoutPixKey(currentPartner?.chavePix || "");
                                   setCommissionPayoutSuccess(null);
                                   setShowCommissionPayoutModal(true);
                                 }}
-                                className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer transition-all shadow-2xs"
+                                className="bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold px-4 py-3 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer shrink-0 min-h-[44px]"
                                 title="Solicitar saque/repasse das comissões liberadas"
                               >
-                                Solicitar Comissão
+                                <Coins className="w-4 h-4 text-slate-950 shrink-0" />
+                                <span>Solicitar Comissão</span>
                               </button>
-                            </div>
-                            <div className="flex flex-col gap-1 mt-1 font-mono text-[10px]">
-                              <div className="flex items-center justify-between gap-1 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-lg min-w-0">
-                                <span className="text-emerald-800 font-semibold shrink-0">Pagas:</span>
-                                <span className="font-extrabold text-emerald-800 truncate text-right font-mono" title={formatCurrencyBRL(totalPaidCommissions)}>{formatCurrencyBRL(totalPaidCommissions)}</span>
-                              </div>
-                              <div className="flex items-center justify-between gap-1 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-lg min-w-0">
-                                <span className="text-amber-800 font-semibold shrink-0">Pendentes:</span>
-                                <span className="font-extrabold text-amber-800 truncate text-right font-mono" title={formatCurrencyBRL(totalPendingCommissions)}>{formatCurrencyBRL(totalPendingCommissions)}</span>
-                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     );
                   })()}
-
-                  {/* Franquia Digital Franchise Summary Overview */}
-                  {isFranquiaDigital(currentPartner?.plano) && (
-                    <div className="bg-gradient-to-r from-emerald-900 to-teal-950 p-6 rounded-3xl border border-emerald-500/20 text-white shadow-md space-y-4 text-left">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-emerald-800/60 pb-3">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-5 h-5 text-emerald-400" />
-                          <div>
-                            <h3 className="font-display font-extrabold text-sm uppercase tracking-wider text-emerald-300">Desempenho Master Partner</h3>
-                            <p className="text-[10px] text-emerald-200">Visão consolidada da sua equipe de consultores autônomos</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setActiveTab("equipe")}
-                          className="px-3 py-1.5 bg-emerald-700/50 hover:bg-emerald-600/50 border border-emerald-500/30 rounded-lg text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1"
-                        >
-                          Gerenciar Consultores
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
-                      </div>
-
-                      {(() => {
-                        const totalConcludedTeamOverride = teamLeads
-                          .filter(l => l.status === "concluido")
-                          .reduce((acc, l) => acc + ((l.valorAprovado || l.limiteEstimado || 0) * getOverrideMultiplierForLead(l)), 0);
-
-                        const totalDirectConcludedComm = leads
-                          .filter(l => l.status === "concluido")
-                          .reduce((acc, l) => acc + ((l.valorAprovado || l.limiteEstimado || 0) * getDirectCommissionMultiplier(currentPartner?.plano)), 0);
-
-                        return (
-                          <>
-                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-1">
-                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Membros na Equipe</span>
-                                <span className="text-xl font-black text-white block mt-0.5">{teamMembers.length}</span>
-                              </div>
-                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Leads da Equipe</span>
-                                <span className="text-xl font-black text-white block mt-0.5">{teamLeads.length}</span>
-                              </div>
-                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Faturamento Equipe Concluído</span>
-                                <span className="text-sm font-black text-white block mt-1">
-                                  {formatCurrencyBRL(teamLeads.filter(l => l.status === "concluido").reduce((acc, l) => acc + (l.limiteEstimado || 0), 0))}
-                                </span>
-                              </div>
-                              <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-amber-300 block tracking-wider font-mono">Override Equipe Dinâmico</span>
-                                <span className="text-sm font-black text-amber-300 block mt-1">
-                                  {formatCurrencyBRL(totalConcludedTeamOverride)}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between text-xs text-emerald-100 gap-2">
-                              <div className="flex items-center gap-1.5">
-                                <Coins className="w-4 h-4 text-emerald-400 shrink-0" />
-                                <span>Seus Ganhos Diretos Concluídos ({(getDirectCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%): <strong>{formatCurrencyBRL(totalDirectConcludedComm)}</strong></span>
-                              </div>
-                              <div className="font-extrabold text-emerald-300 text-sm sm:text-right">
-                                Total Geral Acumulado: {formatCurrencyBRL(totalDirectConcludedComm + totalConcludedTeamOverride)}
-                              </div>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  )}
 
                   {/* DESEMPENHO & CONTROLE FINANCEIRO DE SERVIÇOS (PASSO 6) - COMISSÃO TIERED */}
                   {(() => {
@@ -5246,7 +5151,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                       if (rawServices.length === 0) return;
 
-                      const parsedServices: ServiceItem[] = rawServices.map((s: any, idx: number) => {
+                      // Synchronize with active catalog prices and names dynamically
+                      const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
+
+                      const parsedServices: ServiceItem[] = syncedServices.map((s: any, idx: number) => {
                         const precoNum = typeof s.preco === "number" 
                           ? s.preco 
                           : typeof s.valor === "number" 
@@ -5362,7 +5270,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         const consultantName = member?.nome || "Consultor da Equipe";
                         const teamOverrideRate = getMasterTeamServiceOverrideRate(consultantPlan);
 
-                        const parsedServices: ServiceItem[] = rawServices.map((s: any, idx: number) => {
+                        // Synchronize with active catalog prices and names dynamically
+                        const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
+
+                        const parsedServices: ServiceItem[] = syncedServices.map((s: any, idx: number) => {
                           const precoNum = typeof s.preco === "number" 
                             ? s.preco 
                             : typeof s.valor === "number" 
@@ -5517,16 +5428,16 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     });
 
                     return (
-                      <div className="bg-white p-5 sm:p-7 rounded-3xl border border-slate-200/90 shadow-xs space-y-6 text-left">
+                      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-6 text-left">
                         {/* Section Header */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                           <div className="flex items-start sm:items-center gap-3">
-                            <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-200/70 shrink-0">
+                            <div className="p-2.5 bg-emerald-50 text-[#00A86B] rounded-xl border border-emerald-100 shrink-0">
                               <Receipt className="w-5 h-5" />
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <h3 className="font-display font-black text-base sm:text-lg text-slate-800 tracking-tight">
+                                <h3 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight">
                                   Desempenho & Controle Financeiro de Serviços (Passo 6)
                                 </h3>
                               </div>
@@ -5537,7 +5448,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2 shrink-0">
-                            <span className="text-[10px] font-black uppercase font-mono tracking-wider px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            <span className="text-[11px] font-bold uppercase font-mono tracking-wider px-3 py-1.5 rounded-md bg-emerald-50 text-[#00A86B] border border-emerald-200">
                               Margem: {getPlanServiceLabel(partnerPlan)}
                             </span>
                           </div>
@@ -5546,23 +5457,25 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {/* 4 Financial Metric Cards */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                           {/* Card 1: Pendentes */}
-                          <div className="bg-amber-50/40 border border-amber-200/70 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-amber-400/80 transition-all">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-amber-800 font-extrabold uppercase tracking-wide font-mono flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-amber-600" />
-                                Serviços Pendentes
-                              </span>
-                              <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-amber-100/80 text-amber-900 border border-amber-200">
-                                {countPendentes} cliente(s)
-                              </span>
+                          <div className="bg-amber-50/40 border border-amber-200/70 rounded-2xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-amber-400/80 transition-all">
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-1.5 text-[11px] text-amber-800 font-bold uppercase tracking-wider">
+                                <Clock className="w-4 h-4 text-amber-600 shrink-0" strokeWidth={2} />
+                                <span>Serviços Pendentes</span>
+                              </div>
+                              <div>
+                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100/80 text-amber-900 border border-amber-200">
+                                  {countPendentes} {countPendentes === 1 ? "lead pendente" : "leads pendentes"}
+                                </span>
+                              </div>
                             </div>
                             <div>
-                              <div className="text-xl sm:text-2xl font-black text-slate-800 font-display">
+                              <div className="text-base sm:text-lg font-bold font-mono text-slate-900 tracking-tight" title={formatCurrencyBRL(totalServicosPendentes)}>
                                 {formatCurrencyBRL(totalServicosPendentes)}
                               </div>
-                              <div className="mt-1.5 pt-2 border-t border-amber-200/50 flex items-center justify-between text-[11px]">
-                                <span className="text-amber-800 font-semibold">Comissão a receber:</span>
-                                <span className="font-mono font-extrabold text-amber-900">
+                              <div className="mt-2 pt-2 border-t border-amber-200/50 flex items-center justify-between text-[11px]">
+                                <span className="text-amber-800 font-semibold">Comissão prevista:</span>
+                                <span className="font-mono font-bold text-amber-900" title={formatCurrencyBRL(totalComissaoPendente)}>
                                   {formatCurrencyBRL(totalComissaoPendente)}
                                 </span>
                               </div>
@@ -5570,30 +5483,32 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Card 2: Pagos */}
-                          <div className="bg-emerald-50/40 border border-emerald-200/70 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-emerald-400/80 transition-all">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wide font-mono flex items-center gap-1.5">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                Serviços Pagos
-                              </span>
-                              <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-100/80 text-emerald-900 border border-emerald-200">
-                                {countPagos} quitado(s)
-                              </span>
+                          <div className="bg-emerald-50/40 border border-emerald-200/70 rounded-2xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-emerald-400/80 transition-all">
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-1.5 text-[11px] text-emerald-800 font-bold uppercase tracking-wider">
+                                <CheckCircle2 className="w-4 h-4 text-[#00A86B] shrink-0" strokeWidth={2} />
+                                <span>Serviços Pagos</span>
+                              </div>
+                              <div>
+                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100/80 text-emerald-900 border border-emerald-200">
+                                  {countPagos} {countPagos === 1 ? "serviço quitado" : "serviços quitados"}
+                                </span>
+                              </div>
                             </div>
                             <div>
-                              <div className="text-xl sm:text-2xl font-black text-emerald-800 font-display">
+                              <div className="text-base sm:text-lg font-bold font-mono text-[#00A86B] tracking-tight" title={formatCurrencyBRL(totalServicosPagos)}>
                                 {formatCurrencyBRL(totalServicosPagos)}
                               </div>
-                              <div className="mt-1.5 pt-2 border-t border-emerald-200/50 flex flex-col gap-1 text-[11px]">
+                              <div className="mt-2 pt-2 border-t border-emerald-200/50 flex flex-col gap-1 text-[11px]">
                                 <div className="flex items-center justify-between">
                                   <span className="text-emerald-800 font-semibold">Comissão Conquistada:</span>
-                                  <span className="font-mono font-extrabold text-emerald-900">
+                                  <span className="font-mono font-bold text-emerald-900" title={formatCurrencyBRL(totalComissaoPaga)}>
                                     {formatCurrencyBRL(totalComissaoPaga)}
                                   </span>
                                 </div>
                                 {isMasterUser && (totalComissaoDiretaPaga > 0 || totalComissaoEquipePaga > 0) && (
-                                  <div className="flex items-center justify-between text-[10px] font-mono text-emerald-700 pt-0.5 border-t border-emerald-200/40">
-                                    <span>Direta (30%): {formatCurrencyBRL(totalComissaoDiretaPaga)}</span>
+                                  <div className="flex items-center justify-between text-[10px] font-mono text-emerald-700 pt-1 border-t border-emerald-200/40">
+                                    <span>Direta: {formatCurrencyBRL(totalComissaoDiretaPaga)}</span>
                                     <span>Equipe: {formatCurrencyBRL(totalComissaoEquipePaga)}</span>
                                   </div>
                                 )}
@@ -5602,64 +5517,68 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Card 3: Saques & Repasses */}
-                          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-slate-300 transition-all">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-slate-600 font-extrabold uppercase tracking-wide font-mono flex items-center gap-1.5">
-                                <DollarSign className="w-3.5 h-3.5 text-slate-500" />
-                                Repasses Pix Pagos
-                              </span>
-                              <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-slate-200/70 text-slate-700">
-                                {solicitacoesComissao.filter(s => s.status === "pago").length} pago(s)
-                              </span>
+                          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-slate-300 transition-all">
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-1.5 text-[11px] text-slate-600 font-bold uppercase tracking-wider">
+                                <DollarSign className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
+                                <span>Repasses Pix Pagos</span>
+                              </div>
+                              <div>
+                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-200/70 text-slate-700">
+                                  {solicitacoesComissao.filter(s => s.status === "pago").length} repasse(s) pago(s)
+                                </span>
+                              </div>
                             </div>
                             <div>
-                              <div className="text-xl sm:text-2xl font-black text-slate-700 font-display">
+                              <div className="text-base sm:text-lg font-bold font-mono text-slate-800 tracking-tight" title={formatCurrencyBRL(totalSaquesPagos)}>
                                 {formatCurrencyBRL(totalSaquesPagos)}
                               </div>
-                              <div className="mt-1.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                              <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
                                 <span className="text-slate-500 font-medium">Em processamento:</span>
-                                <span className="font-mono font-bold text-amber-700">
+                                <span className="font-mono font-bold text-amber-700" title={formatCurrencyBRL(totalSaquesPendentes)}>
                                   {formatCurrencyBRL(totalSaquesPendentes)}
                                 </span>
                               </div>
                             </div>
                           </div>
 
-                          {/* Card 4: Saldo Disponível para Saque */}
-                          <div className="bg-gradient-to-br from-[#0A3D2E] to-[#04241B] text-white rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3 relative overflow-hidden shadow-xs">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-emerald-300 font-extrabold uppercase tracking-wide font-mono flex items-center gap-1.5">
-                                <Coins className="w-3.5 h-3.5 text-emerald-400" />
-                                Saldo Disponível p/ Saque
-                              </span>
-                              <button
-                                onClick={() => {
-                                  setPayoutPixKey(currentPartner?.chavePix || "");
-                                  setPayoutAmountCustom(saldoDisponivelParaSaque > 0 ? saldoDisponivelParaSaque.toFixed(2) : "0");
-                                  setCommissionPayoutSuccess(null);
-                                  setShowCommissionPayoutModal(true);
-                                }}
-                                disabled={saldoDisponivelParaSaque <= 0}
-                                className="text-[9px] font-mono font-black px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white border border-emerald-400/40 cursor-pointer transition-all shadow-xs"
-                                title="Solicitar saque de comissão via Pix"
-                              >
-                                Solicitar Saque
-                              </button>
+                          {/* Card 4: Saldo Disponível para Saque (Solid #0A3D2E, no gradient) */}
+                          <div className="bg-[#0A3D2E] text-white rounded-2xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden border border-emerald-500/20 shadow-xs">
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-1.5 text-[11px] text-emerald-300 font-bold uppercase tracking-wider">
+                                <Coins className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2} />
+                                <span>Saldo Disponível</span>
+                              </div>
+                              <div>
+                                <button
+                                  onClick={() => {
+                                    setPayoutPixKey(currentPartner?.chavePix || "");
+                                    setPayoutAmountCustom(saldoDisponivelParaSaque > 0 ? saldoDisponivelParaSaque.toFixed(2) : "0");
+                                    setCommissionPayoutSuccess(null);
+                                    setShowCommissionPayoutModal(true);
+                                  }}
+                                  disabled={saldoDisponivelParaSaque <= 0}
+                                  className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-md bg-[#00A86B] hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 cursor-pointer transition-all shadow-xs"
+                                  title="Solicitar saque de comissão via Pix"
+                                >
+                                  Solicitar Saque
+                                </button>
+                              </div>
                             </div>
                             <div>
-                              <div className="text-2xl sm:text-3xl font-black text-emerald-300 font-display">
+                              <div className="text-lg sm:text-xl font-bold font-mono text-emerald-300 tracking-tight" title={formatCurrencyBRL(saldoDisponivelParaSaque)}>
                                 {formatCurrencyBRL(saldoDisponivelParaSaque)}
                               </div>
-                              <div className="mt-1.5 pt-2 border-t border-emerald-800/60 flex flex-col gap-1 text-[11px]">
+                              <div className="mt-2 pt-2 border-t border-emerald-800/60 flex flex-col gap-1 text-[11px]">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-emerald-200/80">Comissões Conquistadas:</span>
-                                  <span className="font-mono font-bold text-white">
+                                  <span className="text-emerald-200/80">Total Conquistado:</span>
+                                  <span className="font-mono font-bold text-white" title={formatCurrencyBRL(totalComissaoPaga)}>
                                     {formatCurrencyBRL(totalComissaoPaga)}
                                   </span>
                                 </div>
                                 {totalComissaoAguardandoCompensacao > 0 && (
-                                  <div className="flex items-center justify-between text-[10px] text-amber-300 font-mono">
-                                    <span>Compensando (PIX 48h / Cartão 15d):</span>
+                                  <div className="flex items-center justify-between text-[10px] text-amber-300 font-mono pt-0.5">
+                                    <span>Compensando:</span>
                                     <span className="font-bold">{formatCurrencyBRL(totalComissaoAguardandoCompensacao)}</span>
                                   </div>
                                 )}
@@ -5673,8 +5592,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           <div className="flex items-start gap-2.5">
                             <Clock className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                             <div>
-                              <span className="font-extrabold text-emerald-900 block">Regra de Liquidação Financeira & Liberação de Saque:</span>
-                              <p className="text-[11px] text-emerald-800 leading-relaxed mt-0.5">
+                              <span className="font-bold text-emerald-900 block">Regra de Liquidação Financeira & Liberação de Saque:</span>
+                              <p className="text-xs text-emerald-800 leading-relaxed mt-0.5">
                                 A liberação da comissão de serviços ocorre após a compensação bancária na Hubla: <strong>48h para PIX</strong> e <strong>15 dias corridos para Cartão de Crédito</strong>.
                               </p>
                             </div>
@@ -5686,9 +5605,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 setCommissionPayoutSuccess(null);
                                 setShowCommissionPayoutModal(true);
                               }}
-                              className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+                              className="px-3.5 py-2 bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 min-h-[40px]"
                             >
-                              <Coins className="w-3.5 h-3.5" />
+                              <Coins className="w-4 h-4 text-slate-950" />
                               <span>Solicitar Comissão</span>
                             </button>
                           </div>
@@ -5697,15 +5616,15 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {/* Grouped Table by Lead */}
                         <div className="space-y-3 pt-2">
                           {/* Filter Tabs and Search Bar */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70 p-2.5 rounded-2xl border border-slate-200/70">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200/70">
                             <div className="flex flex-wrap items-center gap-1.5">
                               <button
                                 type="button"
                                 onClick={() => setDashboardServiceFilter("todos")}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                                   dashboardServiceFilter === "todos"
-                                    ? "bg-slate-800 text-white shadow-xs"
-                                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70"
+                                    ? "bg-slate-900 text-white shadow-xs"
+                                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
                                 }`}
                               >
                                 Todos ({allLeadGroups.length})
@@ -5713,10 +5632,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <button
                                 type="button"
                                 onClick={() => setDashboardServiceFilter("pendente")}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                                   dashboardServiceFilter === "pendente"
                                     ? "bg-amber-600 text-white shadow-xs"
-                                    : "bg-white text-amber-800 hover:bg-amber-50 border border-amber-200/80"
+                                    : "bg-white text-amber-800 hover:bg-amber-50 border border-amber-200"
                                 }`}
                               >
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
@@ -5725,10 +5644,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <button
                                 type="button"
                                 onClick={() => setDashboardServiceFilter("pago")}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                                   dashboardServiceFilter === "pago"
-                                    ? "bg-emerald-700 text-white shadow-xs"
-                                    : "bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200/80"
+                                    ? "bg-[#00A86B] text-slate-950 shadow-xs"
+                                    : "bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200"
                                 }`}
                               >
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -5737,10 +5656,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <button
                                 type="button"
                                 onClick={() => setDashboardServiceFilter("cancelado")}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                                   dashboardServiceFilter === "cancelado"
                                     ? "bg-slate-700 text-white shadow-xs"
-                                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70"
+                                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
                                 }`}
                               >
                                 Cancelados ({countCancelados})
@@ -5748,13 +5667,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
 
                             <div className="relative w-full sm:w-64">
-                              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                               <input
                                 type="text"
                                 placeholder="Buscar cliente, consultor ou serviço..."
                                 value={dashboardServiceSearch}
                                 onChange={(e) => setDashboardServiceSearch(e.target.value)}
-                                className="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 font-medium placeholder:text-slate-400 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all"
+                                className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 font-medium placeholder:text-slate-400 outline-hidden focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all"
                               />
                             </div>
                           </div>
@@ -5768,207 +5687,214 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   ? "Nenhum serviço do Passo 6 gerado para seus leads ainda."
                                   : "Nenhum cliente encontrado com os filtros selecionados."}
                               </p>
-                              <p className="text-[11px] text-slate-400 max-w-md mx-auto leading-relaxed">
+                              <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
                                 {allLeadGroups.length === 0
                                   ? "Quando seus clientes avançarem para o Passo 6 (Estruturação Técnica) e tiverem serviços de melhoria de crédito recomendados ou contratados, você acompanhará o valor consolidado e sua comissão aqui em tempo real."
                                   : "Tente alterar o filtro de status ou o termo de busca para visualizar os outros registros."}
                               </p>
                             </div>
                           ) : (
-                            <div className="divide-y divide-slate-100 border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
-                              <div className="hidden md:grid grid-cols-12 gap-3 px-4 py-2.5 bg-slate-50/80 text-[10px] font-black uppercase tracking-wider text-slate-500 font-mono">
-                                <div className="col-span-4">Cliente / Lead</div>
-                                <div className="col-span-2">Qtd. Serviços</div>
-                                <div className="col-span-2 text-right">Valor Total Serviços</div>
-                                <div className="col-span-2 text-right">Sua Comissão</div>
-                                <div className="col-span-2 text-center">Ações</div>
-                              </div>
+                            <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
+                              <div className="overflow-x-auto">
+                                <div className="min-w-[920px] divide-y divide-slate-100">
+                                  {/* Table Header */}
+                                  <div className="grid grid-cols-12 gap-3 px-5 py-3 bg-slate-50/90 text-[11px] font-bold uppercase tracking-wider text-slate-500 font-mono items-center border-b border-slate-200/70">
+                                    <div className="col-span-4">Cliente / Lead</div>
+                                    <div className="col-span-2 text-center">Qtd. Serviços</div>
+                                    <div className="col-span-2 text-right">Valor Total Serviços</div>
+                                    <div className="col-span-2 text-right">Sua Comissão</div>
+                                    <div className="col-span-2 text-center">Ações</div>
+                                  </div>
 
-                              {filteredGroups.map((group) => {
-                                const isExpanded = expandedServiceLeadId === group.leadId;
+                                  {filteredGroups.map((group) => {
+                                    const isExpanded = expandedServiceLeadId === group.leadId;
 
-                                return (
-                                  <div key={group.leadId} className="hover:bg-slate-50/50 transition-colors">
-                                    {/* Main Consolidated Row per Lead */}
-                                    <div className="p-4 md:px-4 md:py-3 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-                                      {/* Lead Info */}
-                                      <div className="md:col-span-4 space-y-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                          <span className="font-extrabold text-xs text-slate-800 leading-tight">
-                                            {group.leadName}
-                                          </span>
-                                          <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                                            group.statusGeral === "pago"
-                                              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                                              : group.statusGeral === "cancelado"
-                                                ? "bg-slate-100 text-slate-600 border border-slate-200"
-                                                : group.statusGeral === "parcial"
-                                                  ? "bg-blue-100 text-blue-800 border border-blue-200"
-                                                  : "bg-amber-100 text-amber-800 border border-amber-200"
-                                          }`}>
-                                            {group.statusGeral === "pago" 
-                                              ? "✓ Quitado" 
-                                              : group.statusGeral === "cancelado" 
-                                                ? "Cancelado" 
-                                                : group.statusGeral === "parcial" 
-                                                  ? "Parcialmente Pago" 
-                                                  : "⏳ Aguardando Pagamento"}
-                                          </span>
-
-                                          {group.isTeamLead && (
-                                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200" title={`Lead da Equipe: ${group.consultantName}`}>
-                                              Equipe ({group.consultantName})
-                                            </span>
-                                          )}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                                          {group.leadCnpj && (
-                                            <span className="font-mono">CNPJ: {group.leadCnpj}</span>
-                                          )}
-                                          <span className="font-mono font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-100">
-                                            Taxa: {group.rateDisplay}
-                                          </span>
-                                        </div>
-                                      </div>
-
-                                      {/* Services count badge */}
-                                      <div className="md:col-span-2 flex items-center gap-2">
-                                        <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/80">
-                                          {group.services.length} {group.services.length === 1 ? "serviço" : "serviços"}
-                                        </span>
-                                      </div>
-
-                                      {/* Total Services Value */}
-                                      <div className="md:col-span-2 md:text-right flex md:block items-center justify-between">
-                                        <span className="text-[10px] text-slate-400 md:hidden font-bold">Total dos Serviços:</span>
-                                        <div>
-                                          <span className="font-mono text-xs font-bold text-slate-800">
-                                            {formatCurrencyBRL(group.totalServicos)}
-                                          </span>
-                                          {group.totalPago > 0 && group.totalPendente > 0 && (
-                                            <span className="block text-[9px] font-mono text-emerald-700">
-                                              {formatCurrencyBRL(group.totalPago)} pago
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      {/* Total Commission */}
-                                      <div className="md:col-span-2 md:text-right flex md:block items-center justify-between">
-                                        <span className="text-[10px] text-slate-400 md:hidden font-bold">Sua Comissão:</span>
-                                        <div>
-                                          <span className={`font-mono text-xs font-black ${
-                                            group.totalPago > 0 ? "text-emerald-700" : "text-amber-800"
-                                          }`}>
-                                            {formatCurrencyBRL(group.totalComissao)}
-                                          </span>
-                                          <span className="block text-[9px] font-mono text-slate-400">
-                                            {group.comissaoPaga > 0 
-                                              ? `${formatCurrencyBRL(group.comissaoPaga)} liberada` 
-                                              : `${formatCurrencyBRL(group.comissaoPendente)} prevista`}
-                                          </span>
-                                        </div>
-                                      </div>
-
-                                      {/* Action buttons (Toggle details + Open Workspace) */}
-                                      <div className="md:col-span-2 flex items-center justify-end md:justify-center gap-1.5 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
-                                        <button
-                                          type="button"
-                                          onClick={() => setExpandedServiceLeadId(isExpanded ? null : group.leadId)}
-                                          className={`px-2 py-1.5 text-[10px] font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1 border ${
-                                            isExpanded
-                                              ? "bg-slate-800 text-white border-slate-800"
-                                              : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200/80"
-                                          }`}
-                                          title="Ver detalhamento dos serviços deste cliente"
-                                        >
-                                          {isExpanded ? (
-                                            <>
-                                              <span>Recolher</span>
-                                              <ChevronDown className="w-3 h-3" />
-                                            </>
-                                          ) : (
-                                            <>
-                                              <span>Detalhes</span>
-                                              <ChevronRight className="w-3 h-3" />
-                                            </>
-                                          )}
-                                        </button>
-
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setSelectedLeadForWorkspace(group.leadObj);
-                                            setWorkspaceTab("simulador");
-                                          }}
-                                          className="px-2 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1 border border-emerald-200/80"
-                                          title="Abrir Passo 6 na Ficha do Lead"
-                                        >
-                                          <Eye className="w-3 h-3 text-emerald-700" />
-                                          <span>Passo 6</span>
-                                        </button>
-                                      </div>
-                                    </div>
-
-                                    {/* Expanded Service Items (Nested breakdown with clean layout) */}
-                                    {isExpanded && (
-                                      <div className="bg-slate-50/80 p-3 sm:p-4 border-t border-slate-100 space-y-2">
-                                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 font-mono flex items-center justify-between">
-                                          <span>Discriminação dos Serviços de Estruturação ({group.services.length})</span>
-                                          <span>Margem Aplicada: {group.rateDisplay}</span>
-                                        </div>
-
-                                        <div className="space-y-1.5">
-                                          {group.services.map((srv, sIdx) => (
-                                            <div
-                                              key={srv.id || sIdx}
-                                              className="bg-white p-2.5 rounded-xl border border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
-                                            >
-                                              <div className="flex items-center gap-2 flex-wrap">
-                                                <Briefcase className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                                <span className="font-bold text-slate-800">{srv.titulo}</span>
-                                                <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase ${
-                                                  srv.statusPagamento === "pago"
-                                                    ? "bg-emerald-100 text-emerald-800"
-                                                    : srv.statusPagamento === "cancelado"
-                                                      ? "bg-slate-100 text-slate-600"
-                                                      : "bg-amber-100 text-amber-800"
-                                                }`}>
-                                                  {srv.statusPagamento === "pago" ? "Pago" : srv.statusPagamento === "cancelado" ? "Cancelado" : "Pendente"}
+                                    return (
+                                      <div key={group.leadId} className="hover:bg-slate-50/50 transition-colors">
+                                        {/* Main Consolidated Row per Lead */}
+                                        <div className="px-5 py-3.5 grid grid-cols-12 gap-3 items-center">
+                                          {/* Lead Info */}
+                                          <div className="col-span-4 space-y-1.5 pr-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <span className="font-bold text-xs text-slate-900 leading-snug">
+                                                {group.leadName}
+                                              </span>
+                                              {group.isTeamLead && (
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap" title={`Lead da Equipe: ${group.consultantName}`}>
+                                                  Equipe ({group.consultantName})
                                                 </span>
-                                                {srv.statusPagamento === "pago" && (
-                                                  <span className="text-[10px] text-slate-500 font-mono">
-                                                    Forma: <strong>{srv.metodoPagamento || "PIX/Cartão"}</strong> • {srv.isLiquidated ? (
-                                                      <span className="text-emerald-700 font-bold">Saque liberado</span>
-                                                    ) : (
-                                                      <span className="text-amber-700 font-bold">
-                                                        Compensação até {new Date(srv.dataLiberacaoSaque!).toLocaleDateString("pt-BR")} ({srv.metodoPagamento === "PIX" ? "48h PIX" : "15 dias Cartão"})
+                                              )}
+                                            </div>
+
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider whitespace-nowrap inline-flex items-center ${
+                                                group.statusGeral === "pago"
+                                                  ? "bg-emerald-50 text-[#00A86B] border border-emerald-200"
+                                                  : group.statusGeral === "cancelado"
+                                                    ? "bg-slate-50 text-slate-600 border border-slate-200"
+                                                    : group.statusGeral === "parcial"
+                                                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                                              }`}>
+                                                {group.statusGeral === "pago" 
+                                                  ? "✓ Quitado" 
+                                                  : group.statusGeral === "cancelado" 
+                                                    ? "Cancelado" 
+                                                    : group.statusGeral === "parcial" 
+                                                      ? "Parcialmente Pago" 
+                                                      : "⏳ Aguardando Pagamento"}
+                                              </span>
+
+                                              {group.leadCnpj && (
+                                                <span className="font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                                                  CNPJ: {group.leadCnpj}
+                                                </span>
+                                              )}
+
+                                              <span className="font-mono font-bold text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 whitespace-nowrap">
+                                                Taxa: {group.rateDisplay}
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          {/* Services count badge */}
+                                          <div className="col-span-2 flex items-center justify-center">
+                                            <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200/80 whitespace-nowrap inline-block text-center">
+                                              {group.services.length} {group.services.length === 1 ? "serviço" : "serviços"}
+                                            </span>
+                                          </div>
+
+                                          {/* Total Services Value */}
+                                          <div className="col-span-2 text-right pr-1">
+                                            <div className="font-mono text-xs font-bold text-slate-900 whitespace-nowrap">
+                                              {formatCurrencyBRL(group.totalServicos)}
+                                            </div>
+                                            {group.totalPago > 0 && group.totalPendente > 0 ? (
+                                              <span className="block text-[11px] font-mono text-[#00A86B] font-semibold whitespace-nowrap">
+                                                {formatCurrencyBRL(group.totalPago)} pago
+                                              </span>
+                                            ) : (
+                                              <span className="block text-[10px] font-mono text-slate-400 whitespace-nowrap">
+                                                {group.totalServicos === 0 ? "—" : "valor total"}
+                                              </span>
+                                            )}
+                                          </div>
+
+                                          {/* Total Commission */}
+                                          <div className="col-span-2 text-right pr-2">
+                                            <div className={`font-mono text-xs font-extrabold whitespace-nowrap ${
+                                              group.totalPago > 0 ? "text-[#00A86B]" : "text-amber-800"
+                                            }`}>
+                                              {formatCurrencyBRL(group.totalComissao)}
+                                            </div>
+                                            <span className="block text-[10px] font-mono text-slate-400 whitespace-nowrap">
+                                              {group.comissaoPaga > 0 
+                                                ? `${formatCurrencyBRL(group.comissaoPaga)} liberada` 
+                                                : `${formatCurrencyBRL(group.comissaoPendente)} prevista`}
+                                            </span>
+                                          </div>
+
+                                          {/* Action buttons */}
+                                          <div className="col-span-2 flex items-center justify-center gap-2">
+                                            <button
+                                              type="button"
+                                              onClick={() => setExpandedServiceLeadId(isExpanded ? null : group.leadId)}
+                                              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 border h-9 whitespace-nowrap shrink-0 ${
+                                                isExpanded
+                                                  ? "bg-slate-800 text-white border-slate-800"
+                                                  : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200"
+                                              }`}
+                                              title="Ver detalhamento dos serviços deste cliente"
+                                            >
+                                              {isExpanded ? (
+                                                <>
+                                                  <span>Recolher</span>
+                                                  <ChevronDown className="w-3.5 h-3.5" />
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <span>Detalhes</span>
+                                                  <ChevronRight className="w-3.5 h-3.5" />
+                                                </>
+                                              )}
+                                            </button>
+
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setSelectedLeadForWorkspace(group.leadObj);
+                                                setWorkspaceTab("simulador");
+                                              }}
+                                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 border border-emerald-200 h-9 whitespace-nowrap shrink-0"
+                                              title="Abrir Passo 6 na Ficha do Lead"
+                                            >
+                                              <Eye className="w-3.5 h-3.5 text-emerald-700" />
+                                              <span>Passo 6</span>
+                                            </button>
+                                          </div>
+                                        </div>
+
+                                        {/* Expanded Service Items (Nested breakdown with clean layout) */}
+                                        {isExpanded && (
+                                          <div className="bg-slate-50/80 p-4 border-t border-slate-100 space-y-2.5">
+                                            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono flex items-center justify-between">
+                                              <span>Discriminação dos Serviços de Estruturação ({group.services.length})</span>
+                                              <span>Margem Aplicada: {group.rateDisplay}</span>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                              {group.services.map((srv, sIdx) => (
+                                                <div
+                                                  key={srv.id || sIdx}
+                                                  className="bg-white p-3 rounded-xl border border-slate-200/70 flex items-center justify-between gap-3 text-xs"
+                                                >
+                                                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                                    <Briefcase className="w-3.5 h-3.5 text-[#00A86B] shrink-0" />
+                                                    <span className="font-bold text-slate-800">{srv.titulo}</span>
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase whitespace-nowrap ${
+                                                      srv.statusPagamento === "pago"
+                                                        ? "bg-emerald-50 text-[#00A86B] border border-emerald-200"
+                                                        : srv.statusPagamento === "cancelado"
+                                                          ? "bg-slate-50 text-slate-600 border border-slate-200"
+                                                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                                                    }`}>
+                                                      {srv.statusPagamento === "pago" ? "Pago" : srv.statusPagamento === "cancelado" ? "Cancelado" : "Pendente"}
+                                                    </span>
+                                                    {srv.statusPagamento === "pago" && (
+                                                      <span className="text-[11px] text-slate-500 font-mono whitespace-nowrap">
+                                                        Forma: <strong>{srv.metodoPagamento || "PIX/Cartão"}</strong> • {srv.isLiquidated ? (
+                                                          <span className="text-emerald-700 font-bold">Saque liberado</span>
+                                                        ) : (
+                                                          <span className="text-amber-700 font-bold">
+                                                            Compensação até {new Date(srv.dataLiberacaoSaque!).toLocaleDateString("pt-BR")} ({srv.metodoPagamento === "PIX" ? "48h PIX" : "15 dias Cartão"})
+                                                          </span>
+                                                        )}
                                                       </span>
                                                     )}
-                                                  </span>
-                                                )}
-                                              </div>
+                                                  </div>
 
-                                              <div className="flex items-center gap-4 text-xs font-mono">
-                                                <div>
-                                                  <span className="text-slate-400 text-[10px] mr-1">Valor:</span>
-                                                  <span className="font-bold text-slate-700">{formatCurrencyBRL(srv.preco)}</span>
+                                                  <div className="flex items-center gap-4 text-xs font-mono shrink-0">
+                                                    <div>
+                                                      <span className="text-slate-400 text-[11px] mr-1">Valor:</span>
+                                                      <span className="font-bold text-slate-700 whitespace-nowrap">{formatCurrencyBRL(srv.preco)}</span>
+                                                    </div>
+                                                    <div className="pl-3 border-l border-slate-200">
+                                                      <span className="text-slate-400 text-[11px] mr-1">Sua Margem:</span>
+                                                      <span className={`font-extrabold whitespace-nowrap ${srv.statusPagamento === "pago" ? "text-[#00A86B]" : "text-amber-800"}`}>
+                                                        {formatCurrencyBRL(srv.comissao)}
+                                                      </span>
+                                                    </div>
+                                                  </div>
                                                 </div>
-                                                <div className="pl-3 border-l border-slate-200">
-                                                  <span className="text-slate-400 text-[10px] mr-1">Sua Margem:</span>
-                                                  <span className={`font-black ${srv.statusPagamento === "pago" ? "text-emerald-700" : "text-amber-800"}`}>
-                                                    {formatCurrencyBRL(srv.comissao)}
-                                                  </span>
-                                                </div>
-                                              </div>
+                                              ))}
                                             </div>
-                                          ))}
-                                        </div>
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -5977,21 +5903,21 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         <div className="pt-6 border-t border-slate-100 space-y-4">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
-                              <DollarSign className="w-4.5 h-4.5 text-emerald-600" />
-                              <h4 className="font-display font-extrabold text-sm text-slate-800 tracking-tight">
+                              <DollarSign className="w-4.5 h-4.5 text-[#00A86B]" />
+                              <h4 className="font-extrabold text-sm text-slate-900 tracking-tight">
                                 Histórico de Solicitações de Saque & Repasses PIX
                               </h4>
                             </div>
-                            <span className="text-[11px] font-mono text-slate-500">
+                            <span className="text-xs font-mono text-slate-500">
                               Total de solicitações: <strong>{solicitacoesComissao.length}</strong>
                             </span>
                           </div>
 
                           {solicitacoesComissao.length === 0 ? (
-                            <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-6 text-center">
+                            <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-6 text-center space-y-1">
                               <Coins className="w-6 h-6 text-slate-300 mx-auto mb-2" />
-                              <p className="text-xs font-semibold text-slate-600">Nenhum saque solicitado até o momento.</p>
-                              <p className="text-[11px] text-slate-400 mt-0.5">
+                              <p className="text-xs font-bold text-slate-700">Nenhum saque solicitado até o momento.</p>
+                              <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
                                 À medida que seus clientes quitarem os serviços e passarem pelo prazo de liquidação Hubla, você poderá solicitar o repasse via PIX diretamente para sua conta.
                               </p>
                             </div>
@@ -6010,33 +5936,33 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <tbody className="divide-y divide-slate-100">
                                   {solicitacoesComissao.map((sol) => (
                                     <tr key={sol.id} className="hover:bg-slate-50/60 transition-colors">
-                                      <td className="py-2.5 px-3 font-mono text-slate-600 text-[11px]">
+                                      <td className="py-2.5 px-3 font-mono text-slate-600 text-xs">
                                         {new Date(sol.dataSolicitacao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                                       </td>
-                                      <td className="py-2.5 px-3 font-mono font-black text-slate-800">
+                                      <td className="py-2.5 px-3 font-mono font-extrabold text-slate-900">
                                         {formatCurrencyBRL(sol.valor)}
                                       </td>
-                                      <td className="py-2.5 px-3 font-mono text-[11px] text-slate-600 truncate max-w-[140px]" title={sol.chavePix}>
+                                      <td className="py-2.5 px-3 font-mono text-xs text-slate-600 truncate max-w-[140px]" title={sol.chavePix}>
                                         {sol.chavePix}
                                       </td>
                                       <td className="py-2.5 px-3">
-                                        <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase font-mono ${
+                                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase font-mono ${
                                           sol.status === "pago"
-                                            ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                            ? "bg-emerald-50 text-[#00A86B] border border-emerald-200"
                                             : sol.status === "recusado"
-                                              ? "bg-rose-100 text-rose-800 border border-rose-300"
-                                              : "bg-amber-100 text-amber-800 border border-amber-300"
+                                              ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                              : "bg-amber-50 text-amber-700 border border-amber-200"
                                         }`}>
-                                          {sol.status === "pago" && <CheckCircle2 className="w-3 h-3 text-emerald-700" />}
-                                          {sol.status === "recusado" && <AlertTriangle className="w-3 h-3 text-rose-700" />}
-                                          {sol.status === "pendente" && <Clock className="w-3 h-3 text-amber-700" />}
+                                          {sol.status === "pago" && <CheckCircle2 className="w-3 h-3 text-[#00A86B]" />}
+                                          {sol.status === "recusado" && <AlertTriangle className="w-3 h-3 text-rose-600" />}
+                                          {sol.status === "pendente" && <Clock className="w-3 h-3 text-amber-600" />}
                                           {sol.status === "pago" ? "Pago via PIX" : sol.status === "recusado" ? "Recusado" : "Aguardando PIX ADM"}
                                         </span>
                                       </td>
-                                      <td className="py-2.5 px-3 text-[11px] text-slate-600">
+                                      <td className="py-2.5 px-3 text-xs text-slate-600">
                                         {sol.status === "pago" ? (
                                           <div className="space-y-0.5">
-                                            <span className="font-semibold text-emerald-800 block text-[10px]">
+                                            <span className="font-semibold text-emerald-800 block text-xs">
                                               Pago em: {sol.dataPagamento ? new Date(sol.dataPagamento).toLocaleDateString("pt-BR") : "Confirmado"}
                                             </span>
                                             {sol.comprovantePixUrl && (
@@ -6044,18 +5970,18 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                                 href={sol.comprovantePixUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-[10px] text-emerald-700 hover:underline font-bold"
+                                                className="text-xs text-[#00A86B] hover:underline font-bold"
                                               >
                                                 Ver Comprovante
                                               </a>
                                             )}
                                           </div>
                                         ) : sol.status === "recusado" ? (
-                                          <span className="text-rose-700 text-[10px] italic">
+                                          <span className="text-rose-700 text-xs italic">
                                             {sol.motivoRecusa || "Estornado para o saldo"}
                                           </span>
                                         ) : (
-                                          <span className="text-amber-700 text-[10px]">
+                                          <span className="text-amber-700 text-xs">
                                             Em análise financeira
                                           </span>
                                         )}
@@ -6071,21 +5997,94 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     );
                   })()}
 
+                  {/* Franquia Digital Franchise Summary Overview (Quinta linha: Desempenho Master Partner) */}
+                  {isFranquiaDigital(currentPartner?.plano) && (
+                    <div className="bg-gradient-to-r from-emerald-900 to-teal-950 p-6 rounded-3xl border border-emerald-500/20 text-white shadow-md space-y-4 text-left">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-emerald-800/60 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-5 h-5 text-emerald-400" />
+                          <div>
+                            <h3 className="font-display font-extrabold text-sm uppercase tracking-wider text-emerald-300">Desempenho Master Partner</h3>
+                            <p className="text-[10px] text-emerald-200">Visão consolidada da sua equipe de consultores autônomos</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab("equipe")}
+                          className="px-3 py-1.5 bg-emerald-700/50 hover:bg-emerald-600/50 border border-emerald-500/30 rounded-lg text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1"
+                        >
+                          Gerenciar Consultores
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      </div>
+
+                      {(() => {
+                        const totalConcludedTeamOverride = teamLeads
+                          .filter(l => l.status === "concluido")
+                          .reduce((acc, l) => acc + ((l.valorAprovado || l.limiteEstimado || 0) * getOverrideMultiplierForLead(l)), 0);
+
+                        const totalDirectConcludedComm = leads
+                          .filter(l => l.status === "concluido")
+                          .reduce((acc, l) => acc + ((l.valorAprovado || l.limiteEstimado || 0) * getDirectCommissionMultiplier(currentPartner?.plano)), 0);
+
+                        return (
+                          <>
+                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-1">
+                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Membros na Equipe</span>
+                                <span className="text-xl font-black text-white block mt-0.5">{teamMembers.length}</span>
+                              </div>
+                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Leads da Equipe</span>
+                                <span className="text-xl font-black text-white block mt-0.5">{teamLeads.length}</span>
+                              </div>
+                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Faturamento Equipe Concluído</span>
+                                <span className="text-sm font-black text-white block mt-1">
+                                  {formatCurrencyBRL(teamLeads.filter(l => l.status === "concluido").reduce((acc, l) => acc + (l.limiteEstimado || 0), 0))}
+                                </span>
+                              </div>
+                              <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-amber-300 block tracking-wider font-mono">Override Equipe Dinâmico</span>
+                                <span className="text-sm font-black text-amber-300 block mt-1">
+                                  {formatCurrencyBRL(totalConcludedTeamOverride)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between text-xs text-emerald-100 gap-2">
+                              <div className="flex items-center gap-1.5">
+                                <Coins className="w-4 h-4 text-emerald-400 shrink-0" />
+                                <span>Seus Ganhos Diretos Concluídos ({(getDirectCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%): <strong>{formatCurrencyBRL(totalDirectConcludedComm)}</strong></span>
+                              </div>
+                              <div className="font-extrabold text-emerald-300 text-sm sm:text-right">
+                                Total Geral Acumulado: {formatCurrencyBRL(totalDirectConcludedComm + totalConcludedTeamOverride)}
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+
                   {/* Calculator and CRM Highlights Grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Embedded Commission Calculator */}
-                    <div className="lg:col-span-5 bg-[#052E22] text-white p-6 rounded-3xl shadow-xs space-y-4">
-                      <div className="flex items-center gap-1.5">
-                        <Calculator className="w-4.5 h-4.5 text-emerald-400" />
-                        <h4 className="font-display font-extrabold text-sm text-white uppercase tracking-wider">Simulador do Repassador</h4>
+                    {/* Embedded Commission Calculator (Solid #0A3D2E, rounded-2xl) */}
+                    <div className="lg:col-span-5 bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl border border-emerald-500/20 shadow-xs space-y-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-950/70 border border-emerald-700/40 flex items-center justify-center text-emerald-300 shrink-0">
+                          <Calculator className="w-4.5 h-4.5 text-emerald-300" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-white uppercase tracking-wider">Simulador do Repassador</h4>
+                          <p className="text-[11px] text-emerald-300/80">Simule ganhos com base no seu plano atual.</p>
+                        </div>
                       </div>
-                      <p className="text-xs text-emerald-200">Simule os ganhos de comissão baseados no seu plano atual.</p>
 
                       <div className="space-y-4 pt-2">
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           <div className="flex justify-between text-xs text-emerald-200">
                             <span>Créditos liberados p/ mês</span>
-                            <span className="font-bold text-emerald-300">{calcLeadsCount} empresas</span>
+                            <span className="font-mono font-bold text-emerald-300">{calcLeadsCount} empresas</span>
                           </div>
                           <input
                             type="range"
@@ -6093,14 +6092,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             max="10"
                             value={calcLeadsCount}
                             onChange={(e) => setCalcLeadsCount(parseInt(e.target.value))}
-                            className="w-full accent-emerald-400 cursor-pointer bg-emerald-800 rounded-lg h-1.5"
+                            className="w-full accent-[#00A86B] cursor-pointer bg-emerald-900 rounded-lg h-2"
                           />
                         </div>
 
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           <div className="flex justify-between text-xs text-emerald-200">
                             <span>Valor médio do contrato</span>
-                            <span className="font-bold text-emerald-300">{formatCurrencyBRL(calcAvgValue)}</span>
+                            <span className="font-mono font-bold text-emerald-300">{formatCurrencyBRL(calcAvgValue)}</span>
                           </div>
                           <input
                             type="range"
@@ -6109,35 +6108,37 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             step="25000"
                             value={calcAvgValue}
                             onChange={(e) => setCalcAvgValue(parseInt(e.target.value))}
-                            className="w-full accent-emerald-400 cursor-pointer bg-emerald-800 rounded-lg h-1.5"
+                            className="w-full accent-[#00A86B] cursor-pointer bg-emerald-900 rounded-lg h-2"
                           />
                         </div>
                       </div>
 
-                      <div className="bg-emerald-950 p-4 border border-emerald-800 rounded-xl mt-6">
-                        <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">
+                      <div className="bg-emerald-950/80 p-4 border border-emerald-800/80 rounded-xl mt-4">
+                        <span className="text-[10px] uppercase font-bold text-emerald-300 block tracking-wider">
                           Sua Comissão Mensal Estimada
                         </span>
-                        <span className="text-xl md:text-2xl font-display font-black text-emerald-300 block mt-1">
+                        <span className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-300 block mt-1">
                           {formatCurrencyBRL(calculatedCommission)}
                         </span>
-                        <span className="text-[8px] text-emerald-400 leading-normal block mt-2">
+                        <span className="text-[10px] text-emerald-400/90 leading-normal block mt-2">
                           *A simulação utiliza o percentual de repasse vinculado ao seu plano atual ({(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%).
                         </span>
                       </div>
                     </div>
 
                     {/* Quick CRM View */}
-                    <div className="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                    <div className="lg:col-span-7 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <ClipboardList className="w-4.5 h-4.5 text-emerald-600" />
-                            <h4 className="font-display font-extrabold text-slate-800">Últimas Indicações</h4>
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
+                              <ClipboardList className="w-4.5 h-4.5" />
+                            </div>
+                            <h4 className="font-bold text-sm text-slate-900">Últimas Indicações</h4>
                           </div>
                           <button 
                             onClick={() => setActiveTab("leads")}
-                            className="text-xs text-emerald-700 font-extrabold hover:underline"
+                            className="text-xs text-[#00A86B] font-extrabold hover:underline cursor-pointer"
                           >
                             Ver Todos
                           </button>
@@ -6148,23 +6149,24 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <span className="w-6 h-6 border-2 border-[#0A3D2E] border-t-transparent rounded-full animate-spin" />
                           </div>
                         ) : leads.length === 0 ? (
-                          <div className="py-12 text-center text-xs text-slate-400 font-medium">
-                            Nenhum lead indicado ainda. Divulgue seu link para começar a lucrar!
+                          <div className="py-12 text-center text-xs text-slate-400 font-medium space-y-1">
+                            <p className="font-bold text-slate-600">Nenhum lead indicado ainda.</p>
+                            <p>Divulgue seu link para começar a receber comissões!</p>
                           </div>
                         ) : (
                           <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto pr-1">
                             {leads.slice(0, 4).map(lead => (
                               <div key={lead.id} className="py-3 flex items-center justify-between text-xs">
                                 <div>
-                                  <span className="font-extrabold text-slate-800 block truncate max-w-xs">{lead.nome}</span>
-                                  <span className="text-[10px] text-slate-400 font-mono block mt-0.5">{lead.cnpj || "CPF/CNPJ sob consulta"}</span>
+                                  <span className="font-bold text-slate-900 block truncate max-w-xs">{lead.nome}</span>
+                                  <span className="text-[11px] text-slate-400 font-mono block mt-0.5">{lead.cnpj || "CPF/CNPJ sob consulta"}</span>
                                 </div>
                                 <div className="text-right">
-                                  <span className="font-bold text-[#0A3D2E] block">{lead.limiteEstimated ? formatCurrencyBRL(lead.limiteEstimated) : (lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Consulta")}</span>
-                                  <span className={`inline-block text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded-md mt-0.5 ${
-                                    lead.status === "concluido" ? "bg-emerald-100 text-emerald-800" :
-                                    lead.status === "em atendimento" ? "bg-amber-100 text-amber-800" :
-                                    "bg-blue-50 text-blue-700"
+                                  <span className="font-bold font-mono text-[#0A3D2E] block">{lead.limiteEstimated ? formatCurrencyBRL(lead.limiteEstimated) : (lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Consulta")}</span>
+                                  <span className={`inline-block text-[10px] uppercase font-bold px-2 py-0.5 rounded-md mt-0.5 ${
+                                    lead.status === "concluido" ? "bg-emerald-50 text-[#00A86B] border border-emerald-200" :
+                                    lead.status === "em atendimento" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                                    "bg-blue-50 text-blue-700 border border-blue-200"
                                   }`}>
                                     {lead.status}
                                   </span>
@@ -6175,8 +6177,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         )}
                       </div>
 
-                      <div className="pt-4 border-t border-slate-100 mt-4 text-[10px] text-slate-400 italic">
-                        *As informações acima são updated de forma segura e síncrona diretamente da mesa de crédito da PROSFEC.
+                      <div className="pt-4 border-t border-slate-100 mt-4 text-[11px] text-slate-400">
+                        *As informações acima são atualizadas de forma segura e síncrona diretamente da mesa de crédito da PROSFEC.
                       </div>
                     </div>
                   </div>
@@ -6189,72 +6191,72 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-4 text-left"
+                  className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-5 text-left"
                 >
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
-                      <h3 className="font-display font-extrabold text-base text-slate-800">Painel Geral de Indicações</h3>
-                      <p className="text-xs text-slate-500">Acompanhe todos os leads originados pelo seu código de afiliado.</p>
+                      <h3 className="font-extrabold text-base sm:text-lg text-slate-900">Painel Geral de Indicações</h3>
+                      <p className="text-xs text-slate-500">Acompanhe todos os leads originados pelo seu link de afiliado em tempo real.</p>
                     </div>
                     
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2.5">
                       {/* View Mode Selector */}
-                      <div className="bg-slate-100 p-0.5 rounded-xl flex items-center border border-slate-200">
+                      <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200">
                         <button
                           onClick={() => setLeadsViewMode("lista")}
-                          className={`px-3 py-1.5 text-[11px] font-extrabold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                             leadsViewMode === "lista"
-                              ? "bg-white text-slate-800 shadow-xs border border-slate-200/50"
+                              ? "bg-white text-slate-900 shadow-xs border border-slate-200/60"
                               : "text-slate-500 hover:text-slate-700"
                           }`}
                         >
                           <List className="w-3.5 h-3.5" />
-                          Tabela
+                          <span>Tabela</span>
                         </button>
                         <button
                           onClick={() => setLeadsViewMode("kanban")}
-                          className={`px-3 py-1.5 text-[11px] font-extrabold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                             leadsViewMode === "kanban"
                               ? "bg-[#0A3D2E] text-white shadow-xs"
                               : "text-slate-500 hover:text-slate-700"
                           }`}
                         >
                           <Kanban className="w-3.5 h-3.5" />
-                          Funil Kanban
+                          <span>Funil Kanban</span>
                         </button>
                       </div>
 
                       <button 
                         onClick={() => currentPartner && fetchPartnerLeads(currentPartner.id)}
-                        className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                        className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-xs font-bold text-slate-700 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer min-h-[38px]"
                       >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        Atualizar
+                        <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Atualizar</span>
                       </button>
                     </div>
                   </div>
 
                   {/* Search and Filters */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/60 mt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/70">
                     {/* Search */}
                     <div className="relative">
-                      <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Buscar por nome, CNPJ, razão..."
-                        className="pl-9 pr-4 py-2 w-full text-xs bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#00A86B] focus:bg-white transition-all text-slate-800 font-medium"
+                        className="pl-9 pr-4 py-2 w-full text-xs bg-white border border-slate-300 rounded-xl outline-hidden focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all text-slate-800 font-medium placeholder:text-slate-400"
                       />
                     </div>
 
                     {/* Status */}
                     <div className="flex items-center gap-2">
-                      <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <Filter className="w-4 h-4 text-slate-400 shrink-0" />
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="py-2 px-3 w-full text-xs bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-bold"
+                        className="py-2 px-3 w-full text-xs bg-white border border-slate-300 rounded-xl outline-hidden focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] text-slate-800 font-bold"
                       >
                         <option value="todos">Todos os Status</option>
                         <option value="novo">Novo</option>
@@ -6266,11 +6268,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                     {/* Etapas */}
                     <div className="flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <Clock className="w-4 h-4 text-slate-400 shrink-0" />
                       <select
                         value={etapaFilter}
                         onChange={(e) => setEtapaFilter(e.target.value)}
-                        className="py-2 px-3 w-full text-xs bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-bold"
+                        className="py-2 px-3 w-full text-xs bg-white border border-slate-300 rounded-xl outline-hidden focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] text-slate-800 font-bold"
                       >
                         <option value="todos">Etapa do Lead (Todas)</option>
                         <option value="1">1. Ficha Cadastral (CNPJ)</option>
@@ -6285,13 +6287,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   </div>
 
                   {regLeadSuccess && (
-                    <div className="p-5 bg-emerald-50 border border-emerald-100 rounded-2xl text-slate-800 space-y-4">
+                    <div className="p-4 sm:p-5 bg-emerald-50 border border-emerald-200 rounded-2xl text-slate-800 space-y-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5">
-                          <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                          <CheckCircle2 className="w-5 h-5 text-[#00A86B] shrink-0" />
                           <div>
-                            <span className="text-xs font-black text-emerald-800 uppercase block tracking-wider">Cadastro Concluído</span>
-                            <span className="text-xs text-slate-700 font-bold leading-relaxed">{regLeadSuccess}</span>
+                            <span className="text-[11px] font-bold text-emerald-900 uppercase block tracking-wider">Cadastro Concluído</span>
+                            <span className="text-xs text-slate-700 font-semibold leading-relaxed">{regLeadSuccess}</span>
                           </div>
                         </div>
                         <button 
@@ -6299,18 +6301,18 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             setRegLeadSuccess(null);
                             setRegisteredLeadId(null);
                           }} 
-                          className="text-slate-400 hover:text-slate-600 shrink-0 p-1 rounded-lg hover:bg-emerald-100/50 transition-colors cursor-pointer"
+                          className="text-slate-400 hover:text-slate-600 shrink-0 p-1.5 rounded-lg hover:bg-emerald-100/60 transition-colors cursor-pointer"
                         >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
 
                       {registeredLeadId && (
-                        <div className="pt-3 border-t border-emerald-200/50 space-y-2">
-                          <span className="text-[11px] font-black text-[#0A3D2E] uppercase tracking-wider block">
+                        <div className="pt-3 border-t border-emerald-200/60 space-y-2">
+                          <span className="text-[11px] font-bold text-[#0A3D2E] uppercase tracking-wider block">
                             🔗 Link de Acompanhamento do Cliente
                           </span>
-                          <p className="text-[11px] text-slate-500 font-medium leading-normal">
+                          <p className="text-xs text-slate-600 leading-normal">
                             Copie o link abaixo e envie para o seu cliente acompanhar o andamento da análise de fomento dele em tempo real:
                           </p>
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-1">
@@ -6318,7 +6320,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               type="text"
                               readOnly
                               value={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?leadTrack=${registeredLeadId}`}
-                              className="bg-white border border-slate-200 text-[11px] font-mono px-3 py-2 rounded-xl text-slate-700 font-bold flex-1 select-all"
+                              className="bg-white border border-slate-300 text-xs font-mono px-3 py-2 rounded-xl text-slate-800 font-bold flex-1 select-all"
                             />
                             <button
                               onClick={() => {
@@ -6329,17 +6331,17 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 setCopiedTrackingLink(true);
                                 setTimeout(() => setCopiedTrackingLink(false), 2000);
                               }}
-                              className="px-4 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
+                              className="px-4 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs whitespace-nowrap min-h-[40px]"
                             >
                               {copiedTrackingLink ? (
                                 <>
-                                  <Check className="w-3.5 h-3.5" />
-                                  Copiado!
+                                  <Check className="w-4 h-4 text-emerald-300" />
+                                  <span>Link Copiado!</span>
                                 </>
                               ) : (
                                 <>
-                                  <Copy className="w-3.5 h-3.5" />
-                                  Copiar Link
+                                  <Copy className="w-4 h-4" />
+                                  <span>Copiar Link</span>
                                 </>
                               )}
                             </button>
@@ -6349,109 +6351,107 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </div>
                   )}
 
-
-
                   {fetchLoading ? (
                     <div className="py-24 flex justify-center items-center">
                       <span className="w-8 h-8 border-2 border-[#0A3D2E] border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : leads.length === 0 ? (
-                    <div className="py-16 text-center space-y-3">
-                      <div className="bg-emerald-50 text-emerald-700 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
+                    <div className="py-16 text-center space-y-3 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                      <div className="bg-emerald-50 text-[#00A86B] p-3.5 rounded-2xl w-12 h-12 flex items-center justify-center mx-auto border border-emerald-100">
                         <Handshake className="w-6 h-6" />
                       </div>
-                      <p className="text-xs text-slate-500 font-bold max-w-sm mx-auto leading-relaxed">
+                      <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">
                         Nenhum lead indicado foi registrado na plataforma com o seu identificador. Comece a divulgar o seu link exclusivo agora!
                       </p>
                     </div>
                   ) : leadsViewMode === "lista" ? (
                     <>
                       {/* Desktop Table View */}
-                      <div className="hidden md:block overflow-x-auto">
-                        <table className="w-full border-collapse">
+                      <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-200">
+                        <table className="w-full border-collapse text-left">
                           <thead>
-                            <tr className="border-b border-slate-100 text-slate-400 text-left text-[11px] font-black uppercase tracking-wider">
-                              <th className="py-3 px-4 font-bold">Lead / Empresa</th>
-                              <th className="py-3 px-4 font-bold">Contato</th>
-                              <th className="py-3 px-4 font-bold">Simulado / Aprovado</th>
-                              <th className="py-3 px-4 font-bold">Comissão Parceiro</th>
-                              <th className="py-3 px-4 font-bold">Data</th>
-                              <th className="py-3 px-4 font-bold">Status / Etapa</th>
-                              <th className="py-3 px-4 font-bold text-center">Ações</th>
+                            <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-left text-xs font-semibold uppercase tracking-wider">
+                              <th className="py-3.5 px-4 font-semibold">Lead / Empresa</th>
+                              <th className="py-3.5 px-4 font-semibold">Contato</th>
+                              <th className="py-3.5 px-4 font-semibold">Simulado / Aprovado</th>
+                              <th className="py-3.5 px-4 font-semibold">Comissão Parceiro</th>
+                              <th className="py-3.5 px-4 font-semibold">Data</th>
+                              <th className="py-3.5 px-4 font-semibold">Status / Etapa</th>
+                              <th className="py-3.5 px-4 font-semibold text-center">Ações</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 text-xs">
                             {paginatedLeads.map(lead => (
-                              <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="py-4 px-4 font-medium text-slate-700">
+                              <tr key={lead.id} className="hover:bg-slate-50/60 transition-colors">
+                                <td className="py-3.5 px-4 font-medium text-slate-800">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-extrabold text-slate-800">{lead.razaoSocial || "Não informado"}</span>
+                                    <span className="font-bold text-slate-900">{lead.razaoSocial || "Não informado"}</span>
                                     {(lead.pendente || lead.pendencias?.status === "pendente") && (
-                                      <span className="inline-flex items-center gap-0.5 bg-rose-50 border border-rose-200 text-rose-700 text-[9px] font-black px-1.5 py-0.5 rounded-sm animate-pulse uppercase">
-                                        <AlertTriangle className="w-2.5 h-2.5 text-rose-600" />
+                                      <span className="inline-flex items-center gap-1 bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold px-2 py-0.5 rounded-md uppercase">
+                                        <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
                                         Pendência
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-[10px] text-slate-500 font-mono mt-0.5">{lead.cnpj || "-"}</div>
+                                  <div className="text-[11px] text-slate-500 font-mono mt-0.5">{lead.cnpj || "-"}</div>
                                 </td>
-                                <td className="py-4 px-4">
+                                <td className="py-3.5 px-4">
                                   <div className="font-semibold text-slate-800">{lead.nome}</div>
-                                  <div className="text-[10px] text-slate-500 mt-0.5">{lead.whatsapp || lead.email}</div>
+                                  <div className="text-[11px] text-slate-500 mt-0.5">{lead.whatsapp || lead.email}</div>
                                 </td>
-                                <td className="py-4 px-4">
-                                  <div className="text-[10px] text-slate-400 font-semibold uppercase flex items-center gap-1.5 flex-wrap">
+                                <td className="py-3.5 px-4">
+                                  <div className="text-[11px] text-slate-400 font-bold uppercase flex items-center gap-1.5 flex-wrap">
                                     <span>Simulado</span>
-                                    <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-1.5 py-0.2 rounded font-mono">
+                                    <span className="bg-emerald-50 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-md font-mono border border-emerald-100">
                                       {lead.propostaNegociada?.creditLineCode || lead.creditLineCode || lead.result?.creditLineCode || "PRONAMPE"}
                                     </span>
                                   </div>
-                                  <div className="font-bold text-slate-700">
+                                  <div className="font-bold font-mono text-slate-800 mt-0.5">
                                     {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Consulta"}
                                   </div>
                                   {(lead.etapa === 7 || lead.status === "concluido") && lead.valorAprovado !== undefined && lead.valorAprovado > 0 && (
                                     <div className="mt-1">
-                                      <span className="text-[9px] text-slate-400 font-bold uppercase block">Crédito Aprovado</span>
-                                      <span className="font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] inline-block mt-0.5">
+                                      <span className="text-[11px] text-slate-400 font-bold uppercase block">Crédito Aprovado</span>
+                                      <span className="font-extrabold font-mono text-[#00A86B] bg-emerald-50 px-2 py-0.5 rounded-md text-xs inline-block mt-0.5 border border-emerald-100">
                                         {formatCurrencyBRL(lead.valorAprovado)}
                                       </span>
                                     </div>
                                   )}
                                 </td>
-                                <td className="py-4 px-4">
-                                  <div className="font-extrabold text-slate-800">
+                                <td className="py-3.5 px-4">
+                                  <div className="font-extrabold font-mono text-slate-900">
                                     {formatCurrencyBRL((lead.valorAprovado || lead.limiteEstimado || 0) * getDirectCommissionMultiplier(currentPartner?.plano))}
                                   </div>
                                   <div className="mt-1">
                                     {lead.comissaoPaga ? (
-                                      <span className="inline-flex items-center gap-1 text-[9px] uppercase font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
+                                      <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-emerald-50 text-[#00A86B] border border-emerald-200 px-2.5 py-0.5 rounded-md">
                                         ✓ Pago
                                       </span>
                                     ) : (lead.etapa === 7 || lead.status === "concluido") ? (
-                                      <span className="inline-flex items-center gap-1 text-[9px] uppercase font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded animate-pulse">
+                                      <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-md">
                                         ⏱ Pendente
                                       </span>
                                     ) : lead.etapa === 8 ? (
-                                      <span className="inline-flex items-center gap-1 text-[9px] uppercase font-black bg-rose-50 text-rose-600 px-2 py-0.5 rounded">
+                                      <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-md">
                                         ✕ Sem Repasse
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1 text-[9px] uppercase font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
+                                      <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-md">
                                         Aguardando
                                       </span>
                                     )}
                                   </div>
                                 </td>
-                                <td className="py-4 px-4 text-slate-500 font-medium">
+                                <td className="py-3.5 px-4 text-slate-600 font-mono text-xs">
                                   {new Date(lead.dataCriacao).toLocaleDateString("pt-BR")}
                                 </td>
-                                <td className="py-4 px-4">
-                                  <span className={`inline-block text-[9px] uppercase font-black px-2 py-0.5 rounded ${
-                                    lead.etapa === 7 ? "bg-emerald-600 text-white font-black" :
-                                    lead.etapa === 8 ? "bg-rose-100 text-rose-800 font-black" :
-                                    lead.status === "concluido" ? "bg-emerald-100 text-emerald-800" :
-                                    lead.status === "em atendimento" ? "bg-amber-100 text-amber-800" :
-                                    "bg-blue-50 text-blue-700"
+                                <td className="py-3.5 px-4">
+                                  <span className={`inline-block text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md font-mono ${
+                                    lead.etapa === 7 ? "bg-emerald-50 text-[#00A86B] border border-emerald-200" :
+                                    lead.etapa === 8 ? "bg-rose-50 text-rose-700 border border-rose-200" :
+                                    lead.status === "concluido" ? "bg-emerald-50 text-[#00A86B] border border-emerald-200" :
+                                    lead.status === "em atendimento" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                                    "bg-blue-50 text-blue-700 border border-blue-200"
                                   }`}>
                                     {lead.etapa === 7 ? "Crédito Aprovado" :
                                      lead.etapa === 8 ? "Crédito Recusado" :
@@ -6461,23 +6461,23 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                      lead.status}
                                   </span>
                                 </td>
-                                <td className="py-4 px-4 text-center">
+                                <td className="py-3.5 px-4 text-center">
                                   <div className="flex items-center justify-center gap-1.5">
                                     <button
                                       onClick={() => handleOpenLeadWorkspace(lead, "details")}
-                                      className="px-3 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
+                                      className="px-3 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white rounded-xl transition-all font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap min-h-[36px]"
                                       title="Abrir Ficha de Crédito do Lead"
                                     >
                                       <Eye className="w-3.5 h-3.5 text-emerald-300" />
-                                      Ficha Lead
+                                      <span>Ficha Lead</span>
                                     </button>
                                     <button
                                       onClick={() => handleOpenLeadWorkspace(lead, "simulador")}
                                       disabled={lead.etapa === 7 || lead.etapa === 8}
-                                      className={`p-1.5 border rounded-xl transition-all flex items-center justify-center shrink-0 ${
+                                      className={`p-2 border rounded-xl transition-all flex items-center justify-center shrink-0 min-h-[36px] min-w-[36px] ${
                                         lead.etapa === 7 || lead.etapa === 8
                                           ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50"
-                                          : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200/60 cursor-pointer"
+                                          : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200 cursor-pointer"
                                       }`}
                                       title={
                                         lead.etapa === 7
@@ -6487,15 +6487,15 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                           : `Negociar Proposta (${lead.propostaNegociada?.creditLineCode || lead.creditLineCode || lead.result?.creditLineCode || "Simulação"})`
                                       }
                                     >
-                                      <Calculator className="w-3.5 h-3.5" />
+                                      <Calculator className="w-4 h-4" />
                                     </button>
                                     {isFranquiaDigital(currentPartner?.plano) && (
                                       <button
                                         onClick={() => setAssigningLead(lead)}
-                                        className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200/60 rounded-xl transition-all flex items-center justify-center shrink-0 cursor-pointer"
+                                        className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-xl transition-all flex items-center justify-center shrink-0 cursor-pointer min-h-[36px] min-w-[36px]"
                                         title="Direcionar para Consultor da Equipe"
                                       >
-                                        <Send className="w-3.5 h-3.5" />
+                                        <Send className="w-4 h-4" />
                                       </button>
                                     )}
                                   </div>
@@ -6514,19 +6514,19 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           const directCommissionValue = (lead.valorAprovado || lead.limiteEstimado || 0) * getDirectCommissionMultiplier(currentPartner?.plano);
                           
                           return (
-                            <div key={lead.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+                            <div key={lead.id} className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs">
                               {/* Header: Date & Status Badge */}
-                              <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
-                                <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                                <span className="text-xs text-slate-500 font-mono flex items-center gap-1.5">
                                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
                                   {new Date(lead.dataCriacao).toLocaleDateString("pt-BR")}
                                 </span>
-                                <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded ${
-                                  lead.etapa === 7 ? "bg-emerald-600 text-white font-black" :
-                                  lead.etapa === 8 ? "bg-rose-100 text-rose-800 font-black" :
-                                  lead.status === "concluido" ? "bg-emerald-100 text-emerald-800" :
-                                  lead.status === "em atendimento" ? "bg-amber-100 text-amber-800" :
-                                  "bg-blue-50 text-blue-700"
+                                <span className={`text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md font-mono ${
+                                  lead.etapa === 7 ? "bg-emerald-50 text-[#00A86B] border border-emerald-200" :
+                                  lead.etapa === 8 ? "bg-rose-50 text-rose-700 border border-rose-200" :
+                                  lead.status === "concluido" ? "bg-emerald-50 text-[#00A86B] border border-emerald-200" :
+                                  lead.status === "em atendimento" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                                  "bg-blue-50 text-blue-700 border border-blue-200"
                                 }`}>
                                   {lead.etapa === 7 ? "Crédito Aprovado" :
                                    lead.etapa === 8 ? "Crédito Recusado" :
@@ -6540,77 +6540,77 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               {/* Lead / Company info */}
                               <div className="space-y-1">
                                 <div className="flex items-start justify-between gap-2">
-                                  <h4 className="font-extrabold text-sm text-slate-800 leading-tight">
+                                  <h4 className="font-bold text-sm text-slate-900 leading-tight">
                                     {lead.razaoSocial || "Não informado"}
                                   </h4>
                                 </div>
                                 {(lead.pendente || lead.pendencias?.status === "pendente") && (
-                                  <div className="mt-1 flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-black px-2.5 py-1 rounded-lg">
-                                    <AlertTriangle className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
+                                  <div className="mt-1 flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold px-2.5 py-1 rounded-lg">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
                                     <span>PENDÊNCIA DE DOCUMENTO ATIVA</span>
                                   </div>
                                 )}
-                                <div className="text-[10px] text-slate-500 font-mono">
+                                <div className="text-[11px] text-slate-500 font-mono">
                                   CNPJ: {lead.cnpj || "-"}
                                 </div>
                               </div>
 
                               {/* Contact info card block */}
-                              <div className="bg-white p-2.5 rounded-xl border border-slate-200/50 space-y-1 text-xs text-slate-700">
-                                <div className="font-semibold text-slate-800 flex items-center gap-1">
+                              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/70 space-y-1 text-xs text-slate-700">
+                                <div className="font-semibold text-slate-900 flex items-center gap-1.5">
                                   <User className="w-3.5 h-3.5 text-slate-400" />
                                   {lead.nome}
                                 </div>
-                                <div className="text-[10px] text-slate-500 flex items-center gap-1.5 pl-5">
-                                  <Phone className="w-3 h-3 text-slate-400" />
+                                <div className="text-[11px] text-slate-500 flex items-center gap-1.5 pl-5">
+                                  <Phone className="w-3.5 h-3.5 text-slate-400" />
                                   {lead.whatsapp || lead.email}
                                 </div>
                               </div>
 
                               {/* Values side-by-side */}
-                              <div className="grid grid-cols-2 gap-3 text-xs">
-                                <div className="bg-white p-2.5 rounded-xl border border-slate-200/50">
+                              <div className="grid grid-cols-2 gap-2.5 text-xs">
+                                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
                                   <div className="flex items-center justify-between gap-1">
-                                    <span className="text-[9px] text-slate-400 font-bold uppercase block">Simulado</span>
-                                    <span className="bg-emerald-100 text-emerald-800 text-[8px] font-black px-1.5 py-0.2 rounded font-mono">
+                                    <span className="text-[11px] text-slate-400 font-bold uppercase block">Simulado</span>
+                                    <span className="bg-emerald-50 text-emerald-800 text-[11px] font-bold px-1.5 py-0.5 rounded-md font-mono border border-emerald-100">
                                       {lead.propostaNegociada?.creditLineCode || lead.creditLineCode || lead.result?.creditLineCode || "PRONAMPE"}
                                     </span>
                                   </div>
-                                  <span className="font-bold text-slate-700 block mt-0.5">
+                                  <span className="font-bold font-mono text-slate-800 block mt-1">
                                     {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Consulta"}
                                   </span>
                                 </div>
-                                <div className="bg-white p-2.5 rounded-xl border border-slate-200/50">
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase block">Valor Aprovado</span>
-                                  <span className="font-extrabold text-emerald-600 block mt-0.5">
+                                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+                                  <span className="text-[11px] text-slate-400 font-bold uppercase block">Valor Aprovado</span>
+                                  <span className="font-extrabold font-mono text-[#00A86B] block mt-1">
                                     {(lead.etapa === 7 || lead.status === "concluido") && lead.valorAprovado && lead.valorAprovado > 0 ? formatCurrencyBRL(lead.valorAprovado) : "Sob Consulta"}
                                   </span>
                                 </div>
                               </div>
 
                               {/* Commission Box */}
-                              <div className="bg-emerald-50/60 border border-emerald-100 p-3 rounded-xl flex items-center justify-between text-xs">
+                              <div className="bg-emerald-50/70 border border-emerald-200 p-3 rounded-xl flex items-center justify-between text-xs">
                                 <div>
-                                  <span className="text-[9px] text-emerald-800 font-bold uppercase block">Comissão Estimada</span>
-                                  <span className="font-black text-emerald-700 text-sm">
+                                  <span className="text-[11px] text-emerald-900 font-bold uppercase block">Comissão Estimada</span>
+                                  <span className="font-extrabold font-mono text-[#00A86B] text-sm">
                                     {formatCurrencyBRL(directCommissionValue)}
                                   </span>
                                 </div>
                                 <div>
                                   {lead.comissaoPaga ? (
-                                    <span className="inline-flex items-center gap-1 text-[9px] uppercase font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
+                                    <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-md">
                                       ✓ Pago
                                     </span>
                                   ) : isConcluded ? (
-                                    <span className="inline-flex items-center gap-1 text-[9px] uppercase font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded animate-pulse">
+                                    <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-md">
                                       ⏱ Pendente
                                     </span>
                                   ) : isRefused ? (
-                                    <span className="inline-flex items-center gap-1 text-[9px] uppercase font-black bg-rose-50 text-rose-600 px-2 py-0.5 rounded">
+                                    <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-md">
                                       ✕ Sem Repasse
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1 text-[9px] uppercase font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
+                                    <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-md">
                                       Aguardando
                                     </span>
                                   )}
@@ -6627,14 +6627,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 const canAccessSimulador = cardStepStatus.isTabUnlocked("simulador");
 
                                 return (
-                                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/50">
+                                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
                                     <button
                                       onClick={() => handleOpenLeadWorkspace(lead, "details")}
-                                      className="py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                                      className="py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white rounded-xl transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
                                       title="Abrir Ficha Cadastral (Passo 1)"
                                     >
-                                      <Eye className="w-3.5 h-3.5" />
-                                      Ficha
+                                      <Eye className="w-3.5 h-3.5 text-emerald-300" />
+                                      <span>Ficha</span>
                                     </button>
 
                                     <button
@@ -6645,15 +6645,15 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         }
                                         handleOpenLeadWorkspace(lead, "socios");
                                       }}
-                                      className={`py-2.5 border rounded-xl transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 ${
+                                      className={`py-2.5 border rounded-xl transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 min-h-[44px] ${
                                         !canAccessSocios
                                           ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
-                                          : "bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200/50 cursor-pointer"
+                                          : "bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200 cursor-pointer"
                                       }`}
                                       title={canAccessSocios ? "Cadastrar/Editar Sócios (Passo 2)" : (cardStepStatus.getLockedReason("socios") || "Bloqueado")}
                                     >
                                       {!canAccessSocios ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <Users className="w-3.5 h-3.5" />}
-                                      Sócios
+                                      <span>Sócios</span>
                                     </button>
 
                                     <button
@@ -6665,27 +6665,27 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         handleOpenLeadWorkspace(lead, "simulador");
                                       }}
                                       disabled={lead.etapa === 7 || lead.etapa === 8}
-                                      className={`py-2.5 border rounded-xl transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 ${
+                                      className={`py-2.5 border rounded-xl transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 min-h-[44px] ${
                                         !canAccessSimulador || lead.etapa === 7 || lead.etapa === 8
                                           ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
-                                          : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200/50 cursor-pointer"
+                                          : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200 cursor-pointer"
                                       }`}
                                       title={canAccessSimulador ? "Simulador de Estruturação (Passo 6)" : (cardStepStatus.getLockedReason("simulador") || "Bloqueado")}
                                     >
-                                      {!canAccessSimulador ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <Calculator className="w-3.5 h-3.5" />}
-                                      Simulador
+                                      {!canAccessSimulador ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <Calculator className="w-3.5 h-3.5 text-emerald-700" />}
+                                      <span>Simulador</span>
                                     </button>
 
                                     {isFranquiaDigital(currentPartner?.plano) ? (
                                       <button
                                         onClick={() => setAssigningLead(lead)}
-                                        className="py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200/50 rounded-xl transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                                        className="py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-xl transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
                                       >
                                         <Send className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                                        Direcionar
+                                        <span>Direcionar</span>
                                       </button>
                                     ) : (
-                                      <div className="bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-center text-[10px] text-slate-400 font-semibold select-none">
+                                      <div className="bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-center text-[11px] text-slate-400 font-semibold select-none min-h-[44px]">
                                         PROSFEC Oficial
                                       </div>
                                     )}
@@ -6699,11 +6699,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                       {/* Pagination for Partner Leads */}
                       {filteredLeads.length > itemsPerPage && (
-                        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl mt-4">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl mt-4">
                           <div className="text-xs text-slate-500 font-medium">
-                            Mostrando <span className="font-bold text-slate-700">{((leadsPage - 1) * itemsPerPage) + 1}</span> a{" "}
-                            <span className="font-bold text-slate-700">{Math.min(leadsPage * itemsPerPage, filteredLeads.length)}</span> de{" "}
-                            <span className="font-bold text-slate-700">{filteredLeads.length}</span> indicações
+                            Mostrando <span className="font-bold font-mono text-slate-700">{((leadsPage - 1) * itemsPerPage) + 1}</span> a{" "}
+                            <span className="font-bold font-mono text-slate-700">{Math.min(leadsPage * itemsPerPage, filteredLeads.length)}</span> de{" "}
+                            <span className="font-bold font-mono text-slate-700">{filteredLeads.length}</span> indicações
                           </div>
                           <div className="flex items-center gap-1.5">
                             <button
@@ -6789,10 +6789,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                                       // Sub-etapas for Passo 6 Operacionalização
                                       const rawServs = (lead as any).servicosRecomendados || ((lead as any).diagnosticoPROSFEC && (lead as any).diagnosticoPROSFEC.servicosRecomendados) || [];
+                                      const syncedServs = sanitizeAndSyncServicosList(rawServs, catalogServices);
                                       const subList = (lead as any).subEtapasPasso6 && (lead as any).subEtapasPasso6.length > 0
-                                        ? (lead as any).subEtapasPasso6
-                                        : (rawServs.length > 0
-                                            ? rawServs.map((s: any, idx: number) => ({
+                                        ? sanitizeAndSyncServicosList((lead as any).subEtapasPasso6, catalogServices)
+                                        : (syncedServs.length > 0
+                                            ? syncedServs.map((s: any, idx: number) => ({
                                                 id: s.id || `sub_serv_${idx}`,
                                                 titulo: s.nome || s.servico || `Serviço ${idx + 1}`,
                                                 concluida: s.status === "concluido" || s.concluida,
@@ -6844,17 +6845,17 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                             {column.id === 7 && (
                                               <div className="mt-1">
                                                 {isRefused ? (
-                                                  <div className="bg-rose-100 border border-rose-200 text-rose-800 text-[9px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 uppercase">
+                                                  <div className="bg-rose-100 border border-rose-200 text-rose-800 text-[11px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 uppercase">
                                                     <XCircle className="w-3 h-3 text-rose-600 shrink-0" />
                                                     <span>Crédito Recusado</span>
                                                   </div>
                                                 ) : isApproved ? (
-                                                  <div className="bg-emerald-100 border border-emerald-200 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 uppercase">
+                                                  <div className="bg-emerald-100 border border-emerald-200 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 uppercase">
                                                     <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
                                                     <span>Crédito Aprovado</span>
                                                   </div>
                                                 ) : (
-                                                  <div className="bg-amber-50 border border-amber-200 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 uppercase">
+                                                  <div className="bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 uppercase">
                                                     <Clock className="w-3 h-3 text-amber-600 shrink-0" />
                                                     <span>Em Análise Bancária</span>
                                                   </div>
@@ -7548,157 +7549,31 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </span>
                             <span className="text-[10px] font-bold text-emerald-700 block">Saldo disponível</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRefillSuccessMessage(null);
-                              setShowRefillModal(true);
-                            }}
-                            className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5"
-                          >
-                            <Coins className="w-4 h-4" />
-                            Adquirir Recarga
-                          </button>
+                          {isSubMember ? (
+                            <div
+                              className="px-3.5 py-2 bg-emerald-100/70 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex items-center gap-1.5 shrink-0 cursor-not-allowed select-none"
+                              title="Suas cotas de busca são fornecidas e administradas diretamente pelo seu Master de Franquia."
+                            >
+                              <Lock className="w-3.5 h-3.5 text-emerald-700" />
+                              <span>Gerenciado pelo Master</span>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRefillNotifySuccess(false);
+                                setRefillStep(1);
+                                setRefillCopiedPix(false);
+                                setShowRefillModal(true);
+                              }}
+                              className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5"
+                            >
+                              <Coins className="w-4 h-4 text-amber-300" />
+                              Adquirir Recarga
+                            </button>
+                          )}
                         </div>
                       </div>
-
-                      {/* Buy Refill Modal */}
-                      {showRefillModal && (
-                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 animate-fade-in p-4">
-                          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl relative animate-scale-up space-y-6">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                              <h3 className="font-display font-black text-lg text-slate-800 flex items-center gap-2">
-                                <Coins className="w-5 h-5 text-emerald-600" />
-                                Adquirir Pacote de Consultas
-                              </h3>
-                              <button
-                                type="button"
-                                onClick={() => setShowRefillModal(false)}
-                                className="text-slate-400 hover:text-slate-600 font-bold text-sm cursor-pointer"
-                              >
-                                Voltar
-                              </button>
-                            </div>
-
-                            {!refillSuccessMessage ? (
-                              <form onSubmit={handleRequestRefill} className="space-y-5">
-                                <p className="text-xs text-slate-500 leading-relaxed">
-                                  Selecione o pacote de recarga manual para o Caça Leads desejado. Após enviar a solicitação, realize a transferência PIX correspondente e informe a administração para ativação do saldo.
-                                </p>
-
-                                <div className="space-y-2.5">
-                                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block">Escolha o Pacote</label>
-                                  <div className="grid grid-cols-1 gap-2.5">
-                                    <button
-                                      type="button"
-                                      onClick={() => setRefillPackage("Bronze")}
-                                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                                        refillPackage === "Bronze" 
-                                          ? "border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-600" 
-                                          : "border-slate-200 hover:border-emerald-300"
-                                      }`}
-                                    >
-                                      <div>
-                                        <div className="font-black text-sm text-slate-800">Bronze</div>
-                                        <div className="text-xs text-slate-500 mt-0.5">Inclui 10 buscas em tempo real</div>
-                                      </div>
-                                      <div className="font-mono font-black text-emerald-800 text-sm">
-                                        R$ 59,90
-                                      </div>
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => setRefillPackage("Prata")}
-                                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                                        refillPackage === "Prata" 
-                                          ? "border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-600" 
-                                          : "border-slate-200 hover:border-emerald-300"
-                                      }`}
-                                    >
-                                      <div>
-                                        <div className="font-black text-sm text-slate-800">Prata</div>
-                                        <div className="text-xs text-slate-500 mt-0.5">Inclui 30 buscas em tempo real</div>
-                                      </div>
-                                      <div className="font-mono font-black text-emerald-800 text-sm">
-                                        R$ 129,90
-                                      </div>
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => setRefillPackage("Ouro")}
-                                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                                        refillPackage === "Ouro" 
-                                          ? "border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-600" 
-                                          : "border-slate-200 hover:border-emerald-300"
-                                      }`}
-                                    >
-                                      <div>
-                                        <div className="font-black text-sm text-slate-800">Ouro</div>
-                                        <div className="text-xs text-slate-500 mt-0.5">Inclui 60 buscas em tempo real</div>
-                                      </div>
-                                      <div className="font-mono font-black text-emerald-800 text-sm">
-                                        R$ 239,90
-                                      </div>
-                                    </button>
-                                  </div>
-                                </div>
-
-                                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Dados para Transferência PIX</div>
-                                  <div className="text-xs text-slate-700 font-bold">Chave E-mail: prosfec.tesouraria@gmail.com</div>
-                                  <div className="text-[10px] text-slate-500 leading-relaxed">
-                                    Após efetuar a transferência, envie o comprovante de pagamento ao suporte da PROSFEC para agilizar a liberação.
-                                  </div>
-                                </div>
-
-                                <div className="flex gap-3 justify-end pt-2 border-t border-slate-100">
-                                  <button
-                                    type="button"
-                                    onClick={() => setShowRefillModal(false)}
-                                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 font-bold text-xs text-slate-600 rounded-xl transition-all cursor-pointer"
-                                  >
-                                    Cancelar
-                                  </button>
-                                  <button
-                                    type="submit"
-                                    disabled={refillSubmitting}
-                                    className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 font-black text-xs text-white rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50"
-                                  >
-                                    {refillSubmitting ? "Enviando..." : "Solicitar e Gerar Pedido"}
-                                  </button>
-                                </div>
-                              </form>
-                            ) : (
-                              <div className="space-y-5 py-2">
-                                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-800 text-xs font-bold leading-relaxed space-y-2">
-                                  <div>🎉 {refillSuccessMessage}</div>
-                                </div>
-
-                                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-xs">
-                                  <div className="font-black text-[10px] text-slate-400 uppercase tracking-wide">Como liberar suas buscas:</div>
-                                  <ol className="list-decimal list-inside space-y-1 text-slate-600 font-semibold">
-                                    <li>Realize o PIX para <span className="font-mono font-bold text-slate-800">prosfec.tesouraria@gmail.com</span></li>
-                                    <li>Envie o comprovante de transferência para o suporte</li>
-                                    <li>Seu saldo será atualizado imediatamente após a validação administrativa</li>
-                                  </ol>
-                                </div>
-
-                                <div className="flex justify-end pt-2 border-t border-slate-100">
-                                  <button
-                                    type="button"
-                                    onClick={() => setShowRefillModal(false)}
-                                    className="px-5 py-2.5 bg-[#0A3D2E] text-white font-black text-xs rounded-xl transition-all cursor-pointer hover:bg-emerald-700"
-                                  >
-                                    Entendido, Fechar
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
 
                       {/* Previous Refill Requests History List */}
                       {myRefills.length > 0 && (
@@ -8403,238 +8278,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 </motion.div>
               )}
 
-              {activeTab === "consultas" && (
-                <motion.div
-                  key="consultas-tab"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="space-y-6 text-left max-w-6xl mx-auto"
-                >
-                  {/* Title Header */}
-                  <div className="bg-gradient-to-br from-[#0A3D2E] to-[#125843] p-6 sm:p-8 rounded-3xl text-white shadow-xl relative overflow-hidden">
-                    <div className="absolute right-0 top-0 translate-x-1/4 -translate-y-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                      <div>
-                        <span className="bg-emerald-500/20 text-emerald-300 font-extrabold text-[10px] tracking-widest uppercase px-3 py-1 rounded-full border border-emerald-500/30">
-                          Serviços de Análise de Crédito
-                        </span>
-                        <h2 className="font-display font-black text-2xl sm:text-3xl mt-2 tracking-tight">
-                          Consultas SPC, Serasa & Receita
-                        </h2>
-                        <p className="text-emerald-100/80 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-                          Consulte a situação cadastral, score, restrições financeiras e histórico de CPFs e CNPJs diretamente nas principais bases de dados nacionais.
-                        </p>
-                      </div>
-                      
-                      <div className="bg-white/10 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl flex flex-col items-center justify-center text-center">
-                        <span className="text-[10px] font-black tracking-wider uppercase text-emerald-200">Seu Saldo Atual</span>
-                        <span className="text-xl sm:text-2xl font-black mt-0.5 text-white">
-                          R$ {((currentPartner as any)?.saldoConsultas || 0.00).toFixed(2).replace(".", ",")}
-                        </span>
-                        <span className="text-[9px] text-emerald-300 font-medium mt-1">Reabastecido manualmente via Pix</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Recharge Success banner */}
-                  {rechargeNotifySuccess ? (
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="bg-emerald-50 border border-emerald-200 p-6 rounded-3xl text-center space-y-4 max-w-xl mx-auto shadow-md"
-                    >
-                      <div className="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-3xl font-extrabold">
-                        ✓
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="font-black text-slate-800 text-base">Notificação de Depósito Enviada!</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed">
-                          Sua solicitação de recarga de <strong>R$ {rechargeAmount.toFixed(2).replace(".", ",")}</strong> foi registrada. Nosso financeiro analisará o Pix recebido na chave <strong>prosfec.tesouraria@gmail.com</strong> e liberará seu saldo de consultas em instantes!
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setRechargeNotifySuccess(false);
-                          setRechargeAmount(140);
-                        }}
-                        className="px-5 py-2 bg-[#00A86B] hover:bg-[#008F5A] active:scale-95 text-white font-extrabold rounded-xl transition-all text-xs cursor-pointer"
-                      >
-                        Fazer Outra Notificação
-                      </button>
-                    </motion.div>
-                  ) : (
-                    /* Main Panels Grid */
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                      
-                      {/* Left: Recharge Instructions Card */}
-                      <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2">
-                            <div className="bg-emerald-50 p-2 rounded-xl text-emerald-700">
-                              <Coins className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div>
-                              <h3 className="font-black text-slate-800 text-sm">Adicionar Saldo de Consulta</h3>
-                              <p className="text-slate-400 text-[10px]">Deposite via Pix e informe abaixo para liberação</p>
-                            </div>
-                          </div>
-
-                          <div className="bg-slate-50 p-4 rounded-2xl space-y-3.5 border border-slate-100">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Instruções para Depósito</span>
-                            <div className="space-y-2">
-                              <p className="text-xs text-slate-600 leading-normal font-bold text-emerald-800 bg-emerald-50 border border-emerald-100 p-2 rounded-xl">
-                                ATENÇÃO: O valor mínimo de recarga é de R$ 140,00.
-                              </p>
-                              <p className="text-xs text-slate-600 leading-normal">
-                                1. Faça uma transferência PIX de no mínimo R$ 140,00 para a chave abaixo:
-                              </p>
-                              
-                              <div className="bg-white border border-slate-200 p-2.5 rounded-xl flex items-center justify-between gap-2">
-                                <span className="font-mono text-xs text-slate-700 select-all overflow-hidden text-ellipsis whitespace-nowrap">
-                                  prosfec.tesouraria@gmail.com
-                                </span>
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText("prosfec.tesouraria@gmail.com");
-                                    alert("Chave Pix copiada com sucesso!");
-                                  }}
-                                  className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-all cursor-pointer flex items-center justify-center shrink-0"
-                                  title="Copiar Chave Pix"
-                                >
-                                  <Check className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                              
-                              <p className="text-xs text-slate-600 leading-normal">
-                                2. Após transferir, selecione ou digite o valor enviado abaixo e clique em notificar.
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Pre-set values helper */}
-                          <div className="space-y-2">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Valores de Recarga</span>
-                            <div className="grid grid-cols-4 gap-2">
-                              {[140, 200, 300, 500].map((val) => (
-                                <button
-                                  key={val}
-                                  type="button"
-                                  onClick={() => setRechargeAmount(val)}
-                                  className={`py-2 px-1 text-center font-bold text-xs rounded-xl border transition-all cursor-pointer ${
-                                    rechargeAmount === val
-                                      ? "bg-[#0A3D2E] text-white border-[#0A3D2E]"
-                                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-                                  }`}
-                                >
-                                  R$ {val}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Custom input */}
-                          <div className="relative rounded-2xl border border-slate-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/10 px-4 py-2.5 transition-all">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Valor Personalizado (R$ - Mínimo R$ 140)</span>
-                            <input
-                              type="number"
-                              min="140"
-                              value={rechargeAmount || ""}
-                              onChange={(e) => setRechargeAmount(Number(e.target.value))}
-                              className="w-full bg-transparent border-0 p-0 text-slate-800 font-bold focus:ring-0 focus:outline-hidden text-sm mt-0.5"
-                              placeholder="Mínimo R$ 140,00"
-                            />
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleNotifyCreditRecharge(rechargeAmount)}
-                          disabled={notifyingRecharge || !rechargeAmount || rechargeAmount < 140.00}
-                          className={`w-full py-3.5 rounded-2xl text-white font-extrabold text-xs transition-all mt-4 flex items-center justify-center gap-2 cursor-pointer ${
-                            notifyingRecharge || !rechargeAmount || rechargeAmount < 140.00
-                              ? "bg-slate-300 cursor-not-allowed opacity-50"
-                              : "bg-[#00A86B] hover:bg-[#008F5A] active:scale-95 shadow-sm"
-                          }`}
-                        >
-                          {notifyingRecharge ? (
-                            <>Aguardando...</>
-                          ) : (
-                            <>Notificar Depósito / Adicionar Saldo</>
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Right: Info Card explaining queries are done in the Lead Workspace */}
-                      <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2">
-                            <div className="bg-emerald-50 p-2 rounded-xl text-emerald-700">
-                              <Sparkles className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div>
-                              <h3 className="font-black text-slate-800 text-sm">Onde Executar as Consultas de Crédito?</h3>
-                              <p className="text-slate-400 text-[10px]">Análises integradas diretamente à ficha do seu lead</p>
-                            </div>
-                          </div>
-
-                          <div className="bg-gradient-to-br from-slate-50 to-emerald-50/40 p-5 rounded-2xl border border-emerald-100/80 space-y-3">
-                            <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-xs shrink-0 mt-0.5 shadow-sm">
-                                💡
-                              </div>
-                              <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                                As consultas de crédito (SPC, Serasa e Receita Federal) são executadas <strong>exclusivamente dentro do Workspace / Ficha do Lead</strong>.
-                              </p>
-                            </div>
-
-                            <div className="space-y-2.5 pt-2 border-t border-emerald-200/50 text-xs text-slate-600">
-                              <div className="flex items-start gap-2">
-                                <span className="text-emerald-600 font-extrabold text-sm">✓</span>
-                                <div>
-                                  <strong className="text-slate-800">Diagnóstico PROSFEC IA Automático:</strong>
-                                  <span className="block text-[11px] text-slate-500">Ao realizar a consulta na ficha do lead, os dados alimentam em tempo real a análise da IA.</span>
-                                </div>
-                              </div>
-
-                              <div className="flex items-start gap-2">
-                                <span className="text-emerald-600 font-extrabold text-sm">✓</span>
-                                <div>
-                                  <strong className="text-slate-800">Consultas de CNPJ e Sócios (CPF):</strong>
-                                  <span className="block text-[11px] text-slate-500">Consulte o CNPJ da empresa e os CPFs dos sócios diretamente na aba "Mesa de Análise & Consultas" do lead.</span>
-                                </div>
-                              </div>
-
-                              <div className="flex items-start gap-2">
-                                <span className="text-emerald-600 font-extrabold text-sm">✓</span>
-                                <div>
-                                  <strong className="text-slate-800">Uso Transparente do Saldo:</strong>
-                                  <span className="block text-[11px] text-slate-500">O valor do serviço escolhido é debitado automaticamente do seu saldo de consultas exibido acima.</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="bg-blue-50/70 border border-blue-100 p-3.5 rounded-2xl text-[11px] text-blue-900 leading-relaxed flex items-center gap-2.5">
-                            <Clock className="w-4 h-4 text-blue-600 shrink-0" />
-                            <span>Utilize o formulário ao lado para solicitar a recarga de saldo de consultas sempre que precisar.</span>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleTabClick("leads")}
-                          className="w-full py-3.5 rounded-2xl bg-[#0A3D2E] hover:bg-[#072F23] active:scale-95 text-white font-extrabold text-xs transition-all mt-6 flex items-center justify-center gap-2 cursor-pointer shadow-md"
-                        >
-                          <FileText className="w-4 h-4 text-emerald-400" />
-                          <span>Ir para Ficha dos Leads para Consultar</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-
               {activeTab === "terms" && (
                 <motion.div
                   key="terms-tab"
@@ -8654,6 +8297,22 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>Contrato aceito eletronicamente via endereço IP seguro em: {currentPartner?.dataCriacao ? new Date(currentPartner.dataCriacao).toLocaleDateString("pt-BR") : "Ficha de Cadastro"}.</span>
                   </div>
+                </motion.div>
+              )}
+
+              {activeTab === "servicos-contabilidade" && (
+                <motion.div
+                  key="servicos-contabilidade-tab"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-6 text-left max-w-6xl mx-auto"
+                >
+                  <PartnerServicosContabilidadeTab
+                    currentPartner={currentPartner}
+                    onNavigateToLeads={() => handleTabClick("leads")}
+                    onNavigateToRecarga={() => setShowRechargeModal(true)}
+                  />
                 </motion.div>
               )}
 
@@ -8918,352 +8577,621 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </p>
                   </div>
 
-                  {/* Team Members List */}
-                  <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                      <div>
-                        <h3 className="font-display font-extrabold text-base text-slate-800">Consultores do meu Time</h3>
-                        <p className="text-xs text-slate-500">Membros ativos sob sua gestão comercial.</p>
-                      </div>
-                      <button
-                        onClick={() => currentPartner && fetchTeamDetails(currentPartner.id)}
-                        className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        Atualizar Equipe
-                      </button>
-                    </div>
+                  {/* Team Members List (Collapsible + Search) */}
+                  {(() => {
+                    const filteredTeamMembers = teamMembers.filter(member => {
+                      if (!teamMemberSearchTerm.trim()) return true;
+                      const term = teamMemberSearchTerm.toLowerCase().trim();
+                      const name = (member.nome || "").toLowerCase();
+                      const email = (member.email || "").toLowerCase();
+                      const phone = (member.whatsapp || "").replace(/\D/g, "");
+                      const id = (member.id || "").toLowerCase();
+                      const plano = (member.plano || "").toLowerCase();
+                      return name.includes(term) || email.includes(term) || phone.includes(term) || id.includes(term) || plano.includes(term);
+                    });
 
-                    {teamMembers.length === 0 ? (
-                      <div className="py-16 text-center space-y-2">
-                        <div className="bg-slate-50 text-slate-400 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
-                          <Users className="w-6 h-6" />
+                    const activeCount = teamMembers.filter(m => {
+                      const inact = getInactivityDetails(m);
+                      return m.status !== "inativo" && !inact.isInactiveByTime;
+                    }).length;
+                    const inactiveCount = teamMembers.length - activeCount;
+
+                    return (
+                      <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+                        {/* Header with quick stats and toggle button */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#0A3D2E] border border-emerald-100 flex items-center justify-center shrink-0">
+                              <Users className="w-5 h-5 text-emerald-700" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-display font-extrabold text-base text-slate-800">Consultores do meu Time</h3>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 font-mono">
+                                  {teamMembers.length} {teamMembers.length === 1 ? "consultor" : "consultores"}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
+                                <span>{activeCount} ativos</span>
+                                {inactiveCount > 0 && <span className="text-rose-600 font-bold">• {inactiveCount} inativos</span>}
+                                <span>• Gestão comercial e overrides</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <button
+                              type="button"
+                              onClick={() => currentPartner && fetchTeamDetails(currentPartner.id)}
+                              className="p-2 sm:px-2.5 sm:py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-700 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                              title="Atualizar lista de consultores"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Atualizar</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setIsTeamMembersExpanded(!isTeamMembersExpanded)}
+                              className={`px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center justify-center gap-2 shadow-xs shrink-0 ${
+                                isTeamMembersExpanded
+                                  ? "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300/80"
+                                  : "bg-[#0A3D2E] hover:bg-[#00A86B] text-white"
+                              }`}
+                            >
+                              <span>{isTeamMembersExpanded ? "Recolher Consultores" : `Visualizar Consultores (${teamMembers.length})`}</span>
+                              {isTeamMembersExpanded ? (
+                                <ChevronUp className="w-4 h-4 text-slate-600 shrink-0" />
+                              ) : (
+                                <ChevronDown className="w-4 h-4 text-emerald-300 shrink-0" />
+                              )}
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-xs text-slate-500 font-bold max-w-sm mx-auto leading-relaxed">
-                          Nenhum consultor cadastrado ainda. Use o link de convite acima para convidar seu primeiro vendedor!
-                        </p>
-                      </div>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-                          {teamMembers.map(member => {
-                            const memberLeads = teamLeads.filter(l => l.parceiroId === member.id);
-                            const concludedLeads = memberLeads.filter(l => l.status === "concluido");
-                            const totalConcludedValue = concludedLeads.reduce((acc, l) => acc + (l.valorAprovado || l.limiteEstimado || 0), 0);
-                            
-                            const isExecutive = member.plano?.toUpperCase().includes("EXEC");
-                            const overrideMultiplier = isExecutive ? 0.015 : 0.025;
-                            const overrideEarned = totalConcludedValue * overrideMultiplier;
 
-                            const distLeadsForMember = allParentDistributedLeads.filter(
-                              l => l.teamMemberId === member.id
-                            );
-
-                            const inactivity = getInactivityDetails(member);
-                            const isInactive = member.status === "inativo" || inactivity.isInactiveByTime;
-
-                            return (
-                              <div
-                                key={member.id}
-                                className={`bg-white border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-3.5 group ${
-                                  isInactive 
-                                    ? "border-rose-300/80 hover:border-rose-400 bg-rose-50/10" 
-                                    : "border-slate-200/90 hover:border-emerald-500/40"
-                                }`}
-                              >
-                                <div className="space-y-3">
-                                  {/* Header */}
-                                  <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                      <div className={`w-9 h-9 rounded-xl text-white flex items-center justify-center font-extrabold text-xs shadow-2xs shrink-0 ${
-                                        isInactive
-                                          ? "bg-gradient-to-br from-rose-700 to-rose-500"
-                                          : "bg-gradient-to-br from-[#0A3D2E] to-[#00A86B]"
-                                      }`}>
-                                        {member.nome ? member.nome.charAt(0).toUpperCase() : "C"}
-                                      </div>
-                                      <div className="min-w-0">
-                                        <h4 className="font-extrabold text-xs text-slate-800 leading-snug group-hover:text-[#0A3D2E] transition-colors truncate">
-                                          {member.nome}
-                                        </h4>
-                                        <span className="text-[9px] text-slate-400 font-mono block truncate">ID: {member.id}</span>
-                                      </div>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1 shrink-0">
-                                      <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shrink-0 ${
-                                        isExecutive ? "bg-amber-100 text-amber-800 border border-amber-200/60" : "bg-blue-100 text-blue-800 border border-blue-200/60"
-                                      }`}>
-                                        {isExecutive ? "Executive" : "Starter"}
-                                      </span>
-                                      <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shrink-0 flex items-center gap-1 ${
-                                        isInactive 
-                                          ? "bg-rose-100 text-rose-800 border border-rose-200/70" 
-                                          : "bg-emerald-100 text-emerald-800 border border-emerald-200/70"
-                                      }`}>
-                                        <span className={`w-1.5 h-1.5 rounded-full ${isInactive ? "bg-rose-500" : "bg-emerald-500 animate-pulse"}`}></span>
-                                        {isInactive ? "Inativo (3+ dias)" : "Ativo"}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {/* Contact & Config */}
-                                  <div className="space-y-1.5 text-xs">
-                                    <div className="flex items-center justify-between text-slate-600 bg-slate-50/80 p-2 rounded-xl border border-slate-100/80">
-                                      <span className="text-[9px] text-slate-400 font-bold uppercase shrink-0">Contato</span>
-                                      <div className="text-right min-w-0 pl-2">
-                                        <span className="block text-[10px] font-medium truncate max-w-[150px] text-slate-700">{member.email}</span>
-                                        <a
-                                          href={`https://wa.me/55${member.whatsapp.replace(/\D/g, "")}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-[9px] font-bold text-emerald-700 hover:underline inline-flex items-center gap-1 mt-0.5"
-                                        >
-                                          <Phone className="w-2.5 h-2.5 shrink-0" />
-                                          <span className="truncate">{member.whatsapp}</span>
-                                        </a>
-                                      </div>
-                                    </div>
-
-                                    {/* Inactivity & Last Access */}
-                                    <div className="flex items-center justify-between text-slate-600 bg-slate-50/80 p-2 rounded-xl border border-slate-100/80">
-                                      <span className="text-[9px] text-slate-400 font-bold uppercase shrink-0 flex items-center gap-1">
-                                        <Clock className="w-3 h-3 text-slate-400" />
-                                        Último Acesso
-                                      </span>
-                                      <div className="text-right min-w-0 pl-2">
-                                        <span className={`block text-[10px] font-extrabold truncate ${
-                                          isInactive ? "text-rose-700" : "text-slate-800"
-                                        }`} title={inactivity.formattedLastAccess}>
-                                          {inactivity.timeSinceLabel}
-                                        </span>
-                                        <span className="text-[8.5px] text-slate-400 block truncate">
-                                          {inactivity.formattedLastAccess}
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between text-xs bg-slate-50/80 p-2 rounded-xl border border-slate-100/80">
-                                      <span className="text-[9px] text-slate-400 font-bold uppercase shrink-0">Comissão</span>
-                                      <select
-                                        value={isExecutive ? "EXECUTIVE" : "STARTER"}
-                                        onChange={(e) => handleUpdateTeamMemberPlan(member.id, e.target.value === "EXECUTIVE" ? "Consultor Executive" : "Consultor Starter")}
-                                        className="bg-white border border-slate-200 rounded-lg text-[9px] p-1 font-extrabold outline-none text-slate-700 cursor-pointer max-w-[150px] truncate shadow-2xs hover:border-emerald-500 transition-all"
-                                      >
-                                        <option value="STARTER">Starter (0.5% | 2.5%)</option>
-                                        <option value="EXECUTIVE">Executive (1.5% | 1.5%)</option>
-                                      </select>
-                                    </div>
-                                  </div>
-
-                                  {/* Inactive Warning & Reactivate Button */}
-                                  {isInactive && (
-                                    <div className="bg-rose-50 border border-rose-200/90 rounded-xl p-2.5 space-y-1.5 text-left">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-black text-rose-800 flex items-center gap-1">
-                                          <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                                          Acesso Inativado (Inatividade)
-                                        </span>
-                                        <span className="text-[8.5px] font-mono font-bold text-rose-700 bg-rose-100/90 px-1.5 py-0.5 rounded">
-                                          {inactivity.diffDays >= 3 ? `${inactivity.diffDays}d ausente` : "Inativo"}
-                                        </span>
-                                      </div>
-                                      <p className="text-[9.5px] text-rose-700 leading-tight">
-                                        {member.motivoInativacao || "Consultor ultrapassou 3 dias sem uso e seu acesso foi pausado."}
-                                      </p>
+                        {/* Collapsible Content */}
+                        <AnimatePresence>
+                          {isTeamMembersExpanded && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="space-y-4 pt-1"
+                            >
+                              {/* Search bar inside expanded view */}
+                              {teamMembers.length > 0 && (
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+                                  <div className="relative flex-1">
+                                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                      type="text"
+                                      value={teamMemberSearchTerm}
+                                      onChange={(e) => setTeamMemberSearchTerm(e.target.value)}
+                                      placeholder="Buscar consultor por nome, e-mail, telefone, ID ou plano..."
+                                      className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-all"
+                                    />
+                                    {teamMemberSearchTerm && (
                                       <button
                                         type="button"
-                                        onClick={() => handleReactivateTeamMember(member.id)}
-                                        className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] rounded-lg shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                                        onClick={() => setTeamMemberSearchTerm("")}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
                                       >
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200" />
-                                        Reativar Consultor (Zerar 3 Dias)
+                                        <X className="w-3.5 h-3.5" />
                                       </button>
-                                    </div>
-                                  )}
-
-                                  {/* Performance Metrics Grid */}
-                                  <div className="grid grid-cols-3 gap-1.5 text-center pt-2 border-t border-slate-100">
-                                    <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 overflow-hidden">
-                                      <span className="text-[7.5px] text-slate-400 font-extrabold uppercase block truncate">Leads CRM</span>
-                                      <span className="font-extrabold text-slate-800 text-xs block truncate">{memberLeads.length}</span>
-                                    </div>
-                                    <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 overflow-hidden">
-                                      <span className="text-[7.5px] text-slate-400 font-extrabold uppercase block truncate">Concluído</span>
-                                      <span className="font-bold text-slate-800 text-[9.5px] block truncate tracking-tight" title={formatCurrencyBRL(totalConcludedValue)}>
-                                        {formatCurrencyBRL(totalConcludedValue)}
-                                      </span>
-                                    </div>
-                                    <div className="bg-amber-50/80 p-1.5 rounded-xl border border-amber-100 overflow-hidden">
-                                      <span className="text-[7.5px] text-amber-700 font-extrabold uppercase block truncate">Override</span>
-                                      <span className="font-black text-amber-700 text-[9.5px] block truncate tracking-tight" title={formatCurrencyBRL(overrideEarned)}>
-                                        {formatCurrencyBRL(overrideEarned)}
-                                      </span>
-                                    </div>
+                                    )}
+                                  </div>
+                                  <div className="text-[11px] font-bold text-slate-500 shrink-0 px-1">
+                                    Mostrando {filteredTeamMembers.length} de {teamMembers.length} {teamMembers.length === 1 ? "consultor" : "consultores"}
                                   </div>
                                 </div>
+                              )}
 
-                                {/* Actions */}
-                                <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                              {teamMembers.length === 0 ? (
+                                <div className="py-12 text-center space-y-2">
+                                  <div className="bg-slate-50 text-slate-400 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
+                                    <Users className="w-6 h-6" />
+                                  </div>
+                                  <p className="text-xs text-slate-500 font-bold max-w-sm mx-auto leading-relaxed">
+                                    Nenhum consultor cadastrado ainda. Use o link de convite acima para convidar seu primeiro vendedor!
+                                  </p>
+                                </div>
+                              ) : filteredTeamMembers.length === 0 ? (
+                                <div className="py-10 text-center space-y-2 bg-slate-50 rounded-2xl border border-slate-100">
+                                  <Search className="w-6 h-6 text-slate-400 mx-auto" />
+                                  <p className="text-xs text-slate-600 font-bold">
+                                    Nenhum consultor encontrado para "{teamMemberSearchTerm}"
+                                  </p>
                                   <button
-                                    onClick={() => setSelectedConsultantForInspection(member)}
-                                    className="w-full bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-xs py-2 px-3 rounded-xl transition-all shadow-xs hover:shadow-md flex items-center justify-between cursor-pointer"
+                                    type="button"
+                                    onClick={() => setTeamMemberSearchTerm("")}
+                                    className="text-xs text-emerald-700 font-extrabold hover:underline cursor-pointer"
                                   >
-                                    <div className="flex items-center gap-1.5 truncate">
-                                      <Search className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
-                                      <span className="truncate">Caça-Leads</span>
-                                    </div>
-                                    <span className="bg-emerald-900/80 text-emerald-200 text-[9px] px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ml-1">
-                                      {distLeadsForMember.length} leads
-                                    </span>
+                                    Limpar busca
                                   </button>
-
-                                  <div className="flex gap-1.5">
-                                    <button
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(`${getAppDomain()}?ref=${member.id}`);
-                                        setCopiedTeamMemberLinkId(member.id);
-                                        setTimeout(() => setCopiedTeamMemberLinkId(null), 2000);
-                                      }}
-                                      className={`flex-1 py-1.5 px-2 rounded-xl text-[9.5px] font-bold cursor-pointer transition-all flex items-center justify-center gap-1 ${
-                                        copiedTeamMemberLinkId === member.id
-                                          ? "bg-emerald-600 text-white animate-pulse"
-                                          : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/60"
-                                      }`}
-                                    >
-                                      <Copy className="w-3 h-3 shrink-0" />
-                                      <span className="truncate">{copiedTeamMemberLinkId === member.id ? "Copiado!" : "Copiar Ref"}</span>
-                                    </button>
-
-                                    <a
-                                      href={`https://wa.me/55${member.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${member.nome}, sou a Franquia Master PROSFEC. Gostaria de acompanhar como estão suas abordagens aos leads que direcionamos no Caça-Leads.`)}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-xl text-[9.5px] font-bold flex items-center justify-center gap-1 transition-all shrink-0"
-                                      title="Enviar WhatsApp ao Consultor"
-                                    >
-                                      <Phone className="w-3 h-3 shrink-0 text-emerald-600" />
-                                      <span>Falar</span>
-                                    </a>
-                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                              ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
+                                  {filteredTeamMembers.map(member => {
+                                    const memberLeads = teamLeads.filter(l => l.parceiroId === member.id);
+                                    const concludedLeads = memberLeads.filter(l => l.status === "concluido");
+                                    const totalConcludedValue = concludedLeads.reduce((acc, l) => acc + (l.valorAprovado || l.limiteEstimado || 0), 0);
+                                    
+                                    const isExecutive = member.plano?.toUpperCase().includes("EXEC");
+                                    const overrideMultiplier = isExecutive ? 0.015 : 0.025;
+                                    const overrideEarned = totalConcludedValue * overrideMultiplier;
 
-                  {/* Team Leads Pipeline View */}
-                  <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-                    <div>
-                      <h3 className="font-display font-extrabold text-base text-slate-800">Pipeline de Vendas da Equipe</h3>
-                      <p className="text-xs text-slate-500">Acompanhe as simulações e indicações feitas por todos os seus consultores.</p>
-                    </div>
+                                    const distLeadsForMember = allParentDistributedLeads.filter(
+                                      l => l.teamMemberId === member.id
+                                    );
 
-                    {teamLeads.length === 0 ? (
-                      <div className="py-12 text-center text-slate-400 text-xs">
-                        Nenhum lead gerado pela sua equipe ainda.
+                                    const inactivity = getInactivityDetails(member);
+                                    const isInactive = member.status === "inativo" || inactivity.isInactiveByTime;
+
+                                    return (
+                                      <div
+                                        key={member.id}
+                                        className={`bg-white border rounded-2xl p-4 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-3.5 group ${
+                                          isInactive 
+                                            ? "border-rose-300/80 hover:border-rose-400 bg-rose-50/10" 
+                                            : "border-slate-200/90 hover:border-emerald-500/40"
+                                        }`}
+                                      >
+                                        <div className="space-y-3">
+                                          {/* Header */}
+                                          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                              <div className={`w-9 h-9 rounded-xl text-white flex items-center justify-center font-extrabold text-xs shadow-2xs shrink-0 ${
+                                                isInactive
+                                                  ? "bg-gradient-to-br from-rose-700 to-rose-500"
+                                                  : "bg-gradient-to-br from-[#0A3D2E] to-[#00A86B]"
+                                              }`}>
+                                                {member.nome ? member.nome.charAt(0).toUpperCase() : "C"}
+                                              </div>
+                                              <div className="min-w-0">
+                                                <h4 className="font-extrabold text-xs text-slate-800 leading-snug group-hover:text-[#0A3D2E] transition-colors truncate">
+                                                  {member.nome}
+                                                </h4>
+                                                <span className="text-[9px] text-slate-400 font-mono block truncate">ID: {member.id}</span>
+                                              </div>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1 shrink-0">
+                                              <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shrink-0 ${
+                                                isExecutive ? "bg-amber-100 text-amber-800 border border-amber-200/60" : "bg-blue-100 text-blue-800 border border-blue-200/60"
+                                              }`}>
+                                                {isExecutive ? "Executive" : "Starter"}
+                                              </span>
+                                              <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shrink-0 flex items-center gap-1 ${
+                                                isInactive 
+                                                  ? "bg-rose-100 text-rose-800 border border-rose-200/70" 
+                                                  : "bg-emerald-100 text-emerald-800 border border-emerald-200/70"
+                                              }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${isInactive ? "bg-rose-500" : "bg-emerald-500 animate-pulse"}`}></span>
+                                                {isInactive ? "Inativo (3+ dias)" : "Ativo"}
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          {/* Contact & Config */}
+                                          <div className="space-y-1.5 text-xs">
+                                            <div className="flex items-center justify-between text-slate-600 bg-slate-50/80 p-2 rounded-xl border border-slate-100/80">
+                                              <span className="text-[9px] text-slate-400 font-bold uppercase shrink-0">Contato</span>
+                                              <div className="text-right min-w-0 pl-2">
+                                                <span className="block text-[10px] font-medium truncate max-w-[150px] text-slate-700">{member.email}</span>
+                                                <a
+                                                  href={`https://wa.me/55${member.whatsapp.replace(/\D/g, "")}`}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-[9px] font-bold text-emerald-700 hover:underline inline-flex items-center gap-1 mt-0.5"
+                                                >
+                                                  <Phone className="w-2.5 h-2.5 shrink-0" />
+                                                  <span className="truncate">{member.whatsapp}</span>
+                                                </a>
+                                              </div>
+                                            </div>
+
+                                            {/* Inactivity & Last Access */}
+                                            <div className="flex items-center justify-between text-slate-600 bg-slate-50/80 p-2 rounded-xl border border-slate-100/80">
+                                              <span className="text-[9px] text-slate-400 font-bold uppercase shrink-0 flex items-center gap-1">
+                                                <Clock className="w-3 h-3 text-slate-400" />
+                                                Último Acesso
+                                              </span>
+                                              <div className="text-right min-w-0 pl-2">
+                                                <span className={`block text-[10px] font-extrabold truncate ${
+                                                  isInactive ? "text-rose-700" : "text-slate-800"
+                                                }`} title={inactivity.formattedLastAccess}>
+                                                  {inactivity.timeSinceLabel}
+                                                </span>
+                                                <span className="text-[8.5px] text-slate-400 block truncate">
+                                                  {inactivity.formattedLastAccess}
+                                                </span>
+                                              </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between text-xs bg-slate-50/80 p-2 rounded-xl border border-slate-100/80">
+                                              <span className="text-[9px] text-slate-400 font-bold uppercase shrink-0">Comissão</span>
+                                              <select
+                                                value={isExecutive ? "EXECUTIVE" : "STARTER"}
+                                                onChange={(e) => handleUpdateTeamMemberPlan(member.id, e.target.value === "EXECUTIVE" ? "Consultor Executive" : "Consultor Starter")}
+                                                className="bg-white border border-slate-200 rounded-lg text-[9px] p-1 font-extrabold outline-none text-slate-700 cursor-pointer max-w-[150px] truncate shadow-2xs hover:border-emerald-500 transition-all"
+                                              >
+                                                <option value="STARTER">Starter (0.5% | 2.5%)</option>
+                                                <option value="EXECUTIVE">Executive (1.5% | 1.5%)</option>
+                                              </select>
+                                            </div>
+                                          </div>
+
+                                          {/* Inactive Warning & Reactivate Button */}
+                                          {isInactive && (
+                                            <div className="bg-rose-50 border border-rose-200/90 rounded-xl p-2.5 space-y-1.5 text-left">
+                                              <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-black text-rose-800 flex items-center gap-1">
+                                                  <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                                                  Acesso Inativado (Inatividade)
+                                                </span>
+                                                <span className="text-[8.5px] font-mono font-bold text-rose-700 bg-rose-100/90 px-1.5 py-0.5 rounded">
+                                                  {inactivity.diffDays >= 3 ? `${inactivity.diffDays}d ausente` : "Inativo"}
+                                                </span>
+                                              </div>
+                                              <p className="text-[9.5px] text-rose-700 leading-tight">
+                                                {member.motivoInativacao || "Consultor ultrapassou 3 dias sem uso e seu acesso foi pausado."}
+                                              </p>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleReactivateTeamMember(member.id)}
+                                                className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] rounded-lg shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                                              >
+                                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200" />
+                                                Reativar Consultor (Zerar 3 Dias)
+                                              </button>
+                                            </div>
+                                          )}
+
+                                          {/* Performance Metrics Grid */}
+                                          <div className="grid grid-cols-3 gap-1.5 text-center pt-2 border-t border-slate-100">
+                                            <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 overflow-hidden">
+                                              <span className="text-[7.5px] text-slate-400 font-extrabold uppercase block truncate">Leads CRM</span>
+                                              <span className="font-extrabold text-slate-800 text-xs block truncate">{memberLeads.length}</span>
+                                            </div>
+                                            <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 overflow-hidden">
+                                              <span className="text-[7.5px] text-slate-400 font-extrabold uppercase block truncate">Concluído</span>
+                                              <span className="font-bold text-slate-800 text-[9.5px] block truncate tracking-tight" title={formatCurrencyBRL(totalConcludedValue)}>
+                                                {formatCurrencyBRL(totalConcludedValue)}
+                                              </span>
+                                            </div>
+                                            <div className="bg-amber-50/80 p-1.5 rounded-xl border border-amber-100 overflow-hidden">
+                                              <span className="text-[7.5px] text-amber-700 font-extrabold uppercase block truncate">Override</span>
+                                              <span className="font-black text-amber-700 text-[9.5px] block truncate tracking-tight" title={formatCurrencyBRL(overrideEarned)}>
+                                                {formatCurrencyBRL(overrideEarned)}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                                          <button
+                                            onClick={() => setSelectedConsultantForInspection(member)}
+                                            className="w-full bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-xs py-2 px-3 rounded-xl transition-all shadow-xs hover:shadow-md flex items-center justify-between cursor-pointer"
+                                          >
+                                            <div className="flex items-center gap-1.5 truncate">
+                                              <Search className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                                              <span className="truncate">Caça-Leads</span>
+                                            </div>
+                                            <span className="bg-emerald-900/80 text-emerald-200 text-[9px] px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ml-1">
+                                              {distLeadsForMember.length} leads
+                                            </span>
+                                          </button>
+
+                                          <div className="flex gap-1.5">
+                                            <button
+                                              onClick={() => {
+                                                navigator.clipboard.writeText(`${getAppDomain()}?ref=${member.id}`);
+                                                setCopiedTeamMemberLinkId(member.id);
+                                                setTimeout(() => setCopiedTeamMemberLinkId(null), 2000);
+                                              }}
+                                              className={`flex-1 py-1.5 px-2 rounded-xl text-[9.5px] font-bold cursor-pointer transition-all flex items-center justify-center gap-1 ${
+                                                copiedTeamMemberLinkId === member.id
+                                                  ? "bg-emerald-600 text-white animate-pulse"
+                                                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/60"
+                                              }`}
+                                            >
+                                              <Copy className="w-3 h-3 shrink-0" />
+                                              <span className="truncate">{copiedTeamMemberLinkId === member.id ? "Copiado!" : "Copiar Ref"}</span>
+                                            </button>
+
+                                            <a
+                                              href={`https://wa.me/55${member.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${member.nome}, sou a Franquia Master PROSFEC. Gostaria de acompanhar como estão suas abordagens aos leads que direcionamos no Caça-Leads.`)}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-xl text-[9.5px] font-bold flex items-center justify-center gap-1 transition-all shrink-0"
+                                              title="Enviar WhatsApp ao Consultor"
+                                            >
+                                              <Phone className="w-3 h-3 shrink-0 text-emerald-600" />
+                                              <span>Falar</span>
+                                            </a>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
-                    ) : (
-                      <>
-                        {/* Desktop Table View */}
-                        <div className="hidden md:block overflow-x-auto">
-                          <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                              <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                <th className="pb-2.5 font-bold">Data</th>
-                                <th className="pb-2.5 font-bold">Cliente / Empresa</th>
-                                <th className="pb-2.5 font-bold">Consultor PROSFEC</th>
-                                <th className="pb-2.5 font-bold">Cidade</th>
-                                <th className="pb-2.5 font-bold text-right">Crédito Estimado</th>
-                                <th className="pb-2.5 font-bold text-center">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                              {teamLeads.map(lead => {
-                                const finder = teamMembers.find(t => t.id === lead.parceiroId);
-                                return (
-                                  <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="py-3 text-slate-400 font-mono text-[10px]">
-                                      {lead.dataCriacao ? new Date(lead.dataCriacao).toLocaleDateString("pt-BR") : "-"}
-                                    </td>
-                                    <td className="py-3 font-semibold text-slate-800">
-                                      {lead.nome}
-                                      <span className="block text-[10px] text-slate-400 font-normal">{lead.email || lead.whatsapp}</span>
-                                    </td>
-                                    <td className="py-3 text-slate-600 font-medium">
-                                      {finder?.nome || lead.parceiroNome || "Membro da Equipe"}
-                                    </td>
-                                    <td className="py-3 text-slate-500">{lead.cidade || "-"}</td>
-                                    <td className="py-3 text-right font-bold text-emerald-800">
-                                      {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Em análise"}
-                                    </td>
-                                    <td className="py-3 text-center">
-                                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
-                                        lead.status === "concluido" ? "bg-emerald-100 text-emerald-800" :
-                                        lead.status === "novo" ? "bg-blue-100 text-blue-800" :
-                                        lead.status === "cancelado" ? "bg-red-100 text-red-800" :
-                                        lead.status === "em atendimento" ? "bg-amber-100 text-amber-800" :
-                                        "bg-blue-50 text-blue-700"
-                                      }`}>
-                                        {lead.status}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
+                    );
+                  })()}
 
-                        {/* Mobile Pipeline Cards */}
-                        <div className="block md:hidden space-y-3">
-                          {teamLeads.map(lead => {
-                            const finder = teamMembers.find(t => t.id === lead.parceiroId);
-                            return (
-                              <div key={lead.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 text-xs">
-                                <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                                  <span className="text-[10px] text-slate-400 font-mono">
-                                    {lead.dataCriacao ? new Date(lead.dataCriacao).toLocaleDateString("pt-BR") : "-"}
-                                  </span>
-                                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
-                                    lead.status === "concluido" ? "bg-emerald-100 text-emerald-800" :
-                                    lead.status === "novo" ? "bg-blue-100 text-blue-800" :
-                                    lead.status === "cancelado" ? "bg-red-100 text-red-800" :
-                                    lead.status === "em atendimento" ? "bg-amber-100 text-amber-800" :
-                                    "bg-blue-50 text-blue-700"
-                                  }`}>
-                                    {lead.status}
-                                  </span>
-                                </div>
+                  {/* Team Leads Pipeline View (Collapsible + Consultant Search & Status Filter) */}
+                  {(() => {
+                    const totalTeamVolume = teamLeads.reduce((acc, l) => acc + (l.limiteEstimado || l.valorAprovado || 0), 0);
+                    
+                    const filteredTeamLeads = teamLeads.filter(lead => {
+                      // Status filter
+                      if (teamPipelineStatusFilter !== "todos" && lead.status !== teamPipelineStatusFilter) {
+                        return false;
+                      }
+                      // Search term (consultant name, lead name, company, email, city)
+                      if (!teamPipelineSearchTerm.trim()) return true;
+                      const term = teamPipelineSearchTerm.toLowerCase().trim();
+                      const finder = teamMembers.find(t => t.id === lead.parceiroId);
+                      const consultantName = (finder?.nome || lead.parceiroNome || "").toLowerCase();
+                      const leadName = (lead.nome || "").toLowerCase();
+                      const email = (lead.email || "").toLowerCase();
+                      const city = (lead.cidade || "").toLowerCase();
+                      const id = (lead.id || "").toLowerCase();
+                      return consultantName.includes(term) || leadName.includes(term) || email.includes(term) || city.includes(term) || id.includes(term);
+                    });
 
-                                <div className="space-y-1">
-                                  <h4 className="font-extrabold text-slate-800">{lead.nome}</h4>
-                                  <div className="text-[10px] text-slate-500 font-mono">
-                                    Cidade: {lead.cidade || "-"}
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div className="bg-white p-2.5 rounded-xl border border-slate-200/50">
-                                    <span className="text-[9px] text-slate-400 font-bold uppercase block">Consultor</span>
-                                    <span className="font-semibold text-slate-700 block mt-0.5 truncate">
-                                      {finder?.nome || lead.parceiroNome || "Membro da Equipe"}
-                                    </span>
-                                  </div>
-                                  <div className="bg-white p-2.5 rounded-xl border border-slate-200/50">
-                                    <span className="text-[9px] text-slate-400 font-bold uppercase block">Crédito Estimado</span>
-                                    <span className="font-extrabold text-emerald-700 block mt-0.5">
-                                      {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Em análise"}
-                                    </span>
-                                  </div>
-                                </div>
+                    return (
+                      <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+                        {/* Header with summary and toggle */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#0A3D2E] border border-emerald-100 flex items-center justify-center shrink-0">
+                              <ClipboardList className="w-5 h-5 text-emerald-700" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-display font-extrabold text-base text-slate-800">Pipeline de Vendas da Equipe</h3>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 font-mono">
+                                  {teamLeads.length} {teamLeads.length === 1 ? "lead" : "leads"}
+                                </span>
                               </div>
-                            );
-                          })}
+                              <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
+                                <span>Volume total: <strong className="text-emerald-800 font-mono">{formatCurrencyBRL(totalTeamVolume)}</strong></span>
+                                <span>• Simulações e indicações do time</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setIsTeamPipelineExpanded(!isTeamPipelineExpanded)}
+                              className={`px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center justify-center gap-2 shadow-xs shrink-0 ${
+                                isTeamPipelineExpanded
+                                  ? "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300/80"
+                                  : "bg-[#0A3D2E] hover:bg-[#00A86B] text-white"
+                              }`}
+                            >
+                              <span>{isTeamPipelineExpanded ? "Recolher Pipeline" : `Visualizar Pipeline (${teamLeads.length})`}</span>
+                              {isTeamPipelineExpanded ? (
+                                <ChevronUp className="w-4 h-4 text-slate-600 shrink-0" />
+                              ) : (
+                                <ChevronDown className="w-4 h-4 text-emerald-300 shrink-0" />
+                              )}
+                            </button>
+                          </div>
                         </div>
-                      </>
-                    )}
-                  </div>
+
+                        {/* Collapsible Content */}
+                        <AnimatePresence>
+                          {isTeamPipelineExpanded && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="space-y-4 pt-1"
+                            >
+                              {/* Filter Bar (Search by consultant/lead + status filter) */}
+                              {teamLeads.length > 0 && (
+                                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                                  <div className="relative flex-1">
+                                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                      type="text"
+                                      value={teamPipelineSearchTerm}
+                                      onChange={(e) => setTeamPipelineSearchTerm(e.target.value)}
+                                      placeholder="Buscar por nome do consultor, cliente, empresa ou cidade..."
+                                      className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-all"
+                                    />
+                                    {teamPipelineSearchTerm && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setTeamPipelineSearchTerm("")}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {/* Status Selector */}
+                                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                    <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 shrink-0">
+                                      <Filter className="w-3.5 h-3.5 text-slate-400" />
+                                      <span className="text-[10px] font-bold text-slate-400 uppercase">Status:</span>
+                                      <select
+                                        value={teamPipelineStatusFilter}
+                                        onChange={(e) => setTeamPipelineStatusFilter(e.target.value)}
+                                        className="bg-transparent font-extrabold text-slate-700 outline-none cursor-pointer text-xs"
+                                      >
+                                        <option value="todos">Todos os Status</option>
+                                        <option value="novo">Novo</option>
+                                        <option value="em atendimento">Em Atendimento</option>
+                                        <option value="concluido">Concluído</option>
+                                        <option value="cancelado">Cancelado</option>
+                                      </select>
+                                    </div>
+
+                                    {(teamPipelineSearchTerm || teamPipelineStatusFilter !== "todos") && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setTeamPipelineSearchTerm("");
+                                          setTeamPipelineStatusFilter("todos");
+                                        }}
+                                        className="px-2.5 py-1.5 bg-slate-200/80 hover:bg-slate-300 text-slate-700 text-[11px] font-bold rounded-xl transition-all cursor-pointer shrink-0"
+                                      >
+                                        Limpar Filtros
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {teamLeads.length === 0 ? (
+                                <div className="py-12 text-center text-slate-400 text-xs">
+                                  Nenhum lead gerado pela sua equipe ainda.
+                                </div>
+                              ) : filteredTeamLeads.length === 0 ? (
+                                <div className="py-10 text-center space-y-2 bg-slate-50 rounded-2xl border border-slate-100">
+                                  <Search className="w-6 h-6 text-slate-400 mx-auto" />
+                                  <p className="text-xs text-slate-600 font-bold">
+                                    Nenhum lead encontrado com os filtros aplicados.
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTeamPipelineSearchTerm("");
+                                      setTeamPipelineStatusFilter("todos");
+                                    }}
+                                    className="text-xs text-emerald-700 font-extrabold hover:underline cursor-pointer"
+                                  >
+                                    Limpar filtros
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="text-[11px] font-bold text-slate-500 px-1">
+                                    Mostrando {filteredTeamLeads.length} de {teamLeads.length} {teamLeads.length === 1 ? "lead" : "leads"}
+                                  </div>
+
+                                  {/* Desktop Table View */}
+                                  <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full text-left border-collapse text-xs">
+                                      <thead>
+                                        <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">
+                                          <th className="py-2.5 px-3 font-bold rounded-l-xl">Data</th>
+                                          <th className="py-2.5 px-3 font-bold">Cliente / Empresa</th>
+                                          <th className="py-2.5 px-3 font-bold">Consultor Responsável</th>
+                                          <th className="py-2.5 px-3 font-bold">Cidade</th>
+                                          <th className="py-2.5 px-3 font-bold text-right">Crédito Estimado</th>
+                                          <th className="py-2.5 px-3 font-bold text-center rounded-r-xl">Status</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-100">
+                                        {filteredTeamLeads.map(lead => {
+                                          const finder = teamMembers.find(t => t.id === lead.parceiroId);
+                                          return (
+                                            <tr key={lead.id} className="hover:bg-slate-50/70 transition-colors">
+                                              <td className="py-3 px-3 text-slate-400 font-mono text-[10px]">
+                                                {lead.dataCriacao ? new Date(lead.dataCriacao).toLocaleDateString("pt-BR") : "-"}
+                                              </td>
+                                              <td className="py-3 px-3 font-semibold text-slate-800">
+                                                {lead.nome}
+                                                <span className="block text-[10px] text-slate-400 font-normal">{lead.email || lead.whatsapp}</span>
+                                              </td>
+                                              <td className="py-3 px-3">
+                                                <div className="flex items-center gap-1.5">
+                                                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#0A3D2E] text-[10px] font-black flex items-center justify-center shrink-0">
+                                                    {(finder?.nome || lead.parceiroNome || "C").charAt(0).toUpperCase()}
+                                                  </span>
+                                                  <span className="font-bold text-slate-700 truncate max-w-[180px]">
+                                                    {finder?.nome || lead.parceiroNome || "Membro da Equipe"}
+                                                  </span>
+                                                </div>
+                                              </td>
+                                              <td className="py-3 px-3 text-slate-500">{lead.cidade || "-"}</td>
+                                              <td className="py-3 px-3 text-right font-bold text-emerald-800 font-mono">
+                                                {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Em análise"}
+                                              </td>
+                                              <td className="py-3 px-3 text-center">
+                                                <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                                  lead.status === "concluido" ? "bg-emerald-100 text-emerald-800 border border-emerald-200/60" :
+                                                  lead.status === "novo" ? "bg-blue-100 text-blue-800 border border-blue-200/60" :
+                                                  lead.status === "cancelado" ? "bg-rose-100 text-rose-800 border border-rose-200/60" :
+                                                  lead.status === "em atendimento" ? "bg-amber-100 text-amber-800 border border-amber-200/60" :
+                                                  "bg-slate-100 text-slate-700 border border-slate-200/60"
+                                                }`}>
+                                                  {lead.status}
+                                                </span>
+                                              </td>
+                                            </tr>
+                                          );
+                                        })}
+                                      </tbody>
+                                    </table>
+                                  </div>
+
+                                  {/* Mobile Pipeline Cards */}
+                                  <div className="block md:hidden space-y-3">
+                                    {filteredTeamLeads.map(lead => {
+                                      const finder = teamMembers.find(t => t.id === lead.parceiroId);
+                                      return (
+                                        <div key={lead.id} className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-3 text-xs">
+                                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                                            <span className="text-[10px] text-slate-400 font-mono">
+                                              {lead.dataCriacao ? new Date(lead.dataCriacao).toLocaleDateString("pt-BR") : "-"}
+                                            </span>
+                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                                              lead.status === "concluido" ? "bg-emerald-100 text-emerald-800 border border-emerald-200/60" :
+                                              lead.status === "novo" ? "bg-blue-100 text-blue-800 border border-blue-200/60" :
+                                              lead.status === "cancelado" ? "bg-rose-100 text-rose-800 border border-rose-200/60" :
+                                              lead.status === "em atendimento" ? "bg-amber-100 text-amber-800 border border-amber-200/60" :
+                                              "bg-slate-100 text-slate-700 border border-slate-200/60"
+                                            }`}>
+                                              {lead.status}
+                                            </span>
+                                          </div>
+
+                                          <div className="space-y-1">
+                                            <h4 className="font-extrabold text-slate-800 text-sm">{lead.nome}</h4>
+                                            <div className="text-[10px] text-slate-500 font-mono">
+                                              Cidade: {lead.cidade || "-"} {lead.email && `• ${lead.email}`}
+                                            </div>
+                                          </div>
+
+                                          <div className="grid grid-cols-2 gap-2">
+                                            <div className="bg-white p-2.5 rounded-xl border border-slate-200/50">
+                                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Consultor</span>
+                                              <span className="font-semibold text-slate-700 block mt-0.5 truncate">
+                                                {finder?.nome || lead.parceiroNome || "Membro da Equipe"}
+                                              </span>
+                                            </div>
+                                            <div className="bg-white p-2.5 rounded-xl border border-slate-200/50">
+                                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Crédito Estimado</span>
+                                              <span className="font-extrabold text-emerald-700 block mt-0.5 font-mono">
+                                                {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Em análise"}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </>
+                              )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })()}
                 </motion.div>
               )}
 
@@ -10799,13 +10727,27 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         <span className="text-[10px] text-emerald-700 font-extrabold uppercase block">Convertidos</span>
                         <span className="text-xl font-black text-emerald-600 mt-1 block">{convertidos}</span>
                       </div>
-                      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs text-center">
-                        <span className="text-[10px] text-slate-400 font-extrabold uppercase block">Descartados</span>
-                        <span className="text-xl font-black text-slate-500 mt-1 block">{descartados}</span>
+                      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs text-center flex flex-col justify-between">
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-extrabold uppercase block">Descartados</span>
+                          <span className="text-xl font-black text-slate-500 mt-1 block">{descartados}</span>
+                        </div>
+                        {descartados > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleBulkDeleteDiscardedLeadsForConsultant(selectedConsultantForInspection.id, selectedConsultantForInspection.nome)}
+                            disabled={bulkDeletingDiscardedLoading}
+                            className="mt-1 text-[10px] text-red-600 hover:text-red-700 font-extrabold flex items-center justify-center gap-1 mx-auto hover:underline cursor-pointer"
+                            title="Excluir todos os descartados definitivamente"
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                            Limpar descartados
+                          </button>
+                        )}
                       </div>
                     </div>
 
-                    {/* Filters & Bulk Transfer Button */}
+                    {/* Filters & Bulk Transfer / Delete Discarded Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
                       <div className="relative w-full sm:w-72">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -10831,6 +10773,22 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <option value="descartado">Descartado ({descartados})</option>
                           </select>
                         </div>
+                        {descartados > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleBulkDeleteDiscardedLeadsForConsultant(selectedConsultantForInspection.id, selectedConsultantForInspection.nome)}
+                            disabled={bulkDeletingDiscardedLoading}
+                            className="px-3 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
+                            title="Excluir definitivamente todos os leads descartados por este consultor para liberar o saldo"
+                          >
+                            {bulkDeletingDiscardedLoading ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                            Excluir Descartados ({descartados})
+                          </button>
+                        )}
                         {teamMembers.length > 1 && totalCount > 0 && (
                           <button
                             type="button"
@@ -10976,12 +10934,22 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 </div>
 
                                 <button
-                                  onClick={() => handleDiscardDistributedLead(lead.id)}
-                                  className="px-2 py-1.5 bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-500 font-bold text-[10px] rounded-xl transition-all cursor-pointer flex items-center gap-1"
-                                  title="Remover / Descartar Lead"
+                                  onClick={() => {
+                                    if (lead.status === "descartado") {
+                                      handleDeleteDistributedLeadPermanent(lead.id);
+                                    } else {
+                                      handleDiscardDistributedLead(lead.id);
+                                    }
+                                  }}
+                                  className={`px-2 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 text-[10px] font-bold ${
+                                    lead.status === "descartado"
+                                      ? "bg-red-50 hover:bg-red-100 text-red-700 border border-red-200"
+                                      : "bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-500"
+                                  }`}
+                                  title={lead.status === "descartado" ? "Excluir permanentemente do banco" : "Remover / Descartar Lead"}
                                 >
                                   <Trash2 className="w-3 h-3" />
-                                  Excluir
+                                  {lead.status === "descartado" ? "Excluir Definitivo" : "Descartar"}
                                 </button>
                               </div>
                             </div>
@@ -11341,7 +11309,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   rawServices = (l as any).diagnosticoPROSFEC.servicosRecomendados;
                 }
 
-                rawServices.forEach((s: any) => {
+                const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
+
+                syncedServices.forEach((s: any) => {
                   const precoNum = typeof s.preco === "number" ? s.preco : typeof s.valor === "number" ? s.valor : parseFloat(s.preco || s.valor || 0) || 0;
                   const st = s.statusPagamento || (s.pago ? "pago" : s.status === "concluido" ? "pago" : "pendente");
                   if (st === "pago") {
@@ -11382,7 +11352,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   const consultantPlan = member?.plano || "Executive Partner PROSFEC";
                   const teamOverrideRate = getMasterTeamServiceOverrideRate(consultantPlan);
 
-                  rawServices.forEach((s: any) => {
+                  const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
+
+                  syncedServices.forEach((s: any) => {
                     const precoNum = typeof s.preco === "number" ? s.preco : typeof s.valor === "number" ? s.valor : parseFloat(s.preco || s.valor || 0) || 0;
                     const st = s.statusPagamento || (s.pago ? "pago" : s.status === "concluido" ? "pago" : "pendente");
                     if (st === "pago") {
@@ -11554,6 +11526,718 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               );
             })()}
           </div>
+        </div>
+      )}
+
+      {/* Modal de Recarga de Saldo Geral (Passo 1: Valor -> Passo 2: Pix & Confirmação) */}
+      {showRechargeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs text-left">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            {/* Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-3 bg-gradient-to-br from-slate-50 to-emerald-50/30">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#0A3D2E] text-white flex items-center justify-center shadow-md shrink-0">
+                  <Coins className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-base sm:text-lg tracking-tight">
+                    {rechargeNotifySuccess
+                      ? "Notificação Registrada"
+                      : rechargeStep === 1
+                      ? "Adicionar Saldo Geral"
+                      : "Pagamento via Pix"}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    {rechargeNotifySuccess
+                      ? "Comprovante enviado para liberação"
+                      : rechargeStep === 1
+                      ? "Válido para Consultas de Crédito e Serviços Contábeis"
+                      : "Transfira o valor exato para ativar seu saldo"}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRechargeModal(false);
+                  setRechargeNotifySuccess(false);
+                  setRechargeStep(1);
+                  setRechargeCopiedPix(false);
+                }}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer shrink-0"
+                title="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 sm:p-6 space-y-5 overflow-y-auto">
+              {rechargeNotifySuccess ? (
+                /* Success View */
+                <div className="text-center space-y-4 py-2">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-3xl font-extrabold shadow-inner">
+                    ✓
+                  </div>
+                  <div className="space-y-1.5">
+                    <h4 className="font-black text-slate-900 text-base">
+                      Notificação de Depósito Enviada!
+                    </h4>
+                    <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+                      Sua solicitação de recarga de{" "}
+                      <strong className="font-mono font-bold text-slate-900">
+                        {formatCurrencyBRL(rechargeAmount)}
+                      </strong>{" "}
+                      foi registrada com sucesso. Nosso financeiro analisará o Pix recebido na chave{" "}
+                      <strong className="text-emerald-800 font-mono font-bold">
+                        prosfec.tesouraria@gmail.com
+                      </strong>{" "}
+                      e liberará seu Saldo Geral em instantes!
+                    </p>
+                  </div>
+
+                  <div className="bg-emerald-50/70 border border-emerald-100 p-3 rounded-2xl text-[11px] text-emerald-900 leading-relaxed flex items-center gap-2 text-left">
+                    <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      O saldo é unificado e pode ser utilizado em Consultas SPC/Serasa e em Serviços Contábeis.
+                    </span>
+                  </div>
+
+                  <div className="pt-3 flex flex-col sm:flex-row gap-2.5 justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowRechargeModal(false);
+                        setRechargeNotifySuccess(false);
+                        setRechargeStep(1);
+                        setRechargeAmount(140);
+                      }}
+                      className="w-full sm:w-auto px-6 py-2.5 bg-[#00A86B] hover:bg-[#008F5A] active:scale-95 text-white font-extrabold text-xs rounded-xl transition-all cursor-pointer shadow-md"
+                    >
+                      Concluir e Fechar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRechargeNotifySuccess(false);
+                        setRechargeStep(1);
+                        setRechargeAmount(140);
+                      }}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+                    >
+                      Fazer Outra Notificação
+                    </button>
+                  </div>
+                </div>
+              ) : rechargeStep === 1 ? (
+                /* Step 1: Escolha do Valor */
+                <div className="space-y-5">
+                  {/* Step indicator */}
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                    <span className="text-[#00A86B] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                      Passo 1 de 2: Definir Valor
+                    </span>
+                    <span>Mínimo: R$ 140,00</span>
+                  </div>
+
+                  {/* Preset Values Helper */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black text-slate-700 uppercase tracking-wide block">
+                      Valores Rápidos de Recarga
+                    </label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[140, 200, 300, 500].map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setRechargeAmount(val)}
+                          className={`py-2.5 px-1 text-center font-extrabold text-xs rounded-xl border transition-all cursor-pointer ${
+                            rechargeAmount === val
+                              ? "bg-[#0A3D2E] text-white border-[#0A3D2E] shadow-xs"
+                              : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-white"
+                          }`}
+                        >
+                          R$ {val}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Custom Value Input */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-black text-slate-700 uppercase tracking-wide block">
+                      Valor Personalizado da Recarga (R$)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-mono font-extrabold text-sm">
+                        R$
+                      </span>
+                      <input
+                        type="number"
+                        min="140"
+                        step="1"
+                        value={rechargeAmount || ""}
+                        onChange={(e) => setRechargeAmount(e.target.value === "" ? 0 : Number(e.target.value))}
+                        placeholder="140,00"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-3.5 py-3 text-sm text-slate-900 font-mono font-extrabold outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all"
+                      />
+                    </div>
+
+                    {/* Dynamic validation message */}
+                    {(!rechargeAmount || rechargeAmount < 140) ? (
+                      <div className="flex items-center gap-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-xl mt-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                        <span>O valor mínimo para recarga é de R$ 140,00.</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-3 py-2 rounded-xl mt-1.5">
+                        <Check className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                        <span>Valor válido para recarga de saldo.</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Information block */}
+                  <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-2xl space-y-1.5">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
+                      Como funciona a liberação?
+                    </span>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Após definir o valor, você visualizará a chave Pix para realizar a transferência. O saldo será creditado automaticamente assim que a equipe financeira confirmar o recebimento.
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2.5 justify-end pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setShowRechargeModal(false)}
+                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!rechargeAmount || rechargeAmount < 140}
+                      onClick={() => setRechargeStep(2)}
+                      className="px-5 py-2.5 bg-[#00A86B] hover:bg-[#008F5A] disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-xs rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>Continuar</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Step 2: Chave Pix & Confirmação */
+                <div className="space-y-5">
+                  {/* Step indicator */}
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                    <span className="text-[#00A86B] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                      Passo 2 de 2: Pagamento Pix & Confirmação
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setRechargeStep(1)}
+                      className="text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <ArrowLeft className="w-3 h-3" />
+                      <span>Alterar valor</span>
+                    </button>
+                  </div>
+
+                  {/* Highlighted Value Card */}
+                  <div className="bg-gradient-to-br from-emerald-50 to-teal-50/60 border border-emerald-200/80 p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-black text-emerald-800 uppercase tracking-wider block">
+                        Valor a Transferir
+                      </span>
+                      <span className="text-2xl sm:text-3xl font-mono font-extrabold text-[#0A3D2E] block mt-0.5">
+                        {formatCurrencyBRL(rechargeAmount)}
+                      </span>
+                    </div>
+                    <div className="bg-white/80 border border-emerald-100 px-3 py-1.5 rounded-xl text-center shrink-0">
+                      <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-wide">
+                        Tipo
+                      </span>
+                      <span className="text-[11px] font-extrabold text-emerald-800 font-mono">
+                        Pix Direto
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Pix Key Card */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black text-slate-700 uppercase tracking-wide block">
+                      Chave Pix da Tesouraria (E-mail)
+                    </label>
+                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex items-center justify-between gap-2.5">
+                      <span className="font-mono text-xs sm:text-sm text-slate-800 font-bold select-all truncate">
+                        prosfec.tesouraria@gmail.com
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText("prosfec.tesouraria@gmail.com");
+                          setRechargeCopiedPix(true);
+                          setTimeout(() => setRechargeCopiedPix(false), 3000);
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs ${
+                          rechargeCopiedPix
+                            ? "bg-emerald-600 text-white"
+                            : "bg-white hover:bg-slate-100 text-slate-700 border border-slate-200"
+                        }`}
+                        title="Copiar chave Pix"
+                      >
+                        {rechargeCopiedPix ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Copiado!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5 text-slate-500" />
+                            <span>Copiar Chave</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Instruction text */}
+                  <div className="bg-blue-50/60 border border-blue-100 p-3.5 rounded-2xl text-xs text-blue-950 leading-relaxed space-y-1">
+                    <p className="font-medium">
+                      Faça o Pix de <strong className="font-bold font-mono">{formatCurrencyBRL(rechargeAmount)}</strong> para a chave acima e confirme abaixo.
+                    </p>
+                    <p className="text-[11px] text-blue-800/80">
+                      Seu saldo será liberado após a confirmação do pagamento pela equipe Prosfec.
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2.5 justify-end pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setRechargeStep(1)}
+                      disabled={notifyingRecharge}
+                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Voltar</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={notifyingRecharge || !rechargeAmount || rechargeAmount < 140}
+                      onClick={() => handleNotifyCreditRecharge(rechargeAmount)}
+                      className="px-5 py-2.5 bg-[#00A86B] hover:bg-[#008F5A] disabled:opacity-50 text-white font-extrabold text-xs rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                    >
+                      {notifyingRecharge ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Confirmando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Confirmar Pagamento Realizado</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Modal de Recarga do Caça-Leads (Passo 1: Pacote -> Passo 2: Pix & Confirmação) */}
+      {showRefillModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs text-left">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            {/* Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-3 bg-gradient-to-br from-slate-50 to-emerald-50/30">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#0A3D2E] text-white flex items-center justify-center shadow-md shrink-0">
+                  <Coins className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-base sm:text-lg tracking-tight">
+                    {refillNotifySuccess
+                      ? "Notificação Registrada"
+                      : refillStep === 1
+                      ? "Adicionar Recarga Caça-Leads"
+                      : "Pagamento via Pix"}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    {refillNotifySuccess
+                      ? "Comprovante enviado para liberação"
+                      : refillStep === 1
+                      ? "Escolha o pacote de buscas em tempo real"
+                      : "Transfira o valor exato para ativar suas buscas"}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRefillModal(false);
+                  setRefillNotifySuccess(false);
+                  setRefillStep(1);
+                  setRefillCopiedPix(false);
+                }}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer shrink-0"
+                title="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 sm:p-6 space-y-5 overflow-y-auto">
+              {refillNotifySuccess ? (
+                /* Success View */
+                <div className="text-center space-y-4 py-2">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-3xl font-extrabold shadow-inner">
+                    ✓
+                  </div>
+                  <div className="space-y-1.5">
+                    <h4 className="font-black text-slate-900 text-base">
+                      Notificação de Recarga Enviada!
+                    </h4>
+                    <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+                      Sua solicitação de recarga do{" "}
+                      <strong className="text-slate-900 font-bold">
+                        Pacote {refillPackage} ({
+                          refillPackage === "Bronze" ? "10 buscas" : refillPackage === "Prata" ? "30 buscas" : "60 buscas"
+                        })
+                      </strong>{" "}
+                      no valor de{" "}
+                      <strong className="font-mono font-bold text-slate-900">
+                        {formatCurrencyBRL(
+                          refillPackage === "Bronze" ? 59.90 : refillPackage === "Prata" ? 129.90 : 239.90
+                        )}
+                      </strong>{" "}
+                      foi registrada com sucesso. Nosso financeiro analisará o Pix recebido na chave{" "}
+                      <strong className="text-emerald-800 font-mono font-bold">
+                        prosfec.tesouraria@gmail.com
+                      </strong>{" "}
+                      e liberará seu saldo de buscas em instantes!
+                    </p>
+                  </div>
+
+                  <div className="bg-emerald-50/70 border border-emerald-100 p-3 rounded-2xl text-[11px] text-emerald-900 leading-relaxed flex items-center gap-2 text-left">
+                    <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      Você pode acompanhar o status desta solicitação a qualquer momento no histórico da aba Caça-Leads.
+                    </span>
+                  </div>
+
+                  <div className="pt-3 flex flex-col sm:flex-row gap-2.5 justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowRefillModal(false);
+                        setRefillNotifySuccess(false);
+                        setRefillStep(1);
+                        setRefillCopiedPix(false);
+                      }}
+                      className="w-full sm:w-auto px-6 py-2.5 bg-[#00A86B] hover:bg-[#008F5A] active:scale-95 text-white font-extrabold text-xs rounded-xl transition-all cursor-pointer shadow-md"
+                    >
+                      Concluir e Fechar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRefillNotifySuccess(false);
+                        setRefillStep(1);
+                        setRefillCopiedPix(false);
+                      }}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+                    >
+                      Fazer Outra Recarga
+                    </button>
+                  </div>
+                </div>
+              ) : refillStep === 1 ? (
+                /* Step 1: Escolha do Pacote */
+                <div className="space-y-5">
+                  {/* Step indicator */}
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                    <span className="text-[#00A86B] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                      Passo 1 de 2: Escolher Pacote
+                    </span>
+                    <span className="text-slate-400">Créditos sem data de expiração</span>
+                  </div>
+
+                  {/* Packages Grid */}
+                  <div className="space-y-2.5">
+                    <label className="text-[11px] font-black text-slate-700 uppercase tracking-wide block">
+                      Selecione o Pacote de Buscas
+                    </label>
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {[
+                        {
+                          id: "Bronze" as const,
+                          name: "Pacote Bronze",
+                          buscas: 10,
+                          leadsAprox: "Até 200 empresas/sócios",
+                          valor: 59.90,
+                          unitPrice: "R$ 5,99 / busca",
+                          badge: null,
+                        },
+                        {
+                          id: "Prata" as const,
+                          name: "Pacote Prata",
+                          buscas: 30,
+                          leadsAprox: "Até 600 empresas/sócios",
+                          valor: 129.90,
+                          unitPrice: "R$ 4,33 / busca",
+                          badge: "Mais Escolhido • Economia de 28%",
+                        },
+                        {
+                          id: "Ouro" as const,
+                          name: "Pacote Ouro",
+                          buscas: 60,
+                          leadsAprox: "Até 1.200 empresas/sócios",
+                          valor: 239.90,
+                          unitPrice: "R$ 3,99 / busca",
+                          badge: "Super Econômico • Economia de 33%",
+                        }
+                      ].map((pkg) => {
+                        const isSelected = refillPackage === pkg.id;
+                        return (
+                          <div
+                            key={pkg.id}
+                            onClick={() => setRefillPackage(pkg.id)}
+                            className={`p-4 rounded-2xl border transition-all cursor-pointer relative ${
+                              isSelected
+                                ? "border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-600 shadow-sm"
+                                : "border-slate-200 hover:border-emerald-300 hover:bg-slate-50/70"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                    isSelected
+                                      ? "border-emerald-600 bg-emerald-600 text-white"
+                                      : "border-slate-300 bg-white"
+                                  }`}
+                                >
+                                  {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-black text-sm text-slate-900">{pkg.name}</span>
+                                    {pkg.badge && (
+                                      <span className="text-[9px] font-extrabold bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full">
+                                        {pkg.badge}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-1.5">
+                                    <span className="font-bold text-slate-700">{pkg.buscas} buscas em tempo real</span>
+                                    <span>•</span>
+                                    <span>{pkg.leadsAprox}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <div className="font-mono font-black text-sm sm:text-base text-emerald-900">
+                                  {formatCurrencyBRL(pkg.valor)}
+                                </div>
+                                <div className="text-[10px] text-slate-400 font-semibold">
+                                  {pkg.unitPrice}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Information block */}
+                  <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-2xl space-y-1.5">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
+                      Como funciona o Caça-Leads?
+                    </span>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Cada busca varre em tempo real a base nacional de empresas e retorna até 20 estabelecimentos com telefones, e-mails, endereço e quadro societário (QSA). Os créditos de busca não expiram.
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2.5 justify-end pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setShowRefillModal(false)}
+                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRefillStep(2)}
+                      className="px-5 py-2.5 bg-[#00A86B] hover:bg-[#008F5A] text-white font-extrabold text-xs rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>Continuar</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Step 2: Chave Pix & Confirmação */
+                <div className="space-y-5">
+                  {/* Step indicator */}
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                    <span className="text-[#00A86B] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                      Passo 2 de 2: Pagamento Pix & Confirmação
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setRefillStep(1)}
+                      className="text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <ArrowLeft className="w-3 h-3" />
+                      <span>Alterar pacote</span>
+                    </button>
+                  </div>
+
+                  {/* Highlighted Package & Value Card */}
+                  {(() => {
+                    const currentPack = {
+                      Bronze: { buscas: 10, valor: 59.90, leads: 200 },
+                      Prata: { buscas: 30, valor: 129.90, leads: 600 },
+                      Ouro: { buscas: 60, valor: 239.90, leads: 1200 }
+                    }[refillPackage];
+
+                    return (
+                      <div className="bg-gradient-to-br from-emerald-50 to-teal-50/60 border border-emerald-200/80 p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-3">
+                        <div>
+                          <span className="text-[10px] font-black text-emerald-800 uppercase tracking-wider block">
+                            Pacote {refillPackage} • {currentPack.buscas} Buscas ({currentPack.leads} Leads)
+                          </span>
+                          <span className="text-2xl sm:text-3xl font-mono font-extrabold text-[#0A3D2E] block mt-0.5">
+                            {formatCurrencyBRL(currentPack.valor)}
+                          </span>
+                        </div>
+                        <div className="bg-white/80 border border-emerald-100 px-3 py-1.5 rounded-xl text-center shrink-0">
+                          <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-wide">
+                            Tipo
+                          </span>
+                          <span className="text-xs font-black text-slate-900 block">
+                            Caça-Leads
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Pix Key Card */}
+                  <div className="bg-slate-50 border border-slate-200/90 p-4 rounded-2xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                        <Key className="w-3.5 h-3.5 text-emerald-600" />
+                        Chave Pix da Tesouraria (E-mail)
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400">Banco do Brasil</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 font-mono font-bold text-xs text-slate-800 select-all truncate">
+                        prosfec.tesouraria@gmail.com
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText("prosfec.tesouraria@gmail.com");
+                          setRefillCopiedPix(true);
+                          setTimeout(() => setRefillCopiedPix(false), 2500);
+                        }}
+                        className={`px-3.5 py-2.5 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                          refillCopiedPix
+                            ? "bg-emerald-600 text-white"
+                            : "bg-slate-900 hover:bg-slate-800 text-white"
+                        }`}
+                      >
+                        {refillCopiedPix ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Copiado!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copiar</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Instructions Box */}
+                  <div className="bg-blue-50/60 border border-blue-100 p-3.5 rounded-2xl text-[11px] text-blue-900 leading-relaxed space-y-1">
+                    <div className="font-extrabold flex items-center gap-1 text-blue-950">
+                      <AlertCircle className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <span>Instruções para liberação imediata:</span>
+                    </div>
+                    <p className="pl-4.5 text-blue-800/90">
+                      Faça o Pix de <strong className="font-bold font-mono">
+                        {formatCurrencyBRL(
+                          refillPackage === "Bronze" ? 59.90 : refillPackage === "Prata" ? 129.90 : 239.90
+                        )}
+                      </strong> para a chave acima e clique em confirmar abaixo. As buscas serão liberadas automaticamente assim que o financeiro registrar a transferência.
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2.5 justify-between pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setRefillStep(1)}
+                      disabled={refillSubmitting}
+                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Voltar</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={refillSubmitting}
+                      onClick={handleNotifyCacaLeadsRefill}
+                      className="px-5 py-2.5 bg-[#00A86B] hover:bg-[#008F5A] disabled:opacity-50 text-white font-extrabold text-xs rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                    >
+                      {refillSubmitting ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Confirmando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Confirmar Pagamento Realizado</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
         </div>
       )}
 

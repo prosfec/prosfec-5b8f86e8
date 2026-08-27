@@ -20,7 +20,7 @@ import {
   fetchCNPJ
 } from "../utils";
 import { LeadData, SimulationResult } from "../types";
-import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, updateDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../firebase";
 import {
   Building,
@@ -139,7 +139,7 @@ export default function Simulador({
       const leadsRef = collection(db, "leads");
 
       if (cleanCnpj.length === 14) {
-        let q = query(leadsRef, where("cnpj", "==", cnpjVal.trim()));
+        let q = query(leadsRef, where("cnpj", "==", cnpjVal.trim()), limit(1));
         let snap = await getDocs(q);
         if (!snap.empty) {
           const d = snap.docs[0];
@@ -154,7 +154,7 @@ export default function Simulador({
           return;
         }
 
-        q = query(leadsRef, where("cnpj", "==", cleanCnpj));
+        q = query(leadsRef, where("cnpj", "==", cleanCnpj), limit(1));
         snap = await getDocs(q);
         if (!snap.empty) {
           const d = snap.docs[0];
@@ -171,7 +171,7 @@ export default function Simulador({
       }
 
       if (emailVal && emailVal.includes("@")) {
-        const qEmail = query(leadsRef, where("email", "==", emailVal.trim().toLowerCase()));
+        const qEmail = query(leadsRef, where("email", "==", emailVal.trim().toLowerCase()), limit(1));
         const snapEmail = await getDocs(qEmail);
         if (!snapEmail.empty) {
           const d = snapEmail.docs[0];

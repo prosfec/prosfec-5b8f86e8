@@ -111,11 +111,11 @@ export const LeadStepTimeline: React.FC<LeadStepTimelineProps> = ({
               >
                 {/* Status Icon */}
                 {isCompleted ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2} />
                 ) : isInProgress ? (
-                  <Loader2 className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
+                  <Loader2 className="w-4 h-4 text-amber-400 animate-spin shrink-0" strokeWidth={2} />
                 ) : (
-                  <Lock className="w-4 h-4 text-slate-500 shrink-0" />
+                  <Lock className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
                 )}
 
                 <div className="flex flex-col text-left">

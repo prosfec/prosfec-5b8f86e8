@@ -320,8 +320,73 @@ export function sanitizeFirestoreData<T = any>(obj: T): T {
   return cleanObj as T;
 }
 
-// Re-export Multilevel Commission System
+// Security: Validate uploaded files for MIME types, magic bytes and size constraints
+export async function validateUploadedFile(
+  file: File, 
+  allowedTypes: ("pdf" | "image")[] = ["pdf", "image"], 
+  maxSizeMB: number = 15
+): Promise<{ valid: boolean; error?: string }> {
+  if (!file) {
+    return { valid: false, error: "Nenhum arquivo selecionado." };
+  }
+
+  // 1. Size constraint check
+  const maxBytes = maxSizeMB * 1024 * 1024;
+  if (file.size > maxBytes) {
+    return { 
+      valid: false, 
+      error: `Arquivo excede o limite máximo permitido de ${maxSizeMB}MB (tamanho atual: ${(file.size / (1024 * 1024)).toFixed(1)}MB).` 
+    };
+  }
+
+  // 2. Extension check
+  const fileName = file.name.toLowerCase();
+  const isPdfExt = fileName.endsWith(".pdf");
+  const isImgExt = fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".webp");
+
+  if (!isPdfExt && !isImgExt) {
+    return { valid: false, error: "Formato de arquivo não permitido. Apenas PDF, JPG, PNG e WebP são aceitos." };
+  }
+
+  if (isPdfExt && !allowedTypes.includes("pdf")) {
+    return { valid: false, error: "Formato PDF não aceito para este campo." };
+  }
+
+  if (isImgExt && !allowedTypes.includes("image")) {
+    return { valid: false, error: "Imagens não são aceitas para este campo. Envie um arquivo PDF." };
+  }
+
+  // 3. Magic bytes / header inspection
+  try {
+    const buffer = await file.slice(0, 8).arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+
+    if (isPdfExt) {
+      // PDF magic bytes: %PDF- (0x25 0x50 0x44 0x46)
+      const isPdfHeader = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+      if (!isPdfHeader) {
+        return { valid: false, error: "Arquivo corrompido ou cabeçalho PDF inválido." };
+      }
+    } else if (isImgExt) {
+      // PNG: 89 50 4E 47 | JPEG: FF D8 FF | WebP: 52 49 46 46 (RIFF)
+      const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47;
+      const isJpg = bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF;
+      const isWebp = bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46;
+
+      if (!isPng && !isJpg && !isWebp) {
+        return { valid: false, error: "Arquivo de imagem com estrutura corrompida ou formato inválido." };
+      }
+    }
+  } catch (err) {
+    console.warn("Header inspection fallback warning:", err);
+  }
+
+  return { valid: true };
+}
+
+// Re-export Multilevel Commission System and Service Utils
 export * from "./utils/commissionUtils";
+export * from "./utils/serviceUtils";
 
 
 

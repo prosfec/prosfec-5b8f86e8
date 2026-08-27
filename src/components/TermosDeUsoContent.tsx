@@ -38,7 +38,7 @@ export const TermosDeUsoContent: React.FC<TermosDeUsoContentProps> = ({ variant 
         </h3>
         <p>Para fins deste Termo, consideram-se:</p>
         <ul className="list-disc pl-5 space-y-1">
-          <li><strong>PROSFEC:</strong> L P SILVA TECNOLOGIAS, CREDITOS E FINANCAS, pessoa jurídica de direito privado inscrita no CNPJ/MF sob o nº 28.522.665/0001-84, com sede em Netuno i / Rua Projetada, Bl.b Col.palmeiras, Recanto Dos Vinhais, São Luís - MA, responsável pela plataforma tecnológica destinada à gestão de processos, treinamentos, prospecção comercial, suporte operacional e disponibilização de ferramentas relacionadas aos serviços oferecidos.</li>
+          <li><strong>PROSFEC:</strong> DCS SOLUCOES TECNOLOGICAS E SERVICOS FINANCEIROS LTDA (DCS Tech & Finance), pessoa jurídica de direito privado inscrita no CNPJ/MF sob o nº 65.668.670/0001-26, com sede no Edif Office Tower Setor Coluna 1 Sala 501, Renascença, São Luís - MA, CEP: 65075-060, responsável pela plataforma tecnológica destinada à gestão de processos, treinamentos, prospecção comercial, suporte operacional e disponibilização de ferramentas relacionadas aos serviços oferecidos.</li>
           <li><strong>Plataforma:</strong> Todo ambiente digital disponibilizado pela PROSFEC.</li>
           <li><strong>Usuário:</strong> Toda pessoa física ou jurídica cadastrada.</li>
           <li><strong>Consultor:</strong> Usuário autorizado a prestar serviços utilizando a metodologia PROSFEC.</li>
