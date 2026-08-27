@@ -198,6 +198,44 @@ export default function FichaRatingAdmViewer({
     }
   };
 
+  // Sinalizar / remover sinalização de link inacessível
+  const handleToggleLinkProblema = async (docKey: string, label: string) => {
+    const jaSinalizado = Boolean(linksProblematicos[docKey]);
+    const updated = { ...linksProblematicos };
+    if (jaSinalizado) {
+      delete updated[docKey];
+    } else {
+      updated[docKey] = {
+        label,
+        motivo: "Não foi possível acessar o link. Revise a permissão de compartilhamento e reenvie.",
+        sinalizadoEm: new Date().toISOString()
+      };
+    }
+    setLinksProblematicos(updated);
+
+    try {
+      const docRef = doc(db, "leads", lead.id);
+      const updatedFicha: any = {
+        status: ratingData?.status || "em_analise",
+        sociosCPF: ratingData?.sociosCPF || [],
+        dadosCNPJ: ratingData?.dadosCNPJ || {},
+        ...(ratingData || {}),
+        linksProblematicos: updated,
+        dataAtualizacao: new Date().toISOString()
+      };
+      await updateDoc(docRef, {
+        fichaRatingCredito: sanitizeFirestoreData(updatedFicha)
+      });
+      if (onLeadUpdated) onLeadUpdated({ ...lead, fichaRatingCredito: updatedFicha });
+      setSaveFeedback(jaSinalizado ? "Sinalização de link removida." : "Link sinalizado como inacessível. O cliente verá o aviso de reenvio.");
+      setTimeout(() => setSaveFeedback(null), 4000);
+    } catch (e) {
+      console.error("Erro ao sinalizar link inacessível:", e);
+      setSaveFeedback("Erro ao salvar sinalização do link.");
+    }
+  };
+
+
   // Toggle Improvement Tag in Post-Service
   const handleToggleMelhoria = (m: string) => {
     if (melhoriasSelecionadas.includes(m)) {
