@@ -101,6 +101,12 @@ export default function FichaRatingAdmViewer({
   const [editingMotivoKey, setEditingMotivoKey] = useState<string | null>(null);
   const [tempMotivoText, setTempMotivoText] = useState<string>("");
 
+  // Links sinalizados como inacessíveis pela Mesa (permissão de compartilhamento etc.)
+  const [linksProblematicos, setLinksProblematicos] = useState<Record<string, { label: string; motivo: string; sinalizadoEm: string }>>(
+    (ratingData as any)?.linksProblematicos || {}
+  );
+
+
   // Post-service Conclusion State
   const [notaRating, setNotaRating] = useState<string>(ratingData?.conclusaoRating?.notaFinalRating || "AA (Muito Bom)");
   const [classificacaoRisco, setClassificacaoRisco] = useState<any>(ratingData?.conclusaoRating?.classificacaoRisco || "Risco Mínimo (AAA/AA)");
@@ -191,6 +197,44 @@ export default function FichaRatingAdmViewer({
       console.error("Erro ao salvar validação de doc:", e);
     }
   };
+
+  // Sinalizar / remover sinalização de link inacessível
+  const handleToggleLinkProblema = async (docKey: string, label: string) => {
+    const jaSinalizado = Boolean(linksProblematicos[docKey]);
+    const updated = { ...linksProblematicos };
+    if (jaSinalizado) {
+      delete updated[docKey];
+    } else {
+      updated[docKey] = {
+        label,
+        motivo: "Não foi possível acessar o link. Revise a permissão de compartilhamento e reenvie.",
+        sinalizadoEm: new Date().toISOString()
+      };
+    }
+    setLinksProblematicos(updated);
+
+    try {
+      const docRef = doc(db, "leads", lead.id);
+      const updatedFicha: any = {
+        status: ratingData?.status || "em_analise",
+        sociosCPF: ratingData?.sociosCPF || [],
+        dadosCNPJ: ratingData?.dadosCNPJ || {},
+        ...(ratingData || {}),
+        linksProblematicos: updated,
+        dataAtualizacao: new Date().toISOString()
+      };
+      await updateDoc(docRef, {
+        fichaRatingCredito: sanitizeFirestoreData(updatedFicha)
+      });
+      if (onLeadUpdated) onLeadUpdated({ ...lead, fichaRatingCredito: updatedFicha });
+      setSaveFeedback(jaSinalizado ? "Sinalização de link removida." : "Link sinalizado como inacessível. O cliente verá o aviso de reenvio.");
+      setTimeout(() => setSaveFeedback(null), 4000);
+    } catch (e) {
+      console.error("Erro ao sinalizar link inacessível:", e);
+      setSaveFeedback("Erro ao salvar sinalização do link.");
+    }
+  };
+
 
   // Toggle Improvement Tag in Post-Service
   const handleToggleMelhoria = (m: string) => {
@@ -537,6 +581,7 @@ export default function FichaRatingAdmViewer({
     const isApproved = val?.status === "aprovado";
     const isRejected = val?.status === "rejeitado";
     const isEditingMotivo = editingMotivoKey === docKey;
+    const linkProblema = linksProblematicos[docKey];
 
     return (
       <div 
@@ -582,6 +627,15 @@ export default function FichaRatingAdmViewer({
             </span>
           )}
         </div>
+
+        {/* Link inacessível badge */}
+        {linkProblema && (
+          <div className="p-2 bg-rose-600 text-white rounded-xl text-[10px] font-black flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>Link inacessível — solicitar reenvio</span>
+          </div>
+        )}
+
 
         {/* Rejection Motive Display */}
         {isRejected && val?.motivo && (
@@ -689,7 +743,21 @@ export default function FichaRatingAdmViewer({
             >
               <X className="w-3.5 h-3.5" />
             </button>
+
+            <button
+              type="button"
+              onClick={() => handleToggleLinkProblema(docKey, title)}
+              className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
+                linkProblema
+                  ? "bg-rose-600 text-white shadow-xs"
+                  : "bg-slate-100 hover:bg-amber-100 text-slate-600 hover:text-amber-700"
+              }`}
+              title={linkProblema ? "Remover sinalização de link inacessível" : "Sinalizar link inacessível"}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+            </button>
           </div>
+
         ) : (
           <div className="pt-1 text-[11px] text-slate-400 italic">
             Aguardando anexo do cliente no portal
