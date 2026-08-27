@@ -813,6 +813,47 @@ export default function FichaRatingCreditoForm({
             </motion.div>
           );
         })()}
+
+        {/* Links de documentos sinalizados como inacessíveis pela Mesa */}
+        {(() => {
+          const problemas = Object.entries(((lead.fichaRatingCredito as any)?.linksProblematicos || {}) as Record<string, any>);
+          if (problemas.length === 0) return null;
+
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-rose-50 border border-rose-300 text-rose-950 rounded-2xl space-y-2.5 shadow-xs"
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-rose-700 shrink-0 animate-pulse" />
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-rose-900">
+                    Links inacessíveis — reenvio necessário
+                  </h4>
+                  <p className="text-[11px] text-rose-800">
+                    Nossa equipe não conseguiu abrir os links abaixo. Revise a permissão de compartilhamento
+                    (defina como "Qualquer pessoa com o link") e cole o link novamente no campo correspondente.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pl-2 border-l-2 border-rose-400">
+                {problemas.map(([docKey, info]: any) => (
+                  <div key={docKey} className="text-xs bg-white/80 p-2 rounded-xl border border-rose-200">
+                    <div className="font-extrabold text-rose-900">
+                      • {info?.label || docKey.replace(/_/g, " ")}
+                    </div>
+                    {info?.motivo && (
+                      <p className="text-[11px] text-rose-800 italic mt-0.5">{info.motivo}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          );
+        })()}
+
       </div>
 
       {/* SECTION 1: Dados para estruturação de Rating Comercial de Crédito CPF(Sócios) */}
