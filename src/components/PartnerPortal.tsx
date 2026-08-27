@@ -5435,11 +5435,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                     // Deduções de Saques Solicitados (solicitacoes_comissao)
                     const totalSaquesPagos = solicitacoesComissao
-                      .filter(s => s.status === "pago")
+                      .filter(s => getSolicitacaoOrigem(s) === "servicos" && s.status === "pago")
                       .reduce((acc, s) => acc + (s.valor || 0), 0);
 
                     const totalSaquesPendentes = solicitacoesComissao
-                      .filter(s => s.status === "pendente")
+                      .filter(s => getSolicitacaoOrigem(s) === "servicos" && s.status === "pendente")
                       .reduce((acc, s) => acc + (s.valor || 0), 0);
 
                     // Saldo Disponível Líquido para Novo Saque
