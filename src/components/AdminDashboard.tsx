@@ -71,8 +71,11 @@ import {
   XCircle,
   Save,
   Link2,
-  Calculator
+  Calculator,
+  Menu,
+  LogOut
 } from "lucide-react";
+
 import { 
   formatCurrencyBRL, 
   getAppDomain, 
@@ -393,6 +396,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel" | "resets">("leads");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [resetNewPasswords, setResetNewPasswords] = useState<Record<string, string>>({});
   const [savingResetLeadId, setSavingResetLeadId] = useState<string | null>(null);
   const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
@@ -2702,240 +2707,192 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     );
   }
 
-  return (
-    <div className="min-h-screen flex flex-col font-sans text-slate-800">
-      {/* Top Banner Header */}
-      <header className="glass-panel-dark rounded-none text-slate-100 border-x-0 border-t-0 py-3.5 px-4 sm:px-6 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-emerald-950/70 p-2.5 rounded-xl text-emerald-300 border border-emerald-700/40 shadow-xs">
-              <TrendingUp className="w-5.5 h-5.5 text-emerald-300" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-black tracking-tight text-white font-display">Painel Administrativo</h1>
-                {userRole === "contador" ? (
-                  <span className="text-[11px] bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider border border-amber-400/30">
-                    Área do Contador
-                  </span>
-                ) : (
-                  <span className="text-[11px] bg-emerald-500/20 text-[#00A86B] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider border border-emerald-500/30">
-                    Engine PROSFEC IA v2.6
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 text-[11px] text-emerald-300/90 font-bold tracking-wider uppercase font-mono mt-0.5">
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00A86B] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00A86B]"></span>
-                </span>
-                <span>Mesa de Crédito &bull; PRONAMPE 2026 Online</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-            <button 
-              onClick={fetchData}
-              className="py-2 px-3.5 bg-emerald-950/60 hover:bg-emerald-900/80 active:bg-emerald-800 text-emerald-200 rounded-xl border border-emerald-800/40 transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer shadow-xs min-h-[40px]"
-              title="Sincronizar dados"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-emerald-300 ${loading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Sincronizar</span>
-            </button>
+  const adminNavItems = [
+    { id: "funnel", label: "Funil & Conversão", icon: TrendingUp, badge: null as any },
+    { id: "leads", label: "Leads", icon: Users, badge: leads.length ? String(leads.length) : null, tone: "neutral" },
+    { id: "partners", label: "Parceiros", icon: Handshake, badge: partners.length ? String(partners.length) : null, tone: "neutral" },
+    { id: "announcements", label: "Comunicados", icon: Megaphone, badge: null },
+    {
+      id: "recargas",
+      label: "Recargas",
+      icon: Coins,
+      badge: recargas.filter((r) => r.status === "pendente").length || null,
+      tone: "warning"
+    },
+    {
+      id: "comissoes",
+      label: "Comissões & Saques",
+      icon: Receipt,
+      badge: comissoes.filter((c) => c.status === "pendente").length || null,
+      tone: "accent"
+    },
+    { id: "precos", label: "Preços & Serviços", icon: DollarSign, badge: null },
+    { id: "servicos_contabilidade", label: "Contabilidade", icon: Calculator, badge: null },
+    {
+      id: "resets",
+      label: "Reset de Senhas",
+      icon: Key,
+      badge: leads.filter((l) => l.solicitacaoResetSenha?.pendente).length || null,
+      tone: "danger"
+    }
+  ];
 
-            <button
-              onClick={handleLogout}
-              className="py-2 px-3.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-200 font-bold rounded-xl border border-rose-400/30 text-xs transition-all cursor-pointer min-h-[40px]"
-            >
-              Sair
-            </button>
-          </div>
+  const activeNavLabel = adminNavItems.find((i) => i.id === activeTab)?.label || "Painel";
+
+  const renderSidebarNav = () => (
+    <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 scrollbar-none">
+      <span className="block px-3 pb-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-emerald-300/50">
+        Gestão do sistema
+      </span>
+      {adminNavItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = activeTab === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => {
+              setActiveTab(item.id as any);
+              setSearchTerm("");
+              setStatusFilter("todos");
+              if (item.id === "partners") setPartnersPage(1);
+              setSidebarOpen(false);
+            }}
+            className={`sidebar-item ${isActive ? "sidebar-item-active" : ""}`}
+          >
+            <Icon className={`w-[18px] h-[18px] shrink-0 ${isActive ? "text-[#00A86B]" : ""}`} strokeWidth={2} />
+            <span className="flex-1 text-left truncate">{item.label}</span>
+            {item.badge ? (
+              <span
+                className={`text-[10px] font-black px-1.5 py-0.5 rounded-md tabular ${
+                  item.tone === "warning"
+                    ? "bg-amber-400/20 text-amber-200"
+                    : item.tone === "danger"
+                    ? "bg-rose-500/20 text-rose-200"
+                    : item.tone === "accent"
+                    ? "bg-emerald-400/20 text-emerald-200"
+                    : "bg-white/10 text-emerald-100/80"
+                }`}
+              >
+                {item.badge}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </nav>
+  );
+
+  const sidebarBrand = (
+    <div className="px-5 py-5 border-b border-white/10">
+      <div className="flex items-center gap-2.5">
+        <div className="p-2 rounded-xl bg-[#00A86B]/15 border border-[#00A86B]/30">
+          <TrendingUp className="w-5 h-5 text-[#00A86B]" />
         </div>
-      </header>
+        <div className="min-w-0">
+          <p className="font-display font-extrabold text-[15px] text-white leading-none">PROSFEC</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-300/70 mt-1">
+            {userRole === "contador" ? "Área do Contador" : "Mesa de Crédito"}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-emerald-300/70">
+        <span className="flex h-1.5 w-1.5 relative">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00A86B] opacity-75" />
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#00A86B]" />
+        </span>
+        Pronampe 2026 online
+      </div>
+    </div>
+  );
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
-        
-        {/* Two-Column Sidebar Layout */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start w-full">
-          
-          {/* Sidebar Left Column */}
-          <div className="w-full lg:w-80 shrink-0 space-y-6 lg:sticky lg:top-24">
-            {/* Admin Profile/Control Card */}
-            <div className="glass-panel-dark glass-raise text-white p-5 sm:p-6 relative overflow-hidden flex flex-col justify-between min-h-[160px]">
-              <div className="absolute right-[-40px] top-[-40px] w-36 h-36 rounded-full bg-emerald-400/10 pointer-events-none" />
-              <div className="space-y-4 relative z-10">
-                <div className="flex items-start justify-between">
-                  <span className="text-[11px] bg-emerald-500/20 text-[#00A86B] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-emerald-500/30">
-                    {userRole === "contador" ? "Contador" : "Administrador"}
-                  </span>
-                  <TrendingUp className="w-5 h-5 text-emerald-300" />
-                </div>
-                <div>
-                  <h2 className="font-display font-extrabold text-lg leading-tight text-white">
-                    {userRole === "contador" ? "Painel Contábil" : "Painel Executivo"}
-                  </h2>
-                  <p className="text-xs text-emerald-200/90 mt-1 truncate">PROSFEC PRONAMPE</p>
-                </div>
-              </div>
+  return (
+    <div className="min-h-screen flex font-sans text-ink bg-surface-base">
+      {/* Sidebar fixa (desktop) */}
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col z-40 bg-[#02241a] border-r border-white/10">
+        {sidebarBrand}
+        {renderSidebarNav()}
+        <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          <button onClick={fetchData} className="sidebar-item" title="Sincronizar dados">
+            <RefreshCw className={`w-[18px] h-[18px] ${loading ? "animate-spin" : ""}`} strokeWidth={2} />
+            <span className="flex-1 text-left">Sincronizar</span>
+          </button>
+          <button onClick={handleLogout} className="sidebar-item hover:bg-rose-500/15 hover:text-rose-200">
+            <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
+            <span className="flex-1 text-left">Sair</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Gaveta mobile */}
+      {sidebarOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-[#02241a]/60 backdrop-blur-xs" onClick={() => setSidebarOpen(false)} />
+          <aside className="relative w-72 max-w-[85vw] flex flex-col bg-[#02241a] border-r border-white/10 animate-in slide-in-from-left duration-200">
+            <button
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Fechar menu"
+              className="absolute top-4 right-3 p-1.5 rounded-lg text-emerald-200/70 hover:bg-white/10"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {sidebarBrand}
+            {renderSidebarNav()}
+            <div className="px-3 py-4 border-t border-white/10">
+              <button onClick={handleLogout} className="sidebar-item hover:bg-rose-500/15 hover:text-rose-200">
+                <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
+                <span className="flex-1 text-left">Sair</span>
+              </button>
             </div>
+          </aside>
+        </div>
+      )}
 
-            {/* Vertical Navigation Tabs */}
-            <div className="glass-panel p-3 flex flex-col gap-1 text-left">
-              <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-widest px-3 py-1 mb-1 block">Gestão do Sistema</span>
-              
+      <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+        {/* Topbar */}
+        <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-line-soft">
+          <div className="h-16 px-4 sm:px-6 flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Abrir menu"
+              className="lg:hidden p-2 rounded-xl text-ink-muted hover:bg-surface-sunken"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="font-display font-extrabold text-[15px] sm:text-base text-brand-primary truncate">
+                {activeNavLabel}
+              </h1>
+              <p className="text-[11px] text-ink-muted truncate">
+                {userRole === "contador" ? "Painel contábil" : "Painel executivo"} · PROSFEC
+              </p>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
               <button
-                onClick={() => { setActiveTab("funnel"); setSearchTerm(""); setStatusFilter("todos"); }}
-                className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
-                  activeTab === "funnel"
-                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
-                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
-                }`}
+                onClick={fetchData}
+                title="Sincronizar dados"
+                className="h-9 px-3 rounded-xl border border-line-soft bg-white hover:border-brand-accent/40 text-ink-muted hover:text-brand-primary text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                <span className="flex items-center gap-2.5">
-                  <TrendingUp className={`w-5 h-5 ${activeTab === "funnel" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
-                  Funil & Conversão
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "funnel" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                <span className="hidden sm:inline">Sincronizar</span>
               </button>
-
+              <span className="hidden md:inline-flex pill-status border-brand-accent/30 bg-brand-accent/10 text-brand-primary">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-accent" />
+                {userRole === "contador" ? "Contador" : "Administrador"}
+              </span>
               <button
-                onClick={() => { setActiveTab("leads"); setSearchTerm(""); setStatusFilter("todos"); }}
-                className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
-                  activeTab === "leads"
-                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
-                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
-                }`}
+                onClick={handleLogout}
+                className="lg:hidden h-9 px-3 rounded-xl border border-rose-200 text-rose-600 text-xs font-bold"
               >
-                <span className="flex items-center gap-2.5">
-                  <Users className={`w-5 h-5 ${activeTab === "leads" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
-                  Leads ({leads.length})
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-              </button>
-
-              <button
-                onClick={() => { setActiveTab("partners"); setSearchTerm(""); setStatusFilter("todos"); setPartnersPage(1); }}
-                className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
-                  activeTab === "partners"
-                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
-                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Handshake className={`w-5 h-5 ${activeTab === "partners" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
-                  Parceiros ({partners.length})
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "partners" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-              </button>
-
-              <button
-                onClick={() => { setActiveTab("announcements"); setSearchTerm(""); setStatusFilter("todos"); }}
-                className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
-                  activeTab === "announcements"
-                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
-                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Megaphone className={`w-5 h-5 ${activeTab === "announcements" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
-                  Comunicados
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "announcements" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-              </button>
-
-              <button
-                onClick={() => { setActiveTab("recargas"); setSearchTerm(""); setStatusFilter("todos"); }}
-                className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group relative ${
-                  activeTab === "recargas"
-                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
-                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Coins className={`w-5 h-5 ${activeTab === "recargas" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
-                  Recargas
-                  {recargas.filter(r => r.status === "pendente").length > 0 && (
-                    <span className="bg-amber-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
-                      {recargas.filter(r => r.status === "pendente").length} Pendentes
-                    </span>
-                  )}
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "recargas" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-              </button>
-
-              <button
-                onClick={() => { setActiveTab("comissoes"); setSearchTerm(""); setStatusFilter("todos"); }}
-                className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group relative ${
-                  activeTab === "comissoes"
-                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
-                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Receipt className={`w-5 h-5 ${activeTab === "comissoes" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
-                  Comissões & Saques
-                  {comissoes.filter(c => c.status === "pendente").length > 0 && (
-                    <span className="bg-emerald-600 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse shadow-xs">
-                      {comissoes.filter(c => c.status === "pendente").length} Saque(s)
-                    </span>
-                  )}
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "comissoes" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-              </button>
-
-              <button
-                onClick={() => { setActiveTab("precos"); setSearchTerm(""); setStatusFilter("todos"); }}
-                className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
-                  activeTab === "precos"
-                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
-                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <DollarSign className={`w-5 h-5 ${activeTab === "precos" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
-                  Preços & Serviços
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "precos" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-              </button>
-
-              <button
-                onClick={() => { setActiveTab("servicos_contabilidade"); setSearchTerm(""); setStatusFilter("todos"); }}
-                className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
-                  activeTab === "servicos_contabilidade"
-                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
-                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Calculator className={`w-5 h-5 ${activeTab === "servicos_contabilidade" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={1.75} />
-                  Serviços de Contabilidade
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "servicos_contabilidade" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-              </button>
-
-              <button
-                onClick={() => { setActiveTab("resets"); setSearchTerm(""); setStatusFilter("todos"); }}
-                className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group relative ${
-                  activeTab === "resets"
-                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
-                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Key className={`w-5 h-5 ${activeTab === "resets" ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={2} />
-                  Reset de Senhas
-                  {leads.filter(l => l.solicitacaoResetSenha?.pendente).length > 0 && (
-                    <span className="bg-rose-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse shadow-xs">
-                      {leads.filter(l => l.solicitacaoResetSenha?.pendente).length} Pendente(s)
-                    </span>
-                  )}
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === "resets" ? "translate-x-0.5 text-emerald-700" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+                Sair
               </button>
             </div>
           </div>
+        </header>
+
+        {/* Conteúdo */}
+        <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 md:p-6 space-y-6">
+          
+
 
           {/* Right Column - Main Content Card */}
           <div className="flex-grow w-full space-y-6 min-w-0">
@@ -5706,9 +5663,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           </div>
         </div>
       </div>
-    </div>
 
       </main>
+      </div>
+
 
       {/* LEAD DETAIL MODAL - Caixa Flutuante (Floating Modal) */}
       {selectedLead && (
