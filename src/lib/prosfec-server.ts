@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
 import express from "./mini-express";
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc, runTransaction } from "firebase/firestore";
+import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc, runTransaction, deleteField } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
 import { GoogleGenAI, Type } from "@google/genai";
 import { getBankSpecificRules } from "../utils/creditLineRules";
@@ -2950,5 +2950,184 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // =====================================================================
+  // ETAPA B — Migração de senhas em texto puro para o Firebase Auth
+  // =====================================================================
+  const FIREBASE_API_KEY =
+    process.env.FIREBASE_API_KEY || (firebaseConfig as any).apiKey;
+
+  const authRest = async (endpoint: string, payload: any) => {
+    const r = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${FIREBASE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      },
+    );
+    const data = await r.json().catch(() => ({}));
+    return { ok: r.ok, status: r.status, data };
+  };
+
+  const FIREBASE_PROJECT_ID = (firebaseConfig as any).projectId;
+  const FIRESTORE_DB_ID = (firebaseConfig as any).firestoreDatabaseId || "(default)";
+
+  // Remove o campo `senha` e grava o authUid usando a REST do Firestore
+  // autenticada com o idToken do próprio parceiro (as regras só permitem a
+  // remoção da senha pelo dono do documento).
+  const limparSenhaFirestore = async (partnerId: string, idToken: string, localId: string) => {
+    const url =
+      `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}` +
+      `/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents/parceiros/${partnerId}` +
+      `?updateMask.fieldPaths=senha&updateMask.fieldPaths=authUid&updateMask.fieldPaths=authMigradoEm`;
+    const r = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({
+        fields: {
+          authUid: { stringValue: localId || "" },
+          authMigradoEm: { stringValue: new Date().toISOString() },
+        },
+      }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore PATCH ${r.status}: ${detail.slice(0, 200)}`);
+    }
+  };
+
+  // Cria (ou vincula) a conta no Firebase Auth de um parceiro e apaga a senha
+  // em texto puro do Firestore.
+  const provisionParceiro = async (partnerId: string, email: string, senha: string) => {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const plainPassword = String(senha || "");
+    if (!normalizedEmail || plainPassword.length < 6) {
+      return { ok: false, reason: "Credenciais inválidas (senha mínima de 6 caracteres)." };
+    }
+
+    let localId: string | null = null;
+    let idToken: string | null = null;
+    let created = false;
+
+    const signUp = await authRest("signUp", {
+      email: normalizedEmail,
+      password: plainPassword,
+      returnSecureToken: true,
+    });
+
+    if (signUp.ok) {
+      localId = signUp.data?.localId || null;
+      idToken = signUp.data?.idToken || null;
+      created = true;
+    } else if (String(signUp.data?.error?.message || "").startsWith("EMAIL_EXISTS")) {
+      // Já existe no Auth: valida se a senha atual bate para vincular o uid.
+      const signIn = await authRest("signInWithPassword", {
+        email: normalizedEmail,
+        password: plainPassword,
+        returnSecureToken: true,
+      });
+      if (signIn.ok) {
+        localId = signIn.data?.localId || null;
+        idToken = signIn.data?.idToken || null;
+      } else {
+        // Conta existe com outra senha — não sobrescrevemos.
+        return { ok: false, reason: "EMAIL_EXISTS_DIFFERENT_PASSWORD" };
+      }
+    } else {
+      return { ok: false, reason: signUp.data?.error?.message || "Falha ao criar conta." };
+    }
+
+    if (partnerId && idToken) {
+      try {
+        await limparSenhaFirestore(partnerId, idToken, localId || "");
+      } catch (err: any) {
+        return {
+          ok: true,
+          created,
+          localId,
+          warning: `Conta criada, mas falha ao limpar senha: ${err?.message}`,
+        };
+      }
+    }
+
+    return { ok: true, created, localId };
+  };
+
+
+  // Provisionamento individual (usado no cadastro e na lazy migration do login)
+  app.post("/api/auth/provision-parceiro", async (req, res) => {
+    try {
+      const { email, senha, partnerId } = req.body || {};
+      const normalizedEmail = String(email || "").trim().toLowerCase();
+      if (!normalizedEmail || !senha) {
+        return res.status(400).json({ error: "email e senha são obrigatórios." });
+      }
+
+      // Segurança: só provisiona se existir um parceiro com essa credencial
+      // em texto puro no Firestore (ou o doc informado bater).
+      const snap = await getDocs(
+        query(collection(db, "parceiros"), where("email", "==", normalizedEmail)),
+      );
+      const match = snap.docs.find(
+        (d) => (!partnerId || d.id === partnerId) && d.data()?.senha === senha,
+      );
+      if (!match) {
+        return res.status(401).json({ error: "Credenciais não conferem com o cadastro." });
+      }
+
+      const result = await provisionParceiro(match.id, normalizedEmail, String(senha));
+      if (!result.ok) return res.status(409).json({ error: result.reason });
+      return res.json({ success: true, ...result, partnerId: match.id });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Erro ao provisionar parceiro." });
+    }
+  });
+
+  // Migração em lote — protegida por MIGRATION_ADMIN_TOKEN
+  app.post("/api/auth/migrar-parceiros", async (req, res) => {
+    const expected = process.env.MIGRATION_ADMIN_TOKEN;
+    if (!expected) {
+      return res.status(503).json({ error: "MIGRATION_ADMIN_TOKEN não configurado." });
+    }
+    if (!timingSafeCompare(extractToken(req, "x-migration-token"), expected)) {
+      return res.status(401).json({ error: "Unauthorized." });
+    }
+
+    try {
+      const dryRun = req.body?.dryRun === true;
+      const snap = await getDocs(collection(db, "parceiros"));
+      const pending = snap.docs.filter(
+        (d) => typeof d.data()?.senha === "string" && d.data().senha.length > 0,
+      );
+
+      if (dryRun) {
+        return res.json({ dryRun: true, total: snap.size, pendentes: pending.length });
+      }
+
+      const results: any[] = [];
+      for (const d of pending) {
+        const data = d.data();
+        const r = await provisionParceiro(d.id, data.email, data.senha);
+        results.push({
+          id: d.id,
+          email: String(data.email || "").toLowerCase(),
+          ok: r.ok,
+          created: (r as any).created ?? false,
+          reason: (r as any).reason || (r as any).warning || null,
+        });
+      }
+
+      return res.json({
+        total: snap.size,
+        processados: results.length,
+        migrados: results.filter((r) => r.ok).length,
+        falhas: results.filter((r) => !r.ok),
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Erro na migração." });
+    }
+  });
+
   return app;
 }
+

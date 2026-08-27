@@ -70,6 +70,15 @@ service cloud.firestore {
         ]);
     }
 
+    // Migração para o Firebase Auth: o próprio parceiro (já autenticado) pode
+    // APENAS remover a senha em texto puro e gravar o vínculo com o Auth.
+    function partnerAuthMigration() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(["senha", "authUid", "authMigradoEm"])
+        && !("senha" in request.resource.data)
+        && request.resource.data.authUid == request.auth.uid;
+    }
+
     // Limites de payload para escrita pública (anti-abuso)
     function leadCreateIsSane() {
       return request.resource.data.keys().size() < 120
@@ -108,7 +117,9 @@ service cloud.firestore {
                       )
                     && request.resource.data.keys().size() < 80;
 
-      allow update: if isStaff() || (isOwnPartnerDoc(partnerId) && partnerSafeUpdate());
+      allow update: if isStaff()
+                    || (isOwnPartnerDoc(partnerId) && partnerSafeUpdate())
+                    || (isOwnPartnerDoc(partnerId) && partnerAuthMigration());
       allow delete: if isAdmin();
 
       match /{sub=**} {

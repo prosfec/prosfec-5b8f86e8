@@ -20,9 +20,11 @@ import {
   limit,
   getDoc,
   onSnapshot,
-  arrayUnion
+  arrayUnion,
+  deleteField
 } from "firebase/firestore";
-import { db, handleFirestoreError, OperationType, createNotification } from "../firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
 import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain } from "../utils";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import LeadRegisterForm from "./LeadRegisterForm";
@@ -3124,11 +3126,21 @@ export default function PartnerPortal({
 
     try {
       const normalizedEmail = loginEmail.trim().toLowerCase();
+
+      // ---- 1) Tenta autenticar direto pelo Firebase Auth ----
+      let authUser: any = null;
+      let authErrorCode = "";
+      try {
+        const cred = await signInWithEmailAndPassword(auth, normalizedEmail, loginPassword);
+        authUser = cred.user;
+      } catch (authErr: any) {
+        authErrorCode = authErr?.code || "";
+      }
+
       const q = query(
         collection(db, "parceiros"),
         where("email", "==", normalizedEmail)
       );
-      
       const snapshot = await getDocs(q);
       if (snapshot.empty) {
         setErrorMsg("Nenhum parceiro encontrado com este e-mail.");
@@ -3136,24 +3148,73 @@ export default function PartnerPortal({
         return;
       }
 
-      // Find partner matching password
       let matchedPartner: any = null;
-      for (const d of snapshot.docs) {
-        const data = d.data();
-        if (data.senha === loginPassword) {
-          matchedPartner = {
-            id: d.id,
-            ...data
-          };
-          break;
+
+      if (authUser) {
+        const byUid = snapshot.docs.find((d) => d.data()?.authUid === authUser.uid);
+        const chosen = byUid || snapshot.docs[0];
+        matchedPartner = { id: chosen.id, ...chosen.data() };
+
+        // Higiene: se ainda houver senha em texto puro, remove agora.
+        if (typeof chosen.data()?.senha === "string") {
+          try {
+            await updateDoc(doc(db, "parceiros", chosen.id), {
+              senha: deleteField(),
+              authUid: authUser.uid,
+              authMigradoEm: new Date().toISOString(),
+            });
+          } catch (cleanErr) {
+            console.error("Falha ao limpar senha em texto puro:", cleanErr);
+          }
         }
+      } else {
+        // ---- 2) Lazy migration: valida a senha legada no Firestore ----
+        const legacyDoc = snapshot.docs.find((d) => d.data()?.senha === loginPassword);
+
+        if (!legacyDoc) {
+          setErrorMsg("Senha incorreta. Por favor, tente novamente.");
+          setLoading(false);
+          return;
+        }
+
+        // ---- 3) Cria a conta no Auth e apaga a senha em texto puro ----
+        try {
+          const resp = await fetch("/api/auth/provision-parceiro", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: normalizedEmail,
+              senha: loginPassword,
+              partnerId: legacyDoc.id,
+            }),
+          });
+          if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            console.error("Falha na migração automática:", errData);
+          }
+        } catch (provErr) {
+          console.error("Erro ao provisionar conta no Auth:", provErr);
+        }
+
+        // Conclui o login pelo Auth (agora a conta existe)
+        try {
+          const cred = await signInWithEmailAndPassword(auth, normalizedEmail, loginPassword);
+          authUser = cred.user;
+        } catch (finalErr) {
+          console.error("Login pós-migração falhou, seguindo com sessão local:", finalErr);
+        }
+
+        const fresh = await getDoc(doc(db, "parceiros", legacyDoc.id));
+        matchedPartner = { id: legacyDoc.id, ...(fresh.exists() ? fresh.data() : legacyDoc.data()) };
+        delete matchedPartner.senha;
       }
 
       if (!matchedPartner) {
-        setErrorMsg("Senha incorreta. Por favor, tente novamente.");
+        setErrorMsg("Não foi possível concluir o login. Tente novamente.");
         setLoading(false);
         return;
       }
+
 
       // Check consultant 3-day inactivity rule and general status
       const isSubordinate = !!matchedPartner.parentPartnerId || matchedPartner.isTeamMember === true || (matchedPartner.plano && (matchedPartner.plano.toUpperCase().includes("CONSULTOR") || matchedPartner.plano.toUpperCase().includes("EQUIPE")));
@@ -3269,6 +3330,23 @@ export default function PartnerPortal({
 
       const isAfiliado = regPlan === "AFILIADO";
 
+      // Cria a conta no Firebase Auth (nenhuma senha vai para o Firestore)
+      let newAuthUid = "";
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, normalizedEmail, regPassword);
+        newAuthUid = cred.user.uid;
+      } catch (authErr: any) {
+        if (authErr?.code === "auth/email-already-in-use") {
+          setErrorMsg("Este e-mail já possui cadastro. Faça login ou use \'Esqueci minha senha\'.");
+        } else if (authErr?.code === "auth/weak-password") {
+          setErrorMsg("A senha deve ter no mínimo 6 caracteres.");
+        } else {
+          setErrorMsg("Não foi possível criar seu acesso. Tente novamente.");
+        }
+        setLoading(false);
+        return;
+      }
+
       const newPartnerDoc = {
         nome: regName,
         email: normalizedEmail,
@@ -3278,7 +3356,7 @@ export default function PartnerPortal({
         dataNascimento: regBirthDate || "",
         chavePix: regPix || "",
         plano: regPlan,
-        senha: regPassword, // Stored securely in Firestore
+        authUid: newAuthUid,
         aceitouTermos: regAcceptedTerms,
         status: isAfiliado ? "ativo" : "novo",
         interesse: "ser parceiro",
