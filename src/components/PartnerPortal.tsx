@@ -5114,11 +5114,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <button
                                 onClick={() => {
                                   setPayoutPixKey(currentPartner?.chavePix || "");
+                                  setPayoutAmountCustom(saldoVendasDisponivel > 0 ? saldoVendasDisponivel.toFixed(2) : "0");
                                   setCommissionPayoutSuccess(null);
-                                  setShowCommissionPayoutModal(true);
+                                  setPayoutModalOrigin("vendas");
                                 }}
                                 className="bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold px-4 py-3 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer shrink-0 min-h-[44px]"
-                                title="Solicitar saque/repasse das comissões liberadas"
+                                title="Solicitar saque das comissões de vendas/planos"
                               >
                                 <Coins className="w-4 h-4 text-slate-950 shrink-0" />
                                 <span>Solicitar Comissão</span>
