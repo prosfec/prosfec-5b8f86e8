@@ -6495,7 +6495,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 const domain = window.location.hostname.includes("prosfec.com.br")
                                   ? window.location.origin
                                   : "https://prosfec.com.br";
-                                navigator.clipboard.writeText(`${domain}?leadTrack=${registeredLeadId}`);
+                                navigator.clipboard.writeText(`${domain}/portal-cliente?lead=${registeredLeadId}`);
                                 setCopiedTrackingLink(true);
                                 setTimeout(() => setCopiedTrackingLink(false), 2000);
                               }}
