@@ -2992,12 +2992,15 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   // =====================================================================
   // ETAPA B — Migração de senhas em texto puro para o Firebase Auth
   // =====================================================================
-  const FIREBASE_API_KEY =
-    optionalEnv("FIREBASE_API_KEY") || (firebaseConfig as any).apiKey;
+  // Chave server-side (sem restrição de referenciador) para o Identity Toolkit.
+  // Lida sempre no momento da chamada — nunca no escopo de módulo.
+  const getIdentityToolkitKey = () =>
+    firstEnv("FIREBASE_API_KEY", "GOOGLE_API_KEY") || (firebaseConfig as any).apiKey;
 
   const authRest = async (endpoint: string, payload: any) => {
+    const key = getIdentityToolkitKey();
     const r = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${FIREBASE_API_KEY}`,
+      `https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${encodeURIComponent(key)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
