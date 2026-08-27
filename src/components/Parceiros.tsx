@@ -9,7 +9,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { formatCurrencyBRL, triggerWebhookSimulation, saveLocalLead } from "../utils";
 import { HelpingHand, Coins, Laptop, UserCheck, CheckCircle2, ArrowRight, Check, X, Sparkles } from "lucide-react";
 import { collection, addDoc, query, where, getDocs, limit } from "firebase/firestore";
-import { db, handleFirestoreError, OperationType } from "../firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { db, auth, handleFirestoreError, OperationType } from "../firebase";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 
 interface ParceirosProps {
@@ -105,6 +106,25 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
         return;
       }
 
+      // Etapa B-2: conta criada no Firebase Auth; senha nunca vai ao Firestore.
+      let partnerAuthUid = "";
+      try {
+        const cred = await createUserWithEmailAndPassword(
+          auth,
+          partnerEmail.trim().toLowerCase(),
+          partnerPassword
+        );
+        partnerAuthUid = cred.user.uid;
+      } catch (authErr: any) {
+        setSubmitError(
+          authErr?.code === "auth/email-already-in-use"
+            ? "Este e-mail já possui uma conta de acesso. Faça login na área do parceiro."
+            : "Não foi possível criar seu acesso. Tente novamente."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       const partnerDoc = {
         nome: partnerName,
         whatsapp: partnerPhone,
@@ -119,7 +139,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
         chavePix: partnerPix,
         plano: selectedPlan || "Não especificado",
         aceitouTermos: partnerAcceptedTerms,
-        senha: partnerPassword, // Choice of password
+        authUid: partnerAuthUid,
       };
 
       await addDoc(collection(db, "parceiros"), partnerDoc);

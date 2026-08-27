@@ -82,7 +82,22 @@ service cloud.firestore {
     // Limites de payload para escrita pública (anti-abuso)
     function leadCreateIsSane() {
       return request.resource.data.keys().size() < 120
-        && !request.resource.data.keys().hasAny(["clienteSenha", "senha", "aprovado", "comissaoPaga"]);
+        && !request.resource.data.keys().hasAny([
+             "clienteSenha", "clienteSenhaHash", "clienteSenhaSalt",
+             "senha", "aprovado", "comissaoPaga"
+           ]);
+    }
+
+    // Etapa B-2: os campos de senha do cliente (hash/salt) só podem ser
+    // escritos pela identidade de serviço do servidor ou pelo staff.
+    function leadSenhaFieldsUntouched() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(["clienteSenha", "clienteSenhaHash", "clienteSenhaSalt", "clienteSenhaAlgo"]);
+    }
+
+    // Identidade de serviço do backend PROSFEC (login por e-mail/senha).
+    function isServico() {
+      return isSignedIn() && userEmail() == "servico.interno@prosfec.app";
     }
 
     // ---------------------------------------------------------------------
@@ -91,7 +106,8 @@ service cloud.firestore {
     match /leads/{leadId} {
       allow create: if leadCreateIsSane();
       allow read:   if isSignedIn();
-      allow update: if isSignedIn();
+      allow update: if isServico() || isStaff()
+                    || (isSignedIn() && leadSenhaFieldsUntouched());
       allow delete: if isAdmin();
 
       match /pendencias/{pendenciaId} {

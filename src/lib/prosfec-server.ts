@@ -3,11 +3,13 @@ import { timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
 import express from "./mini-express";
 import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth, signInWithEmailAndPassword as signInService } from "firebase/auth";
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc, runTransaction, deleteField } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
 import { GoogleGenAI, Type } from "@google/genai";
 import { getBankSpecificRules } from "../utils/creditLineRules";
 import { BankRulesManager } from "../utils/BankRulesManager";
+import { optionalEnv, requireEnv, firstEnv, maskEmail, maskDoc, redact } from "../utils/env";
 
 export function cleanForFirestore<T = any>(obj: T): T {
   if (obj === undefined) return null as any;
@@ -100,12 +102,49 @@ export function createExpressApp() {
     ? getFirestore(firebaseApp, (firebaseConfig as any).firestoreDatabaseId)
     : getFirestore(firebaseApp);
 
+  // Identidade de serviço no SDK do servidor: garante que leituras/escritas
+  // do backend passem pelas regras do Firestore como usuário autenticado.
+  const serverAuth = getAuth(firebaseApp);
+  let serviceSignInPromise: Promise<any> | null = null;
+  const ensureServiceSession = async () => {
+    if (serverAuth.currentUser) return;
+    if (!serviceSignInPromise) {
+      const email = optionalEnv("PROSFEC_SERVICE_EMAIL");
+      const password = optionalEnv("PROSFEC_SERVICE_PASSWORD");
+      if (!email || !password) return;
+      serviceSignInPromise = (async () => {
+        try {
+          // Garante que a conta exista (cria via REST se necessário).
+          await getServiceIdTokenRef.fn();
+          await signInService(serverAuth, email, password);
+        } catch (err: any) {
+          console.warn("[SERVICO] Não foi possível autenticar a identidade de serviço.");
+          serviceSignInPromise = null;
+        }
+      })();
+    }
+    await serviceSignInPromise;
+  };
+  // Referência tardia (a função é definida mais abaixo no arquivo)
+  const getServiceIdTokenRef: { fn: () => Promise<string> } = {
+    fn: async () => "",
+  };
+
   // Parse JSON payloads for API routes
   app.use(express.json());
 
+  app.use(async (_req, _res, next) => {
+    try {
+      await ensureServiceSession();
+    } catch {
+      /* segue sem sessão de serviço */
+    }
+    next();
+  });
+
   // API Route: Hubla Webhook (autenticado com comparação time-safe)
   app.post("/api/hubla-webhook", async (req, res) => {
-    const expectedToken = process.env.HUBLA_WEBHOOK_TOKEN;
+    const expectedToken = optionalEnv("HUBLA_WEBHOOK_TOKEN");
     const cleanClientToken = extractToken(req, "x-hubla-token");
 
     if (!expectedToken) {
@@ -121,7 +160,7 @@ export function createExpressApp() {
 
     try {
       const payload = req.body;
-      console.log("Received Hubla Webhook payload:", JSON.stringify(payload));
+      console.log("[HUBLA WEBHOOK] Evento recebido (autenticado).");
       
       // Save webhook event for audit logs
       try {
@@ -205,7 +244,7 @@ export function createExpressApp() {
         statusLower === "paused";
 
       if (isApproved) {
-        console.log(`[Hubla Approved] Email: ${emailNormalized}, checkoutId: ${checkoutId}. Resolving plan...`);
+        console.log(`[Hubla Approved] Email: ${maskEmail(emailNormalized)}, checkoutId: ${checkoutId}. Resolving plan...`);
 
         let planName = "";
         let referrerPartnerId = "";
@@ -266,7 +305,7 @@ export function createExpressApp() {
         const dataLiberacaoSaqueIso = dataLiberacaoSaqueDate.toISOString();
 
         if (resolvedServiceKey) {
-          console.log(`[Hubla Service Payment] Service: ${resolvedServiceName} (${resolvedServiceKey}) via ${metodoPagamento} for email: ${emailNormalized}. Liberação para: ${dataLiberacaoSaqueIso}`);
+          console.log(`[Hubla Service Payment] Service: ${resolvedServiceName} (${resolvedServiceKey}) via ${metodoPagamento} for email: ${maskEmail(emailNormalized)}. Liberação para: ${dataLiberacaoSaqueIso}`);
 
           const queryLeadId = (req.query.leadId || payload.data?.custom_fields?.leadId || payload.leadId || "").toString().trim();
           const buyerDocNum = (buyerDocument || "").replace(/\D/g, "");
@@ -456,7 +495,7 @@ export function createExpressApp() {
             }
 
             await updateDoc(partnerRef, updatePayload);
-            console.log(`Successfully activated partner ${docSnap.id} with email ${emailNormalized} for plan ${planName}`);
+            console.log(`Successfully activated partner ${docSnap.id} with email ${maskEmail(emailNormalized)} for plan ${planName}`);
           }
           return res.status(200).json({ status: "success", message: "Partner activated successfully" });
         } else {
@@ -486,7 +525,7 @@ export function createExpressApp() {
           return res.status(200).json({ status: "success", message: "Pre-paid partner created" });
         }
       } else if (isCancelled) {
-        console.log(`Cancellation/Refund/Expiry event for email: ${emailNormalized}. Deactivating partner...`);
+        console.log(`Cancellation/Refund/Expiry event for email: ${maskEmail(emailNormalized)}. Deactivating partner...`);
 
         // Query the partner document by email
         const q = query(collection(db, "parceiros"), where("email", "==", emailNormalized));
@@ -499,7 +538,7 @@ export function createExpressApp() {
               status: "vencida",
               duracaoDias: 0 // Instantly sets status as "vencida" in getSubscriptionStatus
             });
-            console.log(`Successfully deactivated partner ${docSnap.id} with email ${emailNormalized}`);
+            console.log(`Successfully deactivated partner ${docSnap.id} with email ${maskEmail(emailNormalized)}`);
           }
           return res.status(200).json({ status: "success", message: "Partner deactivated successfully due to refund/cancellation" });
         } else {
@@ -532,7 +571,7 @@ export function createExpressApp() {
       const queryStr = `${keyword} em ${city}${state ? ` - ${state}` : ""}`;
       console.log(`[Google Places API] Initiating lead hunt for: "${queryStr}" with limit ${limit}`);
 
-      const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.PLACES_API_KEY;
+      const GOOGLE_MAPS_KEY = firstEnv("GOOGLE_MAPS_API_KEY", "PLACES_API_KEY");
 
       const requestedLimit = Math.min(Math.max(Number(limit), 1), 20);
       const allResults: any[] = [];
@@ -866,17 +905,17 @@ export function createExpressApp() {
   });
 
   // --- CREDIT QUERY API INTEGRATION (REDEBE API) ---
-  let REDEBE_TOKEN = process.env.REDEBE_TOKEN;
+  let REDEBE_TOKEN = optionalEnv("REDEBE_TOKEN");
   const REDEBE_API_URL = "https://consultas.redebe.com.br/api/v1/credito/diagnostico-inteligente";
 
-  let INTEGRADOR_API_KEY = process.env.INTEGRADOR_API_KEY;
+  let INTEGRADOR_API_KEY = optionalEnv("INTEGRADOR_API_KEY");
   if (INTEGRADOR_API_KEY === "Tony@3419") {
     INTEGRADOR_API_KEY = "intg_Rx5O65qGdNeY6vR1RFjSiKYH0AmXqE0GYFitRYiqf-c";
   }
 
-  let INTEGRADOR_BASE_URL = process.env.INTEGRADOR_API_BASE_URL;
+  let INTEGRADOR_BASE_URL = optionalEnv("INTEGRADOR_API_BASE_URL");
   if (!INTEGRADOR_BASE_URL || !INTEGRADOR_BASE_URL.startsWith("http")) {
-    console.warn(`Invalid or empty INTEGRADOR_API_BASE_URL "${INTEGRADOR_BASE_URL}". Falling back to production URL.`);
+    console.warn("Invalid or empty INTEGRADOR_API_BASE_URL. Falling back to production URL.");
     INTEGRADOR_BASE_URL = "https://kqfciyqklrosqmgjzjtb.supabase.co/functions/v1";
   }
 
@@ -964,7 +1003,7 @@ export function createExpressApp() {
         return res.status(400).json({ error: "Documento inválido. Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido." });
       }
 
-      console.log(`Executing RedeBe credit query for partner ${partnerId} on document ${cleanDoc} (isAdminBypass=${!!isAdminBypass})...`);
+      console.log(`Executing RedeBe credit query for partner ${partnerId} on document ${maskDoc(cleanDoc)} (isAdminBypass=${!!isAdminBypass})...`);
 
       // 3.1 Retrieve partner from Firestore to check balance
       const partnerRef = doc(db, "parceiros", partnerId);
@@ -1011,9 +1050,9 @@ export function createExpressApp() {
       }
 
       // 3.4 Call RedeBe API
-      console.log(`Calling RedeBe API endpoint for document ${cleanDoc}...`);
+      console.log(`Calling RedeBe API endpoint for document ${maskDoc(cleanDoc)}...`);
       const HARDCODED_TOKEN = "ctk_6626261e8e3c6a7ecae118fa6415975852cc6d3b73dabca9fc7f3748eb216851";
-      const envToken = process.env.REDEBE_TOKEN ? process.env.REDEBE_TOKEN.trim() : "";
+      const envToken = optionalEnv("REDEBE_TOKEN");
       const tokenToUse = (envToken.startsWith("ctk_") || envToken.length > 20)
         ? envToken.replace(/^Bearer\s+/i, "").trim()
         : HARDCODED_TOKEN;
@@ -1041,7 +1080,7 @@ export function createExpressApp() {
         }
 
         apiResult = await redebeRes.json();
-        console.log("RedeBe API response successfully received for document:", cleanDoc);
+        console.log("RedeBe API response successfully received for document:", maskDoc(cleanDoc));
         isSuccess = true;
       } catch (fetchErr: any) {
         console.error("Fetch exception while calling RedeBe API:", fetchErr);
@@ -1297,7 +1336,7 @@ export function createExpressApp() {
   let aiClient: any = null;
   function getGeminiAI() {
     if (!aiClient) {
-      const key = process.env.GEMINI_API_KEY;
+      const key = optionalEnv("GEMINI_API_KEY");
       if (!key) {
         throw new Error("A chave GEMINI_API_KEY não foi encontrada no arquivo .env ou no painel de controle.");
       }
@@ -2643,7 +2682,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   // =========================================================================
   app.post("/api/webhooks/lastlink", async (req, res) => {
     // ---- Autenticação obrigatória do webhook (time-safe) ----
-    const expectedLastlinkToken = process.env.LASTLINK_WEBHOOK_TOKEN;
+    const expectedLastlinkToken = optionalEnv("LASTLINK_WEBHOOK_TOKEN");
     if (!expectedLastlinkToken) {
       console.error("[LASTLINK WEBHOOK] LASTLINK_WEBHOOK_TOKEN não configurado no ambiente.");
       return res.status(503).json({ error: "Webhook temporariamente indisponível." });
@@ -2726,7 +2765,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const buyerEmail = (customer.email || order.email || "").toString().trim().toLowerCase();
       const productName = (order.product?.name || dataObj.product_name || dataObj.productName || payload.product_name || "").toString();
 
-      console.log(`[LASTLINK WEBHOOK] Buscando Lead correspondente: CustomId="${customId}", Doc="${buyerDoc}", Email="${buyerEmail}", Produto="${productName}"`);
+      console.log(`[LASTLINK WEBHOOK] Buscando Lead correspondente: CustomId="${customId}", Doc="${maskDoc(buyerDoc)}", Email="${maskEmail(buyerEmail)}", Produto="${productName}"`);
 
       let targetLeadDoc: any = null;
 
@@ -2899,7 +2938,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       if (!documento) return res.status(400).json({ error: "documento é obrigatório." });
 
       if (produto_code === "REDEBE_DIAGNOSTICO_360") {
-        const token = (process.env.REDEBE_TOKEN || "").replace(/^Bearer\s+/i, "").trim();
+        const token = optionalEnv("REDEBE_TOKEN").replace(/^Bearer\s+/i, "").trim();
         if (!token) return res.status(500).json({ error: "REDEBE_TOKEN não configurado." });
         const r = await fetch(REDEBE_API_URL, {
           method: "POST",
@@ -2929,7 +2968,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
   app.post("/api/proxy/places-search", async (req, res) => {
     try {
-      const key = process.env.GOOGLE_MAPS_API_KEY || process.env.PLACES_API_KEY;
+      const key = firstEnv("GOOGLE_MAPS_API_KEY", "PLACES_API_KEY");
       if (!key) return res.status(500).json({ error: "GOOGLE_MAPS_API_KEY não configurada." });
       const { textQuery, pageSize, pageToken } = req.body || {};
       const payload: any = { textQuery, pageSize: Math.min(20, Number(pageSize) || 10) };
@@ -2954,7 +2993,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   // ETAPA B — Migração de senhas em texto puro para o Firebase Auth
   // =====================================================================
   const FIREBASE_API_KEY =
-    process.env.FIREBASE_API_KEY || (firebaseConfig as any).apiKey;
+    optionalEnv("FIREBASE_API_KEY") || (firebaseConfig as any).apiKey;
 
   const authRest = async (endpoint: string, payload: any) => {
     const r = await fetch(
@@ -3083,9 +3122,45 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // Criação de acesso para membro de equipe (sem senha em texto puro)
+  app.post("/api/auth/provision-membro", async (req, res) => {
+    try {
+      const email = String(req.body?.email || "").trim().toLowerCase();
+      const senha = String(req.body?.senha || "");
+      if (!email || senha.length < 6) {
+        return res
+          .status(400)
+          .json({ error: "E-mail válido e senha de no mínimo 6 caracteres são obrigatórios." });
+      }
+
+      const signUp = await authRest("signUp", { email, password: senha, returnSecureToken: true });
+      if (signUp.ok) {
+        return res.json({ success: true, created: true, localId: signUp.data?.localId || "" });
+      }
+
+      const code = String(signUp.data?.error?.message || "");
+      if (code.startsWith("EMAIL_EXISTS")) {
+        const signIn = await authRest("signInWithPassword", {
+          email,
+          password: senha,
+          returnSecureToken: true,
+        });
+        if (signIn.ok) {
+          return res.json({ success: true, created: false, localId: signIn.data?.localId || "" });
+        }
+        return res.status(409).json({ error: "EMAIL_EXISTS_DIFFERENT_PASSWORD" });
+      }
+
+      return res.status(400).json({ error: "Não foi possível criar o acesso." });
+    } catch (err: any) {
+      console.error("[PROVISION MEMBRO] Falha:", err?.message || "erro");
+      return res.status(500).json({ error: "Erro ao criar o acesso do consultor." });
+    }
+  });
+
   // Migração em lote — protegida por MIGRATION_ADMIN_TOKEN
   app.post("/api/auth/migrar-parceiros", async (req, res) => {
-    const expected = process.env.MIGRATION_ADMIN_TOKEN;
+    const expected = optionalEnv("MIGRATION_ADMIN_TOKEN");
     if (!expected) {
       return res.status(503).json({ error: "MIGRATION_ADMIN_TOKEN não configurado." });
     }
@@ -3128,6 +3203,274 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // =====================================================================
+  // ETAPA B-2 — Senha do cliente (leads.clienteSenha) com hash PBKDF2
+  // =====================================================================
+
+  // Identidade de serviço: o servidor autentica no Firebase Auth para poder
+  // ler/gravar os campos de senha do lead respeitando as regras do Firestore.
+  let serviceTokenCache: { token: string; exp: number } | null = null;
+
+  const getServiceIdToken = async (): Promise<string> => {
+    if (serviceTokenCache && serviceTokenCache.exp > Date.now() + 60_000) {
+      return serviceTokenCache.token;
+    }
+    const email = optionalEnv("PROSFEC_SERVICE_EMAIL");
+    const password = optionalEnv("PROSFEC_SERVICE_PASSWORD");
+    if (!email || !password) {
+      throw new Error("Identidade de serviço não configurada.");
+    }
+
+    let r = await authRest("signInWithPassword", { email, password, returnSecureToken: true });
+    if (!r.ok) {
+      // Conta ainda não existe (EMAIL_NOT_FOUND / INVALID_LOGIN_CREDENTIALS): cria.
+      const created = await authRest("signUp", { email, password, returnSecureToken: true });
+      if (created.ok) r = created;
+    }
+    if (!r.ok || !r.data?.idToken) {
+      throw new Error("Falha ao autenticar a identidade de serviço.");
+    }
+    serviceTokenCache = {
+      token: r.data.idToken,
+      exp: Date.now() + (Number(r.data.expiresIn || 3600) - 120) * 1000,
+    };
+    return serviceTokenCache.token;
+  };
+
+  getServiceIdTokenRef.fn = getServiceIdToken;
+
+  const firestoreDocUrl = (path: string, masks: string[] = []) => {
+    const base =
+      `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}` +
+      `/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents/${path}`;
+    if (!masks.length) return base;
+    return base + "?" + masks.map((m) => `updateMask.fieldPaths=${m}`).join("&");
+  };
+
+  const getLeadRest = async (leadId: string) => {
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(`leads/${leadId}`), {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!r.ok) return null;
+    const data = await r.json().catch(() => null);
+    return data?.fields || null;
+  };
+
+  const patchLeadRest = async (leadId: string, fields: any, masks: string[]) => {
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(`leads/${leadId}`, masks), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ fields }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore PATCH ${r.status}: ${detail.slice(0, 160)}`);
+    }
+  };
+
+  // ---- PBKDF2-SHA256 (WebCrypto, compatível com o runtime edge) ----
+  const PBKDF2_ITERATIONS = 150000;
+
+  const toHex = (buf: ArrayBuffer) =>
+    Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+  const derivarHash = async (senha: string, saltHex: string): Promise<string> => {
+    const enc = new TextEncoder();
+    const salt = new Uint8Array(
+      (saltHex.match(/.{1,2}/g) || []).map((h) => parseInt(h, 16)),
+    );
+    const key = await crypto.subtle.importKey("raw", enc.encode(senha), "PBKDF2", false, [
+      "deriveBits",
+    ]);
+    const bits = await crypto.subtle.deriveBits(
+      { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+      key,
+      256,
+    );
+    return toHex(bits);
+  };
+
+  const gerarSalt = () => toHex(crypto.getRandomValues(new Uint8Array(16)).buffer);
+
+  const camposSenhaCliente = async (senha: string) => {
+    const salt = gerarSalt();
+    const hash = await derivarHash(senha, salt);
+    return {
+      fields: {
+        clienteSenhaHash: { stringValue: hash },
+        clienteSenhaSalt: { stringValue: salt },
+        clienteSenhaAlgo: { stringValue: `PBKDF2-SHA256-${PBKDF2_ITERATIONS}` },
+        clienteSenhaAtualizadaEm: { stringValue: new Date().toISOString() },
+        clienteSenha: { nullValue: null },
+      },
+      masks: [
+        "clienteSenhaHash",
+        "clienteSenhaSalt",
+        "clienteSenhaAlgo",
+        "clienteSenhaAtualizadaEm",
+        "clienteSenha",
+      ],
+    };
+  };
+
+  const gravarSenhaCliente = async (leadId: string, senha: string) => {
+    const { fields, masks } = await camposSenhaCliente(senha);
+    // Remove a senha em texto puro: updateMask sem o campo no corpo = delete.
+    delete (fields as any).clienteSenha;
+    await patchLeadRest(leadId, fields, masks);
+  };
+
+  // Login do cliente (com lazy migration da senha em texto puro)
+  app.post("/api/auth/cliente-login", async (req, res) => {
+    try {
+      const leadId = String(req.body?.leadId || "").trim();
+      const senha = String(req.body?.senha || "");
+      if (!leadId || !senha) {
+        return res.status(400).json({ error: "leadId e senha são obrigatórios." });
+      }
+
+      const fields = await getLeadRest(leadId);
+      if (!fields) return res.status(404).json({ error: "Solicitação não encontrada." });
+
+      const hash = fields.clienteSenhaHash?.stringValue || "";
+      const salt = fields.clienteSenhaSalt?.stringValue || "";
+      const legacy = fields.clienteSenha?.stringValue || "";
+
+      if (hash && salt) {
+        const derived = await derivarHash(senha, salt);
+        if (!timingSafeCompare(derived, hash)) {
+          return res.status(401).json({ error: "Senha incorreta." });
+        }
+        return res.json({ success: true, migrated: false });
+      }
+
+      if (legacy) {
+        if (!timingSafeCompare(senha.trim(), legacy.trim())) {
+          return res.status(401).json({ error: "Senha incorreta." });
+        }
+        // Lazy migration: converte para hash e apaga o texto puro.
+        await gravarSenhaCliente(leadId, senha);
+        return res.json({ success: true, migrated: true });
+      }
+
+      return res.status(409).json({ error: "SEM_SENHA_CADASTRADA" });
+    } catch (err: any) {
+      console.error("[CLIENTE LOGIN] Falha:", err?.message || "erro");
+      return res.status(500).json({ error: "Erro ao validar o acesso." });
+    }
+  });
+
+  // Primeiro acesso: define a senha (só se ainda não existir nenhuma)
+  app.post("/api/auth/cliente-definir-senha", async (req, res) => {
+    try {
+      const leadId = String(req.body?.leadId || "").trim();
+      const senha = String(req.body?.senha || "");
+      if (!leadId || senha.trim().length < 4) {
+        return res.status(400).json({ error: "Senha inválida (mínimo de 4 caracteres)." });
+      }
+
+      const fields = await getLeadRest(leadId);
+      if (!fields) return res.status(404).json({ error: "Solicitação não encontrada." });
+
+      const jaTemSenha =
+        !!(fields.clienteSenhaHash?.stringValue || fields.clienteSenha?.stringValue);
+      if (jaTemSenha) {
+        return res
+          .status(409)
+          .json({ error: "Este acesso já possui senha. Use a redefinição com seu consultor." });
+      }
+
+      await gravarSenhaCliente(leadId, senha.trim());
+      await patchLeadRest(
+        leadId,
+        {
+          clientePrimeiroAcessoConcluido: { booleanValue: true },
+          clienteUltimoAcesso: { stringValue: new Date().toISOString() },
+        },
+        ["clientePrimeiroAcessoConcluido", "clienteUltimoAcesso"],
+      );
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("[CLIENTE SENHA] Falha:", err?.message || "erro");
+      return res.status(500).json({ error: "Erro ao salvar a senha." });
+    }
+  });
+
+  // Redefinição pelo ADM — exige idToken de um administrador autenticado
+  app.post("/api/auth/cliente-reset-senha", async (req, res) => {
+    try {
+      const idToken = extractToken(req, "x-admin-idtoken");
+      if (!idToken) return res.status(401).json({ error: "Unauthorized." });
+
+      const lookup = await authRest("lookup", { idToken });
+      const user = lookup.data?.users?.[0];
+      const email = String(user?.email || "").toLowerCase();
+      const ADMINS = ["adm.prosfec@gmail.com", "atendimento.mobitech@gmail.com"];
+      if (!lookup.ok || !ADMINS.includes(email)) {
+        return res.status(403).json({ error: "Acesso restrito ao administrador." });
+      }
+
+      const leadId = String(req.body?.leadId || "").trim();
+      const senha = String(req.body?.senha || "").trim();
+      if (!leadId || senha.length < 4) {
+        return res.status(400).json({ error: "Senha inválida (mínimo de 4 caracteres)." });
+      }
+
+      await gravarSenhaCliente(leadId, senha);
+      await patchLeadRest(
+        leadId,
+        { clienteResetSolicitado: { booleanValue: false } },
+        ["clienteResetSolicitado"],
+      );
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("[CLIENTE RESET] Falha:", err?.message || "erro");
+      return res.status(500).json({ error: "Erro ao redefinir a senha." });
+    }
+  });
+
+  // Migração em lote das senhas de cliente — protegida por MIGRATION_ADMIN_TOKEN
+  app.post("/api/auth/migrar-clientes", async (req, res) => {
+    const expected = optionalEnv("MIGRATION_ADMIN_TOKEN");
+    if (!expected) {
+      return res.status(503).json({ error: "MIGRATION_ADMIN_TOKEN não configurado." });
+    }
+    if (!timingSafeCompare(extractToken(req, "x-migration-token"), expected)) {
+      return res.status(401).json({ error: "Unauthorized." });
+    }
+
+    try {
+      const dryRun = req.body?.dryRun === true;
+      const snap = await getDocs(collection(db, "leads"));
+      const pending = snap.docs.filter(
+        (d) => typeof d.data()?.clienteSenha === "string" && d.data().clienteSenha.length > 0,
+      );
+
+      if (dryRun) {
+        return res.json({ dryRun: true, total: snap.size, pendentes: pending.length });
+      }
+
+      let migrados = 0;
+      const falhas: any[] = [];
+      for (const d of pending) {
+        try {
+          await gravarSenhaCliente(d.id, String(d.data().clienteSenha));
+          migrados++;
+        } catch (e: any) {
+          falhas.push({ id: d.id, erro: String(e?.message || "erro").slice(0, 120) });
+        }
+      }
+      return res.json({ total: snap.size, pendentes: pending.length, migrados, falhas });
+    } catch (err: any) {
+      return res.status(500).json({ error: "Erro na migração de clientes." });
+    }
+  });
+
   return app;
+
 }
 

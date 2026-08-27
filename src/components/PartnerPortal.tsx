@@ -23,7 +23,7 @@ import {
   arrayUnion,
   deleteField
 } from "firebase/firestore";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
 import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain } from "../utils";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
@@ -845,7 +845,23 @@ export default function PartnerPortal({
       };
 
       if (profileNewPassword) {
-        updatedFields.senha = profileNewPassword;
+        // Etapa B-2: a senha vive apenas no Firebase Auth, nunca no Firestore.
+        if (!auth.currentUser) {
+          setProfileErrorMsg("Sua sessão expirou. Saia e entre novamente para alterar a senha.");
+          setSavingProfile(false);
+          return;
+        }
+        try {
+          await updatePassword(auth.currentUser, profileNewPassword);
+        } catch (pwErr: any) {
+          setProfileErrorMsg(
+            pwErr?.code === "auth/requires-recent-login"
+              ? "Por segurança, saia e entre novamente antes de alterar a senha."
+              : "Não foi possível alterar a senha. Tente novamente."
+          );
+          setSavingProfile(false);
+          return;
+        }
       }
 
       await updateDoc(doc(db, "parceiros", currentPartner.id), updatedFields);
@@ -2089,6 +2105,31 @@ export default function PartnerPortal({
         return;
       }
 
+      // Etapa B-2: cria a conta no Firebase Auth; nenhuma senha vai ao Firestore.
+      let memberAuthUid = "";
+      try {
+        const resp = await fetch("/api/auth/provision-membro", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: normalizedEmail, senha: teamMemberPassword })
+        });
+        const provData = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          setTeamError(
+            provData?.error === "EMAIL_EXISTS_DIFFERENT_PASSWORD"
+              ? "Este e-mail já possui uma conta de acesso com outra senha."
+              : (provData?.error || "Não foi possível criar o acesso do consultor.")
+          );
+          setAddingMember(false);
+          return;
+        }
+        memberAuthUid = provData?.localId || "";
+      } catch (provErr) {
+        setTeamError("Falha ao criar o acesso do consultor. Tente novamente.");
+        setAddingMember(false);
+        return;
+      }
+
       const newMemberDoc = {
         nome: teamMemberName,
         email: normalizedEmail,
@@ -2096,7 +2137,7 @@ export default function PartnerPortal({
         cidade: currentPartner.cidade || "",
         cpf: teamMemberCPF,
         chavePix: teamMemberPix,
-        senha: teamMemberPassword,
+        authUid: memberAuthUid,
         plano: teamMemberPlan === "EXECUTIVE" ? "Consultor Executivo" : "Consultor Starter",
         status: "ativo",
         interesse: "ser parceiro",

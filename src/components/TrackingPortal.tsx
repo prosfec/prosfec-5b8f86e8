@@ -86,6 +86,7 @@ interface Lead {
   serasaSenha?: string;
   propostaNegociada?: any;
   clienteSenha?: string;
+  clienteSenhaHash?: string;
   clientePrimeiroAcessoConcluido?: boolean;
   clienteUltimoAcesso?: string;
   solicitacaoResetSenha?: {
@@ -1255,10 +1256,20 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       return;
     }
 
-    const savedPass = (candidateLead.clienteSenha || "").trim();
-
-    if (enteredPassword.trim() !== savedPass) {
-      setAuthError("Senha incorreta. Verifique os caracteres ou solicite a redefinição de senha com seu consultor.");
+    // Etapa B-2: a senha nunca é comparada no navegador. O servidor valida o
+    // hash (PBKDF2) e faz a migração automática de senhas antigas.
+    try {
+      const resp = await fetch("/api/auth/cliente-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: candidateLead.id, senha: enteredPassword.trim() })
+      });
+      if (!resp.ok) {
+        setAuthError("Senha incorreta. Verifique os caracteres ou solicite a redefinição de senha com seu consultor.");
+        return;
+      }
+    } catch (err) {
+      setAuthError("Não foi possível validar seu acesso agora. Tente novamente em instantes.");
       return;
     }
 
@@ -1301,15 +1312,23 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       const now = new Date().toISOString();
       const pass = newPassword1.trim();
 
-      await updateDoc(doc(db, "leads", candidateLead.id), {
-        clienteSenha: pass,
-        clientePrimeiroAcessoConcluido: true,
-        clienteUltimoAcesso: now
+      // Etapa B-2: a senha vai apenas para o servidor, que grava o hash.
+      const resp = await fetch("/api/auth/cliente-definir-senha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: candidateLead.id, senha: pass })
       });
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        setAuthError(errData?.error || "Erro ao salvar a nova senha. Tente novamente.");
+        setIsSettingPassword(false);
+        return;
+      }
 
       const updatedLead = {
         ...candidateLead,
-        clienteSenha: pass,
+        clienteSenha: undefined,
+        clienteSenhaHash: "definida",
         clientePrimeiroAcessoConcluido: true,
         clienteUltimoAcesso: now
       };
@@ -1616,7 +1635,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
                   </p>
                 </div>
               </div>
-            ) : candidateLead.clienteSenha ? (
+            ) : (candidateLead.clienteSenha || (candidateLead as any).clienteSenhaHash) ? (
               // Stage 2A: Password Login (Password already exists)
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
