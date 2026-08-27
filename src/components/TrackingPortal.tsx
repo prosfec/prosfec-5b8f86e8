@@ -1388,6 +1388,9 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
         clienteUltimoAcesso: now
       };
 
+      // Tenta criar/vincular conta real no Firebase Auth (melhor esforço).
+      await provisionarClienteAuth(updatedLead, pass);
+
       setLead(updatedLead);
       initializePartnerForm(updatedLead);
       setCandidateLead(null);
