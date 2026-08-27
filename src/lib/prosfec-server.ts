@@ -2950,5 +2950,153 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // =====================================================================
+  // ETAPA B — Migração de senhas em texto puro para o Firebase Auth
+  // =====================================================================
+  const FIREBASE_API_KEY =
+    process.env.FIREBASE_API_KEY || (firebaseConfig as any).apiKey;
+
+  const authRest = async (endpoint: string, payload: any) => {
+    const r = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${FIREBASE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      },
+    );
+    const data = await r.json().catch(() => ({}));
+    return { ok: r.ok, status: r.status, data };
+  };
+
+  // Cria (ou vincula) a conta no Firebase Auth de um parceiro e apaga a senha
+  // em texto puro do Firestore.
+  const provisionParceiro = async (partnerId: string, email: string, senha: string) => {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const plainPassword = String(senha || "");
+    if (!normalizedEmail || plainPassword.length < 6) {
+      return { ok: false, reason: "Credenciais inválidas (senha mínima de 6 caracteres)." };
+    }
+
+    let localId: string | null = null;
+    let created = false;
+
+    const signUp = await authRest("signUp", {
+      email: normalizedEmail,
+      password: plainPassword,
+      returnSecureToken: false,
+    });
+
+    if (signUp.ok) {
+      localId = signUp.data?.localId || null;
+      created = true;
+    } else if (signUp.data?.error?.message?.startsWith("EMAIL_EXISTS")) {
+      // Já existe no Auth: valida se a senha atual bate para vincular o uid.
+      const signIn = await authRest("signInWithPassword", {
+        email: normalizedEmail,
+        password: plainPassword,
+        returnSecureToken: true,
+      });
+      if (signIn.ok) {
+        localId = signIn.data?.localId || null;
+      } else {
+        // Conta existe com outra senha — não sobrescrevemos; só limpamos depois
+        // que o parceiro conseguir entrar pelo Auth.
+        return { ok: false, reason: "EMAIL_EXISTS_DIFFERENT_PASSWORD" };
+      }
+    } else {
+      return { ok: false, reason: signUp.data?.error?.message || "Falha ao criar conta." };
+    }
+
+    if (partnerId) {
+      try {
+        await updateDoc(doc(db, "parceiros", partnerId), {
+          authUid: localId || null,
+          authMigradoEm: new Date().toISOString(),
+          senha: deleteField(),
+        });
+      } catch (err: any) {
+        return { ok: true, created, localId, warning: `Conta criada, mas falha ao limpar senha: ${err?.message}` };
+      }
+    }
+
+    return { ok: true, created, localId };
+  };
+
+  // Provisionamento individual (usado no cadastro e na lazy migration do login)
+  app.post("/api/auth/provision-parceiro", async (req, res) => {
+    try {
+      const { email, senha, partnerId } = req.body || {};
+      const normalizedEmail = String(email || "").trim().toLowerCase();
+      if (!normalizedEmail || !senha) {
+        return res.status(400).json({ error: "email e senha são obrigatórios." });
+      }
+
+      // Segurança: só provisiona se existir um parceiro com essa credencial
+      // em texto puro no Firestore (ou o doc informado bater).
+      const snap = await getDocs(
+        query(collection(db, "parceiros"), where("email", "==", normalizedEmail)),
+      );
+      const match = snap.docs.find(
+        (d) => (!partnerId || d.id === partnerId) && d.data()?.senha === senha,
+      );
+      if (!match) {
+        return res.status(401).json({ error: "Credenciais não conferem com o cadastro." });
+      }
+
+      const result = await provisionParceiro(match.id, normalizedEmail, String(senha));
+      if (!result.ok) return res.status(409).json({ error: result.reason });
+      return res.json({ success: true, ...result, partnerId: match.id });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Erro ao provisionar parceiro." });
+    }
+  });
+
+  // Migração em lote — protegida por MIGRATION_ADMIN_TOKEN
+  app.post("/api/auth/migrar-parceiros", async (req, res) => {
+    const expected = process.env.MIGRATION_ADMIN_TOKEN;
+    if (!expected) {
+      return res.status(503).json({ error: "MIGRATION_ADMIN_TOKEN não configurado." });
+    }
+    if (!timingSafeCompare(extractToken(req, "x-migration-token"), expected)) {
+      return res.status(401).json({ error: "Unauthorized." });
+    }
+
+    try {
+      const dryRun = req.body?.dryRun === true;
+      const snap = await getDocs(collection(db, "parceiros"));
+      const pending = snap.docs.filter(
+        (d) => typeof d.data()?.senha === "string" && d.data().senha.length > 0,
+      );
+
+      if (dryRun) {
+        return res.json({ dryRun: true, total: snap.size, pendentes: pending.length });
+      }
+
+      const results: any[] = [];
+      for (const d of pending) {
+        const data = d.data();
+        const r = await provisionParceiro(d.id, data.email, data.senha);
+        results.push({
+          id: d.id,
+          email: String(data.email || "").toLowerCase(),
+          ok: r.ok,
+          created: (r as any).created ?? false,
+          reason: (r as any).reason || (r as any).warning || null,
+        });
+      }
+
+      return res.json({
+        total: snap.size,
+        processados: results.length,
+        migrados: results.filter((r) => r.ok).length,
+        falhas: results.filter((r) => !r.ok),
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Erro na migração." });
+    }
+  });
+
   return app;
 }
+
