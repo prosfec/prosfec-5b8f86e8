@@ -762,7 +762,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const consultantName = consultant?.nome || "Consultor Especialista";
       const consultantPhone = consultant?.whatsapp ? consultant.whatsapp.replace(/\D/g, "") : "";
       const companyName = targetLead.razaoSocial || targetLead.nome || "Empresa";
-      const portalLink = `${getAppDomain()}?acompanhamento=${targetLead.id}`;
+      const portalLink = `${getAppDomain()}/portal-cliente?lead=${targetLead.id}`;
 
       // 1. Create in-app notification for the Consultant
       if ((targetLead as any).parceiroId) {
