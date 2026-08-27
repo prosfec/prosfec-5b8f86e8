@@ -1057,7 +1057,10 @@ export default function PartnerPortal({
   const [dashboardServiceSearch, setDashboardServiceSearch] = useState("");
   const [expandedServiceLeadId, setExpandedServiceLeadId] = useState<string | null>(null);
   const [solicitacoesComissao, setSolicitacoesComissao] = useState<SolicitacaoComissao[]>([]);
-  const [showCommissionPayoutModal, setShowCommissionPayoutModal] = useState(false);
+  // Origem da caixa de saque: "vendas" (comissões de planos/vendas) ou "servicos" (Passo 6)
+  const [payoutModalOrigin, setPayoutModalOrigin] = useState<null | "vendas" | "servicos">(null);
+  const showCommissionPayoutModal = payoutModalOrigin !== null;
+  const setShowCommissionPayoutModal = (open: any) => setPayoutModalOrigin(open ? "servicos" : null);
   const [commissionPayoutSubmitting, setCommissionPayoutSubmitting] = useState(false);
   const [commissionPayoutSuccess, setCommissionPayoutSuccess] = useState<string | null>(null);
   const [payoutPixKey, setPayoutPixKey] = useState("");
