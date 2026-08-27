@@ -1,119 +1,244 @@
 rules_version = "2";
+
+// =============================================================================
+// PROSFEC — Regras de Segurança do Firestore (versão blindada)
+//
+// Princípios:
+//  1. Nada é liberado por padrão (deny-all no final).
+//  2. Exceções públicas mínimas e intencionais:
+//       - leads: CREATE público (simulador / captação do site)
+//       - parceiros: READ público (resolver links de indicação)
+//  3. Toda escrita administrativa exige Admin ou Contador autenticado.
+//  4. Parceiro autenticado só escreve/le o que é dele.
+// =============================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. Default deny catch-all for maximum safety
-    match /{document=**} {
-      allow read, write: if false;
-    }
 
-    // Helper functions for security validation
+    // ---------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isAdminOrContador() {
-      return isSignedIn() && (
-        request.auth.uid == "FbYFfsN8igZzNUxcDzBfxX0Anlj1" ||
-        request.auth.uid == "vKZFCNniHJfzJ9B3yWlzErNC3892" ||
-        (request.auth.token.email != null && (
-          request.auth.token.email == "adm.prosfec@gmail.com" ||
-          request.auth.token.email == "contador.prosfec@gmail.com" ||
-          request.auth.token.email == "atendimento.mobitech@gmail.com"
-        ))
-      );
+    function userEmail() {
+      return request.auth != null && request.auth.token.email != null
+        ? request.auth.token.email
+        : "";
     }
 
     function isAdmin() {
       return isSignedIn() && (
         request.auth.uid == "FbYFfsN8igZzNUxcDzBfxX0Anlj1" ||
-        (request.auth.token.email != null && (
-          request.auth.token.email == "adm.prosfec@gmail.com" ||
-          request.auth.token.email == "atendimento.mobitech@gmail.com"
+        request.auth.token.admin == true ||
+        userEmail() == "adm.prosfec@gmail.com" ||
+        userEmail() == "atendimento.mobitech@gmail.com"
+      );
+    }
+
+    function isContador() {
+      return isSignedIn() && (
+        request.auth.uid == "vKZFCNniHJfzJ9B3yWlzErNC3892" ||
+        request.auth.token.contador == true ||
+        userEmail() == "contador.prosfec@gmail.com"
+      );
+    }
+
+    function isStaff() {
+      return isAdmin() || isContador();
+    }
+
+    // Dono do documento de parceiro (após a migração para Firebase Auth)
+    function isOwnPartnerDoc(partnerId) {
+      return isSignedIn() && (
+        request.auth.uid == partnerId ||
+        (resource != null && (
+          (resource.data.authUid is string && resource.data.authUid == request.auth.uid) ||
+          (resource.data.email is string && resource.data.email.lower() == userEmail().lower())
         ))
       );
     }
 
-    // 2. Rules for Leads Collection
-    match /leads/{leadId} {
-      allow read, create, update, delete: if true;
+    // Impede que um parceiro se auto-promova ou altere saldo/comissão
+    function partnerSafeUpdate() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny([
+          "senha", "role", "perfil", "isAdmin", "aprovado", "status",
+          "saldo", "saldoDisponivel", "comissaoTotal", "creditos",
+          "percentualComissao", "nivel", "authUid"
+        ]);
+    }
 
-      // Allow access to pendencias subcollection
+    // Limites de payload para escrita pública (anti-abuso)
+    function leadCreateIsSane() {
+      return request.resource.data.keys().size() < 120
+        && !request.resource.data.keys().hasAny(["clienteSenha", "senha", "aprovado", "comissaoPaga"]);
+    }
+
+    // ---------------------------------------------------------------------
+    // 1. LEADS — create público (simulador), leitura/edição restrita
+    // ---------------------------------------------------------------------
+    match /leads/{leadId} {
+      allow create: if leadCreateIsSane();
+      allow read:   if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+
       match /pendencias/{pendenciaId} {
-        allow read, create, update, delete: if true;
+        allow read, create, update: if isSignedIn();
+        allow delete: if isStaff();
+      }
+
+      match /{sub=**} {
+        allow read, write: if isStaff();
       }
     }
 
-    // 3. Rules for Partners (Parceiros) Collection
+    // ---------------------------------------------------------------------
+    // 2. PARCEIROS — read público (links de indicação), escrita restrita
+    // ---------------------------------------------------------------------
     match /parceiros/{partnerId} {
-      allow read, create, update, delete: if true;
+      allow read: if true;
+
+      // Cadastro de novo parceiro pelo site (sem senha em texto puro,
+      // sem se marcar como aprovado/admin)
+      allow create: if !request.resource.data.keys().hasAny(
+                        ["senha", "role", "isAdmin", "saldo", "comissaoTotal"]
+                      )
+                    && request.resource.data.keys().size() < 80;
+
+      allow update: if isStaff() || (isOwnPartnerDoc(partnerId) && partnerSafeUpdate());
+      allow delete: if isAdmin();
+
+      match /{sub=**} {
+        allow read: if isSignedIn();
+        allow write: if isStaff() || isOwnPartnerDoc(partnerId);
+      }
     }
 
-    // 4. Rules for Announcements (Comunicados) Collection
+    // ---------------------------------------------------------------------
+    // 3. COMUNICADOS — leitura autenticada, escrita só staff
+    // ---------------------------------------------------------------------
     match /comunicados/{comunicadoId} {
-      allow read, write: if true;
+      allow read: if isSignedIn();
+      allow write: if isStaff();
     }
 
-    // 5. Rules for Recargas (Refills) Collection
+    // ---------------------------------------------------------------------
+    // 4. RECARGAS DE CRÉDITO — parceiro solicita, staff aprova
+    // ---------------------------------------------------------------------
     match /recargas/{recargaId} {
-      allow read, create, update, delete: if true;
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isStaff();
     }
 
-    // 6. Rules for Leads Vistos Parceiro Collection
+    // ---------------------------------------------------------------------
+    // 5. LEADS VISTOS PELO PARCEIRO — marcação de leitura
+    // ---------------------------------------------------------------------
     match /leads_vistos_parceiro/{seenId} {
-      allow read, write: if true;
+      allow read, create, update: if isSignedIn();
+      allow delete: if isStaff();
     }
 
-    // 7. Rules for Leads Distribuidos Collection
+    // ---------------------------------------------------------------------
+    // 6. LEADS DISTRIBUIDOS — distribuição controlada pelo ADM
+    // ---------------------------------------------------------------------
     match /leads_distribuidos/{distId} {
-      allow read, create, update, delete: if true;
+      allow read:   if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isStaff();
     }
 
-    // 8. Rules for Notificacoes Collection
+    // ---------------------------------------------------------------------
+    // 7. NOTIFICACOES
+    // ---------------------------------------------------------------------
     match /notificacoes/{notificacaoId} {
-      allow read, create, update, delete: if true;
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isStaff();
     }
 
-    // 9. Rules for Consultas Realizadas Collection
+    // ---------------------------------------------------------------------
+    // 8. CONSULTAS REALIZADAS (RedeBE / Integrador)
+    // ---------------------------------------------------------------------
     match /consultas_realizadas/{consultaId} {
-      allow read, create, update, delete: if true;
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
     }
 
-    // 10. Rules for Configuracoes Collection
+    // ---------------------------------------------------------------------
+    // 9. CONFIGURACOES — leitura autenticada, escrita SOMENTE ADM
+    // ---------------------------------------------------------------------
     match /configuracoes/{configId} {
-      allow read, write: if true;
+      allow read:  if isSignedIn();
+      allow write: if isAdmin();
     }
 
-    // 11. Rules for Historico de Buscas do Caca-Leads Collection
+    // ---------------------------------------------------------------------
+    // 10. HISTORICO DE BUSCAS DO CACA-LEADS
+    // ---------------------------------------------------------------------
     match /historico_buscas_caca_leads/{historyId} {
-      allow read, write: if true;
+      allow read, create: if isSignedIn();
+      allow update, delete: if isStaff();
     }
 
-    // 12. Rules for Solicitacoes de Comissao Collection
+    // ---------------------------------------------------------------------
+    // 11. SOLICITACOES DE COMISSAO (saques) — parceiro cria, ADM decide
+    // ---------------------------------------------------------------------
     match /solicitacoes_comissao/{solicitacaoId} {
-      allow read, write: if true;
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.resource.data.status in ["pendente", "Pendente", "em_analise"];
+      allow update, delete: if isAdmin();
     }
 
-    // 13. Rules for Servicos de Contabilidade Collection
+    // ---------------------------------------------------------------------
+    // 12. SERVICOS DE CONTABILIDADE (catálogo)
+    // ---------------------------------------------------------------------
     match /servicos_contabilidade/{servicoId} {
-      allow read: if true;
-      allow write: if isAdminOrContador() || isAdmin() || true;
+      allow read:  if true;              // catálogo exibido no site/portal
+      allow write: if isStaff();
     }
 
-    // 14. Rules for Pedidos de Servicos de Contabilidade Collection
+    // ---------------------------------------------------------------------
+    // 13. PEDIDOS DE SERVICOS DE CONTABILIDADE
+    // ---------------------------------------------------------------------
     match /pedidos_servicos_contabilidade/{pedidoId} {
-      allow read: if true;
-      allow create: if isSignedIn() || true;
-      allow update, delete: if isAdminOrContador() || isAdmin() || true;
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isStaff();
     }
 
-    // 15. Rules for Webhook Logs LastLink Collection
+    // ---------------------------------------------------------------------
+    // 14. LOGS DE WEBHOOK — escrita só pelo servidor/staff, leitura só ADM
+    // ---------------------------------------------------------------------
     match /webhook_logs_lastlink/{logId} {
-      allow read, write: if true;
+      allow read: if isAdmin();
+      allow write: if isStaff();
     }
 
-    // 16. Rules for Connection Test
+    match /hubla_events/{eventId} {
+      allow read: if isAdmin();
+      allow write: if isStaff();
+    }
+
+    // ---------------------------------------------------------------------
+    // 15. TESTE DE CONEXAO
+    // ---------------------------------------------------------------------
     match /test/{docId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
+    }
+
+    // ---------------------------------------------------------------------
+    // DENY-ALL final: qualquer coleção não listada acima fica bloqueada.
+    // ---------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

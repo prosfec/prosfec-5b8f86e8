@@ -1,4 +1,6 @@
 // @ts-nocheck
+import { timingSafeEqual } from "node:crypto";
+import { Buffer } from "node:buffer";
 import express from "./mini-express";
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc, runTransaction } from "firebase/firestore";
@@ -34,6 +36,50 @@ export function cleanForFirestore<T = any>(obj: T): T {
 export function createExpressApp() {
   const app = express();
 
+  // ---------------------------------------------------------------------
+  // Segurança: comparação de tokens em tempo constante (anti timing attack)
+  // ---------------------------------------------------------------------
+  const timingSafeCompare = (a: string, b: string): boolean => {
+    if (typeof a !== "string" || typeof b !== "string") return false;
+    if (!a || !b) return false;
+    try {
+      const enc = new TextEncoder();
+      const bufA = enc.encode(a);
+      const bufB = enc.encode(b);
+      if (bufA.length !== bufB.length) {
+        // Compara mesmo assim contra si próprio para manter tempo constante
+        try {
+          timingSafeEqual(Buffer.from(bufA), Buffer.from(bufA));
+        } catch {
+          /* noop */
+        }
+        return false;
+      }
+      return timingSafeEqual(Buffer.from(bufA), Buffer.from(bufB));
+    } catch {
+      // Fallback puro em JS, também em tempo constante
+      if (a.length !== b.length) return false;
+      let diff = 0;
+      for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+      return diff === 0;
+    }
+  };
+
+  // Extrai token de cabeçalhos comuns (x-<nome>-token, authorization, token, query)
+  const extractToken = (req: any, headerName: string): string => {
+    const raw =
+      req.headers?.[headerName] ||
+      req.headers?.[headerName.toLowerCase()] ||
+      req.headers?.["authorization"] ||
+      req.headers?.["token"] ||
+      req.query?.token ||
+      "";
+    let value = typeof raw === "string" ? raw.trim() : "";
+    if (value.toLowerCase().startsWith("bearer ")) value = value.substring(7).trim();
+    return value;
+  };
+
+
   // Handle Netlify Function route rewrite if present
   app.use((req, _res, next) => {
     if (req.url.startsWith("/.netlify/functions/api")) {
@@ -57,30 +103,21 @@ export function createExpressApp() {
   // Parse JSON payloads for API routes
   app.use(express.json());
 
-  // API Route: Hubla Webhook
+  // API Route: Hubla Webhook (autenticado com comparação time-safe)
   app.post("/api/hubla-webhook", async (req, res) => {
-    // Retrieve Hubla security token from headers or query params
-    const clientToken = 
-      req.headers["x-hubla-token"] || 
-      req.headers["X-Hubla-Token"] || 
-      req.headers["authorization"] || 
-      req.headers["Authorization"] || 
-      req.headers["token"] || 
-      req.headers["Token"] || 
-      req.query.token;
-
     const expectedToken = process.env.HUBLA_WEBHOOK_TOKEN;
+    const cleanClientToken = extractToken(req, "x-hubla-token");
 
-    // Clean Bearer prefix if present
-    let cleanClientToken = typeof clientToken === "string" ? clientToken : "";
-    if (cleanClientToken.toLowerCase().startsWith("bearer ")) {
-      cleanClientToken = cleanClientToken.substring(7).trim();
+    if (!expectedToken) {
+      console.error("[HUBLA WEBHOOK] HUBLA_WEBHOOK_TOKEN não configurado no ambiente.");
+      return res.status(503).json({ error: "Webhook temporariamente indisponível." });
     }
 
-    if (cleanClientToken !== expectedToken) {
-      console.warn("Unauthorized Hubla webhook request. Token mismatch. Received token ends with: " + cleanClientToken.slice(-6));
-      return res.status(401).json({ error: "Unauthorized. Invalid token." });
+    if (!timingSafeCompare(cleanClientToken, expectedToken)) {
+      console.warn("[HUBLA WEBHOOK] Requisição não autorizada: token inválido.");
+      return res.status(401).json({ error: "Unauthorized." });
     }
+
 
     try {
       const payload = req.body;
@@ -2605,9 +2642,55 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   // WEBHOOK: LASTLINK (Baixa Automática de Pagamento de Serviços de Estruturação)
   // =========================================================================
   app.post("/api/webhooks/lastlink", async (req, res) => {
+    // ---- Autenticação obrigatória do webhook (time-safe) ----
+    const expectedLastlinkToken = process.env.LASTLINK_WEBHOOK_TOKEN;
+    if (!expectedLastlinkToken) {
+      console.error("[LASTLINK WEBHOOK] LASTLINK_WEBHOOK_TOKEN não configurado no ambiente.");
+      return res.status(503).json({ error: "Webhook temporariamente indisponível." });
+    }
+    const clientLastlinkToken = extractToken(req, "x-lastlink-token");
+    if (!timingSafeCompare(clientLastlinkToken, expectedLastlinkToken)) {
+      console.warn("[LASTLINK WEBHOOK] Requisição não autorizada: token inválido.");
+      return res.status(401).json({ error: "Unauthorized." });
+    }
+
     try {
       const payload = req.body || {};
-      console.log("[LASTLINK WEBHOOK] Payload recebido:", JSON.stringify(payload));
+      console.log("[LASTLINK WEBHOOK] Evento recebido (autenticado).");
+
+      // ---- Idempotência: ignora reenvio do mesmo evento ----
+      const eventKey = (
+        payload.id ||
+        payload.eventId ||
+        payload.data?.id ||
+        payload.data?.order?.id ||
+        payload.data?.transaction?.id ||
+        payload.order?.id ||
+        payload.transaction_id ||
+        ""
+      ).toString().trim();
+
+      if (eventKey) {
+        try {
+          const dupSnap = await getDocs(
+            query(collection(db, "webhook_logs_lastlink"), where("eventKey", "==", eventKey))
+          );
+          if (!dupSnap.empty) {
+            console.warn(`[LASTLINK WEBHOOK] Evento duplicado ignorado (eventKey=${eventKey}).`);
+            return res.json({ received: true, duplicated: true, message: "Evento já processado anteriormente." });
+          }
+          await addDoc(collection(db, "webhook_logs_lastlink"), {
+            data: new Date().toISOString(),
+            status: "recebido",
+            eventKey,
+          });
+        } catch (dupErr) {
+          console.warn("[LASTLINK WEBHOOK] Falha ao verificar idempotência:", dupErr?.message || dupErr);
+        }
+      }
+
+
+
 
       // Extrai os dados do evento da LastLink
       const eventType = (payload.event || payload.eventType || payload.type || payload.status || "").toString().toLowerCase();
