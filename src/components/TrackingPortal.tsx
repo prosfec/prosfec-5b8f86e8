@@ -1247,6 +1247,40 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
     }
   };
 
+  const provisionarClienteAuth = async (lead: Lead, senha: string) => {
+    setIsProvisioning(true);
+    try {
+      const resp = await fetch("/api/auth/cliente-provision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: lead.id, senha }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        if (data?.error === "LEAD_SEM_EMAIL") {
+          // Lead sem e-mail: mantém o modo servidor (Modelo A).
+          setSessionMode("server");
+          return;
+        }
+        console.warn("[PORTAL] Provisionamento Auth falhou:", data?.error);
+        setSessionMode("server");
+        return;
+      }
+      if (data?.localId && lead.email) {
+        const cred = await signInWithEmailAndPassword(auth, lead.email, senha);
+        setFirebaseUser(cred.user);
+        setSessionMode("firebase");
+      } else {
+        setSessionMode("server");
+      }
+    } catch (err) {
+      console.warn("[PORTAL] Erro ao provisionar/login Firebase:", err);
+      setSessionMode("server");
+    } finally {
+      setIsProvisioning(false);
+    }
+  };
+
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!candidateLead) return;
@@ -1294,6 +1328,9 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
     } catch (err) {
       console.warn("Could not record last access:", err);
     }
+
+    // Tenta criar/vincular conta real no Firebase Auth (melhor esforço).
+    await provisionarClienteAuth(candidateLead, enteredPassword.trim());
 
     setLead({ ...candidateLead, clienteUltimoAcesso: new Date().toISOString() });
     initializePartnerForm(candidateLead);
