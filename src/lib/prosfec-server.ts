@@ -3562,8 +3562,9 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const lookup = await authRest("lookup", { idToken });
       const user = lookup.data?.users?.[0];
       const email = String(user?.email || "").toLowerCase();
-      const ADMINS = ["adm.prosfec@gmail.com", "atendimento.mobitech@gmail.com"];
-      if (!lookup.ok || !ADMINS.includes(email)) {
+      const ADMINS = ["prosfec.tesouraria@gmail.com"];
+      const ADMIN_UIDS = ["Nso5FBoBVHXNY60RDw6NNKeaCC23"];
+      if (!lookup.ok || (!ADMINS.includes(email) && !ADMIN_UIDS.includes(String(user?.localId || "")))) {
         return res.status(403).json({ error: "Acesso restrito ao administrador." });
       }
 
