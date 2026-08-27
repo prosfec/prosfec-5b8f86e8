@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { collection, addDoc, getDocs, query, where, doc, getDoc, limit } from "firebase/firestore";
-import { db, handleFirestoreError, OperationType } from "../firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { db, auth, handleFirestoreError, OperationType } from "../firebase";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 
 interface UserRegistrationFormProps {
@@ -164,6 +165,23 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
         return;
       }
 
+      // Etapa B-2: cria a conta no Firebase Auth — nenhuma senha vai ao Firestore.
+      let novoAuthUid = "";
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, normalizedEmail, senha);
+        novoAuthUid = cred.user.uid;
+      } catch (authErr: any) {
+        if (authErr?.code === "auth/email-already-in-use") {
+          setErrorMsg("Este e-mail já possui uma conta de acesso. Faça login ou use 'Esqueci minha senha'.");
+        } else if (authErr?.code === "auth/weak-password") {
+          setErrorMsg("A senha deve ter no mínimo 6 caracteres.");
+        } else {
+          setErrorMsg("Não foi possível criar seu acesso. Tente novamente.");
+        }
+        setLoading(false);
+        return;
+      }
+
       // Prepare user document (independent registration linked to Master, with no paid subscription requirement)
       const isExecutive = plano === "Consultor Executive";
       const newUserDoc = {
@@ -173,7 +191,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
         cpf: cpf.trim() || "",
         cidade: cidade.trim() || "",
         chavePix: chavePix.trim() || "",
-        senha: senha,
+        authUid: novoAuthUid,
         plano: plano,                                  // Selected category: "Consultor Starter" or "Consultor Executive"
         comissao: isExecutive ? 1.5 : 0.5,             // Commission percentage: 0.5% or 1.5%
         status: "ativo",                               // Immediately active, no subscription required!
