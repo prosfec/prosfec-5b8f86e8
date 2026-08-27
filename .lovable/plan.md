@@ -42,10 +42,19 @@ Rotas como `/api/proxy/*`, `/api/credit/consultas` e os diagnósticos de IA são
 - Modelo: leitura/escrita de leads e parceiros só para usuário autenticado; `configuracoes`, `solicitacoes_comissao` (aprovação), `servicos_contabilidade` e logs de webhook só para admin/contador; criação pública apenas onde o site precisa (ex.: cadastro inicial de lead), com campos limitados.
 - Você aplica publicando as regras no Console (posso deixar o arquivo pronto e o passo a passo).
 
-**Etapa B — Tirar senhas do banco**
-- Migrar login de parceiro para Firebase Auth (e-mail/senha), como já está no Admin.
-- Parar de gravar `senha` / `clienteSenha` / senha de equipe no Firestore; reset passa a usar o fluxo de redefinição do Firebase.
-- Script/rotina de migração para os parceiros existentes (senha atual vira conta no Auth uma única vez), para ninguém perder acesso.
+**Etapa B — Tirar senhas do banco (com migração automática)**
+
+Sim, dá para automatizar. Uso a API REST do Firebase Auth (que aceita a chave pública `apiKey` já presente no projeto), então **não preciso que você crie usuário por usuário no Console**.
+
+Novas rotas no servidor:
+- `POST /api/auth/provision-parceiro` — cria a conta no Firebase Auth (e-mail + senha) no momento do cadastro de um novo parceiro. Passa a ser chamada pelo formulário de cadastro, e o Firestore deixa de gravar o campo `senha`.
+- `POST /api/auth/migrar-parceiros` — rota de migração única, protegida por um secret (`MIGRATION_ADMIN_TOKEN`), que percorre a coleção `parceiros`, cria no Auth cada parceiro que ainda não existe usando a senha atual dele, grava o `authUid` no documento e **apaga o campo `senha`**. Quem já existir no Auth é apenas vinculado, sem erro.
+- Login do parceiro passa a usar `signInWithEmailAndPassword` (mesmo padrão do Admin), com fallback temporário: se o parceiro ainda não tiver conta no Auth, o sistema cria na hora com a senha que ele digitou e valida contra o Firestore uma última vez — depois disso ele só existe no Auth. Assim ninguém fica travado durante a virada.
+- "Esqueci minha senha" passa a usar o e-mail de redefinição do Firebase.
+- Mesma abordagem para senha de cliente (`leads.clienteSenha`) e de membro de equipe.
+
+O que continua manual: só marcar quem é admin/contador (custom claims) — isso exige credencial de service account. Enquanto isso as regras usam a lista de e-mails que já está no `firestore.rules`.
+
 
 **Etapa C — Blindar webhooks e APIs**
 - Exigir token/assinatura no webhook LastLink (secret novo `LASTLINK_WEBHOOK_TOKEN`).
