@@ -99,6 +99,26 @@ service cloud.firestore {
       return isSignedIn() && userEmail() == "servico.interno@prosfec.app";
     }
 
+    // Cliente que vinculou sua conta real do Firebase Auth a este lead.
+    function isClienteDoLead() {
+      return isSignedIn()
+        && resource != null
+        && resource.data.clienteAuthUid is string
+        && resource.data.clienteAuthUid == request.auth.uid;
+    }
+
+    // Campos que o próprio cliente pode atualizar no seu lead (sem tocar em
+    // dados sensíveis, senhas, etapa, status financeiro ou campos de staff).
+    function leadClienteSafeUpdate() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny([
+          "clienteSenha", "clienteSenhaHash", "clienteSenhaSalt", "clienteSenhaAlgo",
+          "clienteAuthUid", "clienteAuthVinculadoEm", "etapa", "status", "statusAprovacao",
+          "limiteAprovado", "dataAprovacao", "parceiroId", "consultorResponsavel",
+          "comissaoPaga", "valorComissao", "dataPagamentoComissao"
+        ]);
+    }
+
     // ---------------------------------------------------------------------
     // 1. LEADS — create público (simulador), leitura/edição restrita
     // ---------------------------------------------------------------------
