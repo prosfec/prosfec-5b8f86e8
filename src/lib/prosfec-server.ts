@@ -96,8 +96,20 @@ export function createExpressApp() {
     next();
   });
 
-  // Initialize Firebase App and Firestore for webhook handler
-  const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  // Initialize Firebase App and Firestore for webhook handler.
+  // No servidor usamos a chave sem restrição de referenciador (FIREBASE_API_KEY /
+  // GOOGLE_API_KEY); a chave do navegador continua restrita por domínio.
+  const serverFirebaseConfig = {
+    ...(firebaseConfig as any),
+    apiKey:
+      firstEnv("FIREBASE_API_KEY", "GOOGLE_API_KEY") || (firebaseConfig as any).apiKey,
+  };
+  // App nomeado exclusivo do backend, para não herdar a instância do navegador
+  // (que usa a chave restrita por referenciador).
+  const SERVER_APP_NAME = "prosfec-server";
+  const existingServerApp = getApps().find((a) => a.name === SERVER_APP_NAME);
+  const firebaseApp =
+    existingServerApp || initializeApp(serverFirebaseConfig, SERVER_APP_NAME);
   const db = (firebaseConfig as any).firestoreDatabaseId
     ? getFirestore(firebaseApp, (firebaseConfig as any).firestoreDatabaseId)
     : getFirestore(firebaseApp);
@@ -118,7 +130,10 @@ export function createExpressApp() {
           await getServiceIdTokenRef.fn();
           await signInService(serverAuth, email, password);
         } catch (err: any) {
-          console.warn("[SERVICO] Não foi possível autenticar a identidade de serviço.");
+          console.warn(
+            "[SERVICO] Não foi possível autenticar a identidade de serviço:",
+            err?.code || err?.message || "erro",
+          );
           serviceSignInPromise = null;
         }
       })();
@@ -2992,12 +3007,15 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   // =====================================================================
   // ETAPA B — Migração de senhas em texto puro para o Firebase Auth
   // =====================================================================
-  const FIREBASE_API_KEY =
-    optionalEnv("FIREBASE_API_KEY") || (firebaseConfig as any).apiKey;
+  // Chave server-side (sem restrição de referenciador) para o Identity Toolkit.
+  // Lida sempre no momento da chamada — nunca no escopo de módulo.
+  const getIdentityToolkitKey = () =>
+    firstEnv("FIREBASE_API_KEY", "GOOGLE_API_KEY") || (firebaseConfig as any).apiKey;
 
   const authRest = async (endpoint: string, payload: any) => {
+    const key = getIdentityToolkitKey();
     const r = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${FIREBASE_API_KEY}`,
+      `https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${encodeURIComponent(key)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -17,7 +17,8 @@ export type EnvName =
   | "HUBLA_WEBHOOK_TOKEN"
   | "LASTLINK_WEBHOOK_TOKEN"
   | "MIGRATION_ADMIN_TOKEN"
-  | "FIREBASE_API_KEY";
+  | "FIREBASE_API_KEY"
+  | "GOOGLE_API_KEY";
 
 const read = (name: string): string => {
   try {
