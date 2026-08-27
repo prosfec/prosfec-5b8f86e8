@@ -1381,252 +1381,49 @@ export default function FichaRatingCreditoForm({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                
-                {/* Cartão CNPJ(PDF) */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">Cartão CNPJ (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.cartaoCnpjPdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.cartaoCnpjPdfNome || "Selecionar PDF Cartão CNPJ"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("cartaoCnpjPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.cartaoCnpjPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.cartaoCnpjPdfNome || "Cartão CNPJ",
-                          url: dadosCNPJ.cartaoCnpjPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
 
-                {/* Contrato Social(PDF) */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">Contrato Social (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.contratoSocialPdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.contratoSocialPdfNome || "Selecionar PDF Contrato Social"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("contratoSocialPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.contratoSocialPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.contratoSocialPdfNome || "Contrato Social",
-                          url: dadosCNPJ.contratoSocialPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Cartão CNPJ (PDF)"
+                  required
+                  value={dadosCNPJ.cartaoCnpjPdf}
+                  onChange={(url) => handleCNPJLinkChange("cartaoCnpjPdf", url, "Cartão CNPJ")}
+                />
 
-                {/* Comprovante de Residência(PDF) */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">Comprovante de Residência (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.comprovanteResidenciaPdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.comprovanteResidenciaPdfNome || "Selecionar PDF Residência"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("comprovanteResidenciaPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.comprovanteResidenciaPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.comprovanteResidenciaPdfNome || "Comprovante de Residência",
-                          url: dadosCNPJ.comprovanteResidenciaPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Contrato Social (PDF)"
+                  required
+                  value={dadosCNPJ.contratoSocialPdf}
+                  onChange={(url) => handleCNPJLinkChange("contratoSocialPdf", url, "Contrato Social")}
+                />
 
-                {/* Faturamento dos últimos 12 meses(PDF) */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">Faturamento 12 meses (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.faturamento12MesesPdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.faturamento12MesesPdfNome || "Selecionar PDF Faturamento"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("faturamento12MesesPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.faturamento12MesesPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.faturamento12MesesPdfNome || "Faturamento 12 Meses",
-                          url: dadosCNPJ.faturamento12MesesPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Comprovante de Residência (PDF)"
+                  required
+                  value={dadosCNPJ.comprovanteResidenciaPdf}
+                  onChange={(url) => handleCNPJLinkChange("comprovanteResidenciaPdf", url, "Comprovante de Residência")}
+                />
 
-                {/* DRE (Demostração do Resultado do Exercicio) */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">DRE (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.drePdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.drePdfNome || "Selecionar PDF DRE"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("drePdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.drePdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.drePdfNome || "DRE",
-                          url: dadosCNPJ.drePdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Faturamento 12 Meses (PDF)"
+                  required
+                  value={dadosCNPJ.faturamento12MesesPdf}
+                  onChange={(url) => handleCNPJLinkChange("faturamento12MesesPdf", url, "Faturamento 12 Meses")}
+                />
 
-                {/* Balanço Patrimonial */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">Balanço Patrimonial (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.balancoPatrimonialPdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.balancoPatrimonialPdfNome || "Selecionar PDF Balanço"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("balancoPatrimonialPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.balancoPatrimonialPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.balancoPatrimonialPdfNome || "Balanço Patrimonial",
-                          url: dadosCNPJ.balancoPatrimonialPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="DRE (PDF)"
+                  required
+                  value={dadosCNPJ.drePdf}
+                  onChange={(url) => handleCNPJLinkChange("drePdf", url, "DRE")}
+                />
+
+                <DocLinkInput
+                  label="Balanço Patrimonial (PDF)"
+                  required
+                  value={dadosCNPJ.balancoPatrimonialPdf}
+                  onChange={(url) => handleCNPJLinkChange("balancoPatrimonialPdf", url, "Balanço Patrimonial")}
+                />
+
 
                 {/* RTB - Recuperação de Tarifa Bancária (Cédula de Crédito Bancário - CCB) */}
                 <div className="p-4 bg-linear-to-br from-emerald-900/10 via-teal-900/5 to-slate-50 rounded-2xl border-2 border-emerald-600/30 space-y-3 relative overflow-hidden">
