@@ -1462,17 +1462,36 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
     } catch (err: any) {
       console.error("Error fetching admin dashboard data:", err);
-      setError("Erro ao se conectar ao banco de dados Firestore. Certifique-se de que os cadastros foram realizados e que as permissões de acesso estão corretas.");
+      const code = String(err?.code || "");
+      if (code.includes("permission-denied") || code.includes("unauthenticated")) {
+        setError(
+          "Acesso negado pelas regras do Firestore. Confirme que você entrou com uma conta autorizada (prosfec.tesouraria@gmail.com) e tente sair e entrar novamente."
+        );
+      } else {
+        setError("Erro ao se conectar ao banco de dados Firestore. Certifique-se de que os cadastros foram realizados e que as permissões de acesso estão corretas.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchData();
-    }
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        // Garante que o token do Firebase Auth já está disponível antes de ler o Firestore
+        await auth.currentUser?.getIdToken();
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) fetchData();
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [isAuthenticated]);
+
 
   const ADMIN_UID = "Nso5FBoBVHXNY60RDw6NNKeaCC23";
   const CONTADOR_UID = "vKZFCNniHJfzJ9B3yWlzErNC3892";
