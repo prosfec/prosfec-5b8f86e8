@@ -58,7 +58,9 @@ const DocLinkInput = ({
 }) => {
   const current = value || "";
   const isLegacyBase64 = current.startsWith("data:");
-  const isInvalid = !!current && !isLegacyBase64 && !/^https?:\/\//i.test(current.trim());
+  const trimmed = current.trim();
+  const isEmptyRequired = required && !trimmed;
+  const isInvalid = !!trimmed && !isLegacyBase64 && !/^https?:\/\//i.test(trimmed);
 
   return (
     <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
@@ -88,18 +90,25 @@ const DocLinkInput = ({
           inputMode="url"
           value={current}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Cole aqui o link do Google Drive..."
+          placeholder="Cole aqui o link do Google Drive"
           aria-label={`Link do documento: ${label}`}
           className={`w-full bg-white border text-slate-800 text-[11px] rounded-xl px-2.5 py-2 focus:outline-hidden font-medium ${
-            isInvalid ? "border-rose-300 focus:border-rose-500" : "border-slate-200 focus:border-emerald-600"
+            isInvalid || isEmptyRequired ? "border-rose-300 focus:border-rose-500" : "border-slate-200 focus:border-emerald-600"
           }`}
         />
+      )}
+
+      {isEmptyRequired && (
+        <p className="text-[10px] text-rose-600 font-bold flex items-center gap-1">
+          <AlertTriangle className="w-3 h-3 shrink-0" />
+          Este campo é obrigatório
+        </p>
       )}
 
       {isInvalid && (
         <p className="text-[10px] text-rose-600 font-bold flex items-center gap-1">
           <AlertTriangle className="w-3 h-3 shrink-0" />
-          O link deve começar com https://
+          O link deve começar com http:// ou https://
         </p>
       )}
 
