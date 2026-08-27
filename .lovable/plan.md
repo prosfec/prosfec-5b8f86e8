@@ -71,5 +71,6 @@ A → C → B → D. A e C são rápidas e cortam a maior parte do risco; B mexe
 
 ## 5. O que exige ação sua no Firebase
 - Publicar as novas `firestore.rules`.
-- Habilitar provedor E-mail/Senha (se ainda não estiver) para o login de parceiros.
+- Habilitar o provedor **E-mail/Senha** em Authentication → Sign-in method (obrigatório para a migração funcionar).
 - Cadastrar o token do webhook LastLink no painel da LastLink.
+- (Opcional, depois) definir custom claims de admin/contador via service account.
