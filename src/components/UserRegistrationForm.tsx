@@ -19,7 +19,7 @@ import {
   X
 } from "lucide-react";
 import { motion } from "motion/react";
-import { collection, addDoc, getDocs, query, where, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, doc, getDoc, limit } from "firebase/firestore";
 import { db, handleFirestoreError, OperationType } from "../firebase";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 
@@ -153,7 +153,8 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
       // Check for email uniqueness in Firestore
       const q = query(
         collection(db, "parceiros"),
-        where("email", "==", normalizedEmail)
+        where("email", "==", normalizedEmail),
+        limit(1)
       );
       const checkSnap = await getDocs(q);
 

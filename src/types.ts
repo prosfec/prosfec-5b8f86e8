@@ -142,6 +142,7 @@ export interface Lead {
     atendidoPor?: string;
   };
   fichaRatingCredito?: FichaRatingCredito;
+  analiseRTB?: AnaliseRTB;
   pagamentoConfirmado?: boolean;
   pagamentoServicosConfirmado?: boolean;
   liberarFichaRating?: boolean;
@@ -213,6 +214,11 @@ export interface Partner {
   hublaCodeStarter?: string;
   hublaCodeExecutive?: string;
   hublaCodeMaster?: string;
+  saldoGeral?: number; // Saldo geral unificado em reais (R$)
+  saldoConsultas?: number; // Saldo de consultas de crédito (legado, mantido em paralelo)
+  cacaLeadsCredits?: number; // Créditos para buscas no Caça-Leads (não alterado)
+  statusManual?: string;
+  dataAtualizacaoStatus?: string;
   [key: string]: any;
 }
 
@@ -264,6 +270,42 @@ export interface DadosRatingCNPJ {
   drePdfNome?: string;
   balancoPatrimonialPdf?: string;
   balancoPatrimonialPdfNome?: string;
+
+  // Módulo RTB - Cédula de Crédito Bancário (CCB) em PDF
+  ccbContratoPdf?: string;
+  ccbContratoPdfNome?: string;
+  ccbBancoEmissor?: string;
+  ccbValorContrato?: number;
+  ccbDataContrato?: string;
+}
+
+export interface IrregularidadeRTB {
+  tipo: "TAC/TEC" | "Tarifa de Cadastro Repetida" | "Venda Casada / Seguro Prestamista" | "Taxa de Emissão de Carnê/Boleto" | "Capitalização Indevida / CET Divergente" | "Comissão de Permanência Cumulada" | "Outros Encargos Indevidos";
+  descricao: string;
+  valorEstimado: number;
+  fundamentacaoLegal: string;
+  probabilidadeExito: "Alta" | "Média" | "Baixa";
+}
+
+export interface AnaliseRTB {
+  status: "pendente" | "analisando" | "concluido" | "erro";
+  dataAnalise: string;
+  arquivoNome: string;
+  protocoloLaudo: string;
+  bancoIdentificado?: string;
+  numeroContratoOuCCB?: string;
+  valorOperacao?: number;
+  taxaJurosMensal?: string;
+  taxaJurosAnual?: string;
+  cetInformado?: string;
+  potencialRecuperacaoTotal: number;
+  potencialRepeticaoIndebito?: number; // valor em dobro conforme Art. 42 CDC
+  irregularidadesEncontradas: IrregularidadeRTB[];
+  resumoExecutivo: string;
+  teseJuridicaRecomendada: string;
+  sugestaoAcao: "Acordo Extrajudicial Notificatório" | "Ação Revisional de Contrato Bancário" | "Repetição de Indébito em Dobro" | "Amigável Administrativa";
+  analistaIa: string;
+  mensagemErro?: string;
 }
 
 export interface ValidacaoItemDoc {
@@ -344,6 +386,51 @@ export interface DiagnosticoPosEstruturacao {
   };
   parecerTecnico?: string;
   esteirasAptas?: string[];
+  [key: string]: any;
+}
+
+export interface ServicoContabilidade {
+  id: string;
+  categoria: string;
+  categoriaOrdem?: number;
+  ordem: number;
+  nome: string;
+  descricao: string;
+  prazo: string;
+  dica: string;
+  preco: number;
+  ativo: boolean;
+  hublaLink?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: any;
+}
+
+export interface PedidoServicoContabilidade {
+  id?: string;
+  parceiroId: string;
+  parceiroNome?: string;
+  parceiroEmail?: string;
+  parceiroTelefone?: string;
+  servicoId: string;
+  nomeServico: string;
+  precoNoMomento: number;
+  status: "solicitado" | "em_andamento" | "concluido" | "cancelado";
+  dataSolicitacao: string;
+  dataAtualizacao?: string;
+  dataConclusao?: string;
+  clienteNome?: string;
+  observacoes?: string;
+  categoria?: string;
+  parecerContador?: string;
+  linkDocumento?: string;
+  responsavelNome?: string;
+  historicoLogs?: Array<{
+    data: string;
+    autor: string;
+    acao: string;
+    mensagem?: string;
+  }>;
   [key: string]: any;
 }
 

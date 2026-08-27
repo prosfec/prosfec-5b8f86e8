@@ -48,7 +48,7 @@ export default function Seguranca() {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div className="space-y-2 text-left max-w-2xl">
             <div className="inline-flex items-center gap-1.5 bg-emerald-100 text-brand-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-              <Lock className="w-3.5 h-3.5 text-[#00A86B]" />
+              <Lock className="w-4 h-4 text-[#00A86B]" strokeWidth={2} />
               Proteção Garantida
             </div>
             <h2 className="font-display font-extrabold text-2xl md:text-3xl text-brand-primary">
@@ -62,7 +62,7 @@ export default function Seguranca() {
           {/* Mini-Stat Box */}
           <div className="flex items-center gap-3 bg-[#F5F7F6] px-5 py-3.5 rounded-2xl border border-gray-200/60 shrink-0 self-start md:self-auto">
             <div className="bg-brand-primary text-brand-accent p-2 rounded-xl">
-              <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
+              <ShieldCheck className="w-5 h-5" strokeWidth={2} />
             </div>
             <div className="text-left">
               <p className="text-xs text-gray-400 font-medium">Ambiente em conformidade</p>
@@ -86,7 +86,7 @@ export default function Seguranca() {
               >
                 <div className="space-y-3">
                   <div className={`p-2.5 rounded-xl border inline-block ${feat.iconColor}`}>
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-5 h-5" strokeWidth={2} />
                   </div>
                   <h3 className="font-bold text-base text-brand-primary leading-snug">
                     {feat.title}

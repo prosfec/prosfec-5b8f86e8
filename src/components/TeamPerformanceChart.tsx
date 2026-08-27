@@ -157,7 +157,7 @@ export const TeamPerformanceChart: React.FC<TeamPerformanceChartProps> = ({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-emerald-50 rounded-xl text-[#00A86B]">
-              <BarChart2 className="w-5 h-5" />
+              <BarChart2 className="w-5 h-5" strokeWidth={2} />
             </div>
             <div>
               <h3 className="font-display font-extrabold text-base text-slate-800">
@@ -180,7 +180,7 @@ export const TeamPerformanceChart: React.FC<TeamPerformanceChartProps> = ({
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            <Users className="w-3.5 h-3.5" />
+            <Users className="w-4 h-4" strokeWidth={2} />
             Qtd. Leads
           </button>
           <button
@@ -191,7 +191,7 @@ export const TeamPerformanceChart: React.FC<TeamPerformanceChartProps> = ({
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            <DollarSign className="w-3.5 h-3.5" />
+            <DollarSign className="w-4 h-4" strokeWidth={2} />
             Crédito (R$)
           </button>
         </div>
@@ -202,7 +202,7 @@ export const TeamPerformanceChart: React.FC<TeamPerformanceChartProps> = ({
         <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] font-extrabold uppercase tracking-wider">Total de Leads</span>
-            <Users className="w-3.5 h-3.5 text-emerald-600" />
+            <Users className="w-4 h-4 text-emerald-600" strokeWidth={2} />
           </div>
           <p className="text-lg font-black text-slate-800">{summaryMetrics.totalTeamLeads}</p>
           <p className="text-[10px] text-slate-500 font-medium">Média: {summaryMetrics.avgLeadsPerMember} / consultor</p>
@@ -211,7 +211,7 @@ export const TeamPerformanceChart: React.FC<TeamPerformanceChartProps> = ({
         <div className="bg-emerald-50/60 border border-emerald-100/80 p-3.5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between text-emerald-700">
             <span className="text-[10px] font-extrabold uppercase tracking-wider">Concluídos</span>
-            <Award className="w-3.5 h-3.5 text-emerald-600" />
+            <Award className="w-4 h-4 text-emerald-600" strokeWidth={2} />
           </div>
           <p className="text-lg font-black text-emerald-900">{summaryMetrics.totalConcludedLeads}</p>
           <p className="text-[10px] text-emerald-700 font-medium">Taxa média: {summaryMetrics.avgConversion}%</p>
@@ -220,7 +220,7 @@ export const TeamPerformanceChart: React.FC<TeamPerformanceChartProps> = ({
         <div className="bg-indigo-50/60 border border-indigo-100/80 p-3.5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between text-indigo-700">
             <span className="text-[10px] font-extrabold uppercase tracking-wider">Maior Captador</span>
-            <TrendingUp className="w-3.5 h-3.5 text-indigo-600" />
+            <TrendingUp className="w-4 h-4 text-indigo-600" strokeWidth={2} />
           </div>
           <p className="text-sm font-extrabold text-indigo-950 truncate">{summaryMetrics.topPerformerName}</p>
           <p className="text-[10px] text-indigo-700 font-medium">{summaryMetrics.topPerformerCount} leads gerados</p>
@@ -229,7 +229,7 @@ export const TeamPerformanceChart: React.FC<TeamPerformanceChartProps> = ({
         <div className="bg-amber-50/60 border border-amber-100/80 p-3.5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between text-amber-700">
             <span className="text-[10px] font-extrabold uppercase tracking-wider">Pipeline Crédito</span>
-            <Target className="w-3.5 h-3.5 text-amber-600" />
+            <Target className="w-4 h-4 text-amber-600" strokeWidth={2} />
           </div>
           <p className="text-sm font-black text-amber-950 font-mono truncate">{formatCurrencyBRL(summaryMetrics.totalCreditPipeline)}</p>
           <p className="text-[10px] text-amber-700 font-medium">Volume total simulado</p>

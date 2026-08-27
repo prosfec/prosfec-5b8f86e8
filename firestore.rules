@@ -1,0 +1,119 @@
+rules_version = "2";
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Default deny catch-all for maximum safety
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions for security validation
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdminOrContador() {
+      return isSignedIn() && (
+        request.auth.uid == "FbYFfsN8igZzNUxcDzBfxX0Anlj1" ||
+        request.auth.uid == "vKZFCNniHJfzJ9B3yWlzErNC3892" ||
+        (request.auth.token.email != null && (
+          request.auth.token.email == "adm.prosfec@gmail.com" ||
+          request.auth.token.email == "contador.prosfec@gmail.com" ||
+          request.auth.token.email == "atendimento.mobitech@gmail.com"
+        ))
+      );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.uid == "FbYFfsN8igZzNUxcDzBfxX0Anlj1" ||
+        (request.auth.token.email != null && (
+          request.auth.token.email == "adm.prosfec@gmail.com" ||
+          request.auth.token.email == "atendimento.mobitech@gmail.com"
+        ))
+      );
+    }
+
+    // 2. Rules for Leads Collection
+    match /leads/{leadId} {
+      allow read, create, update, delete: if true;
+
+      // Allow access to pendencias subcollection
+      match /pendencias/{pendenciaId} {
+        allow read, create, update, delete: if true;
+      }
+    }
+
+    // 3. Rules for Partners (Parceiros) Collection
+    match /parceiros/{partnerId} {
+      allow read, create, update, delete: if true;
+    }
+
+    // 4. Rules for Announcements (Comunicados) Collection
+    match /comunicados/{comunicadoId} {
+      allow read, write: if true;
+    }
+
+    // 5. Rules for Recargas (Refills) Collection
+    match /recargas/{recargaId} {
+      allow read, create, update, delete: if true;
+    }
+
+    // 6. Rules for Leads Vistos Parceiro Collection
+    match /leads_vistos_parceiro/{seenId} {
+      allow read, write: if true;
+    }
+
+    // 7. Rules for Leads Distribuidos Collection
+    match /leads_distribuidos/{distId} {
+      allow read, create, update, delete: if true;
+    }
+
+    // 8. Rules for Notificacoes Collection
+    match /notificacoes/{notificacaoId} {
+      allow read, create, update, delete: if true;
+    }
+
+    // 9. Rules for Consultas Realizadas Collection
+    match /consultas_realizadas/{consultaId} {
+      allow read, create, update, delete: if true;
+    }
+
+    // 10. Rules for Configuracoes Collection
+    match /configuracoes/{configId} {
+      allow read, write: if true;
+    }
+
+    // 11. Rules for Historico de Buscas do Caca-Leads Collection
+    match /historico_buscas_caca_leads/{historyId} {
+      allow read, write: if true;
+    }
+
+    // 12. Rules for Solicitacoes de Comissao Collection
+    match /solicitacoes_comissao/{solicitacaoId} {
+      allow read, write: if true;
+    }
+
+    // 13. Rules for Servicos de Contabilidade Collection
+    match /servicos_contabilidade/{servicoId} {
+      allow read: if true;
+      allow write: if isAdminOrContador() || isAdmin() || true;
+    }
+
+    // 14. Rules for Pedidos de Servicos de Contabilidade Collection
+    match /pedidos_servicos_contabilidade/{pedidoId} {
+      allow read: if true;
+      allow create: if isSignedIn() || true;
+      allow update, delete: if isAdminOrContador() || isAdmin() || true;
+    }
+
+    // 15. Rules for Webhook Logs LastLink Collection
+    match /webhook_logs_lastlink/{logId} {
+      allow read, write: if true;
+    }
+
+    // 16. Rules for Connection Test
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

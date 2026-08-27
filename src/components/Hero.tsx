@@ -29,7 +29,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
               transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-1.5 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider"
             >
-              <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
+              <Sparkles className="w-4 h-4 text-brand-accent" strokeWidth={2} />
               Assessoria Especializada • Crédito Governamental & Fomento Empresarial
             </motion.div>
 
@@ -80,7 +80,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
               ].map((item, idx) => (
                 <div key={idx} className="flex items-start gap-2.5 bg-white p-3 rounded-xl border border-gray-100 shadow-xs">
                   <div className="bg-brand-accent/20 text-brand-primary p-1 rounded-full shrink-0">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    <Check className="w-4 h-4" strokeWidth={2} />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-800 leading-tight">{item.label}</p>
@@ -102,11 +102,11 @@ export default function Hero({ onSimulateClick }: HeroProps) {
                 className="bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold text-base px-8 py-4 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 Simular agora
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" strokeWidth={2} />
               </button>
               
               <div className="flex items-center justify-center sm:justify-start gap-2 text-xs text-gray-500">
-                <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                <ShieldCheck className="w-5 h-5 text-emerald-600" strokeWidth={2} />
                 <span>Ambiente seguro sob as diretrizes do Banco Central</span>
               </div>
             </motion.div>
@@ -166,7 +166,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs text-gray-700 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                       <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2} />
                         <span>Enquadramento tributário (Simples, Presumido)</span>
                       </div>
                       <span className="font-semibold text-emerald-700">OK</span>
@@ -174,7 +174,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
 
                     <div className="flex items-center justify-between text-xs text-gray-700 bg-amber-50 p-2.5 rounded-lg border border-amber-100">
                       <div className="flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                        <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                         <span className="text-amber-900">Autorização Receita Federal (e-CAC)</span>
                       </div>
                       <span className="font-semibold text-amber-700">Pendente</span>

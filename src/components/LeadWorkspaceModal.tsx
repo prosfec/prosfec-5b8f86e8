@@ -2,7 +2,16 @@
 import React, { useState, useEffect } from "react";
 import { doc, updateDoc, collection, query, where, getDocs, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { DEFAULT_SERVICES_CATALOG, sanitizeAndSyncServicosList } from "../utils/serviceUtils";
+import { 
+  DEFAULT_SERVICES_CATALOG, 
+  sanitizeAndSyncServicosList, 
+  isServiceWithoutUpfrontCost, 
+  isDemandAccountingService,
+  getApplicableContracts,
+  getHublaLinkForService,
+  cleanForFirestore,
+  ServiceCatalogItem
+} from "../utils/serviceUtils";
 import { 
   formatCurrencyBRL, 
   triggerWebhookSimulation, 
@@ -50,11 +59,13 @@ import {
   DollarSign,
   CheckCircle,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  ExternalLink
 } from "lucide-react";
 import LeadStepTimeline from "./LeadStepTimeline";
 import FichaRatingAdmViewer from "./FichaRatingAdmViewer";
 import { DossierComparativeViewer } from "./DossierComparativeViewer";
+import { FintechDiagnosisView } from "./FintechDiagnosisView";
 import { calculateLeadStepStatus } from "../utils/stepValidation";
 import { 
   GOVERNMENT_CREDIT_LINES, 
@@ -238,7 +249,7 @@ export default function LeadWorkspaceModal({
   };
   const [copiedTrackingLink, setCopiedTrackingLink] = useState(false);
   const [showContractPdfModal, setShowContractPdfModal] = useState(false);
-  const [activePdfTab, setActivePdfTab] = useState<"contrato" | "termo" | "rating_score" | "bacen">("contrato");
+  const [activePdfTab, setActivePdfTab] = useState<"contrato" | "termo" | "rating_score" | "bacen" | "rtb">("contrato");
   const [selectedConsultaForModal, setSelectedConsultaForModal] = useState<any | null>(null);
 
   // PROSFEC IA Diagnostic states
@@ -254,7 +265,7 @@ export default function LeadWorkspaceModal({
     return sanitizeAndSyncServicosList(raw, DEFAULT_SERVICES_CATALOG);
   });
   const [savingServicos, setSavingServicos] = useState(false);
-  const [catalogServices, setCatalogServices] = useState<{ id: string; nome: string; valor: number }[]>(DEFAULT_SERVICES_CATALOG);
+  const [catalogServices, setCatalogServices] = useState<ServiceCatalogItem[]>(DEFAULT_SERVICES_CATALOG);
 
   useEffect(() => {
     let activeCatalog = catalogServices;
@@ -281,15 +292,20 @@ export default function LeadWorkspaceModal({
     try {
       const syncedSubEtapas = listToSave.map((s: any, idx: number) => {
         const existing = subEtapasPasso6.find(sub => sub.id === s.id || sub.titulo === s.nome);
-        return {
+        const item: any = {
           id: s.id || `sub_${Date.now()}_${idx + 1}`,
           titulo: s.nome || s.servico || `Serviço ${idx + 1}`,
           concluida: existing ? existing.concluida : (s.status === "concluido" || false),
           preco: typeof s.valor === "number" ? s.valor : (parseFloat(s.valor) || 0),
           statusPagamento: existing?.statusPagamento || (s.status === "concluido" ? "pago" : "pendente"),
-          formaPagamento: existing?.formaPagamento,
-          dataPagamento: existing?.dataPagamento
         };
+        const hLink = s.hublaLink || existing?.hublaLink;
+        if (hLink) item.hublaLink = hLink;
+        const forma = existing?.formaPagamento || s.formaPagamento;
+        if (forma) item.formaPagamento = forma;
+        const dataP = existing?.dataPagamento || s.dataPagamento;
+        if (dataP) item.dataPagamento = dataP;
+        return item;
       });
 
       // Calculate multilevel commission snapshot
@@ -300,12 +316,14 @@ export default function LeadWorkspaceModal({
         syncedSubEtapas
       );
 
-      const docRef = doc(db, "leads", lead.id);
-      await updateDoc(docRef, {
+      const firestoreUpdate = cleanForFirestore({
         servicosRecomendados: listToSave,
         subEtapasPasso6: commissionPayload.subEtapasPasso6,
         comissaoMultinivel: commissionPayload.comissaoMultinivel
       });
+
+      const docRef = doc(db, "leads", lead.id);
+      await updateDoc(docRef, firestoreUpdate);
 
       setServicosRecomendados(listToSave);
       setSubEtapasPasso6(commissionPayload.subEtapasPasso6);
@@ -318,6 +336,7 @@ export default function LeadWorkspaceModal({
         comissaoMultinivel: commissionPayload.comissaoMultinivel
       });
     } catch (err: any) {
+      console.error("Erro ao salvar serviços:", err);
       setWorkspaceError("Erro ao salvar precificação dos serviços: " + (err?.message || ""));
     } finally {
       setSavingServicos(false);
@@ -332,15 +351,20 @@ export default function LeadWorkspaceModal({
     if (Array.isArray(servs) && servs.length > 0) {
       const merged = servs.map((s: any, idx: number) => {
         const existing = existingList.find((sub: any) => sub.id === s.id || sub.titulo === s.nome);
-        return {
+        const item: any = {
           id: s.id || existing?.id || `sub_serv_${idx + 1}`,
           titulo: s.nome || s.servico || `Serviço ${idx + 1}`,
           concluida: existing ? existing.concluida : (s.status === "concluido" || s.concluida || false),
           preco: typeof s.valor === "number" ? s.valor : (parseFloat(s.valor) || 0),
           statusPagamento: existing?.statusPagamento || (s.pago || s.statusPagamento === "pago" ? "pago" : "pendente"),
-          formaPagamento: existing?.formaPagamento || s.formaPagamento,
-          dataPagamento: existing?.dataPagamento || s.dataPagamento
         };
+        const forma = existing?.formaPagamento || s.formaPagamento;
+        if (forma) item.formaPagamento = forma;
+        const dataP = existing?.dataPagamento || s.dataPagamento;
+        if (dataP) item.dataPagamento = dataP;
+        const hLink = s.hublaLink || existing?.hublaLink;
+        if (hLink) item.hublaLink = hLink;
+        return item;
       });
       const extraCustom = existingList.filter((sub: any) => !servs.some((s: any) => s.id === sub.id || s.nome === sub.titulo));
       return [...merged, ...extraCustom];
@@ -366,21 +390,43 @@ export default function LeadWorkspaceModal({
         listToSave
       );
 
-      const docRef = doc(db, "leads", lead.id);
-      await updateDoc(docRef, {
+      // Keep servicosRecomendados in sync if subEtapas change
+      const syncedServicos = listToSave
+        .filter(sub => typeof sub.preco === "number" && sub.preco > 0)
+        .map(sub => {
+          const item: any = {
+            id: sub.id,
+            nome: sub.titulo,
+            valor: sub.preco,
+            status: sub.concluida ? "concluido" : ((sub as any).statusPagamento === "pago" ? "pago" : "pendente")
+          };
+          if ((sub as any).hublaLink) item.hublaLink = (sub as any).hublaLink;
+          return item;
+        });
+
+      const firestoreUpdate: any = cleanForFirestore({
         subEtapasPasso6: commissionPayload.subEtapasPasso6,
-        comissaoMultinivel: commissionPayload.comissaoMultinivel
+        comissaoMultinivel: commissionPayload.comissaoMultinivel,
+        ...(syncedServicos.length > 0 ? { servicosRecomendados: syncedServicos } : {})
       });
 
+      const docRef = doc(db, "leads", lead.id);
+      await updateDoc(docRef, firestoreUpdate);
+
       setSubEtapasPasso6(commissionPayload.subEtapasPasso6);
+      if (syncedServicos.length > 0) {
+        setServicosRecomendados(syncedServicos);
+      }
       setWorkspaceSuccess("Checklist do Passo 6 e comissões atualizados com sucesso!");
       onRefreshLeads?.();
       onLeadUpdated?.({
         ...lead,
         subEtapasPasso6: commissionPayload.subEtapasPasso6,
-        comissaoMultinivel: commissionPayload.comissaoMultinivel
+        comissaoMultinivel: commissionPayload.comissaoMultinivel,
+        ...(syncedServicos.length > 0 ? { servicosRecomendados: syncedServicos } : {})
       });
     } catch (err: any) {
+      console.error("Erro ao salvar sub-etapas do Passo 6:", err);
       setWorkspaceError("Erro ao salvar sub-etapas do Passo 6: " + (err?.message || ""));
     } finally {
       setSavingSubEtapasLocal(false);
@@ -678,7 +724,7 @@ Pelo presente instrumento particular, as partes abaixo qualificadas têm entre s
 
 CLÁUSULA 1 – DAS PARTES
 CONTRATANTE: ${razaoSocial}, inscrita no CNPJ nº ${cnpj}, com sede em ${cidade}, neste ato representada por seu representante legal ${representante}, CPF nº ${representanteCpf}.
-CONTRATADO: L P SILVA TECNOLOGIAS, CREDITOS E FINANCAS, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº 28.522.665/0001-84, com sede em Netuno i / Rua Projetada, Bl.b Col.palmeiras, Recanto Dos Vinhais, São Luís - MA, doravante denominada PROSFEC.
+CONTRATADO: DCS SOLUCOES TECNOLOGICAS E SERVICOS FINANCEIROS LTDA (DCS Tech & Finance), pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº 65.668.670/0001-26, com sede no Edif Office Tower Setor Coluna 1 Sala 501, Renascença, São Luís - MA, CEP: 65075-060, doravante denominada PROSFEC.
 
 CLÁUSULA 2 – DO OBJETO E NATUREZA DOS SERVIÇOS
 2.1. O presente contrato tem por objeto a prestação de serviços profissionais de consultoria e assessoria técnica em crédito empresarial pelo CONTRATADO à CONTRATANTE, compreendendo análise de elegibilidade, diagnóstico cadastral e financeiro, organização documental, montagem de dossiê técnico, orientação estratégica, protocolo e acompanhamento administrativo de propostas de crédito junto a instituições financeiras e agentes parceiros (incluindo linhas como PRONAMPE, Proger, FINEP, FAMP, BNDES e repasses bancários).
@@ -731,7 +777,7 @@ Pelo presente instrumento particular, de um lado:
 CONTRATANTE: ${razaoSocial}, inscrita no CNPJ nº ${cnpj}, neste ato representada por seu representante legal ${representante}, CPF nº ${representanteCpf}.
 
 E, de outro lado,
-CONTRATADO: L P SILVA TECNOLOGIAS, CREDITOS E FINANCAS, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº 28.522.665/0001-84, com sede em Netuno i / Rua Projetada, Bl.b Col.palmeiras, Recanto Dos Vinhais, São Luís - MA, doravante denominada PROSFEC.
+CONTRATADO: DCS SOLUCOES TECNOLOGICAS E SERVICOS FINANCEIROS LTDA (DCS Tech & Finance), pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº 65.668.670/0001-26, com sede no Edif Office Tower Setor Coluna 1 Sala 501, Renascença, São Luís - MA, CEP: 65075-060, doravante denominada PROSFEC.
 
 As partes resolvem firmar o presente Termo de Reconhecimento e Obrigação de Pagamento de Honorários de Êxito, vinculado ao Contrato de Prestação de Serviços de Consultoria e Assessoria em Crédito Empresarial PJ, mediante as cláusulas seguintes:
 
@@ -784,7 +830,7 @@ CLIENTE: ${clienteNome}, pessoa física/jurídica, inscrita no CPF/CNPJ sob nº 
 
 E, de outro lado: 
 
-CONTRATADO: L P SILVA TECNOLOGIAS, CREDITOS E FINANCAS, pessoa jurídica de direito privado, inscrita no CNPJ sob nº 28.522.665/0001-84, com endereço na Rua Projetada, Bl. B, Col. Palmeiras, Recanto dos Vinhais, São Luís - MA, CEP 65070-000, doravante denominada PROSFEC.
+CONTRATADO: DCS SOLUCOES TECNOLOGICAS E SERVICOS FINANCEIROS LTDA (DCS Tech & Finance), pessoa jurídica de direito privado, inscrita no CNPJ sob nº 65.668.670/0001-26, com endereço no Edif Office Tower Setor Coluna 1 Sala 501, Renascença, São Luís - MA, CEP: 65075-060, doravante denominada PROSFEC.
 
 Têm entre si justo e contratado o presente Contrato de Prestação de Serviços de Análise, Organização e Acompanhamento de Informações Cadastrais. 
 
@@ -847,17 +893,19 @@ E, por estarem justas e contratadas, firmam o presente instrumento.`;
     const clienteEndereco = [(lead as any).endereco, lead.cidade, (lead as any).uf].filter(Boolean).join(", ") || lead.cidade || "[ENDEREÇO COMPLETO COM CEP]";
 
     const servBacen = (lead as any).servicosRecomendados?.find((s: any) => 
+      s.id === "serv_reabilitacao" ||
       s.id === "serv_bacen" || 
+      (s.nome && s.nome.toLowerCase().includes("reabilita")) ||
       (s.nome && s.nome.toLowerCase().includes("bacen")) ||
       (s.nome && s.nome.toLowerCase().includes("scr"))
     );
-    const valorTotalNum = servBacen?.valor || 2500;
+    const valorTotalNum = servBacen?.valor || 2000;
     const valorTotalStr = Number(valorTotalNum).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     return `INSTRUMENTO PARTICULAR DE CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE CONSULTORIA E INTERMEDIAÇÃO ADMINISTRATIVA
 
 CONTRATADA
-L P SILVA TECNOLOGIAS, CREDITOS E FINANCAS, pessoa jurídica de direito privado, inscrita no CNPJ sob nº 28.522.665/0001-84, com sede à Rua Projetada, Bl. B, Col. Palmeiras, Recanto dos Vinhais, São Luís - MA, CEP 65070-000, doravante denominada simplesmente CONTRATADA.
+DCS SOLUCOES TECNOLOGICAS E SERVICOS FINANCEIROS LTDA (DCS Tech & Finance), pessoa jurídica de direito privado, inscrita no CNPJ sob nº 65.668.670/0001-26, com sede no Edif Office Tower Setor Coluna 1 Sala 501, Renascença, São Luís - MA, CEP: 65075-060, doravante denominada simplesmente CONTRATADA.
 
 CONTRATANTE
 ${clienteNome}, pessoa física/jurídica, inscrita no CPF/CNPJ sob nº ${clienteCpfCnpj}, residente e domiciliado(a) à ${clienteEndereco}, doravante denominado(a) simplesmente CONTRATANTE.
@@ -900,6 +948,211 @@ Fica eleito o Foro da Comarca de São Luís - MA para dirimir quaisquer controv�
 Por estarem de acordo, as partes firmam o presente instrumento.`;
   };
 
+  const getContractRtbText = () => {
+    const clienteNome = lead.razaoSocial || lead.nome || "[NOME COMPLETO/EMPRESA]";
+    const clienteCpfCnpj = lead.cnpj || (lead as any).cpf || "[CPF/CNPJ]";
+    const clienteEndereco = [(lead as any).endereco, lead.cidade, (lead as any).uf].filter(Boolean).join(", ") || lead.cidade || "[ENDEREÇO COMPLETO COM CEP]";
+
+    return `TERMO DE CONTRATAÇÃO DE SERVIÇOS
+RTB — RECUPERAÇÃO DE TARIFA BANCÁRIA
+PROSFEC — ASSESSORIA FINANCEIRA EMPRESARIAL
+
+Pelo presente instrumento eletrônico, de um lado:
+
+CONTRATADA: DCS SOLUCOES TECNOLOGICAS E SERVICOS FINANCEIROS LTDA (DCS Tech & Finance), pessoa jurídica de direito privado, inscrita no CNPJ sob nº 65.668.670/0001-26, com endereço no Edif Office Tower Setor Coluna 1 Sala 501, Renascença, São Luís - MA, CEP: 65075-060, doravante denominada PROSFEC / CONTRATADA.
+
+E, de outro lado:
+
+CONTRATANTE: ${clienteNome}, pessoa física/jurídica, inscrita no CPF/CNPJ sob nº ${clienteCpfCnpj}, com endereço em ${clienteEndereco}, devidamente identificado no cadastro eletrônico da contratação.
+
+Celebram o presente Termo de Contratação de Serviços de Recuperação de Tarifa Bancária — RTB, mediante as seguintes condições:
+
+1. DO OBJETO
+1.1. O presente contrato tem por objeto a prestação de serviços de análise documental, técnica e financeira de operações bancárias do CONTRATANTE, com a finalidade de identificar possíveis tarifas, encargos, produtos, seguros ou serviços acessórios que possam ter sido cobrados de forma indevida, não comprovada ou em condições que justifiquem apuração e eventual recuperação de valores.
+1.2. O serviço será comercialmente denominado: RTB — RECUPERAÇÃO DE TARIFA BANCÁRIA.
+1.3. A prestação poderá abranger operações realizadas por Pessoa Física ou Pessoa Jurídica, incluindo:
+a) Cédula de Crédito Bancário — CCB;
+b) financiamento de veículos;
+c) empréstimos pessoais;
+d) crédito consignado;
+e) operações de capital de giro;
+f) empréstimos empresariais;
+g) financiamentos;
+h) contratos de crédito e instrumentos acessórios;
+i) outras operações bancárias que contenham elementos passíveis de análise.
+
+2. DA FINALIDADE DO RTB
+2.1. O RTB tem como finalidade realizar uma análise individualizada da documentação disponibilizada pelo CONTRATANTE para identificar possíveis valores passíveis de questionamento, restituição, compensação, abatimento ou negociação.
+2.2. A análise poderá considerar, entre outros:
+• tarifas bancárias;
+• seguros;
+• produtos acessórios;
+• serviços vinculados à operação;
+• tarifas de avaliação de bem;
+• tarifas de registro;
+• títulos de capitalização;
+• Reserva de Margem Consignável — RMC;
+• outras cobranças relacionadas à operação de crédito.
+2.3. A simples existência de determinada tarifa, seguro ou produto no contrato não significa automaticamente que exista irregularidade.
+2.4. A possibilidade de recuperação será determinada após análise da documentação, das características da operação e das normas aplicáveis.
+
+3. DOS ITENS PASSÍVEIS DE RECUPERAÇÃO
+A análise poderá compreender, sem limitação:
+3.1. Seguro Prestamista: Verificação de eventual seguro prestamista vinculado à operação, incluindo análise da documentação relacionada à contratação e à autorização do cliente.
+3.2. Seguro de Vida e outros seguros: Verificação de seguros ou produtos securitários eventualmente vinculados à operação de crédito.
+3.3. Tarifa de Avaliação do Bem: Análise da cobrança relacionada à avaliação de veículo, imóvel ou outro bem dado em garantia, considerando a documentação disponível e a efetiva prestação do serviço, quando aplicável.
+3.4. Tarifa de Registro de Contrato: Análise de valores cobrados a título de registro contratual, considerando previsão contratual, documentação e características da operação.
+3.5. Títulos de Capitalização: Identificação de títulos de capitalização eventualmente vinculados à contratação de crédito, especialmente em operações empresariais.
+3.6. Reserva de Margem Consignável — RMC: Análise da existência de RMC ou produtos consignados relacionados à operação, quando aplicável.
+3.7. Outras tarifas e produtos bancários: Poderão ser analisadas outras tarifas, encargos, produtos ou serviços identificados durante a avaliação documental.
+
+4. DA METODOLOGIA
+A execução do RTB poderá compreender as seguintes etapas:
+ETAPA 1 — RECEBIMENTO DA DOCUMENTAÇÃO: Recebimento dos contratos, CCBs, extratos, comprovantes, documentos bancários e demais informações disponibilizadas pelo CONTRATANTE.
+ETAPA 2 — ANÁLISE DOCUMENTAL: Identificação das tarifas, produtos, seguros, encargos e demais componentes financeiros relacionados à operação.
+ETAPA 3 — APURAÇÃO: Análise dos itens identificados e verificação da existência de elementos que possam justificar questionamento ou recuperação.
+ETAPA 4 — ESTIMATIVA: Quando houver documentação suficiente, poderá ser realizada estimativa dos valores potencialmente envolvidos.
+ETAPA 5 — PROCEDIMENTO DE RECUPERAÇÃO: Quando identificada oportunidade de recuperação, poderão ser adotadas medidas administrativas compatíveis com o serviço contratado, diretamente ou mediante encaminhamento a profissional habilitado.
+ETAPA 6 — RESULTADO: O CONTRATANTE será informado sobre eventual resultado obtido e o benefício econômico correspondente.
+
+5. DA NATUREZA DOS SERVIÇOS
+5.1. O RTB possui natureza técnica, documental, financeira e administrativa.
+5.2. A CONTRATADA realizará a análise dos documentos fornecidos pelo CONTRATANTE e poderá auxiliar na organização e condução administrativa da demanda.
+5.3. A CONTRATADA não declara antecipadamente que qualquer cobrança é ilegal, abusiva ou indevida.
+5.4. A existência de possibilidade de recuperação será determinada individualmente após análise da documentação.
+
+6. DA AUSÊNCIA DE GARANTIA DE RESULTADO
+6.1. A contratação do RTB não representa garantia de recuperação de valores.
+6.2. O resultado poderá depender:
+a) da documentação disponível;
+b) das características da operação;
+c) da instituição financeira envolvida;
+d) da análise dos documentos;
+e) da legislação e regulamentação aplicáveis;
+f) da aceitação ou não da pretensão pela instituição financeira;
+g) de eventual procedimento administrativo ou judicial.
+6.3. A CONTRATADA não garante valor mínimo ou máximo de recuperação.
+
+7. DA ATUAÇÃO JURÍDICA
+7.1. Este instrumento não constitui contrato de prestação de serviços advocatícios.
+7.2. A CONTRATADA não realizará atos privativos de advocacia por meio deste contrato.
+7.3. Caso a demanda exija atuação jurídica, elaboração de medidas judiciais, representação processual ou outra atividade privativa de advogado, o CONTRATANTE poderá ser encaminhado a profissional ou escritório de advocacia devidamente habilitado.
+7.4. Eventual contratação de advogado será realizada mediante instrumento próprio.
+7.5. Honorários advocatícios eventualmente contratados não integram automaticamente a remuneração prevista neste instrumento.
+
+8. DA REMUNERAÇÃO DE ÊXITO
+8.1. Pela prestação dos serviços objeto deste contrato, o CONTRATANTE pagará à CONTRATADA remuneração exclusivamente condicionada ao êxito.
+8.2. A remuneração será equivalente a 50% (CINQUENTA POR CENTO) do benefício econômico efetivamente obtido pelo CONTRATANTE em decorrência da demanda objeto do RTB.
+8.3. Não haverá cobrança da remuneração de êxito quando não houver benefício econômico efetivamente obtido, ressalvadas despesas extraordinárias previamente autorizadas pelo CONTRATANTE.
+
+9. DO BENEFÍCIO ECONÔMICO
+Para fins deste contrato, considera-se benefício econômico:
+I — valores efetivamente restituídos;
+II — valores creditados;
+III — valores compensados;
+IV — valores abatidos;
+V — redução do saldo devedor;
+VI — descontos obtidos mediante negociação;
+VII — quitação de obrigação por valor inferior ao originalmente exigido;
+VIII — qualquer outra vantagem financeira direta e mensurável decorrente da demanda.
+
+10. DA REDUÇÃO DE DÍVIDA
+10.1. Caso o resultado obtido não seja uma restituição em dinheiro, mas uma redução do saldo devedor ou obrigação financeira, será considerado benefício econômico o valor efetivamente economizado pelo CONTRATANTE.
+10.2. A apuração poderá utilizar contrato original, saldo devedor, termo de acordo, extratos, demonstrativos, comprovantes, documentos emitidos pela instituição financeira e outros documentos hábeis.
+
+11. DO PAGAMENTO
+11.1. Quando o benefício econômico for recebido em parcela única, a remuneração será devida após a efetiva disponibilização do valor ao CONTRATANTE.
+11.2. Quando o benefício for recebido parceladamente, a remuneração poderá ser paga proporcionalmente ao recebimento das parcelas.
+11.3. Quando o benefício consistir em redução de dívida, a remuneração será calculada sobre o valor efetivamente economizado.
+11.4. O pagamento da remuneração de êxito deverá ser realizado pelo CONTRATANTE no prazo e meio de pagamento disponibilizados pela CONTRATADA.
+
+12. DA COMUNICAÇÃO DO ÊXITO
+12.1. O CONTRATANTE deverá comunicar à CONTRATADA qualquer resultado relacionado à demanda.
+12.2. O CONTRATANTE deverá apresentar, quando solicitado, documentos que comprovem restituição, crédito, compensação, abatimento, desconto, acordo, redução de dívida, quitação ou qualquer outro benefício econômico.
+12.3. O CONTRATANTE compromete-se a não ocultar deliberadamente resultado obtido em decorrência da demanda.
+
+13. DAS OBRIGAÇÕES DO CONTRATANTE
+São obrigações do CONTRATANTE:
+a) fornecer documentos verdadeiros;
+b) disponibilizar os contratos necessários;
+c) fornecer informações completas sobre as operações;
+d) informar renegociações e alterações contratuais;
+e) fornecer documentos complementares solicitados;
+f) manter os dados cadastrais atualizados;
+g) informar acordos realizados com a instituição financeira;
+h) comunicar eventual benefício econômico obtido.
+
+14. DAS OBRIGAÇÕES DA CONTRATADA
+São obrigações da CONTRATADA:
+a) analisar a documentação recebida;
+b) realizar a análise técnica e financeira;
+c) identificar possíveis oportunidades de recuperação;
+d) organizar as informações da demanda;
+e) apresentar diagnóstico quando aplicável;
+f) orientar o CONTRATANTE quanto aos próximos procedimentos;
+g) manter sigilo sobre as informações recebidas;
+h) comunicar o CONTRATANTE sobre o andamento da demanda.
+
+15. DA RESPONSABILIDADE PELOS DOCUMENTOS
+15.1. O CONTRATANTE declara que os documentos apresentados são legítimos e verdadeiros.
+15.2. A CONTRATADA não será responsável por prejuízos decorrentes de informações falsas, documentos adulterados, documentos incompletos ou informações relevantes deliberadamente omitidas pelo CONTRATANTE.
+
+16. DO TRATAMENTO DE DADOS
+16.1. O CONTRATANTE autoriza o tratamento dos dados pessoais, financeiros, bancários e empresariais necessários à execução do serviço.
+16.2. Os dados poderão ser utilizados para:
+a) análise da operação;
+b) elaboração de diagnóstico;
+c) comunicação com o CONTRATANTE;
+d) organização documental;
+e) execução de procedimentos administrativos;
+f) encaminhamento a profissionais habilitados, quando necessário e autorizado.
+16.3. A CONTRATADA deverá adotar medidas razoáveis para proteção das informações recebidas.
+
+17. DA CONFIDENCIALIDADE
+17.1. A CONTRATADA manterá sigilo sobre os documentos e informações recebidos do CONTRATANTE.
+17.2. O compartilhamento de informações poderá ocorrer quando necessário para execução do serviço, mediante autorização do CONTRATANTE ou quando exigido por lei.
+
+18. DA PARTICIPAÇÃO DE TERCEIROS
+18.1. Dependendo da natureza da demanda, poderão ser necessários profissionais especializados.
+18.2. Poderão participar, conforme o caso: advogados, contadores, peritos, consultores, especialistas financeiros e outros profissionais habilitados.
+18.3. Eventuais honorários ou custos de terceiros não estarão automaticamente incluídos na remuneração de êxito da PROSFEC.
+
+19. DO PRAZO DE EXECUÇÃO
+19.1. O serviço terá início após o recebimento da documentação mínima necessária.
+19.2. O prazo de execução dependerá da complexidade da operação, quantidade de contratos, qualidade dos documentos e eventual necessidade de informações adicionais.
+19.3. Prazos dependentes de instituições financeiras ou terceiros não serão considerados como atraso imputável à CONTRATADA.
+
+20. DA RESCISÃO
+20.1. O contrato poderá ser rescindido por qualquer das partes.
+20.2. A rescisão não prejudicará eventual remuneração de êxito caso seja posteriormente comprovado que o benefício econômico obtido decorreu diretamente do trabalho realizado durante a vigência deste contrato.
+20.3. Não haverá cobrança de êxito se não houver benefício econômico, ressalvadas despesas extraordinárias previamente autorizadas.
+
+21. DO DIREITO DE ARREPENDIMENTO
+21.1. Nas hipóteses em que houver aplicação da legislação consumerista, serão respeitados os direitos legalmente assegurados ao CONTRATANTE.
+21.2. Caso o CONTRATANTE solicite expressamente o início da execução do serviço antes do término do prazo legal aplicável, serão observadas as disposições legais relativas aos serviços já iniciados ou executados.
+
+22. DA ASSINATURA ELETRÔNICA
+22.1. O CONTRATANTE reconhece como válida sua manifestação de vontade realizada por meio eletrônico.
+22.2. Poderão ser utilizados como elementos de comprovação: assinatura eletrônica, aceite eletrônico, autenticação, código de confirmação, data e hora, endereço IP, identificação da conta e registro eletrônico da contratação.
+
+23. DA DECLARAÇÃO DE CIÊNCIA
+Ao aceitar este instrumento, o CONTRATANTE declara expressamente:
+[X] Que leu e compreendeu o presente contrato.
+[X] Que compreendeu que o RTB consiste em análise e busca de recuperação de possíveis valores relacionados a tarifas, produtos, seguros e demais cobranças bancárias.
+[X] Que compreendeu que a existência de uma tarifa ou produto não significa automaticamente que exista irregularidade.
+[X] Que compreendeu que não existe garantia de recuperação de valores.
+[X] Que compreendeu que a remuneração da PROSFEC corresponde a 50% do benefício econômico efetivamente obtido.
+[X] Que compreendeu como será calculado o benefício econômico.
+[X] Que fornecerá documentos e informações verdadeiros.
+[X] Que autoriza o tratamento dos dados necessários à execução do serviço.
+[X] Que está ciente de que eventual atuação jurídica será realizada por profissional legalmente habilitado.
+
+24. DO FORO
+24.1. Fica eleito o foro da Comarca de São Luís - MA para dirimir quaisquer controvérsias oriundas deste contrato, respeitadas as normas legais aplicáveis.
+
+Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
+  };
+
   const handlePrint = () => {
     // Open a new print window with clean, professional A4 formatting
     const printWindow = window.open("", "_blank");
@@ -914,12 +1167,15 @@ Por estarem de acordo, as partes firmam o presente instrumento.`;
       ? "Termo de Reconhecimento de Honorarios"
       : activePdfTab === "rating_score"
       ? "Contrato de Prestacao de Servicos - Rating e Score"
-      : "Contrato de Prestacao de Servicos - BACEN e SCR";
+      : activePdfTab === "bacen"
+      ? "Contrato de Prestacao de Servicos - BACEN e SCR"
+      : "Termo de Contratacao de Servicos - RTB";
 
     let contentText = getContractText();
     if (activePdfTab === "termo") contentText = getTermoText();
     if (activePdfTab === "rating_score") contentText = getContractRatingScoreText();
     if (activePdfTab === "bacen") contentText = getContractBacenText();
+    if (activePdfTab === "rtb") contentText = getContractRtbText();
 
     printWindow.document.write(`
       <html>
@@ -2780,7 +3036,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       ⚡ Executar Nova Consulta de Crédito
                     </h5>
                     <p className="text-[10px] text-slate-500">
-                      Consulte novos dados do SERASA ou órgãos diretamente debitando do saldo do seu painel.
+                      Consulte novos dados do SERASA ou órgãos diretamente debitando do seu Saldo Geral.
                     </p>
 
                     <div className="space-y-2.5">
@@ -3090,42 +3346,25 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </p>
                   </div>
                 ) : diagnosticoPROSFEC ? (
-                  <div className="space-y-4">
-                    {/* Diagnostic Content Sheet */}
-                    <div className="p-6 bg-slate-50/50 border border-slate-200 rounded-2xl relative space-y-4 shadow-inner">
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 border-b border-slate-200/50 pb-2.5">
-                        <span className="flex items-center gap-1.5 font-semibold">
+                  <div className="space-y-6">
+                    {/* Visualização de Alto Padrão Fintech do Diagnóstico PROSFEC IA */}
+                    <div className="p-6 bg-white border border-slate-200/90 rounded-2xl relative space-y-4 shadow-xs">
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 border-b border-slate-100 pb-2.5">
+                        <span className="flex items-center gap-1.5 font-bold text-emerald-800">
                           <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                          DOCUMENTO OFICIAL DE ESTRUTURAÇÃO PROSFEC IA
+                          RESULTADO DA PERÍCIA E DIAGNÓSTICO PROSFEC IA
                         </span>
-                        <span className="font-mono">
+                        <span className="font-mono text-slate-500">
                           Gerado em: {new Date(diagnosticoPROSFEC.dataGeracao).toLocaleString("pt-BR")}
                         </span>
                       </div>
 
-                      <div className="prose prose-slate max-w-none">
-                        {renderMarkdown(diagnosticoPROSFEC.texto)}
-                      </div>
-
-                      {/* Floating actions */}
-                      <div className="flex justify-end gap-2 pt-4 border-t border-slate-200/50">
-                        <button
-                          onClick={copyDiagnosticoToClipboard}
-                          className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer"
-                        >
-                          {copiedDiagnostico ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                              Copiado!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3.5 h-3.5 text-slate-400" />
-                              Copiar para o WhatsApp / CRM
-                            </>
-                          )}
-                        </button>
-                      </div>
+                      <FintechDiagnosisView
+                        lead={lead}
+                        diagnostico={diagnosticoPROSFEC}
+                        consultas={leadConsultas}
+                        renderMarkdownContent={renderMarkdown}
+                      />
                     </div>
 
                     {/* Recommended Services Pricing Block (Admin Editable) */}
@@ -3196,9 +3435,36 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                               <div className="flex flex-wrap items-center gap-2 shrink-0">
                                 {(() => {
+                                  const isDemand = isDemandAccountingService(serv);
+                                  const rawPrice = typeof serv.valor === "number" ? serv.valor : typeof serv.preco === "number" ? serv.preco : parseFloat(serv.valor || serv.preco || 0);
+                                  const hasCost = !isNaN(rawPrice) && rawPrice > 0;
+                                  const isZeroCost = isServiceWithoutUpfrontCost(serv) || !hasCost;
+
+                                  if (isZeroCost) {
+                                    return (
+                                      <div className="flex items-center gap-1.5">
+                                        {isDemand ? (
+                                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
+                                            📋 Serviços Contratados por demanda
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-blue-50 text-blue-800 border-blue-200 flex items-center gap-1">
+                                            🎯 Sem Custo Inicial (Remuneração no Êxito)
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  }
+
                                   const isPaid = serv.statusPagamento === "pago" || serv.pago === true;
+                                  const hublaUrl = !isPaid ? getHublaLinkForService(serv, lead, catalogServices) : null;
                                   return (
                                     <div className="flex items-center gap-1.5">
+                                      {isDemand && (
+                                        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
+                                          📋 Serviços Contratados por demanda
+                                        </span>
+                                      )}
                                       <span className={`text-[10px] font-extrabold px-2 py-1 rounded-lg border ${
                                         isPaid 
                                           ? "bg-emerald-100 text-emerald-800 border-emerald-300" 
@@ -3206,6 +3472,18 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                       }`}>
                                         {isPaid ? `✓ Pago (${serv.formaPagamento === "manual" ? "Manual" : "Hubla"})` : "⏳ Pendente"}
                                       </span>
+                                      {hublaUrl && (
+                                        <a
+                                          href={hublaUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-[#00A86B] hover:bg-[#0A3D2E] text-white px-2.5 py-1 rounded-lg transition-all shadow-xs cursor-pointer shrink-0"
+                                          title="Contratar via Hubla"
+                                        >
+                                          <span>Contratar Serviço</span>
+                                          <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                      )}
                                       {isAdminUser && (
                                         <button
                                           type="button"
@@ -3472,7 +3750,12 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       </div>
                     ) : (
                       subEtapasPasso6.map((sub, idx) => {
+                        const isDemand = isDemandAccountingService(sub);
+                        const rawPrice = typeof sub.preco === "number" ? sub.preco : typeof (sub as any).valor === "number" ? (sub as any).valor : parseFloat(sub.preco || (sub as any).valor || 0);
+                        const hasCost = !isNaN(rawPrice) && rawPrice > 0;
+                        const isZeroCost = isServiceWithoutUpfrontCost(sub) || !hasCost;
                         const isPaid = (sub as any).statusPagamento === "pago" || (sub as any).pago === true;
+                        const hublaUrl = (!isZeroCost && !isPaid) ? getHublaLinkForService(sub, lead, catalogServices) : null;
                         return (
                           <div
                             key={sub.id || idx}
@@ -3517,18 +3800,18 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2 shrink-0">
-                              {typeof sub.preco === "number" && sub.preco > 0 && (
+                              {hasCost && (
                                 <span className="text-[10px] font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200" title="Valor do Serviço">
-                                  {formatCurrencyBRL(sub.preco)}
+                                  {formatCurrencyBRL(rawPrice)}
                                 </span>
                               )}
 
                               {/* Multilevel Commission Badge */}
-                              {typeof sub.preco === "number" && sub.preco > 0 && (() => {
+                              {hasCost && (() => {
                                 const partnerPlan = currentPartner?.plano || lead.parceiroPlano || "";
                                 const hasParentMaster = !!(currentPartner?.parentPartnerId || lead.parentPartnerId);
                                 const isDirectMaster = isFranquiaDigital(partnerPlan);
-                                const breakdown = calculateMultilevelCommission(sub.preco, {
+                                const breakdown = calculateMultilevelCommission(rawPrice, {
                                   consultantPlan: partnerPlan,
                                   hasMasterParent: hasParentMaster,
                                   isDirectMaster
@@ -3552,47 +3835,81 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                 );
                               })()}
 
-                              <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg shrink-0 border ${
-                                isPaid 
-                                  ? "bg-emerald-100 text-emerald-800 border-emerald-300" 
-                                  : "bg-amber-50 text-amber-800 border-amber-200"
-                              }`}>
-                                {isPaid ? `💰 Pago (${(sub as any).formaPagamento === "manual" ? "Manual" : "Hubla"})` : "⏳ Pgt Pendente"}
-                              </span>
+                              {isZeroCost ? (
+                                <div className="flex items-center gap-1.5">
+                                  {isDemand ? (
+                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
+                                      📋 Serviços Contratados por demanda
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-blue-50 text-blue-800 border-blue-200">
+                                      🎯 Sem Custo Inicial (Remuneração no Êxito)
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <>
+                                  {isDemand && (
+                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
+                                      📋 Serviços Contratados por demanda
+                                    </span>
+                                  )}
+                                  {hublaUrl && (
+                                    <a
+                                      href={hublaUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-[#00A86B] hover:bg-[#0A3D2E] text-white px-2.5 py-1 rounded-lg transition-all shadow-xs cursor-pointer shrink-0"
+                                      title="Contratar via Hubla com confirmação em tempo real"
+                                    >
+                                      <span>Contratar Serviço</span>
+                                      <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                  )}
 
-                              {isAdminUser && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const updated = [...subEtapasPasso6];
-                                    if (isPaid) {
-                                      updated[idx] = {
-                                        ...updated[idx],
-                                        statusPagamento: "pendente",
-                                        formaPagamento: undefined,
-                                        dataPagamento: undefined
-                                      } as any;
-                                    } else {
-                                      updated[idx] = {
-                                        ...updated[idx],
-                                        statusPagamento: "pago",
-                                        formaPagamento: "manual",
-                                        dataPagamento: new Date().toISOString(),
-                                        concluida: true
-                                      } as any;
-                                    }
-                                    setSubEtapasPasso6(updated);
-                                    handleSaveSubEtapasLocal(updated);
-                                  }}
-                                  className={`text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                                  <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg shrink-0 border ${
                                     isPaid 
-                                      ? "bg-slate-200 text-slate-700 hover:bg-slate-300" 
-                                      : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-                                  }`}
-                                  title={isPaid ? "Reverter pagamento para pendente" : "Confirmar pagamento manual desta sub-etapa"}
-                                >
-                                  {isPaid ? "Estornar Pgt" : "✓ Confirmar Pgt Manual"}
-                                </button>
+                                      ? "bg-emerald-100 text-emerald-800 border-emerald-300" 
+                                      : "bg-amber-50 text-amber-800 border-amber-200"
+                                  }`}>
+                                    {isPaid ? `💰 Pago (${(sub as any).formaPagamento === "manual" ? "Manual" : "Hubla"})` : "⏳ Pgt Pendente"}
+                                  </span>
+
+                                  {isAdminUser && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const updated = [...subEtapasPasso6];
+                                        if (isPaid) {
+                                          updated[idx] = {
+                                            ...updated[idx],
+                                            statusPagamento: "pendente",
+                                            formaPagamento: undefined,
+                                            dataPagamento: undefined
+                                          } as any;
+                                        } else {
+                                          updated[idx] = {
+                                            ...updated[idx],
+                                            statusPagamento: "pago",
+                                            formaPagamento: "manual",
+                                            dataPagamento: new Date().toISOString(),
+                                            concluida: true
+                                          } as any;
+                                        }
+                                        setSubEtapasPasso6(updated);
+                                        handleSaveSubEtapasLocal(updated);
+                                      }}
+                                      className={`text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                                        isPaid 
+                                          ? "bg-slate-200 text-slate-700 hover:bg-slate-300" 
+                                          : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                                      }`}
+                                      title={isPaid ? "Reverter pagamento para pendente" : "Confirmar pagamento manual desta sub-etapa"}
+                                    >
+                                      {isPaid ? "Estornar Pgt" : "✓ Confirmar Pgt Manual"}
+                                    </button>
+                                  )}
+                                </>
                               )}
 
                               <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg shrink-0 ${
@@ -3602,6 +3919,23 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               }`}>
                                 {sub.concluida ? "Concluída ✓" : "Em Andamento ⏳"}
                               </span>
+
+                              {isAdminUser && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (window.confirm(`Deseja realmente remover o item/serviço "${sub.titulo}" deste lead?`)) {
+                                      const updated = subEtapasPasso6.filter((_, i) => i !== idx);
+                                      setSubEtapasPasso6(updated);
+                                      handleSaveSubEtapasLocal(updated);
+                                    }
+                                  }}
+                                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer shrink-0"
+                                  title="Excluir este serviço/item do checklist"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         );
@@ -3610,26 +3944,80 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   </div>
 
                   {/* Controles do Administrador e Informação ao Parceiro */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                  <div className="flex flex-col gap-3 pt-3 border-t border-slate-100">
                     {isAdminUser ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newSub = {
-                              id: `sub_${Date.now()}`,
-                              titulo: "Nova ação de melhoria de crédito...",
-                              concluida: false
-                            };
-                            const updated = [...subEtapasPasso6, newSub];
-                            setSubEtapasPasso6(updated);
-                            handleSaveSubEtapasLocal(updated);
-                          }}
-                          className="px-3 py-1.5 bg-white border border-emerald-200 hover:border-[#00A86B] text-[#0A3D2E] text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
-                        >
-                          <Plus className="w-3.5 h-3.5 text-[#00A86B]" />
-                          Adicionar Item ao Checklist
-                        </button>
+                      <div className="space-y-2.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <select
+                            id="passo6-catalog-select"
+                            className="text-xs bg-slate-50 border border-slate-200 font-semibold rounded-xl p-2 outline-none flex-1 min-w-[240px] focus:border-emerald-500"
+                            defaultValue=""
+                          >
+                            <option value="" disabled>-- Selecione um Serviço do Catálogo para Acrescentar --</option>
+                            {catalogServices.map((serv) => (
+                              <option 
+                                key={serv.id} 
+                                value={JSON.stringify({ 
+                                  id: serv.id, 
+                                  nome: serv.nome, 
+                                  valor: serv.valor, 
+                                  hublaLink: serv.hublaLink || "" 
+                                })}
+                              >
+                                {serv.nome} ({formatCurrencyBRL(serv.valor)})
+                              </option>
+                            ))}
+                          </select>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const sel = document.getElementById("passo6-catalog-select") as HTMLSelectElement;
+                              if (!sel || !sel.value) return;
+                              try {
+                                const parsed = JSON.parse(sel.value);
+                                const newSub = {
+                                  id: parsed.id || `sub_serv_${Date.now()}`,
+                                  titulo: parsed.nome,
+                                  concluida: false,
+                                  preco: typeof parsed.valor === "number" ? parsed.valor : 0,
+                                  hublaLink: parsed.hublaLink || undefined,
+                                  statusPagamento: "pendente"
+                                };
+                                const updated = [...subEtapasPasso6, newSub];
+                                setSubEtapasPasso6(updated);
+                                handleSaveSubEtapasLocal(updated);
+                                sel.value = "";
+                              } catch (err) {
+                                console.error("Erro ao adicionar serviço do catálogo:", err);
+                              }
+                            }}
+                            className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1 shadow-xs shrink-0"
+                          >
+                            <Plus className="w-3.5 h-3.5 text-emerald-300" />
+                            Acrescentar Serviço
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newSub = {
+                                id: `sub_custom_${Date.now()}`,
+                                titulo: "Nova ação de melhoria de crédito...",
+                                concluida: false,
+                                preco: 0,
+                                statusPagamento: "pendente"
+                              };
+                              const updated = [...subEtapasPasso6, newSub];
+                              setSubEtapasPasso6(updated);
+                              handleSaveSubEtapasLocal(updated);
+                            }}
+                            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                          >
+                            <Plus className="w-3.5 h-3.5 text-slate-600" />
+                            Adicionar Item Avulso
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <span className="text-xs text-slate-500 font-medium">
@@ -3638,7 +4026,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     )}
 
                     <p className="text-[11px] text-slate-500 italic">
-                      💡 Sincronizado automaticamente com o portal de acompanhamento do cliente.
+                      💡 Sincronizado automaticamente com o portal de acompanhamento do cliente e painel financeiro.
                     </p>
                   </div>
                 </div>
@@ -4147,7 +4535,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       ? "Termo de Reconhecimento de Honorários"
                       : activePdfTab === "rating_score"
                       ? "Contrato de Serviços - Rating e Score"
-                      : "Contrato de Serviços - BACEN e SCR"}
+                      : activePdfTab === "bacen"
+                      ? "Contrato de Serviços - BACEN e SCR"
+                      : "Termo de Contratação - RTB (Tarifas Bancárias)"}
                   </h3>
                   <p className="text-[10px] text-slate-400">
                     Visualização Oficial do Documento preenchido {lead.contratoAssinado ? "e assinado digitalmente" : "(Minuta)"}
@@ -4171,48 +4561,21 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               </div>
             </div>
 
-            {/* Document Tabs */}
+            {/* Document Tabs (Dinâmicas com base nos serviços do lead) */}
             <div className="flex flex-wrap gap-2 px-5 pt-3 bg-slate-900/30 border-b border-slate-800 overflow-x-auto">
-              <button
-                onClick={() => setActivePdfTab("contrato")}
-                className={`pb-2 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                  activePdfTab === "contrato"
-                    ? "border-[#00A86B] text-white"
-                    : "border-transparent text-slate-400 hover:text-slate-300"
-                }`}
-              >
-                1. Contrato Principal
-              </button>
-              <button
-                onClick={() => setActivePdfTab("termo")}
-                className={`pb-2 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                  activePdfTab === "termo"
-                    ? "border-[#00A86B] text-white"
-                    : "border-transparent text-slate-400 hover:text-slate-300"
-                }`}
-              >
-                2. Termo de Honorários
-              </button>
-              <button
-                onClick={() => setActivePdfTab("rating_score")}
-                className={`pb-2 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                  activePdfTab === "rating_score"
-                    ? "border-[#00A86B] text-white"
-                    : "border-transparent text-slate-400 hover:text-slate-300"
-                }`}
-              >
-                3. Contrato Rating/Score
-              </button>
-              <button
-                onClick={() => setActivePdfTab("bacen")}
-                className={`pb-2 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                  activePdfTab === "bacen"
-                    ? "border-[#00A86B] text-white"
-                    : "border-transparent text-slate-400 hover:text-slate-300"
-                }`}
-              >
-                4. Contrato BACEN/SCR
-              </button>
+              {getApplicableContracts(lead).map((tab, idx) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActivePdfTab(tab.id)}
+                  className={`pb-2 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                    activePdfTab === tab.id
+                      ? "border-[#00A86B] text-white"
+                      : "border-transparent text-slate-400 hover:text-slate-300"
+                  }`}
+                >
+                  {idx + 1}. {tab.title}
+                </button>
+              ))}
             </div>
 
             {/* Modal Body (A4 sheet preview) */}
@@ -4232,7 +4595,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     ? getTermoText()
                     : activePdfTab === "rating_score"
                     ? getContractRatingScoreText()
-                    : getContractBacenText()}
+                    : activePdfTab === "bacen"
+                    ? getContractBacenText()
+                    : getContractRtbText()}
                 </div>
 
                 {/* Signature Representation */}

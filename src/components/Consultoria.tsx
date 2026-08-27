@@ -50,7 +50,7 @@ export default function Consultoria({ onSimulateClick }: ConsultoriaProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
                 <div className="flex items-center gap-1.5 text-rose-800 font-bold text-sm mb-1">
-                  <ShieldX className="w-4.5 h-4.5 shrink-0" />
+                  <ShieldX className="w-5 h-5 shrink-0" strokeWidth={2} />
                   <span>Sem Assessoria</span>
                 </div>
                 <p className="text-xs text-rose-700 leading-normal">
@@ -60,7 +60,7 @@ export default function Consultoria({ onSimulateClick }: ConsultoriaProps) {
 
               <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
                 <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-sm mb-1">
-                  <ShieldCheck className="w-4.5 h-4.5 shrink-0" />
+                  <ShieldCheck className="w-5 h-5 shrink-0" strokeWidth={2} />
                   <span>Com PROSFEC</span>
                 </div>
                 <p className="text-xs text-emerald-700 leading-normal">
@@ -80,7 +80,7 @@ export default function Consultoria({ onSimulateClick }: ConsultoriaProps) {
               {bulletPoints.map((point, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <div className="bg-brand-accent/20 text-brand-primary p-1 rounded-full shrink-0">
-                    <Check className="w-4 h-4 stroke-[3]" />
+                    <Check className="w-4 h-4" strokeWidth={2} />
                   </div>
                   <span className="text-sm font-semibold text-gray-700 leading-snug">
                     {point}
@@ -96,7 +96,7 @@ export default function Consultoria({ onSimulateClick }: ConsultoriaProps) {
                 className="w-full bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold py-4 px-6 rounded-xl text-center shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
               >
                 Simular com orientação consultiva
-                <ArrowRight className="w-5 h-5 shrink-0" />
+                <ArrowRight className="w-5 h-5 shrink-0" strokeWidth={2} />
               </button>
               
               <span className="text-[10px] text-gray-400 text-center block mt-3">

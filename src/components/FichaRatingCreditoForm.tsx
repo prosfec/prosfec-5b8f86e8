@@ -24,13 +24,18 @@ import {
   Award,
   Sparkles,
   TrendingUp,
-  Clock
+  Clock,
+  Scale,
+  DollarSign,
+  ShieldAlert,
+  RotateCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPessoal } from "../types";
-import { formatCurrencyBRL, sanitizeFirestoreData } from "../utils";
+import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPessoal, AnaliseRTB } from "../types";
+import { formatCurrencyBRL, sanitizeFirestoreData, validateUploadedFile } from "../utils";
+import RTBAuditoriaViewerModal from "./RTBAuditoriaViewerModal";
 
 interface FichaRatingCreditoFormProps {
   lead: Lead;
@@ -92,6 +97,12 @@ export default function FichaRatingCreditoForm({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<{ name: string; url: string; isPdf?: boolean } | null>(null);
 
+  // RTB (Recuperação de Tarifa Bancária) State
+  const [analiseRTB, setAnaliseRTB] = useState<AnaliseRTB | null>(lead.analiseRTB || null);
+  const [analisandoRTB, setAnalisandoRTB] = useState(false);
+  const [showRTBModal, setShowRTBModal] = useState(false);
+  const [rtbError, setRtbError] = useState<string | null>(null);
+
   // Sync state if lead prop changes
   useEffect(() => {
     if (lead.fichaRatingCredito) {
@@ -102,7 +113,58 @@ export default function FichaRatingCreditoForm({
         setDadosCNPJ(lead.fichaRatingCredito.dadosCNPJ);
       }
     }
-  }, [lead.id]);
+    if (lead.analiseRTB) {
+      setAnaliseRTB(lead.analiseRTB);
+    }
+  }, [lead.id, lead.analiseRTB]);
+
+  // Handler to trigger PROSFEC IA RTB Audit
+  const handleAnalisarCCBComIA = async () => {
+    if (!dadosCNPJ.ccbContratoPdf) {
+      setSaveError("Por favor, selecione e anexe primeiro o arquivo em PDF da CCB (Cédula de Crédito Bancário).");
+      return;
+    }
+
+    setAnalisandoRTB(true);
+    setRtbError(null);
+    setSaveError(null);
+
+    try {
+      const response = await fetch("/api/credit/analise-rtb-ccb", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: lead.id,
+          ccbBase64: dadosCNPJ.ccbContratoPdf,
+          nomeArquivo: dadosCNPJ.ccbContratoPdfNome || "CCB_Contrato_Bancario.pdf",
+          bancoInformado: dadosCNPJ.ccbBancoEmissor || lead.bancoPrincipal,
+          valorInformado: dadosCNPJ.ccbValorContrato || lead.limiteEstimado
+        })
+      });
+
+      const resData = await response.json();
+
+      if (!response.ok || !resData.success) {
+        throw new Error(resData.error || "Falha na análise pericial da CCB pela PROSFEC IA.");
+      }
+
+      setAnaliseRTB(resData.analiseRTB);
+      setSaveSuccess("Perícia pericial da CCB concluída com sucesso pela PROSFEC IA!");
+      setShowRTBModal(true);
+
+      if (onUpdateLead) {
+        onUpdateLead({
+          ...lead,
+          analiseRTB: resData.analiseRTB
+        });
+      }
+    } catch (err: any) {
+      console.error("Erro na análise RTB:", err);
+      setRtbError(err.message || "Erro ao conectar com a PROSFEC IA para auditoria da CCB.");
+    } finally {
+      setAnalisandoRTB(false);
+    }
+  };
 
   // Format currency R$ input
   const handleCurrencyChange = (val: string, setter: (formatted: string) => void) => {
@@ -139,9 +201,9 @@ export default function FichaRatingCreditoForm({
     if (!file) return;
     setSaveError(null);
 
-    // Limit size to 10MB
-    if (file.size > 10 * 1024 * 1024) {
-      setSaveError("O arquivo selecionado é muito grande. O tamanho máximo permitido é 10MB.");
+    const validation = await validateUploadedFile(file, ["pdf", "image"], 10);
+    if (!validation.valid) {
+      setSaveError(validation.error || "Arquivo inválido.");
       return;
     }
 
@@ -169,16 +231,9 @@ export default function FichaRatingCreditoForm({
     if (!file) return;
     setSaveError(null);
 
-    if (isStrictPdf) {
-      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-      if (!isPdf) {
-        setSaveError(`O arquivo "${file.name}" não é um PDF válido. Para este documento, envie obrigatoriamente um arquivo em formato PDF (.pdf).`);
-        return;
-      }
-    }
-
-    if (file.size > 15 * 1024 * 1024) {
-      setSaveError("O arquivo selecionado excede o limite máximo de 15MB.");
+    const validation = await validateUploadedFile(file, isStrictPdf ? ["pdf"] : ["pdf", "image"], 15);
+    if (!validation.valid) {
+      setSaveError(validation.error || "Arquivo inválido para este campo.");
       return;
     }
 
@@ -1467,6 +1522,144 @@ export default function FichaRatingCreditoForm({
                   </div>
                 </div>
 
+                {/* RTB - Recuperação de Tarifa Bancária (Cédula de Crédito Bancário - CCB) */}
+                <div className="p-4 bg-linear-to-br from-emerald-900/10 via-teal-900/5 to-slate-50 rounded-2xl border-2 border-emerald-600/30 space-y-3 relative overflow-hidden">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <Scale className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span className="text-xs font-black text-slate-900">
+                          CCB - Cédula de Crédito Bancário (PDF)
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 font-medium">
+                        Serviço RTB: Auditoria pericial de tarifas abusivas e TAC/TEC com a PROSFEC IA
+                      </p>
+                    </div>
+                    {dadosCNPJ.ccbContratoPdf ? (
+                      <span className="text-[10px] bg-emerald-700 text-white font-extrabold px-2.5 py-0.5 rounded-full shrink-0 shadow-xs">
+                        CCB Anexada
+                      </span>
+                    ) : (
+                      <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full shrink-0">
+                        Opcional p/ RTB
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Informações Complementares Opcionais */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Banco Emissor (ex: Santander, BB...)"
+                      value={dadosCNPJ.ccbBancoEmissor || ""}
+                      onChange={(e) => setDadosCNPJ(prev => ({ ...prev, ccbBancoEmissor: e.target.value }))}
+                      className="w-full bg-white border border-slate-200 text-slate-800 text-[11px] rounded-xl px-2.5 py-1.5 focus:outline-hidden focus:border-emerald-600 font-medium"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Valor CCB (ex: R$ 150.000)"
+                      value={dadosCNPJ.ccbValorContrato ? `R$ ${Number(dadosCNPJ.ccbValorContrato).toLocaleString('pt-BR')}` : ""}
+                      onChange={(e) => {
+                        const num = Number(e.target.value.replace(/\D/g, ''));
+                        setDadosCNPJ(prev => ({ ...prev, ccbValorContrato: num || undefined }));
+                      }}
+                      className="w-full bg-white border border-slate-200 text-slate-800 text-[11px] rounded-xl px-2.5 py-1.5 focus:outline-hidden focus:border-emerald-600 font-medium"
+                    />
+                  </div>
+
+                  {/* File Upload Selector */}
+                  <div className="flex items-center gap-2">
+                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-emerald-300 text-slate-800 text-xs font-bold py-2.5 px-3 rounded-xl cursor-pointer transition-all truncate shadow-xs">
+                      <Upload className="w-4 h-4 shrink-0 text-emerald-600" />
+                      <span className="truncate">{dadosCNPJ.ccbContratoPdfNome || "Selecionar PDF da CCB / Contrato"}</span>
+                      <input
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        className="hidden"
+                        onChange={(e) => handleCNPJFileUpload("ccbContratoPdf", e.target.files?.[0] || null, true)}
+                      />
+                    </label>
+                    {dadosCNPJ.ccbContratoPdf && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewFile({
+                          name: dadosCNPJ.ccbContratoPdfNome || "CCB Contrato Bancário",
+                          url: dadosCNPJ.ccbContratoPdf!,
+                          isPdf: true
+                        })}
+                        className="p-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl cursor-pointer"
+                        title="Visualizar PDF"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Trigger Button: Analisar CCB com PROSFEC IA */}
+                  {dadosCNPJ.ccbContratoPdf && (
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={handleAnalisarCCBComIA}
+                        disabled={analisandoRTB}
+                        className="w-full py-2.5 px-4 bg-linear-to-r from-[#0A3D2E] via-teal-800 to-emerald-700 hover:from-[#082f23] hover:to-emerald-800 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-98"
+                      >
+                        {analisandoRTB ? (
+                          <>
+                            <RotateCw className="w-4 h-4 animate-spin text-emerald-300" />
+                            <span>PROSFEC IA Analisando Cláusulas da CCB...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 text-emerald-300" />
+                            <span>{analiseRTB ? "Reanalisar CCB com PROSFEC IA" : "Analisar CCB com PROSFEC IA"}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* RTB Result Card Banner */}
+                  {analiseRTB && (
+                    <div className="p-3 bg-white rounded-xl border border-emerald-300 shadow-xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-black tracking-wider text-emerald-700 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          Laudo RTB Disponível
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {analiseRTB.protocoloLaudo}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] text-slate-500 font-bold block">Potencial de Restituição:</span>
+                          <span className="text-base font-black text-emerald-700">
+                            {formatCurrencyBRL(analiseRTB.potencialRecuperacaoTotal)}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowRTBModal(true)}
+                          className="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-extrabold text-[11px] rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          Ver Laudo Completo
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {rtbError && (
+                    <p className="text-[11px] text-rose-600 font-bold flex items-center gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      {rtbError}
+                    </p>
+                  )}
+                </div>
+
               </div>
             </div>
 
@@ -1556,6 +1749,19 @@ export default function FichaRatingCreditoForm({
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Laudo Pericial RTB */}
+      <AnimatePresence>
+        {showRTBModal && analiseRTB && (
+          <RTBAuditoriaViewerModal
+            analiseRTB={analiseRTB}
+            razaoSocial={lead.razaoSocial || lead.nome}
+            cnpj={lead.cnpj}
+            ccbPdfUrl={dadosCNPJ.ccbContratoPdf}
+            onClose={() => setShowRTBModal(false)}
+          />
         )}
       </AnimatePresence>
 

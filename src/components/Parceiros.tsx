@@ -8,7 +8,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { formatCurrencyBRL, triggerWebhookSimulation, saveLocalLead } from "../utils";
 import { HelpingHand, Coins, Laptop, UserCheck, CheckCircle2, ArrowRight, Check, X, Sparkles } from "lucide-react";
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, limit } from "firebase/firestore";
 import { db, handleFirestoreError, OperationType } from "../firebase";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 
@@ -95,7 +95,8 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
       // Check if email already registered
       const qCheck = query(
         collection(db, "parceiros"),
-        where("email", "==", partnerEmail.trim().toLowerCase())
+        where("email", "==", partnerEmail.trim().toLowerCase()),
+        limit(1)
       );
       const checkSnapshot = await getDocs(qCheck);
       if (!checkSnapshot.empty) {
@@ -178,7 +179,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
             {/* Program features */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <div className="flex items-start gap-2.5 bg-white/5 p-3 rounded-xl border border-white/10">
-                <Laptop className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <Laptop className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" strokeWidth={2} />
                 <div>
                   <h4 className="font-semibold text-xs text-white">Painel Exclusivo</h4>
                   <p className="text-[10px] text-gray-300">Acompanhe leads captados e status em tempo real.</p>
@@ -186,7 +187,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
               </div>
 
               <div className="flex items-start gap-2.5 bg-white/5 p-3 rounded-xl border border-white/10">
-                <Coins className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <Coins className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" strokeWidth={2} />
                 <div>
                   <h4 className="font-semibold text-xs text-white">Comissionamento</h4>
                   <p className="text-[10px] text-gray-300">Remuneração agressiva sobre contratos liberados.</p>
@@ -194,7 +195,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
               </div>
 
               <div className="flex items-start gap-2.5 bg-white/5 p-3 rounded-xl border border-white/10">
-                <UserCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <UserCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" strokeWidth={2} />
                 <div>
                   <h4 className="font-semibold text-xs text-white">Suporte Técnico</h4>
                   <p className="text-[10px] text-gray-300">Orientação completa de nossa mesa regulatória.</p>
@@ -209,7 +210,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                 className="bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95 inline-flex items-center gap-2 cursor-pointer"
               >
                 Quero ser parceiro
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4" strokeWidth={2} />
               </button>
             </div>
           </div>
@@ -233,7 +234,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                 onClick={() => setIsPlansModalOpen(false)}
                 className="absolute right-4 top-4 hover:bg-gray-200 p-2 text-gray-500 rounded-full cursor-pointer transition-all z-20"
               >
-                <X className="w-6 h-6" />
+                <X className="w-6 h-6" strokeWidth={2} />
               </button>
 
               {/* Modal Header */}
@@ -305,7 +306,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                       <ul className="space-y-3">
                         <li className="flex items-start gap-2.5 text-xs text-slate-800 leading-snug font-bold bg-emerald-50/70 border border-emerald-200 rounded-xl p-3 shadow-sm">
                           <span className="text-emerald-700 bg-emerald-100/80 rounded-full shrink-0 w-5 h-5 flex items-center justify-center">
-                            <Sparkles className="w-3 h-3 text-emerald-800" />
+                            <Sparkles className="w-3.5 h-3.5 text-emerald-800" strokeWidth={2} />
                           </span>
                           <div>
                             <span className="block text-[10px] uppercase tracking-wider text-emerald-800 font-extrabold mb-0.5">Ferramenta Exclusiva</span>
@@ -314,31 +315,31 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Cadastro & Qualificação de Leads:</strong> Ficha cadastral com CNPJ, Faturamento e Sócios</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Simulações PRONAMPE:</strong> Limites estimados e diagnósticos automáticos</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Consultas de Crédito:</strong> Desconto especial em Rating e Diagnóstico</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Link de Afiliado Exclusivo:</strong> Ganhe comissão de 30% indicando novos parceiros</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span>Grupo de WhatsApp + gestor comercial + CRM de controle</span>
                         </li>
@@ -422,7 +423,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                       <ul className="space-y-3">
                         <li className="flex items-start gap-2.5 text-xs text-slate-800 leading-snug font-bold bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm">
                           <span className="text-emerald-700 bg-emerald-100 rounded-full shrink-0 w-5 h-5 flex items-center justify-center">
-                            <Sparkles className="w-3 h-3 text-emerald-800" />
+                            <Sparkles className="w-3.5 h-3.5 text-emerald-800" strokeWidth={2} />
                           </span>
                           <div>
                             <span className="block text-[10px] uppercase tracking-wider text-emerald-800 font-extrabold mb-0.5">Ferramenta Exclusiva</span>
@@ -431,37 +432,37 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Triplo de Comissão (1,5%):</strong> Ganhe 3x mais do que no plano Starter por operação</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Simulador Comercial Avançado:</strong> Tabela SAC/Price, carência, juros e envio de proposta em PDF/WhatsApp</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Painel de Performance Individual:</strong> Gráficos e relatórios de pipeline em tempo real</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Prioridade na Mesa Operacional:</strong> Analistas de crédito dedicados para acelerar aprovações</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Treinamento 2x por semana:</strong> Mentoria e técnicas de vendas de crédito corporativo</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Link de Afiliado Exclusivo:</strong> Ganhe 30% de comissão por Executive indicado</span>
                         </li>
@@ -540,7 +541,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                       <ul className="space-y-3">
                         <li className="flex items-start gap-2.5 text-xs text-slate-800 leading-snug font-bold bg-amber-50 border border-amber-200 rounded-xl p-3 shadow-sm">
                           <span className="text-amber-700 bg-amber-100 rounded-full shrink-0 w-5 h-5 flex items-center justify-center">
-                            <Sparkles className="w-3 h-3 text-amber-800" />
+                            <Sparkles className="w-3.5 h-3.5 text-amber-800" strokeWidth={2} />
                           </span>
                           <div>
                             <span className="block text-[10px] uppercase tracking-wider text-amber-800 font-extrabold mb-0.5">Ferramenta Exclusiva</span>
@@ -549,37 +550,37 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Gestão de Equipe (Franquia Digital):</strong> Cadastre consultores e vendedores vinculados à sua rede</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Distribuição de Leads em Lote:</strong> Transfira e atribua empresas captadas diretamente para seu time</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Ganha Override de Comissão:</strong> Receba participação sobre a produção de todos os seus consultores</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Consultores Sem Custo Adicional:</strong> Sua equipe usa o ecossistema sem taxa extra</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Suporte & Mentoria da Mesa VIP:</strong> Treinamento de equipe e suporte em operações estruturadas</span>
                         </li>
                         <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Link de Afiliado Exclusivo:</strong> Ganhe 30% de comissão por Master indicado</span>
                         </li>
@@ -749,7 +750,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
               ) : (
                 <div className="text-center py-6 space-y-6">
                   <div className="bg-emerald-100 text-[#0A5438] p-3.5 rounded-full w-14 h-14 flex items-center justify-center mx-auto shadow-sm">
-                    <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
+                    <CheckCircle2 className="w-8 h-8" strokeWidth={2} />
                   </div>
                   
                   <div className="space-y-4">
@@ -773,7 +774,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                       className="w-full bg-[#0A5438] hover:opacity-95 text-white font-bold p-4 rounded-xl text-sm transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 hover:scale-[1.01]"
                     >
                       Acessar Portal do Parceiro
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4" strokeWidth={2} />
                     </button>
                     
                     <button

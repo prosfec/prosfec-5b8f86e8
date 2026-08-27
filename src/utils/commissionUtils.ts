@@ -17,6 +17,8 @@
  *      * Independent Starter: Consultant receives 10% | Master 0%
  */
 
+import { cleanForFirestore } from "./serviceUtils";
+
 export type PartnerPlanType = "STARTER" | "EXECUTIVE" | "MASTER";
 
 export const SERVICE_COMMISSION_RATES = {
@@ -349,10 +351,10 @@ export function augmentServiceItemsWithCommission(
     const metodo = s.formaPagamento || s.metodoPagamento || "PIX";
     const isPix = metodo.toUpperCase().includes("PIX");
     const daysToClear = isPix ? 2 : 15;
-    const dataPagamento = s.dataPagamento || (st === "pago" ? (lead.dataCriacao || new Date().toISOString()) : undefined);
+    const dataPagamento = s.dataPagamento || (st === "pago" ? (lead.dataCriacao || new Date().toISOString()) : null);
     
     let isLiquidated = false;
-    let dataLiberacaoSaque = s.dataLiberacaoSaque;
+    let dataLiberacaoSaque = s.dataLiberacaoSaque || null;
     if (st === "pago") {
       if (!dataLiberacaoSaque && dataPagamento) {
         const paymentDate = new Date(dataPagamento);
@@ -369,15 +371,13 @@ export function augmentServiceItemsWithCommission(
       isDirectMaster: hierarchy.isDirectMaster
     });
 
-    return {
+    const item: any = {
       ...s,
       id: s.id || `srv_${lead.id || "lead"}_${idx + 1}`,
       titulo: s.titulo || s.nome || s.servico || `Serviço ${idx + 1}`,
       preco: precoNum,
       statusPagamento: st,
       formaPagamento: metodo,
-      dataPagamento,
-      dataLiberacaoSaque,
       isLiquidated,
       comissao: commissionCalc.consultantAmount, // Default commission for direct owner
       comissaoConsultor: commissionCalc.consultantAmount,
@@ -389,6 +389,12 @@ export function augmentServiceItemsWithCommission(
       splitDescription: commissionCalc.splitDescription,
       concluida: s.concluida ?? (st === "pago")
     };
+
+    if (dataPagamento) item.dataPagamento = dataPagamento;
+    if (dataLiberacaoSaque) item.dataLiberacaoSaque = dataLiberacaoSaque;
+    if (s.hublaLink) item.hublaLink = s.hublaLink;
+
+    return item;
   });
 }
 
@@ -499,15 +505,15 @@ export function calculateLeadMultilevelCommissions(
     valorLiberadoMaster,
     valorAguardandoCompensacao,
 
-    consultorId: hierarchy.consultor?.id || lead.parceiroId,
+    consultorId: hierarchy.consultor?.id || lead.parceiroId || null,
     consultorNome: hierarchy.consultor?.nome || lead.parceiroNome || "Consultor Parceiro",
-    consultorPlano: hierarchy.consultor?.plano || consultantPlan,
-    consultorPlanoNormalizado: consultantPlanNorm,
+    consultorPlano: hierarchy.consultor?.plano || consultantPlan || "Executive Partner PROSFEC",
+    consultorPlanoNormalizado: consultantPlanNorm || "EXECUTIVE",
 
     masterId: hierarchy.master?.id || null,
     masterNome: hierarchy.master?.nome || null,
     masterPlano: hierarchy.master?.plano || null,
-    masterPlanoNormalizado: masterPlanNorm,
+    masterPlanoNormalizado: masterPlanNorm || null,
 
     hasHierarchy: hierarchy.hasHierarchy,
     descricaoDivisao: sampleCalc.splitDescription,
@@ -549,5 +555,5 @@ export function buildLeadMultilevelFirestorePayload(
     payload.parentPartnerNome = commissionSummary.masterNome;
   }
 
-  return payload;
+  return cleanForFirestore(payload);
 }

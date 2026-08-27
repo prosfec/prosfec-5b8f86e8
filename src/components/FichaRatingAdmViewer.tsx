@@ -29,7 +29,8 @@ import {
   ArrowRight,
   Clock,
   Layers,
-  Award
+  Award,
+  Scale
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { doc, updateDoc } from "firebase/firestore";
@@ -40,9 +41,11 @@ import {
   ValidacaoItemDoc, 
   ConclusaoRatingPosServico, 
   SocioRatingCPF, 
-  DadosRatingCNPJ 
+  DadosRatingCNPJ,
+  AnaliseRTB
 } from "../types";
-import { sanitizeFirestoreData } from "../utils";
+import { sanitizeFirestoreData, formatCurrencyBRL } from "../utils";
+import RTBAuditoriaViewerModal from "./RTBAuditoriaViewerModal";
 
 interface FichaRatingAdmViewerProps {
   lead: Lead;
@@ -85,6 +88,7 @@ export default function FichaRatingAdmViewer({
   const [activeTab, setActiveTab] = useState<"cpf" | "cnpj" | "pos_servico">("cpf");
   const [selectedSocioIdx, setSelectedSocioIdx] = useState(0);
   const [previewFile, setPreviewFile] = useState<{ name: string; url: string; isPdf?: boolean } | null>(null);
+  const [showRTBModal, setShowRTBModal] = useState(false);
   
   const [status, setStatus] = useState(ratingData?.status || "pendente");
   const [observacoes, setObservacoes] = useState(ratingData?.observacoesAdm || "");
@@ -327,6 +331,15 @@ export default function FichaRatingAdmViewer({
       fileName: cnpj?.balancoPatrimonialPdfNome || "balanco_patrimonial.pdf",
       isPdf: true,
       validation: validacoes["cnpj_balanco_patrimonial"]
+    });
+    list.push({
+      key: "cnpj_ccb_pdf",
+      label: "Cédula de Crédito Bancário - CCB (PDF)",
+      category: "CNPJ",
+      fileUrl: cnpj?.ccbContratoPdf,
+      fileName: cnpj?.ccbContratoPdfNome || "ccb_contrato.pdf",
+      isPdf: true,
+      validation: validacoes["cnpj_ccb_pdf"]
     });
 
     return list;
@@ -1111,8 +1124,68 @@ export default function FichaRatingAdmViewer({
                 ratingData?.dadosCNPJ?.balancoPatrimonialPdfNome,
                 true
               )}
+              {renderDocCard(
+                "cnpj_ccb_pdf",
+                "Cédula de Crédito Bancário (CCB)",
+                ratingData?.dadosCNPJ?.ccbContratoPdf,
+                ratingData?.dadosCNPJ?.ccbContratoPdfNome,
+                true
+              )}
             </div>
           </div>
+
+          {/* RTB Laudo Card (Recuperação de Tarifa Bancária) */}
+          {lead.analiseRTB && (
+            <div className="p-4 bg-linear-to-r from-emerald-950/20 via-teal-950/10 to-slate-900/40 rounded-2xl border border-emerald-500/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Scale className="w-5 h-5 text-emerald-400" />
+                  <div>
+                    <h4 className="text-xs font-black text-white">
+                      Auditoria Pericial RTB (Recuperação de Tarifas Bancárias)
+                    </h4>
+                    <span className="text-[10px] text-emerald-300 font-mono">
+                      Protocolo: {lead.analiseRTB.protocoloLaudo}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                  PROSFEC IA
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                <div className="p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-bold">Potencial de Restituição</span>
+                  <span className="text-sm font-black text-emerald-400">
+                    {formatCurrencyBRL(lead.analiseRTB.potencialRecuperacaoTotal)}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-bold">Repetição em Dobro (CDC)</span>
+                  <span className="text-sm font-black text-amber-400">
+                    {formatCurrencyBRL(lead.analiseRTB.potencialRepeticaoIndebito || lead.analiseRTB.potencialRecuperacaoTotal * 2)}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-slate-900/60 rounded-xl border border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-bold">Irregularidades</span>
+                    <span className="text-xs font-black text-rose-400">
+                      {lead.analiseRTB.irregularidadesEncontradas?.length || 0} Apontadas
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowRTBModal(true)}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    Ver Laudo
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       )}
@@ -1389,6 +1462,19 @@ export default function FichaRatingAdmViewer({
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Laudo Pericial RTB */}
+      <AnimatePresence>
+        {showRTBModal && lead.analiseRTB && (
+          <RTBAuditoriaViewerModal
+            analiseRTB={lead.analiseRTB}
+            razaoSocial={lead.razaoSocial || lead.nome}
+            cnpj={lead.cnpj}
+            ccbPdfUrl={ratingData?.dadosCNPJ?.ccbContratoPdf}
+            onClose={() => setShowRTBModal(false)}
+          />
         )}
       </AnimatePresence>
 

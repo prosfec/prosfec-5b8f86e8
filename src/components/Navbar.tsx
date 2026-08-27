@@ -66,7 +66,7 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
             className="flex items-center gap-2 group"
           >
             <div className="bg-brand-primary p-2 rounded-lg text-white group-hover:scale-105 transition-transform">
-              <Landmark className="w-5 h-5 text-brand-accent" />
+              <Landmark className="w-5 h-5 text-brand-accent" strokeWidth={2} />
             </div>
             <div>
               <span className="font-display font-bold text-lg md:text-xl text-brand-primary leading-none block">
@@ -127,14 +127,14 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
               onClick={onPartnerPortalClick}
               className="border border-brand-primary/10 hover:border-brand-primary/30 text-brand-primary font-bold text-xs px-4 py-2.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer bg-slate-50 hover:bg-slate-100"
             >
-              <Users className="w-3.5 h-3.5 text-brand-primary/70" />
+              <Users className="w-4 h-4 text-brand-primary/70" strokeWidth={2} />
               Área do Parceiro
             </button>
             <button
               onClick={onSimulateClick}
               className="bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold text-sm px-5 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-2 cursor-pointer"
             >
-              <Calculator className="w-4 h-4" />
+              <Calculator className="w-4 h-4" strokeWidth={2} />
               Simular agora
             </button>
           </div>
@@ -145,7 +145,7 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
               onClick={() => setIsOpen(!isOpen)}
               className="p-2 rounded-md hover:bg-gray-100/80 text-brand-primary transition-colors"
             >
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isOpen ? <X className="w-6 h-6" strokeWidth={2} /> : <Menu className="w-6 h-6" strokeWidth={2} />}
             </button>
           </div>
         </div>
@@ -213,7 +213,7 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
                 }}
                 className="w-full border border-gray-200 hover:bg-slate-50 text-gray-700 text-center font-bold py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2"
               >
-                <Users className="w-5 h-5 text-gray-500" />
+                <Users className="w-5 h-5 text-gray-500" strokeWidth={2} />
                 Acessar Área do Parceiro
               </button>
               <button
@@ -223,7 +223,7 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
                 }}
                 className="w-full bg-[#00A86B] hover:bg-[#008f5a] text-white text-center font-bold py-3.5 rounded-xl shadow-md flex items-center justify-center gap-2"
               >
-                <Calculator className="w-5 h-5" />
+                <Calculator className="w-5 h-5" strokeWidth={2} />
                 Simular Limite Potencial
               </button>
             </div>
