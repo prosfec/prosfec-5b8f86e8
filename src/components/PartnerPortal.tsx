@@ -11272,10 +11272,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 </div>
                 <div>
                   <h4 className="font-display font-extrabold text-base text-slate-800">
-                    Solicitar Repasse de Comissões
+                    {payoutModalOrigin === "vendas" ? "Saque de Comissões de Vendas" : "Saque de Comissões de Serviços (Passo 6)"}
                   </h4>
                   <p className="text-[11px] text-slate-500">
-                    Comissão de 20% sobre serviços quitados do Passo 6
+                    {payoutModalOrigin === "vendas"
+                      ? "Comissões de planos e vendas liberadas (Lastlink / Hubla)"
+                      : "Comissão sobre serviços quitados do Passo 6"}
                   </p>
                 </div>
               </div>
