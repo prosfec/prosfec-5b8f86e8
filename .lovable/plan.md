@@ -33,7 +33,7 @@ Mantém `/api/auth/cliente-login` + `/api/portal/salvar-lead` intactos. Nenhuma 
 1. **Rota e navegação** — criar `src/routes/portal-cliente.tsx` (`ClientOnly` + lazy, `noindex`), renderizando `TrackingPortal`. `?acompanhamento=<id>` passa a redirecionar para `/portal-cliente?lead=<id>`, e todos os links gerados (`LeadWorkspaceModal`, `FichaRatingAdmViewer`, `TrackingPortal`, `Simulador`) apontam para a URL nova. Os links antigos continuam funcionando.
 2. **Sessão** — extrair a lógica de sessão do cliente para um `useClienteAuth`: guarda `leadId` + modo de sessão (Firebase ou servidor) e mantém o cliente logado ao recarregar a página (hoje o acesso se perde a cada refresh).
 3. **Provisionamento Auth** — nova rota `POST /api/auth/cliente-provision`: cria/vincula a conta Firebase do lead e grava `clienteAuthUid`. Chamada no primeiro acesso, no login bem-sucedido do modelo A (migração preguiçosa, igual à dos parceiros) e opcionalmente em lote protegido por `MIGRATION_ADMIN_TOKEN`.
-4. **Regras** — publicar `firestore.rules` com `isClienteDoLead()` e a allowlist de campos do cliente. Entrego o arquivo completo em bloco de código para você publicar no console (é a única etapa manual).
+4. **Regras** — atualizar `firestore.rules` no repositório e entregar o arquivo completo em bloco de código para você **copiar e publicar manualmente no Console do Firebase**. A publicação das regras é a única etapa que não posso fazer automaticamente; todo o restante (código, rotas, API, validações) fica no deploy do Lovable.
 5. **Leitura direta** — depois que a conta existir, `TrackingPortal` passa a ler o lead por `onSnapshot`; enquanto não existir, segue com `/api/portal/buscar-lead`.
 6. **Área do Cliente propriamente dita** — organizar o conteúdo já existente em seções da rota: dashboard/andamento, diagnóstico, documentos (links de nuvem), assinaturas, notificações e suporte.
 
@@ -42,6 +42,7 @@ Mantém `/api/auth/cliente-login` + `/api/portal/salvar-lead` intactos. Nenhuma 
 | Risco | Mitigação |
 | --- | --- |
 | Regras novas publicadas incorretamente derrubam o acesso (já aconteceu) | Entregar o arquivo completo, só adicionando blocos; testar admin, parceiro e cliente logo após publicar |
+| Esquecer de publicar as regras no Firebase | Deixar isso explícito como ação manual obrigatória; não avançar sem confirmar a publicação |
 | Lead sem e-mail ou com e-mail duplicado entre leads | Modelo A como fallback; ao provisionar, tratar `EMAIL_EXISTS` vinculando pelo uid existente |
 | Regra por e-mail dá acesso a mais de um lead do mesmo cliente | É o comportamento desejado (mesma empresa/pessoa); a Área do Cliente lista os leads dele |
 | Exposição de campos internos ao ler o lead direto do Firestore | A tela só renderiza os campos já exibidos hoje; campos de senha continuam bloqueados por regra |
@@ -51,6 +52,16 @@ Mantém `/api/auth/cliente-login` + `/api/portal/salvar-lead` intactos. Nenhuma 
 ## Impacto nos outros portais
 
 Nenhuma alteração em `PartnerPortal.tsx` ou `AdminDashboard.tsx`, além de trocar a URL gerada nos links de acompanhamento. As regras dos parceiros e do staff permanecem literalmente as mesmas.
+
+## O que é automático e o que exige ação sua
+
+| Automático (eu faço no código) | Manual (você faz no console) |
+| --- | --- |
+| Criar a rota `/portal-cliente` e redirecionar `?acompanhamento=` | Publicar o `firestore.rules` atualizado no Console do Firebase |
+| Criar `/api/auth/cliente-provision` e ajustar login/senha | Habilitar "Email/Password" no Firebase Authentication (já deve estar ativo) |
+| Atualizar `TrackingPortal.tsx` para usar sessão real | Liberar domínios de preview/produção nas restrições da chave web do Google Cloud, se aparecer erro 403 de referrer |
+| Atualizar todos os links gerados no Admin/Parceiro/Simulador | — |
+| Entregar o `firestore.rules` completo e testado em bloco de código | — |
 
 ## O que muda para o cliente
 
