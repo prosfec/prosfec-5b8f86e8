@@ -726,19 +726,32 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const now = new Date().toISOString();
       const docRef = doc(db, "leads", targetLead.id);
 
-      const resetPayload = {
-        clienteSenha: passwordToSet.trim(),
+      // Etapa B-2: a senha nunca é gravada em texto puro. O servidor calcula o
+      // hash (PBKDF2) e só o hash fica no Firestore.
+      const idToken = await auth.currentUser?.getIdToken();
+      const resp = await fetch("/api/auth/cliente-reset-senha", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-idtoken": idToken || ""
+        },
+        body: JSON.stringify({ leadId: targetLead.id, senha: passwordToSet.trim() })
+      });
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData?.error || "Falha ao redefinir a senha no servidor.");
+      }
+
+      // Marca o atendimento da solicitação (sem armazenar a senha gerada)
+      await updateDoc(docRef, {
         clientePrimeiroAcessoConcluido: true,
         solicitacaoResetSenha: {
           pendente: false,
-          novaSenhaGerada: passwordToSet.trim(),
           dataAtendimento: now,
           atendidoPor: "Administração PROSFEC"
         },
         updated_at: now
-      };
-
-      await updateDoc(docRef, resetPayload);
+      });
 
       // Find the consultant (partner) for this lead
       const consultant = partners.find(p => p.id === (targetLead as any).parceiroId);
@@ -754,7 +767,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             recipientId: (targetLead as any).parceiroId,
             recipientType: "parceiro",
             titulo: `🔑 Senha do Portal Redefinida: ${companyName}`,
-            mensagem: `A administração da PROSFEC redefiniu a senha do Portal do Cliente da empresa ${companyName} (CNPJ: ${targetLead.cnpj || "N/A"}) para: ${passwordToSet.trim()}. Encaminhe esta credencial ao seu cliente para que ele acesse seu portal.`,
+            mensagem: `A administração da PROSFEC redefiniu a senha do Portal do Cliente da empresa ${companyName} (CNPJ: ${targetLead.cnpj || "N/A"}). A nova credencial foi enviada ao consultor pelo WhatsApp — por segurança, ela não é armazenada no sistema.`,
             lida: false,
             dataCriacao: now,
             tipo: "senha_redefinida",
@@ -5492,7 +5505,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         {filtered.map((leadItem) => {
                           const consultant = partners.find(p => p.id === (leadItem as any).parceiroId);
                           const isPending = leadItem.solicitacaoResetSenha?.pendente;
-                          const currentPass = leadItem.clienteSenha;
+                          const currentPass = leadItem.clienteSenha || (leadItem as any).clienteSenhaHash ? "••••••••" : "";
                           const typedPass = resetNewPasswords[leadItem.id] || "";
                           const isShowPass = showLeadPortalSenha[leadItem.id];
                           const isSaving = savingResetLeadId === leadItem.id;
@@ -5968,31 +5981,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <div>
                       <span className="text-slate-400 font-bold block mb-1">Status do Acesso:</span>
                       <span className={`px-2.5 py-1 rounded-full font-bold inline-block text-[11px] ${
-                        selectedLead.clienteSenha ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                        (selectedLead.clienteSenha || (selectedLead as any).clienteSenhaHash) ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
                       }`}>
-                        {selectedLead.clienteSenha ? "✓ Senha Cadastrada" : "⏳ Primeiro Acesso Pendente"}
+                        {(selectedLead.clienteSenha || (selectedLead as any).clienteSenhaHash) ? "✓ Senha Cadastrada" : "⏳ Primeiro Acesso Pendente"}
                       </span>
                     </div>
 
                     <div>
                       <span className="text-slate-400 font-bold block mb-1">Senha Atual do Portal:</span>
-                      {selectedLead.clienteSenha ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs select-all">
-                            {showLeadPortalSenha[selectedLead.id] ? selectedLead.clienteSenha : "••••••••"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setShowLeadPortalSenha(prev => ({ ...prev, [selectedLead.id]: !prev[selectedLead.id] }))}
-                            className="p-1 hover:bg-slate-200 text-slate-600 rounded transition-all cursor-pointer"
-                            title={showLeadPortalSenha[selectedLead.id] ? "Ocultar Senha" : "Mostrar Senha"}
-                          >
-                            {showLeadPortalSenha[selectedLead.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 italic">Não definida ainda</span>
-                      )}
+                      <span className="text-slate-500 italic text-[11px] leading-snug block">
+                        Protegida por criptografia (hash). Não é possível visualizar — gere uma nova senha abaixo para enviar ao consultor.
+                      </span>
                     </div>
                   </div>
 
@@ -6929,31 +6928,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <div>
                       <span className="text-slate-400 font-bold block mb-1">Status do Acesso:</span>
                       <span className={`px-2.5 py-1 rounded-full font-bold inline-block text-[11px] ${
-                        selectedLead.clienteSenha ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                        (selectedLead.clienteSenha || (selectedLead as any).clienteSenhaHash) ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
                       }`}>
-                        {selectedLead.clienteSenha ? "✓ Senha Cadastrada" : "⏳ Primeiro Acesso Pendente"}
+                        {(selectedLead.clienteSenha || (selectedLead as any).clienteSenhaHash) ? "✓ Senha Cadastrada" : "⏳ Primeiro Acesso Pendente"}
                       </span>
                     </div>
 
                     <div>
                       <span className="text-slate-400 font-bold block mb-1">Senha Atual do Portal:</span>
-                      {selectedLead.clienteSenha ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs select-all">
-                            {showLeadPortalSenha[selectedLead.id] ? selectedLead.clienteSenha : "••••••••"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setShowLeadPortalSenha(prev => ({ ...prev, [selectedLead.id]: !prev[selectedLead.id] }))}
-                            className="p-1 hover:bg-slate-200 text-slate-600 rounded transition-all cursor-pointer"
-                            title={showLeadPortalSenha[selectedLead.id] ? "Ocultar Senha" : "Mostrar Senha"}
-                          >
-                            {showLeadPortalSenha[selectedLead.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 italic">Não definida ainda</span>
-                      )}
+                      <span className="text-slate-500 italic text-[11px] leading-snug block">
+                        Protegida por criptografia (hash). Não é possível visualizar — gere uma nova senha abaixo para enviar ao consultor.
+                      </span>
                     </div>
                   </div>
 
