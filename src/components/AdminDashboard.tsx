@@ -1474,11 +1474,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   }, [isAuthenticated]);
 
-  const ADMIN_UID = "FbYFfsN8igZzNUxcDzBfxX0Anlj1";
+  const ADMIN_UID = "Nso5FBoBVHXNY60RDw6NNKeaCC23";
   const CONTADOR_UID = "vKZFCNniHJfzJ9B3yWlzErNC3892";
 
   // Mesma lista autorizada das regras do Firestore (firestore.rules)
-  const ADMIN_EMAILS = ["adm.prosfec@gmail.com", "atendimento.mobitech@gmail.com"];
+  const ADMIN_EMAILS = ["prosfec.tesouraria@gmail.com"];
   const CONTADOR_EMAILS = ["contador.prosfec@gmail.com"];
 
   const resolveRole = (user: any): "admin" | "contador" | null => {
