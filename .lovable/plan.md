@@ -42,6 +42,7 @@ Mantém `/api/auth/cliente-login` + `/api/portal/salvar-lead` intactos. Nenhuma 
 | Risco | Mitigação |
 | --- | --- |
 | Regras novas publicadas incorretamente derrubam o acesso (já aconteceu) | Entregar o arquivo completo, só adicionando blocos; testar admin, parceiro e cliente logo após publicar |
+| Esquecer de publicar as regras no Firebase | Deixar isso explícito como ação manual obrigatória; não avançar sem confirmar a publicação |
 | Lead sem e-mail ou com e-mail duplicado entre leads | Modelo A como fallback; ao provisionar, tratar `EMAIL_EXISTS` vinculando pelo uid existente |
 | Regra por e-mail dá acesso a mais de um lead do mesmo cliente | É o comportamento desejado (mesma empresa/pessoa); a Área do Cliente lista os leads dele |
 | Exposição de campos internos ao ler o lead direto do Firestore | A tela só renderiza os campos já exibidos hoje; campos de senha continuam bloqueados por regra |
