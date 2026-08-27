@@ -5643,8 +5643,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <button
                               onClick={() => {
                                 setPayoutPixKey(currentPartner?.chavePix || "");
+                                setPayoutAmountCustom(saldoDisponivelParaSaque > 0 ? saldoDisponivelParaSaque.toFixed(2) : "0");
                                 setCommissionPayoutSuccess(null);
-                                setShowCommissionPayoutModal(true);
+                                setPayoutModalOrigin("servicos");
                               }}
                               className="px-3.5 py-2 bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 min-h-[40px]"
                             >
