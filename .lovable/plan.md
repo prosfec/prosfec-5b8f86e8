@@ -1,52 +1,73 @@
-# Plano de redesign dos painéis PROSFEC
+# Atualização para a versão atual + melhorias para lançar hoje
 
-## Contexto
+## O que encontrei no arquivo enviado
 
-O usuário escolheu a direção **Luminous Glass Enterprise** para o redesign do painel administrativo e da área do parceiro. Estilo: Enterprise Clean. Paleta: #fcfdfd, #ffffff, #02241a, #00A86B. Tipografia: Space Grotesk (títulos) + DM Sans (corpo). Layout do admin: topnav + cards.
+O `prosfec-2.zip` é uma evolução real do projeto espelhado. Comparando arquivo a arquivo com o que está no ar aqui:
 
-## Escopo
+**Módulos totalmente novos (4.000+ linhas):**
+- `AdminServicosContabilidadeTab.tsx` (697 linhas) — catálogo de serviços contábeis no admin
+- `AdminPedidosContabilidadeTab.tsx` (886 linhas) — gestão de pedidos contábeis
+- `PartnerServicosContabilidadeTab.tsx` (1.070 linhas) — contratação de serviços pelo parceiro
+- `FintechDiagnosisView.tsx` (748 linhas) — nova visão de diagnóstico fintech
+- `RTBAuditoriaViewerModal.tsx` (333 linhas) — visualizador de auditoria RTB
+- `utils/markdownRenderer.tsx` (193 linhas) — renderização de markdown nos laudos
 
-Aplicar a nova identidade visual somente nos componentes de interface dos painéis de serviço, sem alterar regras de negócio, autenticação, rotas ou lógica de dados:
+**Arquivos que cresceram bastante:**
+- `AdminDashboard.tsx`: 7.723 → 8.281 linhas
+- `PartnerPortal.tsx`: 11.562 → 12.245 linhas
+- `LeadWorkspaceModal.tsx`: 4.297 → 4.661 linhas
+- `TrackingPortal.tsx`: 3.254 → 3.480 linhas
+- `FichaRatingCreditoForm.tsx`: 1.564 → 1.769 linhas
+- `utils/serviceUtils.ts`: 139 → 437 linhas
+- `types.ts`: 350 → 436 linhas
 
-- `src/components/AdminDashboard.tsx` — login admin + dashboard admin
-- `src/components/PartnerPortal.tsx` — login parceiro + dashboard parceiro
-- `src/routes/__root.tsx` — adicionar Google Fonts (Space Grotesk + DM Sans)
-- `src/styles.css` — adicionar tokens semânticos de cor, fonte, sombra e borda
+**Backend (`server.ts`: 2.115 → 2.812 linhas), rotas novas:**
+- `POST /api/webhooks/lastlink` e `GET /api/webhooks/lastlink` — integração de pagamentos LastLink (o fluxo Hubla continua existindo em paralelo)
+- `POST /api/contabilidade/solicitar-servico` — solicitação de serviço contábil
+- `POST /api/credit/analise-rtb-ccb` — análise RTB/CCB por IA
+- `POST /.netlify/functions/solicitar-servico-contabilidade` — alias Netlify
 
-## Passos
+**Outros:** `firestore.rules` novo, `firestore.indexes.json`, scripts de seed e migração, e uma nova variável de ambiente `PLACES_API_KEY`.
 
-1. **Tokens de design em `src/styles.css`**
-   - Adicionar variáveis CSS para as cores escolhidas: `--prosfec-bg`, `--prosfec-card`, `--prosfec-primary`, `--prosfec-accent`.
-   - Adicionar tokens de sombra: `--shadow-card`, `--shadow-elevated`, `--shadow-glow`.
-   - Adicionar tokens de tipografia: `--font-heading` (Space Grotesk), `--font-body` (DM Sans).
-   - Garantir compatibilidade com o tema existente do projeto, sem quebrar componentes shadcn.
+## Fase 1 — Sincronizar o espelho com a versão nova
 
-2. **Carregamento de fontes em `src/routes/__root.tsx`**
-   - Incluir `<link>` para Google Fonts (preconnect + stylesheet) no `head()`.
-   - Usar as famílias `Space Grotesk` (500, 700) e `DM Sans` (400, 500, 700).
+1. Copiar os 6 componentes/utilitários novos para `src/components/` e `src/utils/`, com `// @ts-nocheck` no topo (mesmo padrão dos demais arquivos espelhados).
+2. Substituir os arquivos alterados pela versão nova: `App.tsx`, `AdminDashboard.tsx`, `PartnerPortal.tsx`, `LeadWorkspaceModal.tsx`, `TrackingPortal.tsx`, `FichaRatingCreditoForm.tsx`, `FichaRatingAdmViewer.tsx`, `FunnelAnalyticsDashboard.tsx`, `DiagnosticStep3Viewer.tsx`, `types.ts`, `utils.ts`, `utils/serviceUtils.ts`, `utils/commissionUtils.ts` e os demais componentes com diferenças menores.
+3. Ajustar imports de caminho: no zip o `firebase.ts` importa `../firebase-applet-config.json`; aqui o arquivo fica em `src/`, então o import continua `./firebase-applet-config.json`.
+4. Não trazer o `testConnection()` automático do novo `firebase.ts` — ele dispara uma leitura ao Firestore em todo carregamento e polui o console; manter a versão atual do arquivo.
+5. Portar o `server.ts` novo (2.812 linhas) para `src/lib/prosfec-server.ts`, preservando as três melhorias de segurança já aplicadas aqui:
+   - as rotas proxy `/api/proxy/integrador-catalogo`, `/api/proxy/supplier-consulta` e `/api/proxy/places-search`
+   - a leitura de tokens exclusivamente por variável de ambiente (sem fallback hardcoded)
+   - o `PartnerPortal.tsx` chamando os proxies locais em vez das APIs externas com chave no navegador
+6. Adicionar `firestore.rules` e `firestore.indexes.json` na raiz do repositório para versionamento.
+7. Cadastrar a nova variável `PLACES_API_KEY` como secret (usarei o valor presente no código enviado, ou o oficial se você preferir informar).
+8. Verificar o build e subir o preview.
 
-3. **Redesign de `src/components/AdminDashboard.tsx`**
-   - **Login admin:** manter o card centralizado, mas aplicar fundo sutil com gradiente/clara, tipografia Space Grotesk no título, inputs arredondados, botão com sombra glow verde.
-   - **Dashboard admin:** substituir sidebar escura por topnav fixo com backdrop-blur, logotipo PROSFEC, links de navegação e avatar do usuário.
-   - Adicionar grid de KPIs (4 cards) com ícones, variação percentual e hover elevado.
-   - Transformar a tabela de leads em card arredondado com header, filtros, status badges com bolinha colorida, hover nas linhas e paginação limpa.
-   - Preservar todas as funcionalidades atuais: filtros, exportação, modais, sincronização, sair.
+## Fase 2 — Redesign dos painéis (direção já aprovada)
 
-4. **Redesign de `src/components/PartnerPortal.tsx`**
-   - **Login parceiro:** aplicar layout clean com card centralizado/branco, fundo claro sutil, tipografia premium, botão verde com sombra.
-   - **Dashboard parceiro:** usar topnav leve, KPIs em cards, cards de serviço (Pronampe, FINEP, BNDES, Caça Leads) com ícones, sombras e hover.
-   - Manter todos os formulários, simuladores e integrações existentes.
+Aplicar a direção **Luminous Glass Enterprise** escolhida anteriormente, agora sobre a base atualizada:
 
-5. **Verificação**
-   - Rodar build de desenvolvimento (`build:dev` ou `bun run dev`) para confirmar ausência de erros.
-   - Capturar screenshots do admin e do portal do parceiro para validar a aplicação visual.
+- Tokens de design em `src/styles.css`: paleta `#fcfdfd` / `#ffffff` / `#02241a` / `#00A86B`, sombras suaves (`--shadow-card`, `--shadow-elevated`), raio de canto generoso.
+- Tipografia Space Grotesk (títulos) + DM Sans (corpo), carregada por `<link>` no `__root.tsx`.
+- **Admin:** topnav fixo com backdrop-blur no lugar da sidebar escura, grid de KPIs com ícones e variação percentual, tabela de leads em card arredondado com filtros, badges de status com bolinha colorida, hover nas linhas e paginação limpa.
+- **Parceiro:** login em card branco centralizado com fundo suave, dashboard com topnav leve, KPIs em cards e cards de serviço (Pronampe, FINEP, BNDES, Caça Leads, Contabilidade) com hover elevado.
+- Aplicar o mesmo padrão visual às novas abas de Contabilidade, para que não destoem.
+- Nenhuma regra de negócio, rota ou fluxo de dados é alterada nesta fase.
 
-## Fora de escopo
+## Fase 3 — Checklist de lançamento
 
-- Não alterar `firestore.rules`, autenticação Firebase, lógica de server functions, endpoints de API ou segurança nesse plano.
-- Não adicionar novas funcionalidades de produto.
-- Não migrar dados ou configurações manuais do Firebase Console.
+1. Testar ao vivo as rotas críticas: catálogo do integrador, saldo do fornecedor, consulta CNPJ, Places, diagnóstico IA, e as novas rotas de contabilidade e RTB/CCB.
+2. Conferir os fluxos de webhook (Hubla e LastLink) respondendo corretamente.
+3. Percorrer no navegador: home → login parceiro → dashboard → contratar serviço contábil → login admin → gestão de pedidos.
+4. Revisar metadados de SEO da página inicial.
+5. Publicar.
 
-## Resultado esperado
+## Ponto de atenção sobre segurança
 
-Painéis admin e parceiro com aparência de SaaS enterprise premium, hierarquia visual clara, espaçamento consistente e micro-interações suaves, mantendo 100% das funcionalidades atuais.
+O `firestore.rules` que veio no zip tem `allow read, write: if true` em praticamente todas as coleções — incluindo `parceiros`, `leads`, `recargas` e `solicitacoes_comissao`. Na prática, qualquer pessoa com a chave pública do Firebase consegue ler e escrever nesses dados direto do navegador. As regras de contabilidade até chamam `isAdmin()`, mas terminam com `|| true`, o que anula a verificação.
+
+Isso não bloqueia o lançamento de hoje, mas é a maior vulnerabilidade em aberto. Sugiro tratar logo depois, junto com a migração para Firebase Auth que discutimos antes. Se você quiser que eu já endureça as regras nesta rodada, me avise — mas isso exige que os parceiros existam no Firebase Auth, senão o acesso deles quebra.
+
+## Decisão que preciso de você
+
+O redesign da Fase 2 mexe visualmente em `AdminDashboard.tsx` e `PartnerPortal.tsx`, que juntos têm mais de 20 mil linhas e acabaram de ser atualizados. Fazer as duas fases hoje é possível, mas se o objetivo principal for colocar a versão nova no ar com segurança, o caminho mais rápido é Fase 1 + Fase 3 hoje e a Fase 2 em seguida. Aprove como está para fazer tudo, ou me diga se prefere adiar o redesign.
