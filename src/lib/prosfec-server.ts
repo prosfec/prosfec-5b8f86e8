@@ -3477,6 +3477,106 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // -------------------------------------------------------------------------
+  // Portal do Cliente — gravação feita pelo servidor (o cliente não tem sessão
+  // no Firebase). Apenas os campos da allowlist abaixo podem ser alterados.
+  // -------------------------------------------------------------------------
+  const CAMPOS_PORTAL_CLIENTE = new Set([
+    "govbrLogin",
+    "govbrSenha",
+    "serasaLogin",
+    "serasaSenha",
+    "dataColetaSenhas",
+    "etapa",
+    "status",
+    "historicoEtapas",
+    "propostaNegociada",
+    "limiteEstimado",
+    "creditLineCode",
+    "creditLineName",
+    "socios",
+    "enderecoSocioPrincipal",
+    "fichaRatingCredito",
+    "documentosCliente",
+    "contratoAssinado",
+    "contratoAssinadoData",
+    "contratoAssinadoIp",
+    "contratoAssinadoNome",
+    "contratoAssinadoCpf",
+    "contratoAssinadoDispositivo",
+    "contratoAssinadoDesenho",
+    "termoAssinado",
+    "termoAssinadoData",
+    "termoAssinadoIp",
+    "termoAssinadoNome",
+    "termoAssinadoCpf",
+    "termoAssinadoDispositivo",
+    "termoAssinadoDesenho",
+    "clienteUltimoAcesso",
+    "clientePrimeiroAcessoConcluido",
+    "solicitacaoResetSenha",
+    "updated_at",
+  ]);
+
+  const jsToRestValue = (v: any): any => {
+    if (v === null || v === undefined) return { nullValue: null };
+    if (typeof v === "string") return { stringValue: v };
+    if (typeof v === "boolean") return { booleanValue: v };
+    if (typeof v === "number") {
+      return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+    }
+    if (Array.isArray(v)) {
+      return { arrayValue: { values: v.map(jsToRestValue) } };
+    }
+    if (typeof v === "object") {
+      const fields: any = {};
+      for (const k of Object.keys(v)) {
+        if (v[k] === undefined) continue;
+        fields[k] = jsToRestValue(v[k]);
+      }
+      return { mapValue: { fields } };
+    }
+    return { stringValue: String(v) };
+  };
+
+  app.post("/api/portal/salvar-lead", async (req, res) => {
+    try {
+      const leadId = String(req.body?.leadId || "").trim();
+      const dados = req.body?.dados;
+      if (!leadId || !dados || typeof dados !== "object") {
+        return res.status(400).json({ error: "leadId e dados são obrigatórios." });
+      }
+
+      const existente = await getLeadRest(leadId);
+      if (!existente) return res.status(404).json({ error: "Solicitação não encontrada." });
+
+      const fields: any = {};
+      const masks: string[] = [];
+      const ignorados: string[] = [];
+
+      for (const chave of Object.keys(dados)) {
+        if (!CAMPOS_PORTAL_CLIENTE.has(chave)) {
+          ignorados.push(chave);
+          continue;
+        }
+        fields[chave] = jsToRestValue(dados[chave]);
+        masks.push(chave);
+      }
+
+      if (!masks.length) {
+        return res.status(400).json({ error: "Nenhum campo permitido para gravação." });
+      }
+
+      await patchLeadRest(leadId, fields, masks);
+      return res.json({ success: true, gravados: masks, ignorados });
+    } catch (err: any) {
+      console.error("[PORTAL] Falha ao salvar lead:", err?.message || "erro");
+      return res.status(500).json({ error: err?.message || "Erro ao salvar os dados." });
+    }
+  });
+
+
+
   // Login do cliente (com lazy migration da senha em texto puro)
   app.post("/api/auth/cliente-login", async (req, res) => {
     try {

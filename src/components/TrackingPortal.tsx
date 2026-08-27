@@ -37,6 +37,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import SignaturePad from "./SignaturePad";
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, deleteDoc, onSnapshot, limit } from "firebase/firestore";
+import { salvarLeadPortal } from "@/lib/portal-save";
 import { db, handleFirestoreError, OperationType } from "../firebase";
 import type { SystemNotification } from "./PartnerPortal";
 import { formatCurrencyBRL, formatCPF, formatCEP, formatPhone, brazilianUFs, triggerWebhookSimulation, getAppDomain } from "../utils";
@@ -257,6 +258,8 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
 
   // Authentication & Password Gate States
   const [candidateLead, setCandidateLead] = useState<Lead | null>(null);
+  // Indica se o lead já possui senha cadastrada (o servidor nunca devolve o hash).
+  const [candidateTemSenha, setCandidateTemSenha] = useState<boolean>(false);
   const [enteredPassword, setEnteredPassword] = useState("");
   const [newPassword1, setNewPassword1] = useState("");
   const [newPassword2, setNewPassword2] = useState("");
@@ -515,7 +518,7 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
         dataColetaSenhas: new Date().toISOString()
       };
 
-      await updateDoc(docRef, payload);
+      await salvarLeadPortal(lead.id, payload);
 
       triggerWebhookSimulation("gov_credentials_collected_portal", {
         leadId: lead.id,
@@ -526,7 +529,7 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
       await fetchLead(lead.id);
     } catch (err) {
       console.error("Error saving GOV credentials:", err);
-      setGovError("Erro ao salvar os dados. Tente novamente.");
+      setGovError(`Erro ao salvar os dados: ${(err as any)?.message || "tente novamente"}`);
     } finally {
       setSubmittingGov(false);
     }
@@ -580,7 +583,7 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
         dataSimulacaoLead: new Date().toISOString()
       };
 
-      await updateDoc(docRef, {
+      await salvarLeadPortal(lead.id, {
         propostaNegociada: updatedProposal,
         limiteEstimado: clientValor,
         creditLineCode: clientLineCode,
@@ -663,7 +666,7 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
         historicoEtapas: updatedHistory
       };
 
-      await updateDoc(docRef, signaturePayload);
+      await salvarLeadPortal(lead.id, signaturePayload);
 
       // Trigger Webhook
       triggerWebhookSimulation("signature_completed_portal", {
@@ -675,7 +678,7 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
       await fetchLead(lead.id);
     } catch (err) {
       console.error("Error saving signature:", err);
-      setSignatureError("Erro ao salvar a assinatura. Tente novamente.");
+      setSignatureError(`Erro ao salvar a assinatura: ${(err as any)?.message || "tente novamente"}`);
     } finally {
       setIsSubmittingSignature(false);
     }
@@ -1192,7 +1195,12 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
 
       if (resp.ok) {
         const data = await resp.json();
-        if (data?.lead?.id) fetchedLead = data.lead as Lead;
+        if (data?.lead?.id) {
+          fetchedLead = data.lead as Lead;
+          // O servidor remove os campos de senha do payload; o indicador
+          // "temSenha" é a única fonte confiável para decidir a tela.
+          setCandidateTemSenha(!!data.temSenha);
+        }
       }
 
 
@@ -1247,7 +1255,18 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
         body: JSON.stringify({ leadId: candidateLead.id, senha: enteredPassword.trim() })
       });
       if (!resp.ok) {
-        setAuthError("Senha incorreta. Verifique os caracteres ou solicite a redefinição de senha com seu consultor.");
+        const errData = await resp.json().catch(() => ({}));
+        if (resp.status === 409 || errData?.error === "SEM_SENHA_CADASTRADA") {
+          // Ainda não existe senha: envia o cliente para o primeiro acesso.
+          setCandidateTemSenha(false);
+          setAuthError("Este acesso ainda não possui senha. Crie sua senha abaixo.");
+          return;
+        }
+        setAuthError(
+          resp.status === 401
+            ? "Senha incorreta. Verifique os caracteres ou solicite a redefinição de senha com seu consultor."
+            : (errData?.error || "Não foi possível validar seu acesso agora.")
+        );
         return;
       }
     } catch (err) {
@@ -1258,7 +1277,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
     // Success! Update last access timestamp and log in
     try {
       const now = new Date().toISOString();
-      await updateDoc(doc(db, "leads", candidateLead.id), {
+      await salvarLeadPortal(candidateLead.id, {
         clienteUltimoAcesso: now,
         clientePrimeiroAcessoConcluido: true
       });
@@ -1302,6 +1321,13 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       });
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({}));
+        if (resp.status === 409) {
+          // Já existe senha: leva o cliente para a tela de login.
+          setCandidateTemSenha(true);
+          setAuthError("Este acesso já possui senha. Digite sua senha ou solicite a redefinição.");
+          setIsSettingPassword(false);
+          return;
+        }
         setAuthError(errData?.error || "Erro ao salvar a nova senha. Tente novamente.");
         setIsSettingPassword(false);
         return;
@@ -1335,7 +1361,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
 
     try {
       const now = new Date().toISOString();
-      await updateDoc(doc(db, "leads", candidateLead.id), {
+      await salvarLeadPortal(candidateLead.id, {
         solicitacaoResetSenha: {
           pendente: true,
           dataSolicitacao: now,
@@ -1359,7 +1385,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       }, 3500);
     } catch (err) {
       console.error("Error requesting password reset:", err);
-      setAuthError("Erro ao enviar solicitação de reset. Tente novamente.");
+      setAuthError(`Erro ao enviar solicitação de reset: ${(err as any)?.message || "tente novamente"}`);
     } finally {
       setIsRequestingReset(false);
     }
@@ -1427,7 +1453,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
         });
       }
 
-      await updateDoc(refDoc, {
+      await salvarLeadPortal(lead.id, {
         socios: sociosList,
         enderecoSocioPrincipal: enderecoSocio,
         etapa: 3, // Advances to Step 3: Consulta diagnóstica no CPF e CNPJ
@@ -1446,7 +1472,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       await fetchLead(lead.id);
     } catch (err) {
       console.error("Error saving socios:", err);
-      setSociosError("Erro ao salvar os dados. Tente novamente.");
+      setSociosError(`Erro ao salvar os dados: ${(err as any)?.message || "tente novamente"}`);
     } finally {
       setSubmittingSocios(false);
     }
@@ -1617,7 +1643,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
                   </p>
                 </div>
               </div>
-            ) : (candidateLead.clienteSenha || (candidateLead as any).clienteSenhaHash) ? (
+            ) : candidateTemSenha ? (
               // Stage 2A: Password Login (Password already exists)
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}

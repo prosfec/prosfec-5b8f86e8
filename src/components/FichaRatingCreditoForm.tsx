@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { doc, updateDoc } from "firebase/firestore";
+import { salvarLeadPortal } from "@/lib/portal-save";
 import { db } from "../firebase";
 import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPessoal, AnaliseRTB } from "../types";
 import { formatCurrencyBRL, sanitizeFirestoreData, validateUploadedFile } from "../utils";
@@ -467,8 +468,9 @@ export default function FichaRatingCreditoForm({
     };
 
     try {
-      const docRef = doc(db, "leads", lead.id);
-      await updateDoc(docRef, {
+      // A gravação passa pelo servidor: o cliente do portal não possui sessão
+      // no Firebase e as regras bloqueiam a escrita direta em /leads.
+      await salvarLeadPortal(lead.id, {
         fichaRatingCredito: sanitizeFirestoreData(currentRating)
       });
 
@@ -490,7 +492,7 @@ export default function FichaRatingCreditoForm({
       setTimeout(() => setSaveSuccess(null), 5000);
     } catch (err) {
       console.error("Erro ao salvar ficha de rating:", err);
-      setSaveError("Erro ao salvar os dados no sistema. Verifique a conexão e tente novamente.");
+      setSaveError(`Erro ao salvar os dados: ${(err as any)?.message || "verifique a conexão e tente novamente"}`);
     } finally {
       setSaving(false);
     }
