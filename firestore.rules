@@ -30,10 +30,9 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.uid == "FbYFfsN8igZzNUxcDzBfxX0Anlj1" ||
+        request.auth.uid == "Nso5FBoBVHXNY60RDw6NNKeaCC23" ||
         request.auth.token.admin == true ||
-        userEmail() == "adm.prosfec@gmail.com" ||
-        userEmail() == "atendimento.mobitech@gmail.com"
+        userEmail() == "prosfec.tesouraria@gmail.com"
       );
     }
 

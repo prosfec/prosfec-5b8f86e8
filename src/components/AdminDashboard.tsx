@@ -1474,11 +1474,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   }, [isAuthenticated]);
 
-  const ADMIN_UID = "FbYFfsN8igZzNUxcDzBfxX0Anlj1";
+  const ADMIN_UID = "Nso5FBoBVHXNY60RDw6NNKeaCC23";
   const CONTADOR_UID = "vKZFCNniHJfzJ9B3yWlzErNC3892";
 
   // Mesma lista autorizada das regras do Firestore (firestore.rules)
-  const ADMIN_EMAILS = ["adm.prosfec@gmail.com", "atendimento.mobitech@gmail.com"];
+  const ADMIN_EMAILS = ["prosfec.tesouraria@gmail.com"];
   const CONTADOR_EMAILS = ["contador.prosfec@gmail.com"];
 
   const resolveRole = (user: any): "admin" | "contador" | null => {
@@ -2621,7 +2621,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     required
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="adm.prosfec@gmail.com"
+                    placeholder="prosfec.tesouraria@gmail.com"
                     className="appearance-none block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#00A86B] focus:border-transparent text-sm font-medium text-slate-900 bg-slate-50 focus:bg-white/75 backdrop-blur-xl transition-all shadow-inner"
                   />
                 </div>
