@@ -96,8 +96,15 @@ export function createExpressApp() {
     next();
   });
 
-  // Initialize Firebase App and Firestore for webhook handler
-  const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  // Initialize Firebase App and Firestore for webhook handler.
+  // No servidor usamos a chave sem restrição de referenciador (FIREBASE_API_KEY /
+  // GOOGLE_API_KEY); a chave do navegador continua restrita por domínio.
+  const serverFirebaseConfig = {
+    ...(firebaseConfig as any),
+    apiKey:
+      firstEnv("FIREBASE_API_KEY", "GOOGLE_API_KEY") || (firebaseConfig as any).apiKey,
+  };
+  const firebaseApp = getApps().length ? getApp() : initializeApp(serverFirebaseConfig);
   const db = (firebaseConfig as any).firestoreDatabaseId
     ? getFirestore(firebaseApp, (firebaseConfig as any).firestoreDatabaseId)
     : getFirestore(firebaseApp);
