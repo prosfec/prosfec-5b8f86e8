@@ -3889,7 +3889,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden z-50 text-slate-800"
+                        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden z-50 text-slate-800"
                       >
                         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                           <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
@@ -4005,7 +4005,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-3xl border border-slate-200/80 shadow-xl overflow-hidden max-w-2xl w-full"
+              className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-xl overflow-hidden max-w-2xl w-full"
             >
               <div className="grid grid-cols-1 md:grid-cols-12">
                 {/* Visual Banner Left (on desktop) */}
@@ -4283,7 +4283,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {/* Termos scroll area */}
                         <div className="bg-slate-50 p-3 rounded-xl border border-slate-150 space-y-1.5 mt-2">
                           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Declaração e Termos de Parceria</p>
-                          <div className="text-[9px] text-slate-400 bg-white p-2.5 rounded-lg border border-slate-200 max-h-36 overflow-y-auto leading-relaxed space-y-2.5 scrollbar-thin">
+                          <div className="text-[9px] text-slate-400 bg-white/75 backdrop-blur-xl p-2.5 rounded-lg border border-slate-200 max-h-36 overflow-y-auto leading-relaxed space-y-2.5 scrollbar-thin">
                             <TermosDeUsoContent variant="light" />
                           </div>
                           <div className="flex items-start gap-2 pt-1">
@@ -4489,7 +4489,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               </div>
 
               {/* Vertical Navigation Tabs */}
-              <div className="order-3 lg:order-none bg-white rounded-2xl border border-slate-200/80 p-2.5 shadow-xs flex flex-col gap-1 text-left">
+              <div className="order-3 lg:order-none bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/80 p-2.5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col gap-1 text-left">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 mb-0.5 block">Navegação do Portal</span>
                 
                 <button
@@ -4882,7 +4882,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {/* LINHA 1: Quick Metrics Grid (Desempenho: Total Indicados, Em Atendimento, Crédito Aprovado Real) */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
                           {/* Card 1: Total Indicados */}
-                          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3.5 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0">
+                          <div className="bg-white/75 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex items-center gap-3.5 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0">
                             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
                               <Users className="w-5 h-5" />
                             </div>
@@ -4894,7 +4894,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Card 2: Em Atendimento */}
-                          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3.5 relative overflow-hidden group hover:border-amber-500/40 transition-all min-w-0">
+                          <div className="bg-white/75 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex items-center gap-3.5 relative overflow-hidden group hover:border-amber-500/40 transition-all min-w-0">
                             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0">
                               <RefreshCw className="w-5 h-5" />
                             </div>
@@ -4908,7 +4908,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Card 3: Crédito Aprovado Real */}
-                          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3.5 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0 sm:col-span-2 lg:col-span-1">
+                          <div className="bg-white/75 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex items-center gap-3.5 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0 sm:col-span-2 lg:col-span-1">
                             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
                               <CheckCircle2 className="w-5 h-5" />
                             </div>
@@ -4927,7 +4927,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {/* LINHA 2: Dedicated Saldos Grid (Recargas e Saldos: Saldo Geral vs. Saldo Caça-Leads) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 text-left">
                           {/* Saldo Geral (Consultas e Serviços) */}
-                          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+                          <div className="bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-center gap-3 min-w-0">
                                 <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
@@ -4972,7 +4972,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Saldo Caça Leads (buscas) */}
-                          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+                          <div className="bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-center gap-3 min-w-0">
                                 <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-100 flex items-center justify-center shrink-0">
@@ -5425,7 +5425,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     });
 
                     return (
-                      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-6 text-left">
+                      <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
                         {/* Section Header */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                           <div className="flex items-start sm:items-center gap-3">
@@ -5691,7 +5691,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </p>
                             </div>
                           ) : (
-                            <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
+                            <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white/75 backdrop-blur-xl shadow-2xs">
                               <div className="overflow-x-auto">
                                 <div className="min-w-[920px] divide-y divide-slate-100">
                                   {/* Table Header */}
@@ -5843,7 +5843,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                               {group.services.map((srv, sIdx) => (
                                                 <div
                                                   key={srv.id || sIdx}
-                                                  className="bg-white p-3 rounded-xl border border-slate-200/70 flex items-center justify-between gap-3 text-xs"
+                                                  className="bg-white/75 backdrop-blur-xl p-3 rounded-xl border border-slate-200/70 flex items-center justify-between gap-3 text-xs"
                                                 >
                                                   <div className="flex items-center gap-2 flex-wrap min-w-0">
                                                     <Briefcase className="w-3.5 h-3.5 text-[#00A86B] shrink-0" />
@@ -6124,7 +6124,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </div>
 
                     {/* Quick CRM View */}
-                    <div className="lg:col-span-7 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                    <div className="lg:col-span-7 bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between">
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -6188,7 +6188,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-5 text-left"
+                  className="bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-5 sm:p-6 space-y-5 text-left"
                 >
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
@@ -6511,7 +6511,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           const directCommissionValue = (lead.valorAprovado || lead.limiteEstimado || 0) * getDirectCommissionMultiplier(currentPartner?.plano);
                           
                           return (
-                            <div key={lead.id} className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs">
+                            <div key={lead.id} className="bg-white/75 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                               {/* Header: Date & Status Badge */}
                               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                                 <span className="text-xs text-slate-500 font-mono flex items-center gap-1.5">
@@ -6706,7 +6706,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <button
                               onClick={() => setLeadsPage(prev => Math.max(prev - 1, 1))}
                               disabled={leadsPage === 1}
-                              className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white/75 backdrop-blur-xl hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                             >
                               Anterior
                             </button>
@@ -6726,7 +6726,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <button
                               onClick={() => setLeadsPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}
                               disabled={leadsPage === Math.ceil(filteredLeads.length / itemsPerPage)}
-                              className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white/75 backdrop-blur-xl hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                             >
                               Próximo
                             </button>
@@ -6999,7 +6999,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-6 text-left"
+                  className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-6 text-left"
                 >
                   {currentPartner && getSubscriptionStatus(currentPartner).status === "vencida" ? (
                     /* Locked View */
@@ -7089,7 +7089,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               type="text"
                               readOnly
                               value={`${getAppDomain()}?leadTrack=${registeredLeadId}`}
-                              className="bg-white border border-slate-200 text-xs font-mono px-3 py-2 rounded-xl text-slate-700 font-bold flex-1 select-all"
+                              className="bg-white/75 backdrop-blur-xl border border-slate-200 text-xs font-mono px-3 py-2 rounded-xl text-slate-700 font-bold flex-1 select-all"
                             />
                             <button
                               onClick={() => {
@@ -7133,7 +7133,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="Buscar empresa, cidade ou CNPJ..."
                                   value={consultantSearchQuery}
                                   onChange={(e) => setConsultantSearchQuery(e.target.value)}
-                                  className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                  className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 />
                                 {consultantSearchQuery && (
                                   <button
@@ -7150,7 +7150,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <select
                                   value={consultantCategoryFilter}
                                   onChange={(e) => setConsultantCategoryFilter(e.target.value)}
-                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                                  className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                                 >
                                   <option value="">Todas as Categorias</option>
                                   {Array.from(new Set(leadsDistributedToMe.map(l => l.categoria).filter(Boolean))).map((cat) => (
@@ -7166,7 +7166,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <select
                                   value={consultantCnpjFilter}
                                   onChange={(e) => setConsultantCnpjFilter(e.target.value as any)}
-                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                                  className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                                 >
                                   <option value="ALL">Status do CNPJ (Todos)</option>
                                   <option value="WITH_CNPJ">Com CNPJ Cadastrado</option>
@@ -7388,7 +7388,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         {Array.isArray(lead.historico) && lead.historico.length > 0 ? (
                                           <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
                                             {lead.historico.map((note: any, idx: number) => (
-                                              <div key={note.id || idx} className="bg-white border border-slate-200/60 p-2 rounded-lg text-[10px] space-y-0.5">
+                                              <div key={note.id || idx} className="bg-white/75 backdrop-blur-xl border border-slate-200/60 p-2 rounded-lg text-[10px] space-y-0.5">
                                                 <div className="flex items-center justify-between text-slate-400 font-bold">
                                                   <span>{note.author || "Consultor"}</span>
                                                   <span>{new Date(note.date).toLocaleString("pt-BR")}</span>
@@ -7410,7 +7410,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                             onKeyDown={(e) => {
                                               if (e.key === "Enter") handleAddLeadNote(lead.id);
                                             }}
-                                            className="flex-1 bg-white border border-slate-200 text-[10px] px-2.5 py-1.5 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                            className="flex-1 bg-white/75 backdrop-blur-xl border border-slate-200 text-[10px] px-2.5 py-1.5 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                           />
                                           <button
                                             disabled={!activeNoteInput[lead.id]?.trim() || addingNoteForLeadId === lead.id}
@@ -7630,7 +7630,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             placeholder="Ex: Contabilidade, Restaurantes, Doutor, etc."
                             value={huntKeyword}
                             onChange={(e) => setHuntKeyword(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs outline-none text-slate-800 font-bold focus:border-[#0A3D2E] focus:ring-1 focus:ring-[#0A3D2E]"
+                            className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl p-3 text-xs outline-none text-slate-800 font-bold focus:border-[#0A3D2E] focus:ring-1 focus:ring-[#0A3D2E]"
                           />
                         </div>
                       </div>
@@ -7647,7 +7647,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             setHuntCity("");
                             setIsCustomCity(false);
                           }}
-                          className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs outline-none text-slate-800 font-bold focus:border-[#0A3D2E] focus:ring-1 focus:ring-[#0A3D2E]"
+                          className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl p-3 text-xs outline-none text-slate-800 font-bold focus:border-[#0A3D2E] focus:ring-1 focus:ring-[#0A3D2E]"
                         >
                           <option value="">Selecione...</option>
                           {BRAZIL_STATES.map((state) => (
@@ -7669,7 +7669,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               placeholder="Digite a cidade..."
                               value={huntCity}
                               onChange={(e) => setHuntCity(e.target.value)}
-                              className="w-full bg-white border border-slate-200 rounded-xl p-3 pr-10 text-xs outline-none text-slate-800 font-bold focus:border-[#0A3D2E] focus:ring-1 focus:ring-[#0A3D2E]"
+                              className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl p-3 pr-10 text-xs outline-none text-slate-800 font-bold focus:border-[#0A3D2E] focus:ring-1 focus:ring-[#0A3D2E]"
                             />
                             <button
                               type="button"
@@ -7699,7 +7699,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 setHuntCity(val);
                               }
                             }}
-                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs outline-none text-slate-800 font-bold focus:border-[#0A3D2E] focus:ring-1 focus:ring-[#0A3D2E] disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+                            className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl p-3 text-xs outline-none text-slate-800 font-bold focus:border-[#0A3D2E] focus:ring-1 focus:ring-[#0A3D2E] disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                           >
                             <option value="">
                               {!huntState ? "Selecione o Estado" : "Selecione a Cidade"}
@@ -7722,7 +7722,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         <select
                           value={huntLimit}
                           onChange={(e) => setHuntLimit(Number(e.target.value))}
-                          className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs outline-none text-slate-800 font-bold focus:border-[#0A3D2E] focus:ring-1 focus:ring-[#0A3D2E]"
+                          className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl p-3 text-xs outline-none text-slate-800 font-bold focus:border-[#0A3D2E] focus:ring-1 focus:ring-[#0A3D2E]"
                         >
                           <option value={20}>20 resultados (1 Requisição)</option>
                           <option value={10}>10 resultados (Rápido)</option>
@@ -7762,7 +7762,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                   {/* Caça-Leads Search History Section (Up to 5 searches) */}
                   {cacaLeadsHistory.length > 0 && (
-                    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs space-y-3">
+                    <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 rounded-2xl p-4 shadow-2xs space-y-3">
                       <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-2.5">
                         <div className="flex items-center gap-2">
                           <div className="p-1.5 bg-emerald-50 text-[#0A3D2E] rounded-lg">
@@ -8176,7 +8176,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                       </button>
                                       
                                       {assigningHuntLeadId === place.id && (
-                                        <div className="absolute left-0 bottom-full mb-1 bg-white border border-slate-200 rounded-xl shadow-lg p-2 z-40 min-w-[180px] text-left">
+                                        <div className="absolute left-0 bottom-full mb-1 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl shadow-lg p-2 z-40 min-w-[180px] text-left">
                                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide mb-1.5 px-1.5 pt-1">Escolha o Consultor:</p>
                                           <div className="space-y-1 max-h-[140px] overflow-y-auto">
                                             {teamMembers.map(member => (
@@ -8281,7 +8281,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-4 text-left max-w-4xl mx-auto"
+                  className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-4 text-left max-w-4xl mx-auto"
                 >
                   <h3 className="font-display font-extrabold text-base text-slate-800">Contrato de Credenciamento e Parceria Comercial</h3>
                   <p className="text-xs text-slate-500">Abaixo constam as regras normativas aceitas em ambiente seguro no momento da criação do cadastro.</p>
@@ -8319,7 +8319,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 md:p-8 space-y-6 text-left max-w-4xl mx-auto"
+                  className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 md:p-8 space-y-6 text-left max-w-4xl mx-auto"
                 >
                   <div className="border-b border-slate-100 pb-4">
                     <h3 className="font-display font-black text-xl text-slate-800 flex items-center gap-2">
@@ -8594,7 +8594,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     const inactiveCount = teamMembers.length - activeCount;
 
                     return (
-                      <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+                      <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
                         {/* Header with quick stats and toggle button */}
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                           <div className="flex items-center gap-3">
@@ -8666,7 +8666,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                       value={teamMemberSearchTerm}
                                       onChange={(e) => setTeamMemberSearchTerm(e.target.value)}
                                       placeholder="Buscar consultor por nome, e-mail, telefone, ID ou plano..."
-                                      className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-all"
+                                      className="w-full pl-9 pr-8 py-2 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-all"
                                     />
                                     {teamMemberSearchTerm && (
                                       <button
@@ -8810,7 +8810,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                               <select
                                                 value={isExecutive ? "EXECUTIVE" : "STARTER"}
                                                 onChange={(e) => handleUpdateTeamMemberPlan(member.id, e.target.value === "EXECUTIVE" ? "Consultor Executive" : "Consultor Starter")}
-                                                className="bg-white border border-slate-200 rounded-lg text-[9px] p-1 font-extrabold outline-none text-slate-700 cursor-pointer max-w-[150px] truncate shadow-2xs hover:border-emerald-500 transition-all"
+                                                className="bg-white/75 backdrop-blur-xl border border-slate-200 rounded-lg text-[9px] p-1 font-extrabold outline-none text-slate-700 cursor-pointer max-w-[150px] truncate shadow-2xs hover:border-emerald-500 transition-all"
                                               >
                                                 <option value="STARTER">Starter (0.5% | 2.5%)</option>
                                                 <option value="EXECUTIVE">Executive (1.5% | 1.5%)</option>
@@ -8943,7 +8943,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     });
 
                     return (
-                      <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+                      <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
                         {/* Header with summary and toggle */}
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                           <div className="flex items-center gap-3">
@@ -9004,7 +9004,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                       value={teamPipelineSearchTerm}
                                       onChange={(e) => setTeamPipelineSearchTerm(e.target.value)}
                                       placeholder="Buscar por nome do consultor, cliente, empresa ou cidade..."
-                                      className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-all"
+                                      className="w-full pl-9 pr-8 py-2 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-all"
                                     />
                                     {teamPipelineSearchTerm && (
                                       <button
@@ -9019,7 +9019,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                                   {/* Status Selector */}
                                   <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                                    <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 shrink-0">
+                                    <div className="flex items-center gap-1.5 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 shrink-0">
                                       <Filter className="w-3.5 h-3.5 text-slate-400" />
                                       <span className="text-[10px] font-bold text-slate-400 uppercase">Status:</span>
                                       <select
@@ -9164,13 +9164,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                           </div>
 
                                           <div className="grid grid-cols-2 gap-2">
-                                            <div className="bg-white p-2.5 rounded-xl border border-slate-200/50">
+                                            <div className="bg-white/75 backdrop-blur-xl p-2.5 rounded-xl border border-slate-200/50">
                                               <span className="text-[9px] text-slate-400 font-bold uppercase block">Consultor</span>
                                               <span className="font-semibold text-slate-700 block mt-0.5 truncate">
                                                 {finder?.nome || lead.parceiroNome || "Membro da Equipe"}
                                               </span>
                                             </div>
-                                            <div className="bg-white p-2.5 rounded-xl border border-slate-200/50">
+                                            <div className="bg-white/75 backdrop-blur-xl p-2.5 rounded-xl border border-slate-200/50">
                                               <span className="text-[9px] text-slate-400 font-bold uppercase block">Crédito Estimado</span>
                                               <span className="font-extrabold text-emerald-700 block mt-0.5 font-mono">
                                                 {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Em análise"}
@@ -9215,7 +9215,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   </div>
 
                   {/* CONFIGURAÇÃO DE CÓDIGOS DE AFILIADO HUBLA (OPÇÃO B) */}
-                  <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-5">
+                  <div className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-5">
                     <div>
                       <h4 className="font-display font-extrabold text-sm text-slate-800 flex items-center gap-2">
                         <Link className="w-4 h-4 text-emerald-700" />
@@ -9317,12 +9317,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     return (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs">
+                          <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 p-5 rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                             <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Total de Indicados</span>
                             <span className="text-2xl font-black text-slate-800 block mt-1">{totalAffiliates}</span>
                             <span className="text-[10px] text-slate-400 block mt-1">Parceiros que utilizaram seu link</span>
                           </div>
-                          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs">
+                          <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 p-5 rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                             <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Assinantes Ativos</span>
                             <span className="text-2xl font-black text-emerald-800 block mt-1">
                               {affiliateStats.activeCount} <span className="text-xs text-slate-400 font-medium">de {totalAffiliates}</span>
@@ -9350,7 +9350,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
 
                         {/* Affiliates List */}
-                        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+                        <div className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] overflow-hidden">
                           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                             <span className="font-display font-extrabold text-sm text-slate-800">Parceiros Cadastrados ({referredPartners.length})</span>
                             <button 
@@ -9501,7 +9501,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* Controls Column */}
-                    <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+                    <div className="lg:col-span-5 bg-white/75 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-5">
                       <h4 className="font-display font-extrabold text-sm text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">
                         Parâmetros do Financiamento
                       </h4>
@@ -9719,25 +9719,25 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                       {/* Stat Metrics Grid */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Prazo Total</span>
                           <strong className="text-sm text-slate-800 font-extrabold">{advCarencia + advPrazoAmortizacao} meses</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5">{advCarencia} car. + {advPrazoAmortizacao} amort.</span>
                         </div>
 
-                        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Total de Juros</span>
                           <strong className="text-sm text-emerald-800 font-extrabold">{formatCurrencyBRL(calculateSchedule().totalJuros)}</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5 font-mono">Custo do capital</span>
                         </div>
 
-                        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Parcela Inicial</span>
                           <strong className="text-sm text-[#0A3D2E] font-extrabold">{formatCurrencyBRL(calculateSchedule().parcelaInicial)}</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5 font-mono">Mes 1 de amortiz.</span>
                         </div>
 
-                        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Parcela Final</span>
                           <strong className="text-sm text-slate-700 font-extrabold">{formatCurrencyBRL(calculateSchedule().parcelaFinal)}</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5 font-mono font-mono">Ultimo mes</span>
@@ -9762,7 +9762,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       </div>
 
                       {/* Detailed schedule list */}
-                      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+                      <div className="bg-white/75 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                           <h5 className="font-display font-extrabold text-sm text-slate-800">Tabela de Amortização Projetada</h5>
                           <span className="text-[10px] text-slate-400 font-bold">Total: {calculateSchedule().rows.length} meses</span>
@@ -9809,7 +9809,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       </div>
 
                       {/* Form Card for Lead and Socios Registration */}
-                      <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200/80 shadow-md space-y-6">
+                      <div className="bg-white/75 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-slate-200/80 shadow-md space-y-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                           <div>
                             <span className="text-[10px] bg-[#0A3D2E] text-white font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider font-mono">
@@ -9854,7 +9854,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="Razão Social Ltda"
                                   value={leadRazaoSocial}
                                   onChange={(e) => setLeadRazaoSocial(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -9865,7 +9865,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="00.000.000/0001-00"
                                   value={leadCnpj}
                                   onChange={(e) => setLeadCnpj(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -9876,7 +9876,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="Nome Completo"
                                   value={leadNome}
                                   onChange={(e) => setLeadNome(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -9887,7 +9887,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="(11) 99999-9999"
                                   value={leadWhatsapp}
                                   onChange={(e) => setLeadWhatsapp(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -9898,7 +9898,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="cliente@email.com"
                                   value={leadEmail}
                                   onChange={(e) => setLeadEmail(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -9909,7 +9909,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="Ex: Comércio, Tecnologia, Serviços"
                                   value={leadRamo}
                                   onChange={(e) => setLeadRamo(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -9918,7 +9918,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <select
                                   value={leadPorte}
                                   onChange={(e) => setLeadPorte(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                 >
                                   <option value="MEI">MEI (Microempreendedor Individual)</option>
                                   <option value="ME">ME (Microempresa)</option>
@@ -9931,7 +9931,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <select
                                   value={leadBancoPrincipal}
                                   onChange={(e) => setLeadBancoPrincipal(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                 >
                                   <option value="Banco do Brasil">Banco do Brasil</option>
                                   <option value="Caixa Econômica">Caixa Econômica</option>
@@ -9964,7 +9964,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                       placeholder="Ex: 50000"
                                       value={leadCapitalSocial}
                                       onChange={(e) => setLeadCapitalSocial(e.target.value)}
-                                      className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
+                                      className="w-full text-xs px-3.5 py-2.5 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                       required={leadMenosDe12Meses}
                                     />
                                   </div>
@@ -9975,7 +9975,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                       placeholder="Ex: 15000"
                                       value={leadMediaReceitaMensal}
                                       onChange={(e) => setLeadMediaReceitaMensal(e.target.value)}
-                                      className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
+                                      className="w-full text-xs px-3.5 py-2.5 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                       required={leadMenosDe12Meses}
                                     />
                                   </div>
@@ -9988,7 +9988,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     placeholder="Ex: 180000"
                                     value={leadFaturamento}
                                     onChange={(e) => setLeadFaturamento(e.target.value)}
-                                    className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
+                                    className="w-full text-xs px-3.5 py-2.5 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                     required={!leadMenosDe12Meses}
                                   />
                                 </div>
@@ -10011,7 +10011,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="Nome Completo do Sócio"
                                   value={socio1Nome}
                                   onChange={(e) => setSocio1Nome(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -10022,7 +10022,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="000.000.000-00"
                                   value={socio1Cpf}
                                   onChange={(e) => setSocio1Cpf(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -10032,7 +10032,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   type="date"
                                   value={socio1Birth}
                                   onChange={(e) => setSocio1Birth(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -10054,7 +10054,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="00000-00"
                                   value={endCep}
                                   onChange={(e) => setEndCep(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -10065,7 +10065,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="Ex: Av. Paulista"
                                   value={endLogradouro}
                                   onChange={(e) => setEndLogradouro(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -10076,7 +10076,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="Ex: 1000"
                                   value={endNumero}
                                   onChange={(e) => setEndNumero(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -10087,7 +10087,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="Ex: Bela Vista"
                                   value={endBairro}
                                   onChange={(e) => setEndBairro(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -10098,7 +10098,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="Ex: Apto 51"
                                   value={endComplemento}
                                   onChange={(e) => setEndComplemento(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                 />
                               </div>
                               <div className="sm:col-span-8 space-y-1">
@@ -10108,7 +10108,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   placeholder="Ex: São Paulo"
                                   value={endCidade}
                                   onChange={(e) => setEndCidade(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                   required
                                 />
                               </div>
@@ -10117,7 +10117,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <select
                                   value={endUf}
                                   onChange={(e) => setEndUf(e.target.value)}
-                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                 >
                                   <option value="AC">Acre</option>
                                   <option value="AL">Alagoas</option>
@@ -10175,7 +10175,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     placeholder="Nome do Segundo Sócio"
                                     value={socio2Nome}
                                     onChange={(e) => setSocio2Nome(e.target.value)}
-                                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                     required={hasSocio2}
                                   />
                                 </div>
@@ -10186,7 +10186,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     placeholder="000.000.000-00"
                                     value={socio2Cpf}
                                     onChange={(e) => setSocio2Cpf(e.target.value)}
-                                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                     required={hasSocio2}
                                   />
                                 </div>
@@ -10196,7 +10196,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     type="date"
                                     value={socio2Birth}
                                     onChange={(e) => setSocio2Birth(e.target.value)}
-                                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white/75 backdrop-blur-xl focus:outline-hidden focus:border-[#0A3D2E]"
                                     required={hasSocio2}
                                   />
                                 </div>
@@ -10471,7 +10471,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 placeholder="00.000.000/0001-00"
                 value={cnpjInputModal.inputCnpj}
                 onChange={(e) => setCnpjInputModal({ ...cnpjInputModal, inputCnpj: e.target.value })}
-                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-mono font-bold outline-none focus:border-[#0A3D2E]"
+                className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl p-3 text-xs font-mono font-bold outline-none focus:border-[#0A3D2E]"
               />
               <span className="text-[10px] text-slate-400 block">Digitação rápida ou cole o CNPJ para buscar os sócios e regime tributário.</span>
             </div>
@@ -10664,7 +10664,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       {/* CONSULTANT CAÇA-LEADS INSPECTION MODAL */}
       {selectedConsultantForInspection && (
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-fade-in overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col text-left">
+          <div className="bg-white/75 backdrop-blur-xl rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col text-left">
             {/* Modal Header */}
             <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
@@ -10712,7 +10712,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   <>
                     {/* Summary Metrics */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs text-center">
+                      <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-2xl border border-slate-200 shadow-2xs text-center">
                         <span className="text-[10px] text-slate-400 font-extrabold uppercase block">Total Direcionados</span>
                         <span className="text-xl font-black text-slate-800 mt-1 block">{totalCount}</span>
                       </div>
@@ -10724,7 +10724,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         <span className="text-[10px] text-emerald-700 font-extrabold uppercase block">Convertidos</span>
                         <span className="text-xl font-black text-emerald-600 mt-1 block">{convertidos}</span>
                       </div>
-                      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs text-center flex flex-col justify-between">
+                      <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-2xl border border-slate-200 shadow-2xs text-center flex flex-col justify-between">
                         <div>
                           <span className="text-[10px] text-slate-400 font-extrabold uppercase block">Descartados</span>
                           <span className="text-xl font-black text-slate-500 mt-1 block">{descartados}</span>
@@ -10745,7 +10745,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </div>
 
                     {/* Filters & Bulk Transfer / Delete Discarded Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white/75 backdrop-blur-xl p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
                       <div className="relative w-full sm:w-72">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
@@ -10805,7 +10805,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                     {/* Distributed Leads List */}
                     {filtered.length === 0 ? (
-                      <div className="py-12 bg-white rounded-2xl border border-dashed border-slate-200 text-center space-y-3">
+                      <div className="py-12 bg-white/75 backdrop-blur-xl rounded-2xl border border-dashed border-slate-200 text-center space-y-3">
                         <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
                           <Search className="w-6 h-6" />
                         </div>
@@ -10834,7 +10834,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           const hasCnpj = !!lead.cnpj;
 
                           return (
-                            <div key={lead.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3 hover:border-emerald-300 transition-all flex flex-col justify-between">
+                            <div key={lead.id} className="bg-white/75 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3 hover:border-emerald-300 transition-all flex flex-col justify-between">
                               <div>
                                 <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
                                   <div>
@@ -11013,7 +11013,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 <select
                   value={reassignTargetMemberId}
                   onChange={(e) => setReassignTargetMemberId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500 focus:bg-white/75 backdrop-blur-xl transition-all cursor-pointer"
                 >
                   <option value="">Selecione um consultor da sua equipe...</option>
                   {teamMembers
@@ -11035,7 +11035,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   value={reassignReason}
                   onChange={(e) => setReassignReason(e.target.value)}
                   placeholder="Ex: Consultor inativo, ausência, readequação de carteira..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 outline-none focus:border-indigo-500 focus:bg-white/75 backdrop-blur-xl transition-all"
                 />
               </div>
             </div>
@@ -11153,7 +11153,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   <select
                     value={bulkReassignTargetId}
                     onChange={(e) => setBulkReassignTargetId(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500 focus:bg-white/75 backdrop-blur-xl transition-all cursor-pointer"
                   >
                     <option value="">Selecione o novo consultor...</option>
                     {teamMembers
@@ -11533,7 +11533,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+            className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
           >
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-3 bg-gradient-to-br from-slate-50 to-emerald-50/30">
@@ -11860,7 +11860,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+            className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
           >
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-3 bg-gradient-to-br from-slate-50 to-emerald-50/30">
@@ -12155,7 +12155,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 font-mono font-bold text-xs text-slate-800 select-all truncate">
+                      <div className="flex-1 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl px-3.5 py-2.5 font-mono font-bold text-xs text-slate-800 select-all truncate">
                         prosfec.tesouraria@gmail.com
                       </div>
                       <button

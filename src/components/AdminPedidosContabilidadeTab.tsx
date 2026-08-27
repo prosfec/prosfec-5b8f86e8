@@ -382,7 +382,7 @@ export default function AdminPedidosContabilidadeTab({ userRole }: AdminPedidosC
       </div>
 
       {/* Barra de Filtros e Busca */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3.5">
+      <div className="bg-white/75 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-3.5">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           {/* Campo de Busca */}
           <div className="relative flex-1">
@@ -392,7 +392,7 @@ export default function AdminPedidosContabilidadeTab({ userRole }: AdminPedidosC
               placeholder="Buscar por cliente, parceiro, serviço, ID do pedido ou observações..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-9 py-2.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-9 py-2.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white/75 backdrop-blur-xl focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all"
             />
             {searchTerm && (
               <button
@@ -412,7 +412,7 @@ export default function AdminPedidosContabilidadeTab({ userRole }: AdminPedidosC
             <select
               value={categoriaFilter}
               onChange={(e) => setCategoriaFilter(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#00A86B]"
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:bg-white/75 backdrop-blur-xl focus:border-[#00A86B]"
             >
               <option value="todas">Todas as Categorias</option>
               {categoriasDisponiveis.map((cat) => (
@@ -458,7 +458,7 @@ export default function AdminPedidosContabilidadeTab({ userRole }: AdminPedidosC
       </div>
 
       {/* Tabela de Pedidos */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] overflow-hidden">
         {loading ? (
           <div className="p-12 text-center space-y-3">
             <RefreshCw className="w-8 h-8 text-[#00A86B] animate-spin mx-auto" />
@@ -598,7 +598,7 @@ export default function AdminPedidosContabilidadeTab({ userRole }: AdminPedidosC
       {/* MODAL / WORKSPACE DE EXECUÇÃO DO SERVIÇO */}
       {selectedPedido && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in">
-          <div className="bg-white w-full max-w-3xl rounded-3xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-auto max-h-[90vh]">
+          <div className="bg-white/75 backdrop-blur-xl w-full max-w-3xl rounded-3xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-auto max-h-[90vh]">
             
             {/* Modal Header */}
             <div className="p-5 sm:p-6 bg-slate-900 text-white flex items-start justify-between gap-4 shrink-0">

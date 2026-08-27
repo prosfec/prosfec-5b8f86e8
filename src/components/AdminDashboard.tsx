@@ -2625,7 +2625,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     placeholder="adm.prosfec@gmail.com"
-                    className="appearance-none block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#00A86B] focus:border-transparent text-sm font-medium text-slate-900 bg-slate-50 focus:bg-white transition-all shadow-inner"
+                    className="appearance-none block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#00A86B] focus:border-transparent text-sm font-medium text-slate-900 bg-slate-50 focus:bg-white/75 backdrop-blur-xl transition-all shadow-inner"
                   />
                 </div>
               </div>
@@ -2641,7 +2641,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     placeholder="••••••••"
-                    className="appearance-none block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#00A86B] focus:border-transparent text-sm font-medium text-slate-900 bg-slate-50 focus:bg-white transition-all shadow-inner"
+                    className="appearance-none block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#00A86B] focus:border-transparent text-sm font-medium text-slate-900 bg-slate-50 focus:bg-white/75 backdrop-blur-xl transition-all shadow-inner"
                   />
                 </div>
               </div>
@@ -2687,9 +2687,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-slate-50 text-slate-800">
+    <div className="min-h-screen flex flex-col font-sans text-slate-800">
       {/* Top Banner Header */}
-      <header className="bg-[#0A3D2E] text-slate-100 border-b border-emerald-800/50 py-3.5 px-4 sm:px-6 sticky top-0 z-40 shadow-sm backdrop-blur-md">
+      <header className="glass-panel-dark rounded-none text-slate-100 border-x-0 border-t-0 py-3.5 px-4 sm:px-6 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-950/70 p-2.5 rounded-xl text-emerald-300 border border-emerald-700/40 shadow-xs">
@@ -2747,7 +2747,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           {/* Sidebar Left Column */}
           <div className="w-full lg:w-80 shrink-0 space-y-6 lg:sticky lg:top-24">
             {/* Admin Profile/Control Card */}
-            <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-xs flex flex-col justify-between border border-emerald-500/20 min-h-[160px]">
+            <div className="glass-panel-dark glass-raise text-white p-5 sm:p-6 relative overflow-hidden flex flex-col justify-between min-h-[160px]">
               <div className="absolute right-[-40px] top-[-40px] w-36 h-36 rounded-full bg-emerald-400/10 pointer-events-none" />
               <div className="space-y-4 relative z-10">
                 <div className="flex items-start justify-between">
@@ -2766,15 +2766,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             </div>
 
             {/* Vertical Navigation Tabs */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-3 shadow-xs flex flex-col gap-1 text-left">
+            <div className="glass-panel p-3 flex flex-col gap-1 text-left">
               <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-widest px-3 py-1 mb-1 block">Gestão do Sistema</span>
               
               <button
                 onClick={() => { setActiveTab("funnel"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "funnel"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2788,8 +2788,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("leads"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "leads"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2803,8 +2803,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("partners"); setSearchTerm(""); setStatusFilter("todos"); setPartnersPage(1); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "partners"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2818,8 +2818,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("announcements"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "announcements"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2833,8 +2833,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("recargas"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group relative ${
                   activeTab === "recargas"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2853,8 +2853,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("comissoes"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group relative ${
                   activeTab === "comissoes"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2873,8 +2873,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("precos"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "precos"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2888,8 +2888,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("servicos_contabilidade"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "servicos_contabilidade"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2903,8 +2903,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("resets"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group relative ${
                   activeTab === "resets"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2924,7 +2924,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           {/* Right Column - Main Content Card */}
           <div className="flex-grow w-full space-y-6 min-w-0">
             {/* Main Database view card */}
-            <div className="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
+            <div className="bg-white/75 backdrop-blur-xl rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] border border-slate-200/90 overflow-hidden">
               
               {/* Navigation tabs inside list card */}
               <div className="border-b border-slate-100 bg-slate-50/50 p-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
@@ -2974,7 +2974,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder={activeTab === "leads" ? "Buscar por empresa, CNPJ, razão social ou email..." : "Buscar por parceiro, WhatsApp, email..."}
-                    className="pl-9 pr-8 py-2 w-full text-xs md:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#00A86B] focus:bg-white transition-all text-slate-800 placeholder:text-slate-400"
+                    className="pl-9 pr-8 py-2 w-full text-xs md:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#00A86B] focus:bg-white/75 backdrop-blur-xl transition-all text-slate-800 placeholder:text-slate-400"
                   />
                   {searchTerm && (
                     <button
@@ -3140,7 +3140,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="py-1.5 px-2.5 w-full text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-medium cursor-pointer"
+                      className="py-1.5 px-2.5 w-full text-xs bg-white/75 backdrop-blur-xl border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-medium cursor-pointer"
                     >
                       <option value="todos">Todos os Status</option>
                       <option value="novo">Novo</option>
@@ -3157,7 +3157,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <select
                         value={porteFilter}
                         onChange={(e) => setPorteFilter(e.target.value)}
-                        className="py-1.5 px-2.5 w-full text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-medium cursor-pointer"
+                        className="py-1.5 px-2.5 w-full text-xs bg-white/75 backdrop-blur-xl border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-medium cursor-pointer"
                       >
                         <option value="todos">Todos os Portes</option>
                         <option value="MEI">MEI</option>
@@ -3171,7 +3171,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <select
                         value={porteFilter}
                         onChange={(e) => setPorteFilter(e.target.value)}
-                        className="py-1.5 px-2.5 w-full text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-medium cursor-pointer"
+                        className="py-1.5 px-2.5 w-full text-xs bg-white/75 backdrop-blur-xl border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-medium cursor-pointer"
                       >
                         <option value="todos">Todos os Planos</option>
                         <option value="STARTER">STARTER</option>
@@ -3188,7 +3188,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <select
                         value={preparacaoFilter}
                         onChange={(e) => setPreparacaoFilter(e.target.value)}
-                        className="py-1.5 px-2.5 w-full text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-medium cursor-pointer"
+                        className="py-1.5 px-2.5 w-full text-xs bg-white/75 backdrop-blur-xl border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-medium cursor-pointer"
                       >
                         <option value="todos">Todos os Níveis</option>
                         <option value="alto">Alto</option>
@@ -3205,7 +3205,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <select
                         value={etapaFilter}
                         onChange={(e) => setEtapaFilter(e.target.value)}
-                        className="py-1.5 px-2.5 w-full text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-medium cursor-pointer truncate"
+                        className="py-1.5 px-2.5 w-full text-xs bg-white/75 backdrop-blur-xl border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#00A86B] text-slate-800 font-medium cursor-pointer truncate"
                       >
                         <option value="todos">Todas as Etapas (1 a 8)</option>
                         <option value="1">1. Dados cadastrais CNPJ</option>
@@ -3317,7 +3317,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           {etapaFilter !== "todos" && (
                             <button
                               onClick={() => setEtapaFilter("todos")}
-                              className="text-xs bg-white hover:bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg border border-slate-200 transition-all cursor-pointer shadow-xs"
+                              className="text-xs bg-white/75 backdrop-blur-xl hover:bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg border border-slate-200 transition-all cursor-pointer shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]"
                             >
                               Mostrar Todas Etapas
                             </button>
@@ -3566,7 +3566,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <select
                                   value={stageNum}
                                   onChange={(e) => handleUpdateEtapa(lead.id, Number(e.target.value))}
-                                  className="w-full text-[10px] px-2 py-1.5 rounded-lg font-bold bg-white border border-slate-200 text-slate-700 focus:outline-hidden cursor-pointer truncate"
+                                  className="w-full text-[10px] px-2 py-1.5 rounded-lg font-bold bg-white/75 backdrop-blur-xl border border-slate-200 text-slate-700 focus:outline-hidden cursor-pointer truncate"
                                 >
                                   <option value={1}>1. Dados CNPJ</option>
                                   <option value={2}>2. Dados Sócios</option>
@@ -3801,7 +3801,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <select
                                   value={lead.etapa || 1}
                                   onChange={(e) => handleUpdateEtapa(lead.id, Number(e.target.value))}
-                                  className="text-[11px] px-2 py-1 rounded-lg font-bold cursor-pointer focus:outline-hidden bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 max-w-[125px] truncate"
+                                  className="text-[11px] px-2 py-1 rounded-lg font-bold cursor-pointer focus:outline-hidden bg-white/75 backdrop-blur-xl border border-slate-200 text-slate-700 hover:bg-slate-50 max-w-[125px] truncate"
                                 >
                                   <option value={1}>1. Dados CNPJ</option>
                                   <option value={2}>2. Sócios</option>
@@ -3898,7 +3898,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <button
                           onClick={() => setLeadsPage(prev => Math.max(prev - 1, 1))}
                           disabled={leadsPage === 1}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white/75 backdrop-blur-xl hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                         >
                           Anterior
                         </button>
@@ -3918,7 +3918,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <button
                           onClick={() => setLeadsPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}
                           disabled={leadsPage === Math.ceil(filteredLeads.length / itemsPerPage)}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white/75 backdrop-blur-xl hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                         >
                           Próximo
                         </button>
@@ -4394,7 +4394,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <button
                           onClick={() => setPartnersPage(prev => Math.max(prev - 1, 1))}
                           disabled={partnersPage === 1}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white/75 backdrop-blur-xl hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                         >
                           Anterior
                         </button>
@@ -4414,7 +4414,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <button
                           onClick={() => setPartnersPage(prev => Math.min(prev + 1, Math.ceil(filteredPartners.length / itemsPerPage)))}
                           disabled={partnersPage === Math.ceil(filteredPartners.length / itemsPerPage)}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                          className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white/75 backdrop-blur-xl hover:bg-slate-50 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                         >
                           Próximo
                         </button>
@@ -4458,7 +4458,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               handleOpenNewAnnouncement();
                               handleApplyPreset(preset);
                             }}
-                            className="px-3 py-1.5 bg-white border border-slate-200 hover:border-indigo-400 rounded-lg text-xs font-bold text-slate-700 transition-all flex items-center gap-1 cursor-pointer"
+                            className="px-3 py-1.5 bg-white/75 backdrop-blur-xl border border-slate-200 hover:border-indigo-400 rounded-lg text-xs font-bold text-slate-700 transition-all flex items-center gap-1 cursor-pointer"
                           >
                             <Plus className="w-3 h-3 text-indigo-500" />
                             {preset.titulo}
@@ -4769,7 +4769,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
 
                           {/* Card 2 */}
-                          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+                          <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200 shadow-2xs">
                             <div className="flex items-center justify-between text-slate-600 mb-1">
                               <span className="text-[11px] font-black uppercase tracking-wider font-mono">Comissões Pagas</span>
                               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -4783,7 +4783,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
 
                           {/* Card 3 */}
-                          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+                          <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200 shadow-2xs">
                             <div className="flex items-center justify-between text-blue-800 mb-1">
                               <span className="text-[11px] font-black uppercase tracking-wider font-mono">Aguardando Hubla</span>
                               <Clock className="w-4 h-4 text-blue-600" />
@@ -4797,7 +4797,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
 
                           {/* Card 4 */}
-                          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+                          <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200 shadow-2xs">
                             <div className="flex items-center justify-between text-slate-600 mb-1">
                               <span className="text-[11px] font-black uppercase tracking-wider font-mono">Volume Total Serviços</span>
                               <TrendingUp className="w-4 h-4 text-emerald-600" />
@@ -4880,7 +4880,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         value={comissoesSearch}
                         onChange={(e) => setComissoesSearch(e.target.value)}
                         placeholder="Buscar por parceiro, e-mail, chave PIX..."
-                        className="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-emerald-600"
+                        className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-emerald-600"
                       />
                     </div>
                   </div>
@@ -5191,7 +5191,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             value={newServNome}
                             onChange={(e) => setNewServNome(e.target.value)}
                             placeholder="Ex: Regularização de Protestos e Cartórios"
-                            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-emerald-500"
+                            className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-emerald-500"
                           />
                         </div>
                         <div className="sm:col-span-2">
@@ -5203,7 +5203,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             value={newServValor}
                             onChange={(e) => setNewServValor(e.target.value === "" ? "" : Number(e.target.value))}
                             placeholder="350.00"
-                            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500"
+                            className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500"
                           />
                         </div>
                         <div className="sm:col-span-4">
@@ -5214,7 +5214,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               value={newServHublaLink}
                               onChange={(e) => setNewServHublaLink(e.target.value)}
                               placeholder="https://lastlink.com/p/..."
-                              className="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 font-mono"
+                              className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 font-mono"
                             />
                             <Link2 className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                           </div>
@@ -5301,7 +5301,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                             return updated;
                                           }));
                                         }}
-                                        className="w-full rounded-lg border border-slate-200 py-1 pl-7 pr-2 text-xs font-mono text-slate-700 bg-slate-50/50 focus:bg-white focus:border-emerald-500 focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-200 py-1 pl-7 pr-2 text-xs font-mono text-slate-700 bg-slate-50/50 focus:bg-white/75 backdrop-blur-xl focus:border-emerald-500 focus:outline-none"
                                       />
                                       <Link2 className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" />
                                     </div>
@@ -5444,7 +5444,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         value={resetsSearch}
                         onChange={(e) => setResetsSearch(e.target.value)}
                         placeholder="Buscar por Razão, CNPJ ou Nome..."
-                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-500 font-medium"
+                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl outline-none focus:border-emerald-500 font-medium"
                       />
                     </div>
                   </div>
@@ -5564,7 +5564,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   </span>
                                   {currentPass ? (
                                     <div className="flex items-center gap-1.5">
-                                      <span className="font-mono text-xs font-black text-slate-900 bg-white border border-slate-200 px-2 py-1 rounded-lg">
+                                      <span className="font-mono text-xs font-black text-slate-900 bg-white/75 backdrop-blur-xl border border-slate-200 px-2 py-1 rounded-lg">
                                         {isShowPass ? currentPass : "••••••••"}
                                       </span>
                                       <button
@@ -5902,7 +5902,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <select
                       value={editingPendenciasStatus}
                       onChange={(e) => setEditingPendenciasStatus(e.target.value as 'pendente' | 'resolvida')}
-                      className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] focus:outline-hidden bg-white text-slate-800"
+                      className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] focus:outline-hidden bg-white/75 backdrop-blur-xl text-slate-800"
                     >
                       <option value="pendente">⚠️ Pendente (Requer Atenção do Parceiro)</option>
                       <option value="resolvida">✓ Resolvida / Sem Pendências</option>
@@ -5918,7 +5918,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       value={editingPendenciasMsg}
                       onChange={(e) => setEditingPendenciasMsg(e.target.value)}
                       placeholder="Ex: Por gentileza, nos envie a declaração de faturamento dos últimos 12 meses assinada pelo contador."
-                      className="w-full text-xs font-semibold p-3 rounded-xl border border-slate-200 focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] focus:outline-hidden bg-white text-slate-800"
+                      className="w-full text-xs font-semibold p-3 rounded-xl border border-slate-200 focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] focus:outline-hidden bg-white/75 backdrop-blur-xl text-slate-800"
                     />
                   </div>
 
@@ -6008,7 +6008,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           const gen = generateClientPassword();
                           setResetNewPasswords(prev => ({ ...prev, [selectedLead.id]: gen }));
                         }}
-                        className="absolute right-1 top-1 px-2 py-0.5 bg-white hover:bg-slate-100 text-slate-700 text-[10px] font-bold rounded-lg border border-slate-200 cursor-pointer"
+                        className="absolute right-1 top-1 px-2 py-0.5 bg-white/75 backdrop-blur-xl hover:bg-slate-100 text-slate-700 text-[10px] font-bold rounded-lg border border-slate-200 cursor-pointer"
                       >
                         🎲 Gerar
                       </button>
@@ -6599,7 +6599,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 {/* Texto do Diagnóstico IA e Serviços Recomendados (Apenas se Passo 3 concluído) */}
                 {selectedLead.diagnosticoPROSFEC ? (
                   <>
-                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4 shadow-xs">
+                    <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 rounded-2xl p-5 space-y-4 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 border-b border-slate-100 pb-2.5">
                         <span className="font-bold text-emerald-800 flex items-center gap-1.5">
                           <CheckCircle className="w-4 h-4 text-emerald-600" />
@@ -6623,7 +6623,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </div>
 
                     {/* Lista de Serviços Recomendados do Lead */}
-                    <div className="bg-white border border-slate-200/80 rounded-xl p-4 space-y-3 shadow-2xs">
+                    <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 rounded-xl p-4 space-y-3 shadow-2xs">
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
                         <h5 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                           <DollarSign className="w-4 h-4 text-emerald-600" />
@@ -6647,7 +6647,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 {serv.descricao && <span className="text-[10px] text-slate-500 block truncate">{serv.descricao}</span>}
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-1">
+                                <div className="flex items-center gap-1 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-lg px-2 py-1">
                                   <span className="text-[10px] text-slate-400 font-bold">R$</span>
                                   <input
                                     type="number"
@@ -6969,7 +6969,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           const gen = generateClientPassword();
                           setResetNewPasswords(prev => ({ ...prev, [selectedLead.id]: gen }));
                         }}
-                        className="absolute right-1 top-1 px-2 py-0.5 bg-white hover:bg-slate-100 text-slate-700 text-[10px] font-bold rounded-lg border border-slate-200 cursor-pointer"
+                        className="absolute right-1 top-1 px-2 py-0.5 bg-white/75 backdrop-blur-xl hover:bg-slate-100 text-slate-700 text-[10px] font-bold rounded-lg border border-slate-200 cursor-pointer"
                       >
                         🎲 Gerar
                       </button>
@@ -7028,7 +7028,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </div>
 
                     {editingSubEtapasPasso6.length === 0 ? (
-                      <div className="text-center py-6 px-4 bg-white rounded-xl border border-dashed border-slate-200 space-y-2">
+                      <div className="text-center py-6 px-4 bg-white/75 backdrop-blur-xl rounded-xl border border-dashed border-slate-200 space-y-2">
                         <p className="text-xs font-bold text-slate-600">
                           Nenhuma sub-etapa configurada para o Passo 6 deste lead ainda.
                         </p>
@@ -7041,7 +7041,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         {editingSubEtapasPasso6.map((sub: any, idx: number) => {
                           const isPaid = sub.statusPagamento === "pago" || sub.pago === true;
                           return (
-                            <div key={sub.id || idx} className="flex flex-wrap items-center justify-between gap-2.5 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+                            <div key={sub.id || idx} className="flex flex-wrap items-center justify-between gap-2.5 bg-white/75 backdrop-blur-xl p-3 rounded-xl border border-slate-200 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                               <div className="flex items-center gap-2.5 flex-1 min-w-[200px]">
                                 <input
                                   type="checkbox"
@@ -7200,7 +7200,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             };
                             setEditingSubEtapasPasso6([...editingSubEtapasPasso6, newSub]);
                           }}
-                          className="px-3 py-1.5 bg-white border border-slate-200 hover:border-emerald-300 text-slate-700 text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                          className="px-3 py-1.5 bg-white/75 backdrop-blur-xl border border-slate-200 hover:border-emerald-300 text-slate-700 text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
                         >
                           <Plus className="w-3.5 h-3.5 text-emerald-600" />
                           Adicionar Sub-etapa
@@ -7244,7 +7244,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 </p>
 
                 {!selectedLead.historicoEtapas || selectedLead.historicoEtapas.length === 0 ? (
-                  <div className="text-center py-4 text-xs text-slate-400 font-bold bg-white rounded-xl border border-dashed border-slate-200">
+                  <div className="text-center py-4 text-xs text-slate-400 font-bold bg-white/75 backdrop-blur-xl rounded-xl border border-dashed border-slate-200">
                     Nenhum registro de alteração de etapa para este lead ainda.
                   </div>
                 ) : (
@@ -7806,7 +7806,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     <select
                                       value={lead.etapa}
                                       onChange={(e) => handleUpdateEtapa(lead.id, Number(e.target.value))}
-                                      className="w-full py-1 px-2 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 cursor-pointer focus:border-[#00A86B] focus:outline-hidden"
+                                      className="w-full py-1 px-2 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 cursor-pointer focus:border-[#00A86B] focus:outline-hidden"
                                     >
                                       <option value="1">1. Dados cadastrais CNPJ</option>
                                       <option value="2">2. Coleta de dados dos Sócios</option>
@@ -7824,7 +7824,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     <select
                                       value={lead.status}
                                       onChange={(e) => handleUpdateStatus(lead.id, "leads", e.target.value)}
-                                      className="w-full py-1 px-2 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 cursor-pointer focus:border-[#00A86B] focus:outline-hidden"
+                                      className="w-full py-1 px-2 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 cursor-pointer focus:border-[#00A86B] focus:outline-hidden"
                                     >
                                       <option value="novo">Novo</option>
                                       <option value="em atendimento">Em Atendimento</option>
@@ -7958,7 +7958,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         key={i}
                         type="button"
                         onClick={() => handleApplyPreset(preset)}
-                        className="px-2.5 py-1 bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-800 border border-slate-200 rounded-lg text-[10px] font-bold transition-all shadow-2xs hover:border-indigo-300 cursor-pointer"
+                        className="px-2.5 py-1 bg-white/75 backdrop-blur-xl hover:bg-indigo-50 text-slate-700 hover:text-indigo-800 border border-slate-200 rounded-lg text-[10px] font-bold transition-all shadow-2xs hover:border-indigo-300 cursor-pointer"
                       >
                         {preset.titulo.split(" ")[0]} - {preset.titulo.split(" ").slice(1, 3).join(" ")}
                       </button>
@@ -7976,7 +7976,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   placeholder="Ex: Super Campanha de Indicação Pronampe"
                   value={annTitulo}
                   onChange={(e) => setAnnTitulo(e.target.value)}
-                  className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white text-slate-800 transition-all"
+                  className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white/75 backdrop-blur-xl text-slate-800 transition-all"
                 />
               </div>
 
@@ -7989,7 +7989,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   placeholder="Escreva a mensagem detalhada que o parceiro irá visualizar. Dica: você pode pular linhas para organizar o texto."
                   value={annMensagem}
                   onChange={(e) => setAnnMensagem(e.target.value)}
-                  className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white text-slate-800 transition-all"
+                  className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white/75 backdrop-blur-xl text-slate-800 transition-all"
                 />
               </div>
 
@@ -8002,7 +8002,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     placeholder="https://exemplo.com/banner.jpg"
                     value={annImagemUrl}
                     onChange={(e) => setAnnImagemUrl(e.target.value)}
-                    className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white text-slate-800 transition-all font-mono"
+                    className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white/75 backdrop-blur-xl text-slate-800 transition-all font-mono"
                   />
                   <span className="text-[10px] text-slate-400 mt-0.5 block">Use uma URL pública de imagem JPG/PNG.</span>
                 </div>
@@ -8013,7 +8013,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   <select
                     value={annPublicoAlvo}
                     onChange={(e) => setAnnPublicoAlvo(e.target.value as any)}
-                    className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white text-slate-800 transition-all"
+                    className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white/75 backdrop-blur-xl text-slate-800 transition-all"
                   >
                     <option value="todos">Todos os Parceiros</option>
                     <option value="executive">Apenas Executive Partners</option>
@@ -8032,7 +8032,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     placeholder="https://t.me/seu_grupo"
                     value={annLinkUrl}
                     onChange={(e) => setAnnLinkUrl(e.target.value)}
-                    className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white text-slate-800 transition-all font-mono"
+                    className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white/75 backdrop-blur-xl text-slate-800 transition-all font-mono"
                   />
                 </div>
 
@@ -8044,7 +8044,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     placeholder="Ex: Acessar Grupo Telegram"
                     value={annLinkTexto}
                     onChange={(e) => setAnnLinkTexto(e.target.value)}
-                    className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white text-slate-800 transition-all"
+                    className="w-full text-sm py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white/75 backdrop-blur-xl text-slate-800 transition-all"
                   />
                 </div>
               </div>
