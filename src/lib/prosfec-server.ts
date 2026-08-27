@@ -2658,6 +2658,39 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const payload = req.body || {};
       console.log("[LASTLINK WEBHOOK] Evento recebido (autenticado).");
 
+      // ---- Idempotência: ignora reenvio do mesmo evento ----
+      const eventKey = (
+        payload.id ||
+        payload.eventId ||
+        payload.data?.id ||
+        payload.data?.order?.id ||
+        payload.data?.transaction?.id ||
+        payload.order?.id ||
+        payload.transaction_id ||
+        ""
+      ).toString().trim();
+
+      if (eventKey) {
+        try {
+          const dupSnap = await getDocs(
+            query(collection(db, "webhook_logs_lastlink"), where("eventKey", "==", eventKey))
+          );
+          if (!dupSnap.empty) {
+            console.warn(`[LASTLINK WEBHOOK] Evento duplicado ignorado (eventKey=${eventKey}).`);
+            return res.json({ received: true, duplicated: true, message: "Evento já processado anteriormente." });
+          }
+          await addDoc(collection(db, "webhook_logs_lastlink"), {
+            data: new Date().toISOString(),
+            status: "recebido",
+            eventKey,
+          });
+        } catch (dupErr) {
+          console.warn("[LASTLINK WEBHOOK] Falha ao verificar idempotência:", dupErr?.message || dupErr);
+        }
+      }
+
+
+
 
       // Extrai os dados do evento da LastLink
       const eventType = (payload.event || payload.eventType || payload.type || payload.status || "").toString().toLowerCase();
