@@ -104,7 +104,12 @@ export function createExpressApp() {
     apiKey:
       firstEnv("FIREBASE_API_KEY", "GOOGLE_API_KEY") || (firebaseConfig as any).apiKey,
   };
-  const firebaseApp = getApps().length ? getApp() : initializeApp(serverFirebaseConfig);
+  // App nomeado exclusivo do backend, para não herdar a instância do navegador
+  // (que usa a chave restrita por referenciador).
+  const SERVER_APP_NAME = "prosfec-server";
+  const existingServerApp = getApps().find((a) => a.name === SERVER_APP_NAME);
+  const firebaseApp =
+    existingServerApp || initializeApp(serverFirebaseConfig, SERVER_APP_NAME);
   const db = (firebaseConfig as any).firestoreDatabaseId
     ? getFirestore(firebaseApp, (firebaseConfig as any).firestoreDatabaseId)
     : getFirestore(firebaseApp);
