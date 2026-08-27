@@ -5663,9 +5663,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           </div>
         </div>
       </div>
-    </div>
 
       </main>
+      </div>
+
 
       {/* LEAD DETAIL MODAL - Caixa Flutuante (Floating Modal) */}
       {selectedLead && (
