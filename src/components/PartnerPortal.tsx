@@ -11441,14 +11441,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   <div className="bg-emerald-50/70 border border-emerald-200/80 p-3.5 rounded-2xl flex items-center justify-between">
                     <div>
                       <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wide block">
-                        Saldo Disponível para Saque
+                        {isVendas ? "Saldo de Comissões de Vendas" : "Saldo de Comissões de Serviços (Passo 6)"}
                       </span>
                       <span className="text-xl font-black text-emerald-900 font-display">
                         {formatCurrencyBRL(saldoLiquidoDisponivel)}
                       </span>
                     </div>
                     <div className="text-right text-[10px] font-mono text-emerald-700 space-y-0.5">
-                      <div>Total liberado: {formatCurrencyBRL(totalLiberada)}</div>
+                      <div>Total liberado: {formatCurrencyBRL(baseLiberada)}</div>
                       <div>Em análise/pagos: {formatCurrencyBRL(totalSaquesJaRealizados + totalSaquesEmAndamento)}</div>
                     </div>
                   </div>
