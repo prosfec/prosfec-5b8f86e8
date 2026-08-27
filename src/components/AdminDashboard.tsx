@@ -4944,6 +4944,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   {sol.partnerWhatsapp && (
                                     <div className="text-[10px] text-emerald-700 font-mono">{sol.partnerWhatsapp}</div>
                                   )}
+                                  <span className={`inline-block mt-1 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                                    (sol as any).origem === "vendas"
+                                      ? "bg-sky-50 text-sky-700 border border-sky-200"
+                                      : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  }`}>
+                                    {(sol as any).origem === "vendas" ? "Comissões de Vendas" : "Serviços Passo 6"}
+                                  </span>
                                 </td>
 
                                 <td className="py-3 px-4">
