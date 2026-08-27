@@ -28,7 +28,9 @@ import {
   Scale,
   DollarSign,
   ShieldAlert,
-  RotateCw
+  RotateCw,
+  Link2,
+  ExternalLink
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { doc, updateDoc } from "firebase/firestore";
@@ -36,6 +38,102 @@ import { db } from "../firebase";
 import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPessoal, AnaliseRTB } from "../types";
 import { formatCurrencyBRL, sanitizeFirestoreData, validateUploadedFile } from "../utils";
 import RTBAuditoriaViewerModal from "./RTBAuditoriaViewerModal";
+
+/**
+ * Campo de link de documento em nuvem (Google Drive, OneDrive, Dropbox...).
+ * Substitui o antigo upload em base64 — grava apenas a URL no mesmo campo do Firestore.
+ */
+const DocLinkInput = ({
+  label,
+  value,
+  onChange,
+  required = false,
+  hint
+}: {
+  label: string;
+  value?: string;
+  onChange: (url: string) => void;
+  required?: boolean;
+  hint?: string;
+}) => {
+  const current = value || "";
+  const isLegacyBase64 = current.startsWith("data:");
+  const isInvalid = !!current && !isLegacyBase64 && !/^https?:\/\//i.test(current.trim());
+
+  return (
+    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Link2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="text-xs font-bold text-slate-800 truncate">
+            {label}{required ? " *" : ""}
+          </span>
+        </div>
+        {current ? (
+          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full shrink-0">
+            Link salvo
+          </span>
+        ) : (
+          <span className="text-[10px] text-slate-400 font-medium shrink-0">Pendente</span>
+        )}
+      </div>
+
+      {isLegacyBase64 ? (
+        <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5 font-medium">
+          Arquivo antigo anexado. Limpe e cole o link do documento na nuvem.
+        </p>
+      ) : (
+        <input
+          type="url"
+          inputMode="url"
+          value={current}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Cole aqui o link do Google Drive..."
+          aria-label={`Link do documento: ${label}`}
+          className={`w-full bg-white border text-slate-800 text-[11px] rounded-xl px-2.5 py-2 focus:outline-hidden font-medium ${
+            isInvalid ? "border-rose-300 focus:border-rose-500" : "border-slate-200 focus:border-emerald-600"
+          }`}
+        />
+      )}
+
+      {isInvalid && (
+        <p className="text-[10px] text-rose-600 font-bold flex items-center gap-1">
+          <AlertTriangle className="w-3 h-3 shrink-0" />
+          O link deve começar com https://
+        </p>
+      )}
+
+      {hint && !isInvalid && (
+        <p className="text-[10px] text-slate-500 leading-snug">{hint}</p>
+      )}
+
+      {current && (
+        <div className="flex items-center gap-1.5">
+          {!isInvalid && !isLegacyBase64 && (
+            <a
+              href={current}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Abrir link
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 rounded-xl text-[11px] font-bold cursor-pointer transition-colors"
+            title="Remover link"
+          >
+            Limpar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 interface FichaRatingCreditoFormProps {
   lead: Lead;
@@ -192,35 +290,43 @@ export default function FichaRatingCreditoForm({
     });
   };
 
-  // Upload handler for CPF documents (Images / Documents)
-  const handleSocioFileUpload = async (
+  // Grava o LINK do documento do sócio (mesmo campo do Firestore, agora com URL)
+  const handleSocioLinkChange = (
     socioIndex: number,
     fieldName: keyof SocioRatingCPF,
-    file: File | null
+    url: string,
+    label: string
   ) => {
-    if (!file) return;
     setSaveError(null);
-
-    const validation = await validateUploadedFile(file, ["pdf", "image"], 10);
-    if (!validation.valid) {
-      setSaveError(validation.error || "Arquivo inválido.");
-      return;
-    }
-
-    try {
-      const { base64, name } = await readFileAsBase64(file);
-      const updated = [...socios];
-      updated[socioIndex] = {
-        ...updated[socioIndex],
-        [fieldName]: base64,
-        [`${String(fieldName)}Nome`]: name
-      };
-      setSocios(updated);
-    } catch (err) {
-      console.error("Erro ao processar arquivo:", err);
-      setSaveError("Erro ao processar o arquivo. Tente novamente.");
-    }
+    const value = (url || "").trim();
+    setSocios(prev =>
+      prev.map((s, i) =>
+        i !== socioIndex
+          ? s
+          : {
+              ...s,
+              [fieldName]: value,
+              [`${String(fieldName)}Nome`]: value ? `${label} (link externo)` : ""
+            }
+      )
+    );
   };
+
+  // Grava o LINK dos documentos do CNPJ
+  const handleCNPJLinkChange = (
+    fieldName: keyof DadosRatingCNPJ,
+    url: string,
+    label: string
+  ) => {
+    setSaveError(null);
+    const value = (url || "").trim();
+    setDadosCNPJ(prev => ({
+      ...prev,
+      [fieldName]: value,
+      [`${String(fieldName)}Nome`]: value ? `${label} (link externo)` : ""
+    }));
+  };
+
 
   // Upload handler for CNPJ documents (strictly validating PDF if field is a PDF field)
   const handleCNPJFileUpload = async (
@@ -971,146 +1077,32 @@ export default function FichaRatingCreditoForm({
                   </span>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    
-                    {/* Foto CNH ou RG (Frente) */}
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700">Foto CNH ou RG (Frente)</span>
-                        {socios[activeSocioTab].fotoCnhRgFrente && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Anexado</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                          <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                          <span className="truncate">{socios[activeSocioTab].fotoCnhRgFrenteNome || "Escolher Foto Frente"}</span>
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            className="hidden"
-                            onChange={(e) => handleSocioFileUpload(activeSocioTab, "fotoCnhRgFrente", e.target.files?.[0] || null)}
-                          />
-                        </label>
-                        {socios[activeSocioTab].fotoCnhRgFrente && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewFile({
-                              name: socios[activeSocioTab].fotoCnhRgFrenteNome || "CNH/RG Frente",
-                              url: socios[activeSocioTab].fotoCnhRgFrente!
-                            })}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                            title="Visualizar anexo"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Foto CNH ou RG (Verso) */}
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700">Foto CNH ou RG (Verso)</span>
-                        {socios[activeSocioTab].fotoCnhRgVerso && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Anexado</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                          <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                          <span className="truncate">{socios[activeSocioTab].fotoCnhRgVersoNome || "Escolher Foto Verso"}</span>
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            className="hidden"
-                            onChange={(e) => handleSocioFileUpload(activeSocioTab, "fotoCnhRgVerso", e.target.files?.[0] || null)}
-                          />
-                        </label>
-                        {socios[activeSocioTab].fotoCnhRgVerso && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewFile({
-                              name: socios[activeSocioTab].fotoCnhRgVersoNome || "CNH/RG Verso",
-                              url: socios[activeSocioTab].fotoCnhRgVerso!
-                            })}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                            title="Visualizar anexo"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    <DocLinkInput
+                      label="Foto CNH ou RG (Frente)"
+                      value={socios[activeSocioTab].fotoCnhRgFrente}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoCnhRgFrente", url, "CNH/RG Frente")}
+                      hint="Compartilhe o arquivo no Google Drive com permissão de visualização e cole o link."
+                    />
 
-                    {/* Selfie segurando o mesmo documento */}
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700">Selfie segurando o documento</span>
-                        {socios[activeSocioTab].selfieComDocumento && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Anexado</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                          <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                          <span className="truncate">{socios[activeSocioTab].selfieComDocumentoNome || "Escolher Selfie"}</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleSocioFileUpload(activeSocioTab, "selfieComDocumento", e.target.files?.[0] || null)}
-                          />
-                        </label>
-                        {socios[activeSocioTab].selfieComDocumento && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewFile({
-                              name: socios[activeSocioTab].selfieComDocumentoNome || "Selfie com documento",
-                              url: socios[activeSocioTab].selfieComDocumento!
-                            })}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                            title="Visualizar anexo"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    <DocLinkInput
+                      label="Foto CNH ou RG (Verso)"
+                      value={socios[activeSocioTab].fotoCnhRgVerso}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoCnhRgVerso", url, "CNH/RG Verso")}
+                    />
 
-                    {/* Foto de Título de Eleitor */}
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700">Foto de Título de Eleitor</span>
-                        {socios[activeSocioTab].fotoTituloEleitor && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Anexado</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                          <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                          <span className="truncate">{socios[activeSocioTab].fotoTituloEleitorNome || "Escolher Título"}</span>
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            className="hidden"
-                            onChange={(e) => handleSocioFileUpload(activeSocioTab, "fotoTituloEleitor", e.target.files?.[0] || null)}
-                          />
-                        </label>
-                        {socios[activeSocioTab].fotoTituloEleitor && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewFile({
-                              name: socios[activeSocioTab].fotoTituloEleitorNome || "Título de Eleitor",
-                              url: socios[activeSocioTab].fotoTituloEleitor!
-                            })}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                            title="Visualizar anexo"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    <DocLinkInput
+                      label="Selfie segurando o documento"
+                      value={socios[activeSocioTab].selfieComDocumento}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "selfieComDocumento", url, "Selfie com documento")}
+                    />
+
+                    <DocLinkInput
+                      label="Foto de Título de Eleitor"
+                      value={socios[activeSocioTab].fotoTituloEleitor}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoTituloEleitor", url, "Título de Eleitor")}
+                    />
+
 
                   </div>
                 </div>
@@ -1159,107 +1151,24 @@ export default function FichaRatingCreditoForm({
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* Frente */}
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">Doc Foto (Frente)</span>
-                    {dadosCNPJ.documentoFotoFrenteTodosSocios && (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">OK</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-2 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.documentoFotoFrenteTodosSociosNome || "Anexar Frente"}</span>
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("documentoFotoFrenteTodosSocios", e.target.files?.[0] || null, false)}
-                      />
-                    </label>
-                    {dadosCNPJ.documentoFotoFrenteTodosSocios && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.documentoFotoFrenteTodosSociosNome || "Doc Foto Frente",
-                          url: dadosCNPJ.documentoFotoFrenteTodosSocios!
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Doc Foto (Frente)"
+                  value={dadosCNPJ.documentoFotoFrenteTodosSocios}
+                  onChange={(url) => handleCNPJLinkChange("documentoFotoFrenteTodosSocios", url, "Doc Foto Frente")}
+                />
 
-                {/* Verso */}
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">Doc Foto (Verso)</span>
-                    {dadosCNPJ.documentoFotoVersoTodosSocios && (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">OK</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-2 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.documentoFotoVersoTodosSociosNome || "Anexar Verso"}</span>
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("documentoFotoVersoTodosSocios", e.target.files?.[0] || null, false)}
-                      />
-                    </label>
-                    {dadosCNPJ.documentoFotoVersoTodosSocios && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.documentoFotoVersoTodosSociosNome || "Doc Foto Verso",
-                          url: dadosCNPJ.documentoFotoVersoTodosSocios!
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Doc Foto (Verso)"
+                  value={dadosCNPJ.documentoFotoVersoTodosSocios}
+                  onChange={(url) => handleCNPJLinkChange("documentoFotoVersoTodosSocios", url, "Doc Foto Verso")}
+                />
 
-                {/* Selfie */}
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">Selfie dos Sócios</span>
-                    {dadosCNPJ.selfieTodosSocios && (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">OK</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-2 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.selfieTodosSociosNome || "Anexar Selfie"}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("selfieTodosSocios", e.target.files?.[0] || null, false)}
-                      />
-                    </label>
-                    {dadosCNPJ.selfieTodosSocios && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.selfieTodosSociosNome || "Selfie dos Sócios",
-                          url: dadosCNPJ.selfieTodosSocios!
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Selfie dos Sócios"
+                  value={dadosCNPJ.selfieTodosSocios}
+                  onChange={(url) => handleCNPJLinkChange("selfieTodosSocios", url, "Selfie dos Sócios")}
+                />
+
               </div>
             </div>
 
@@ -1275,252 +1184,49 @@ export default function FichaRatingCreditoForm({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                
-                {/* Cartão CNPJ(PDF) */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">Cartão CNPJ (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.cartaoCnpjPdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.cartaoCnpjPdfNome || "Selecionar PDF Cartão CNPJ"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("cartaoCnpjPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.cartaoCnpjPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.cartaoCnpjPdfNome || "Cartão CNPJ",
-                          url: dadosCNPJ.cartaoCnpjPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
 
-                {/* Contrato Social(PDF) */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">Contrato Social (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.contratoSocialPdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.contratoSocialPdfNome || "Selecionar PDF Contrato Social"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("contratoSocialPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.contratoSocialPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.contratoSocialPdfNome || "Contrato Social",
-                          url: dadosCNPJ.contratoSocialPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Cartão CNPJ (PDF)"
+                  required
+                  value={dadosCNPJ.cartaoCnpjPdf}
+                  onChange={(url) => handleCNPJLinkChange("cartaoCnpjPdf", url, "Cartão CNPJ")}
+                />
 
-                {/* Comprovante de Residência(PDF) */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">Comprovante de Residência (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.comprovanteResidenciaPdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.comprovanteResidenciaPdfNome || "Selecionar PDF Residência"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("comprovanteResidenciaPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.comprovanteResidenciaPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.comprovanteResidenciaPdfNome || "Comprovante de Residência",
-                          url: dadosCNPJ.comprovanteResidenciaPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Contrato Social (PDF)"
+                  required
+                  value={dadosCNPJ.contratoSocialPdf}
+                  onChange={(url) => handleCNPJLinkChange("contratoSocialPdf", url, "Contrato Social")}
+                />
 
-                {/* Faturamento dos últimos 12 meses(PDF) */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">Faturamento 12 meses (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.faturamento12MesesPdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.faturamento12MesesPdfNome || "Selecionar PDF Faturamento"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("faturamento12MesesPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.faturamento12MesesPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.faturamento12MesesPdfNome || "Faturamento 12 Meses",
-                          url: dadosCNPJ.faturamento12MesesPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Comprovante de Residência (PDF)"
+                  required
+                  value={dadosCNPJ.comprovanteResidenciaPdf}
+                  onChange={(url) => handleCNPJLinkChange("comprovanteResidenciaPdf", url, "Comprovante de Residência")}
+                />
 
-                {/* DRE (Demostração do Resultado do Exercicio) */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">DRE (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.drePdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.drePdfNome || "Selecionar PDF DRE"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("drePdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.drePdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.drePdfNome || "DRE",
-                          url: dadosCNPJ.drePdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Faturamento 12 Meses (PDF)"
+                  required
+                  value={dadosCNPJ.faturamento12MesesPdf}
+                  onChange={(url) => handleCNPJLinkChange("faturamento12MesesPdf", url, "Faturamento 12 Meses")}
+                />
 
-                {/* Balanço Patrimonial */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-800">Balanço Patrimonial (PDF) *</span>
-                    </div>
-                    {dadosCNPJ.balancoPatrimonialPdf ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PDF Anexado</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Pendente</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.balancoPatrimonialPdfNome || "Selecionar PDF Balanço"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("balancoPatrimonialPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.balancoPatrimonialPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.balancoPatrimonialPdfNome || "Balanço Patrimonial",
-                          url: dadosCNPJ.balancoPatrimonialPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="DRE (PDF)"
+                  required
+                  value={dadosCNPJ.drePdf}
+                  onChange={(url) => handleCNPJLinkChange("drePdf", url, "DRE")}
+                />
+
+                <DocLinkInput
+                  label="Balanço Patrimonial (PDF)"
+                  required
+                  value={dadosCNPJ.balancoPatrimonialPdf}
+                  onChange={(url) => handleCNPJLinkChange("balancoPatrimonialPdf", url, "Balanço Patrimonial")}
+                />
+
 
                 {/* RTB - Recuperação de Tarifa Bancária (Cédula de Crédito Bancário - CCB) */}
                 <div className="p-4 bg-linear-to-br from-emerald-900/10 via-teal-900/5 to-slate-50 rounded-2xl border-2 border-emerald-600/30 space-y-3 relative overflow-hidden">

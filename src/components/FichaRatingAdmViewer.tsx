@@ -627,22 +627,38 @@ export default function FichaRatingAdmViewer({
         {/* View & Download buttons */}
         {fileUrl ? (
           <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setPreviewFile({ name: fileName || title, url: fileUrl, isPdf })}
-              className="flex-1 py-1.5 bg-[#0A3D2E] hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Visualizar</span>
-            </button>
-            <a
-              href={fileUrl}
-              download={fileName || "documento"}
-              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
-              title="Baixar arquivo"
-            >
-              <Download className="w-3.5 h-3.5" />
-            </a>
+            {String(fileUrl).startsWith("data:") ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPreviewFile({ name: fileName || title, url: fileUrl, isPdf })}
+                  className="flex-1 py-1.5 bg-[#0A3D2E] hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Visualizar</span>
+                </button>
+                <a
+                  href={fileUrl}
+                  download={fileName || "documento"}
+                  className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
+                  title="Baixar arquivo"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </a>
+              </>
+            ) : (
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-1.5 bg-[#0A3D2E] hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors shadow-xs"
+                title="Abrir link do documento em nova aba"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Abrir link</span>
+              </a>
+            )}
+
 
             {/* Validation Toggle Buttons */}
             <button
