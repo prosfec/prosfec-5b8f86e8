@@ -123,10 +123,10 @@ const DocLinkInput = ({
               href={current}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+              className="flex-1 py-1.5 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              Abrir link
+              Testar link
             </a>
           )}
           <button
