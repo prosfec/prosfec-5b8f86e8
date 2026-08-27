@@ -415,10 +415,13 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
   const [sociosSubmitted, setSociosSubmitted] = useState(false);
   const [sociosError, setSociosError] = useState("");
 
-  // Load initial lead if provided
+  // Load initial lead if provided via prop or ?lead= query param
   useEffect(() => {
-    if (initialLeadId) {
-      fetchLead(initialLeadId);
+    const params = new URLSearchParams(window.location.search);
+    const leadId = initialLeadId || params.get("lead") || params.get("acompanhamento") || "";
+    if (leadId) {
+      setSearchIdOrCnpj(leadId);
+      fetchLead(leadId);
     }
   }, [initialLeadId]);
 
