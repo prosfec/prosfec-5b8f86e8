@@ -2580,6 +2580,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   const paginatedPartners = filteredPartners.slice((partnersPage - 1) * itemsPerPage, partnersPage * itemsPerPage);
 
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 font-sans">
+        <div className="h-10 w-10 rounded-full border-2 border-[#00A86B] border-t-transparent animate-spin" />
+        <p className="text-slate-400 text-sm">Verificando sessão administrativa...</p>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans antialiased relative overflow-hidden">
