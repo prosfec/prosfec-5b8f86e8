@@ -11424,15 +11424,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 });
               }
 
-              const totalSaquesJaRealizados = solicitacoesComissao
-                .filter(s => s.status === "pago")
-                .reduce((acc, s) => acc + (s.valor || 0), 0);
+              const isVendas = payoutModalOrigin === "vendas";
+              const origemAtual: "vendas" | "servicos" = isVendas ? "vendas" : "servicos";
 
-              const totalSaquesEmAndamento = solicitacoesComissao
-                .filter(s => s.status === "pendente")
-                .reduce((acc, s) => acc + (s.valor || 0), 0);
+              const totalSaquesJaRealizados = somaSaques(origemAtual, "pago");
+              const totalSaquesEmAndamento = somaSaques(origemAtual, "pendente");
 
-              const saldoLiquidoDisponivel = Math.max(0, totalLiberada - (totalSaquesJaRealizados + totalSaquesEmAndamento));
+              const baseLiberada = isVendas ? salesCommissionStats.totalPaid : totalLiberada;
+              const saldoLiquidoDisponivel = Math.max(0, baseLiberada - (totalSaquesJaRealizados + totalSaquesEmAndamento));
               const valorDigitado = parseFloat(payoutAmountCustom.replace(",", ".")) || 0;
               const isValorValido = valorDigitado > 0 && valorDigitado <= saldoLiquidoDisponivel;
 
