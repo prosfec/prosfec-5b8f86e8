@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
 import express from "./mini-express";
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc, runTransaction } from "firebase/firestore";
+import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc, runTransaction, deleteField } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
 import { GoogleGenAI, Type } from "@google/genai";
 import { getBankSpecificRules } from "../utils/creditLineRules";
