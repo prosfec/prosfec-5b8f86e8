@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { doc, updateDoc } from "firebase/firestore";
+import { salvarLeadPortal } from "@/lib/portal-save";
 import { db } from "../firebase";
 import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPessoal, AnaliseRTB } from "../types";
 import { formatCurrencyBRL, sanitizeFirestoreData, validateUploadedFile } from "../utils";
@@ -467,8 +468,9 @@ export default function FichaRatingCreditoForm({
     };
 
     try {
-      const docRef = doc(db, "leads", lead.id);
-      await updateDoc(docRef, {
+      // A gravação passa pelo servidor: o cliente do portal não possui sessão
+      // no Firebase e as regras bloqueiam a escrita direta em /leads.
+      await salvarLeadPortal(lead.id, {
         fichaRatingCredito: sanitizeFirestoreData(currentRating)
       });
 

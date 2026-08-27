@@ -1321,6 +1321,13 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       });
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({}));
+        if (resp.status === 409) {
+          // Já existe senha: leva o cliente para a tela de login.
+          setCandidateTemSenha(true);
+          setAuthError("Este acesso já possui senha. Digite sua senha ou solicite a redefinição.");
+          setIsSettingPassword(false);
+          return;
+        }
         setAuthError(errData?.error || "Erro ao salvar a nova senha. Tente novamente.");
         setIsSettingPassword(false);
         return;
