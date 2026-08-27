@@ -1,41 +1,37 @@
-# Erro real do login e como destravar
+# Anexos por link de nuvem (Google Drive) na Ficha de Rating
 
-## O que o navegador está acusando
+Trocar o mecanismo de anexo do formulário do cliente: em vez de converter o arquivo em base64 e gravar no Firestore, o cliente cola o link do documento (Google Drive, OneDrive, Dropbox etc.). Os nomes dos campos no Firestore permanecem idênticos — muda apenas o conteúdo gravado (URL em vez de base64).
 
-A requisição de login para o Firebase (`identitytoolkit.googleapis.com/v1/accounts:signInWithPassword`) está voltando com **HTTP 403**:
+## Etapas
 
-```text
-API_KEY_HTTP_REFERRER_BLOCKED
-"Requests from referer https://aa418b68-...-.lovableproject.com/ are blocked."
-```
+### Etapa 1 — Campo de link reutilizável (formulário do cliente)
+Em `FichaRatingCreditoForm.tsx`, criar um componente interno `DocLinkInput` (título, valor, callback) que substitui cada bloco de upload:
+- input de URL com placeholder "Cole aqui o link do Google Drive...";
+- validação leve: precisa começar com `http://` ou `https://` (aviso inline se inválido);
+- selo "Anexado" quando há link;
+- botão "Abrir" que abre o link em nova aba (`target="_blank"`, `rel="noopener noreferrer"`);
+- botão para limpar o link.
 
-Ou seja: **a senha e o e-mail estão corretos**. O que bloqueia é a restrição de referenciador HTTP da chave de navegador do Firebase no Google Cloud. A mensagem genérica aparece porque esse 403 chega ao SDK como um código que o `catch` atual não trata.
+### Etapa 2 — Trocar os handlers de gravação
+- Substituir `handleSocioFileUpload` por `handleSocioLinkChange(socioIndex, fieldName, url)`: grava a URL em `fieldName` e um rótulo padrão do documento em `fieldNameNome` (ex.: "CNH/RG Frente — link externo"), mantendo a compatibilidade com o Admin.
+- Substituir `handleCNPJFileUpload` por `handleCNPJLinkChange(fieldName, url)` com a mesma lógica.
+- Remover `readFileAsBase64` e as chamadas a `validateUploadedFile` que ficarem sem uso.
 
-Isso não é corrigível por código — precisa ser liberado no console do Google.
+### Etapa 3 — Aplicar aos 4 documentos de sócio (CPF)
+`fotoCnhRgFrente`, `fotoCnhRgVerso`, `selfieComDocumento`, `fotoTituloEleitor` passam a usar `DocLinkInput`.
 
-## Ação necessária (fora do código, feita por você)
+### Etapa 4 — Aplicar aos documentos de CNPJ
+`documentoFotoFrenteTodosSocios`, `documentoFotoVersoTodosSocios`, `selfieTodosSocios`, `cartaoCnpjPdf`, `contratoSocialPdf`, `comprovanteResidenciaPdf`, `faturamento12MesesPdf`, `drePdf`, `balancoPatrimonialPdf`.
 
-Google Cloud Console → APIs e Serviços → Credenciais → chave Web do Firebase (projeto `gen-lang-client-0885171769`) → Restrições de aplicativo → Referenciadores HTTP. Adicionar:
+### Etapa 5 — Ajuste mínimo no visualizador do Admin
+`FichaRatingAdmViewer.tsx` continua lendo os mesmos campos e mantendo aprovar/rejeitar. Único ajuste: quando o valor do campo for um link externo (não começa com `data:`), o botão "Visualizar" abre o link em nova aba e o botão de download vira "Abrir link" — o preview em `<img>`/`<iframe>` só é usado para valores base64 legados. Nenhuma mudança de layout, navegação ou estrutura de dados.
 
-```text
-https://*.lovableproject.com/*
-https://*.lovable.app/*
-https://<seu-dominio-de-producao>/*
-```
+## Ponto de atenção: CCB / módulo RTB
 
-Também confirmar em APIs e Serviços → Biblioteca que a **Identity Toolkit API** está habilitada. A propagação leva alguns minutos.
+O campo `ccbContratoPdf` é o único que **não** pode virar link: o conteúdo em base64 é enviado para a PROSFEC IA em `/api/credit/analise-rtb-ccb` para a perícia do contrato. Esse bloco continua com upload de arquivo como está hoje. Todos os demais viram link.
 
-## O que será feito no código
+## Detalhes técnicos
 
-1. **Mensagens de erro reais no login do Admin** (`src/components/AdminDashboard.tsx`)
-   - `console.error` com `error.code`, `error.message` e o corpo do erro do Firebase.
-   - Novo tratamento explícito para `auth/requests-from-referer-are-blocked` / `auth/api-key-not-valid` / erro 403, com texto na tela: "Domínio bloqueado na chave do Firebase — libere este endereço nas restrições de referenciador HTTP".
-   - No fallback genérico, exibir também o código bruto entre parênteses, para nunca mais mascarar o erro.
-
-2. **Mesmo tratamento no login do parceiro** (`src/components/PartnerPortal.tsx`), no `catch` do `signInWithEmailAndPassword`.
-
-3. **Nenhuma senha ou payload de login em log** — apenas código e mensagem do Firebase.
-
-## Sobre as variáveis de ambiente do frontend
-
-Não existem `VITE_FIREBASE_*` neste projeto: a configuração do Firebase do navegador vem de `src/firebase-applet-config.json`, importado por `src/firebase.ts`. Os valores estão presentes e corretos (projectId, appId, apiKey, authDomain, database id) — a chamada realmente sai com a chave certa, tanto que o Google responde 403 de referenciador, e não "API key inválida". Portanto, não há variável faltando no preview; nada precisa ser alterado nessa parte.
+- Somente `src/components/FichaRatingCreditoForm.tsx` e um ajuste pontual em `src/components/FichaRatingAdmViewer.tsx`.
+- Nenhuma mudança em `src/types.ts` (os campos já são `string`), nem em `validacoesDocumentos`, nem no cálculo de progresso (`calculateProgress` continua checando "campo preenchido").
+- Sem migração de dados: campos base64 legados continuam sendo exibidos normalmente pelo Admin.
