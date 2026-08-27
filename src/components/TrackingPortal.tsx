@@ -37,6 +37,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import SignaturePad from "./SignaturePad";
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, deleteDoc, onSnapshot, limit } from "firebase/firestore";
+import { salvarLeadPortal } from "@/lib/portal-save";
 import { db, handleFirestoreError, OperationType } from "../firebase";
 import type { SystemNotification } from "./PartnerPortal";
 import { formatCurrencyBRL, formatCPF, formatCEP, formatPhone, brazilianUFs, triggerWebhookSimulation, getAppDomain } from "../utils";
