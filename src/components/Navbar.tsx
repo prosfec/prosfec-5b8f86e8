@@ -143,6 +143,8 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
           <div className="flex lg:hidden items-center gap-2">
             <button
               onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"}
+              aria-expanded={isOpen}
               className="p-2 rounded-md hover:bg-gray-100/80 text-brand-primary transition-colors"
             >
               {isOpen ? <X className="w-6 h-6" strokeWidth={2} /> : <Menu className="w-6 h-6" strokeWidth={2} />}
