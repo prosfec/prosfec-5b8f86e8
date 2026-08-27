@@ -34,6 +34,50 @@ export function cleanForFirestore<T = any>(obj: T): T {
 export function createExpressApp() {
   const app = express();
 
+  // ---------------------------------------------------------------------
+  // Segurança: comparação de tokens em tempo constante (anti timing attack)
+  // ---------------------------------------------------------------------
+  const timingSafeCompare = (a: string, b: string): boolean => {
+    if (typeof a !== "string" || typeof b !== "string") return false;
+    if (!a || !b) return false;
+    try {
+      const enc = new TextEncoder();
+      const bufA = enc.encode(a);
+      const bufB = enc.encode(b);
+      if (bufA.length !== bufB.length) {
+        // Compara mesmo assim contra si próprio para manter tempo constante
+        try {
+          timingSafeEqual(Buffer.from(bufA), Buffer.from(bufA));
+        } catch {
+          /* noop */
+        }
+        return false;
+      }
+      return timingSafeEqual(Buffer.from(bufA), Buffer.from(bufB));
+    } catch {
+      // Fallback puro em JS, também em tempo constante
+      if (a.length !== b.length) return false;
+      let diff = 0;
+      for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+      return diff === 0;
+    }
+  };
+
+  // Extrai token de cabeçalhos comuns (x-<nome>-token, authorization, token, query)
+  const extractToken = (req: any, headerName: string): string => {
+    const raw =
+      req.headers?.[headerName] ||
+      req.headers?.[headerName.toLowerCase()] ||
+      req.headers?.["authorization"] ||
+      req.headers?.["token"] ||
+      req.query?.token ||
+      "";
+    let value = typeof raw === "string" ? raw.trim() : "";
+    if (value.toLowerCase().startsWith("bearer ")) value = value.substring(7).trim();
+    return value;
+  };
+
+
   // Handle Netlify Function route rewrite if present
   app.use((req, _res, next) => {
     if (req.url.startsWith("/.netlify/functions/api")) {
