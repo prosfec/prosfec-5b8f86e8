@@ -2869,6 +2869,3 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
   return app;
 }
-
-  return app;
-}
