@@ -440,26 +440,23 @@ const executeCacaLeadsClientSide = async (keyword: string, city: string, limit: 
   const queryStr = `${keyword} em ${city}`;
   console.log(`Executing client-side Google Places API search for: "${queryStr}"`);
 
-  const GOOGLE_MAPS_KEY = "AIzaSyBLYM0vO54g1hos2EC6OEHu1oPw974t5mU";
   const payload: any = {
     textQuery: queryStr,
     pageSize: Math.min(20, limit)
   };
   if (pageToken) payload.pageToken = pageToken;
 
-  const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
+  // Proxy no servidor: a chave do Google Places nunca é exposta no navegador.
+  const response = await fetch("/api/proxy/places-search", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": GOOGLE_MAPS_KEY,
-      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,nextPageToken"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
-    throw new Error("Erro na busca direta do Google Places API.");
+    throw new Error("Erro na busca de leads via Google Places.");
   }
+
 
   const data = await response.json();
   const places = data.places || [];
