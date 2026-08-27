@@ -332,6 +332,22 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
     return () => unsubscribe();
   }, [lead]);
 
+  // Quando há sessão real no Firebase Auth, escuta o lead diretamente para
+  // atualizações em tempo real sem depender de polling.
+  useEffect(() => {
+    if (!lead?.id || sessionMode !== "firebase" || !firebaseUser) return;
+    const leadRef = doc(db, "leads", lead.id);
+    const unsubscribe = onSnapshot(leadRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setLead(prev => (prev ? { ...prev, ...data } : data as Lead));
+      }
+    }, (error) => {
+      console.error("Error listening to lead updates:", error);
+    });
+    return () => unsubscribe();
+  }, [lead?.id, sessionMode, firebaseUser]);
+
   const handleMarkNotificationRead = async (notifId: string) => {
     try {
       // Deletar a notificação diretamente do Firestore para economizar espaço e evitar acúmulo no banco
