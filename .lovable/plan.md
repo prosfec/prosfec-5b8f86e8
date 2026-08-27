@@ -39,8 +39,9 @@ Rotas como `/api/proxy/*`, `/api/credit/consultas` e os diagnósticos de IA são
 
 **Etapa A — Fechar o Firestore (maior ganho)**
 - Reescrever `firestore.rules` removendo todos os `|| true` e os `if true`.
-- Modelo: leitura/escrita de leads e parceiros só para usuário autenticado; `configuracoes`, `solicitacoes_comissao` (aprovação), `servicos_contabilidade` e logs de webhook só para admin/contador; criação pública apenas onde o site precisa (ex.: cadastro inicial de lead), com campos limitados.
-- Você aplica publicando as regras no Console (posso deixar o arquivo pronto e o passo a passo).
+- Exceções públicas confirmadas por você: `create` público em `leads` (simulador/captação) e `read` público em `parceiros` (resolver links de indicação) — com projeção de campos limitada.
+- Todo o resto: leitura para autenticado quando necessário e **escrita apenas para Admin/Contador** (`configuracoes`, `solicitacoes_comissao`, `servicos_contabilidade`, `recargas`, `comunicados`, logs de webhook, etc.).
+- Entrego o arquivo pronto para você colar no Console do Firebase.
 
 **Etapa B — Tirar senhas do banco (com migração automática)**
 
@@ -57,10 +58,15 @@ O que continua manual: só marcar quem é admin/contador (custom claims) — iss
 
 
 **Etapa C — Blindar webhooks e APIs**
-- Exigir token/assinatura no webhook LastLink (secret novo `LASTLINK_WEBHOOK_TOKEN`).
-- Trocar a comparação do Hubla por `timingSafeEqual`.
+- Exigir o segredo `LASTLINK_WEBHOOK_TOKEN` por cabeçalho no `POST /api/webhooks/lastlink` (aceita `x-lastlink-token` / `authorization: Bearer`), com comparação time-safe e resposta 401 sem vazar detalhe.
+- Trocar a comparação do token Hubla por `crypto.timingSafeEqual`.
 - Idempotência: ignorar evento já processado (evita comissão duplicada em reenvio).
-- Rate limit simples + verificação de sessão nos proxies que gastam crédito.
+- Rate limit simples nos proxies que gastam crédito.
+
+## Execução acordada
+1. Gerar e revisar juntos **A** (arquivo `firestore.rules` completo) e **C** (código do servidor).
+2. Depois de aprovados, seguir para **B** com as rotas `/api/auth/provision-parceiro` e `/api/auth/migrar-parceiros` + lazy migration no login e exclusão do campo `senha` em texto puro.
+3. Por fim **D**.
 
 **Etapa D — Higiene**
 - Centralizar leitura de envs em um único módulo do servidor.
