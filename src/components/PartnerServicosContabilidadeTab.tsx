@@ -380,7 +380,7 @@ export default function PartnerServicosContabilidadeTab({
       {activeSubTab === "meus_pedidos" ? (
         /* ABA DE MINHAS SOLICITAÇÕES */
         <div className="space-y-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
             <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-[#00A86B]" />
               Acompanhamento de Serviços Contábeis Solicitados
@@ -391,12 +391,12 @@ export default function PartnerServicosContabilidadeTab({
           </div>
 
           {loadingPedidos ? (
-            <div className="bg-white p-12 rounded-2xl border border-slate-200/80 text-center space-y-3">
+            <div className="bg-white/75 backdrop-blur-xl p-12 rounded-2xl border border-slate-200/80 text-center space-y-3">
               <RefreshCw className="w-8 h-8 text-[#00A86B] animate-spin mx-auto" />
               <p className="text-xs font-bold text-slate-600">Buscando suas solicitações contábeis...</p>
             </div>
           ) : myPedidos.length === 0 ? (
-            <div className="bg-white p-12 rounded-2xl border border-slate-200/80 text-center space-y-3">
+            <div className="bg-white/75 backdrop-blur-xl p-12 rounded-2xl border border-slate-200/80 text-center space-y-3">
               <ClipboardList className="w-12 h-12 text-slate-300 mx-auto" />
               <h4 className="text-sm font-black text-slate-700">Você ainda não solicitou nenhum serviço avulso</h4>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -421,7 +421,7 @@ export default function PartnerServicosContabilidadeTab({
                 return (
                   <div
                     key={ped.id}
-                    className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-4 hover:border-emerald-500/40 transition-all flex flex-col justify-between"
+                    className="bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4 hover:border-emerald-500/40 transition-all flex flex-col justify-between"
                   >
                     <div className="space-y-3">
                       {/* Status & Data */}
@@ -532,7 +532,7 @@ export default function PartnerServicosContabilidadeTab({
         /* ABA DO CATÁLOGO */
         <div className="space-y-6">
       {/* Barra de Filtro de Categorias (Pills Horizontais Roláveis) e Busca */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
         {/* Barra de Busca Rápida */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative flex-1">
@@ -542,7 +542,7 @@ export default function PartnerServicosContabilidadeTab({
               placeholder="Buscar serviço por nome, descrição, categoria ou palavra-chave..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-9 py-2.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-9 py-2.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white/75 backdrop-blur-xl focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all"
             />
             {searchTerm && (
               <button
@@ -649,7 +649,7 @@ export default function PartnerServicosContabilidadeTab({
                 {[1, 2].map((card) => (
                   <div 
                     key={card} 
-                    className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4 animate-pulse"
+                    className="bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/80 p-5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4 animate-pulse"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="h-5 bg-slate-200 rounded w-2/3" />
@@ -672,7 +672,7 @@ export default function PartnerServicosContabilidadeTab({
 
       {/* Estado Vazio (Nenhum serviço encontrado) */}
       {!loading && !error && groupedByCategoria.length === 0 && (
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-8 sm:p-12 text-center shadow-xs space-y-4 max-w-lg mx-auto">
+        <div className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 p-8 sm:p-12 text-center shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4 max-w-lg mx-auto">
           <div className="w-14 h-14 bg-emerald-50 text-[#00A86B] border border-emerald-100 rounded-2xl flex items-center justify-center mx-auto shadow-xs">
             <Calculator className="w-7 h-7" strokeWidth={1.5} />
           </div>
@@ -732,7 +732,7 @@ export default function PartnerServicosContabilidadeTab({
                   return (
                     <div
                       key={servico.id}
-                      className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-emerald-500/40 transition-all flex flex-col justify-between space-y-4 group"
+                      className="bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/90 p-5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] hover:shadow-md hover:border-emerald-500/40 transition-all flex flex-col justify-between space-y-4 group"
                     >
                       {/* Top: Nome e Badge da Categoria */}
                       <div className="space-y-2">
@@ -923,7 +923,7 @@ export default function PartnerServicosContabilidadeTab({
                       value={clienteNome}
                       onChange={(e) => setClienteNome(e.target.value)}
                       disabled={isSubmittingRequest}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white/75 backdrop-blur-xl focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all"
                     />
                   </div>
 
@@ -937,7 +937,7 @@ export default function PartnerServicosContabilidadeTab({
                       value={observacoes}
                       onChange={(e) => setObservacoes(e.target.value)}
                       disabled={isSubmittingRequest}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all resize-none"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white/75 backdrop-blur-xl focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all resize-none"
                     />
                   </div>
                 </div>
@@ -1021,7 +1021,7 @@ export default function PartnerServicosContabilidadeTab({
                   {requestSuccessData?.pedidoId && (
                     <div className="flex justify-between items-center pb-2 border-b border-slate-200/60">
                       <span className="font-semibold text-slate-600">Protocolo do Pedido:</span>
-                      <span className="font-mono font-bold text-xs text-slate-800 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+                      <span className="font-mono font-bold text-xs text-slate-800 bg-white/75 backdrop-blur-xl px-2 py-0.5 rounded-lg border border-slate-200">
                         #{requestSuccessData.pedidoId.slice(0, 10)}
                       </span>
                     </div>

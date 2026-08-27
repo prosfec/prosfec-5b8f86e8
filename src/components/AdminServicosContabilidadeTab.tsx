@@ -289,7 +289,7 @@ export default function AdminServicosContabilidadeTab({ userRole }: AdminServico
   return (
     <div className="p-4 sm:p-6 space-y-6 text-left animate-fade-in font-sans">
       {/* Top Header Card */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
         <div>
           <div className="flex items-center gap-2">
             <span className="p-2 bg-emerald-50 text-[#00A86B] rounded-xl border border-emerald-200/50">
@@ -350,7 +350,7 @@ export default function AdminServicosContabilidadeTab({ userRole }: AdminServico
       ) : (
         <div className="space-y-6">
           {/* Top Actions Bar for Preços */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
             <div>
               <h3 className="text-sm font-black text-slate-900">
                 Tabela Oficial de Preços dos 33 Serviços
@@ -410,25 +410,25 @@ export default function AdminServicosContabilidadeTab({ userRole }: AdminServico
 
       {/* Metrics Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total no Catálogo</span>
           <span className="text-lg sm:text-xl font-extrabold text-slate-900 font-mono block mt-0.5">{servicos.length} Serviços</span>
           <span className="text-[10px] text-slate-500 font-medium">13 Categorias oficiais</span>
         </div>
 
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Serviços Ativos</span>
           <span className="text-lg sm:text-xl font-extrabold text-emerald-700 font-mono block mt-0.5">{totalServicosAtivos} de {servicos.length}</span>
           <span className="text-[10px] text-emerald-600 font-semibold">Exibidos aos Parceiros</span>
         </div>
 
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Preços Definidos</span>
           <span className="text-lg sm:text-xl font-extrabold text-[#00A86B] font-mono block mt-0.5">{totalServicosPrecoConfigurado} / {servicos.length}</span>
           <span className="text-[10px] text-slate-500 font-medium">Valores &gt; R$ 0,00</span>
         </div>
 
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Regra de Precificação</span>
           <span className="text-xs font-bold text-[#0A3D2E] block mt-1">Preço Único Oficial</span>
           <span className="text-[10px] text-slate-500">Editável pelo Admin</span>
@@ -436,7 +436,7 @@ export default function AdminServicosContabilidadeTab({ userRole }: AdminServico
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-white/75 backdrop-blur-xl p-3.5 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
         {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
@@ -445,7 +445,7 @@ export default function AdminServicosContabilidadeTab({ userRole }: AdminServico
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por serviço, descrição ou categoria..."
-            className="pl-9 pr-4 py-2 w-full text-xs md:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#00A86B] focus:bg-white transition-all text-slate-800 placeholder:text-slate-400"
+            className="pl-9 pr-4 py-2 w-full text-xs md:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#00A86B] focus:bg-white/75 backdrop-blur-xl transition-all text-slate-800 placeholder:text-slate-400"
           />
         </div>
 
@@ -497,7 +497,7 @@ export default function AdminServicosContabilidadeTab({ userRole }: AdminServico
 
       {/* Loading state */}
       {loading ? (
-        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200/80 space-y-3">
+        <div className="p-12 text-center bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/80 space-y-3">
           <RefreshCw className="w-8 h-8 text-[#00A86B] animate-spin mx-auto" />
           <p className="text-xs font-bold text-slate-600">Carregando catálogo de serviços contábeis do Firestore...</p>
         </div>
@@ -518,7 +518,7 @@ export default function AdminServicosContabilidadeTab({ userRole }: AdminServico
             return (
               <div 
                 key={categoria}
-                className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden transition-all"
+                className="bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] overflow-hidden transition-all"
               >
                 {/* Cabeçalho da Categoria */}
                 <div 
