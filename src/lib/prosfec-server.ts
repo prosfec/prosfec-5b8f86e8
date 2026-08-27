@@ -2642,9 +2642,22 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   // WEBHOOK: LASTLINK (Baixa Automática de Pagamento de Serviços de Estruturação)
   // =========================================================================
   app.post("/api/webhooks/lastlink", async (req, res) => {
+    // ---- Autenticação obrigatória do webhook (time-safe) ----
+    const expectedLastlinkToken = process.env.LASTLINK_WEBHOOK_TOKEN;
+    if (!expectedLastlinkToken) {
+      console.error("[LASTLINK WEBHOOK] LASTLINK_WEBHOOK_TOKEN não configurado no ambiente.");
+      return res.status(503).json({ error: "Webhook temporariamente indisponível." });
+    }
+    const clientLastlinkToken = extractToken(req, "x-lastlink-token");
+    if (!timingSafeCompare(clientLastlinkToken, expectedLastlinkToken)) {
+      console.warn("[LASTLINK WEBHOOK] Requisição não autorizada: token inválido.");
+      return res.status(401).json({ error: "Unauthorized." });
+    }
+
     try {
       const payload = req.body || {};
-      console.log("[LASTLINK WEBHOOK] Payload recebido:", JSON.stringify(payload));
+      console.log("[LASTLINK WEBHOOK] Evento recebido (autenticado).");
+
 
       // Extrai os dados do evento da LastLink
       const eventType = (payload.event || payload.eventType || payload.type || payload.status || "").toString().toLowerCase();
