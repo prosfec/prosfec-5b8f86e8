@@ -529,7 +529,7 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
       await fetchLead(lead.id);
     } catch (err) {
       console.error("Error saving GOV credentials:", err);
-      setGovError("Erro ao salvar os dados. Tente novamente.");
+      setGovError(`Erro ao salvar os dados: ${(err as any)?.message || "tente novamente"}`);
     } finally {
       setSubmittingGov(false);
     }
@@ -678,7 +678,7 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
       await fetchLead(lead.id);
     } catch (err) {
       console.error("Error saving signature:", err);
-      setSignatureError("Erro ao salvar a assinatura. Tente novamente.");
+      setSignatureError(`Erro ao salvar a assinatura: ${(err as any)?.message || "tente novamente"}`);
     } finally {
       setIsSubmittingSignature(false);
     }
@@ -1385,7 +1385,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       }, 3500);
     } catch (err) {
       console.error("Error requesting password reset:", err);
-      setAuthError("Erro ao enviar solicitação de reset. Tente novamente.");
+      setAuthError(`Erro ao enviar solicitação de reset: ${(err as any)?.message || "tente novamente"}`);
     } finally {
       setIsRequestingReset(false);
     }
@@ -1472,7 +1472,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       await fetchLead(lead.id);
     } catch (err) {
       console.error("Error saving socios:", err);
-      setSociosError("Erro ao salvar os dados. Tente novamente.");
+      setSociosError(`Erro ao salvar os dados: ${(err as any)?.message || "tente novamente"}`);
     } finally {
       setSubmittingSocios(false);
     }

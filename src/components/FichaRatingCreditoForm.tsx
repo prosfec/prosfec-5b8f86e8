@@ -492,7 +492,7 @@ export default function FichaRatingCreditoForm({
       setTimeout(() => setSaveSuccess(null), 5000);
     } catch (err) {
       console.error("Erro ao salvar ficha de rating:", err);
-      setSaveError("Erro ao salvar os dados no sistema. Verifique a conexão e tente novamente.");
+      setSaveError(`Erro ao salvar os dados: ${(err as any)?.message || "verifique a conexão e tente novamente"}`);
     } finally {
       setSaving(false);
     }
