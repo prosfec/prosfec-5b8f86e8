@@ -8,6 +8,7 @@ import firebaseConfig from "../firebase-applet-config.json";
 import { GoogleGenAI, Type } from "@google/genai";
 import { getBankSpecificRules } from "../utils/creditLineRules";
 import { BankRulesManager } from "../utils/BankRulesManager";
+import { optionalEnv, requireEnv, firstEnv, maskEmail, maskDoc, redact } from "../utils/env";
 
 export function cleanForFirestore<T = any>(obj: T): T {
   if (obj === undefined) return null as any;
@@ -105,7 +106,7 @@ export function createExpressApp() {
 
   // API Route: Hubla Webhook (autenticado com comparação time-safe)
   app.post("/api/hubla-webhook", async (req, res) => {
-    const expectedToken = process.env.HUBLA_WEBHOOK_TOKEN;
+    const expectedToken = optionalEnv("HUBLA_WEBHOOK_TOKEN");
     const cleanClientToken = extractToken(req, "x-hubla-token");
 
     if (!expectedToken) {
@@ -121,7 +122,7 @@ export function createExpressApp() {
 
     try {
       const payload = req.body;
-      console.log("Received Hubla Webhook payload:", JSON.stringify(payload));
+      console.log("[HUBLA WEBHOOK] Evento recebido (autenticado).");
       
       // Save webhook event for audit logs
       try {
@@ -205,7 +206,7 @@ export function createExpressApp() {
         statusLower === "paused";
 
       if (isApproved) {
-        console.log(`[Hubla Approved] Email: ${emailNormalized}, checkoutId: ${checkoutId}. Resolving plan...`);
+        console.log(`[Hubla Approved] Email: ${maskEmail(emailNormalized)}, checkoutId: ${checkoutId}. Resolving plan...`);
 
         let planName = "";
         let referrerPartnerId = "";
@@ -266,7 +267,7 @@ export function createExpressApp() {
         const dataLiberacaoSaqueIso = dataLiberacaoSaqueDate.toISOString();
 
         if (resolvedServiceKey) {
-          console.log(`[Hubla Service Payment] Service: ${resolvedServiceName} (${resolvedServiceKey}) via ${metodoPagamento} for email: ${emailNormalized}. Liberação para: ${dataLiberacaoSaqueIso}`);
+          console.log(`[Hubla Service Payment] Service: ${resolvedServiceName} (${resolvedServiceKey}) via ${metodoPagamento} for email: ${maskEmail(emailNormalized)}. Liberação para: ${dataLiberacaoSaqueIso}`);
 
           const queryLeadId = (req.query.leadId || payload.data?.custom_fields?.leadId || payload.leadId || "").toString().trim();
           const buyerDocNum = (buyerDocument || "").replace(/\D/g, "");
@@ -456,7 +457,7 @@ export function createExpressApp() {
             }
 
             await updateDoc(partnerRef, updatePayload);
-            console.log(`Successfully activated partner ${docSnap.id} with email ${emailNormalized} for plan ${planName}`);
+            console.log(`Successfully activated partner ${docSnap.id} with email ${maskEmail(emailNormalized)} for plan ${planName}`);
           }
           return res.status(200).json({ status: "success", message: "Partner activated successfully" });
         } else {
@@ -486,7 +487,7 @@ export function createExpressApp() {
           return res.status(200).json({ status: "success", message: "Pre-paid partner created" });
         }
       } else if (isCancelled) {
-        console.log(`Cancellation/Refund/Expiry event for email: ${emailNormalized}. Deactivating partner...`);
+        console.log(`Cancellation/Refund/Expiry event for email: ${maskEmail(emailNormalized)}. Deactivating partner...`);
 
         // Query the partner document by email
         const q = query(collection(db, "parceiros"), where("email", "==", emailNormalized));
@@ -499,7 +500,7 @@ export function createExpressApp() {
               status: "vencida",
               duracaoDias: 0 // Instantly sets status as "vencida" in getSubscriptionStatus
             });
-            console.log(`Successfully deactivated partner ${docSnap.id} with email ${emailNormalized}`);
+            console.log(`Successfully deactivated partner ${docSnap.id} with email ${maskEmail(emailNormalized)}`);
           }
           return res.status(200).json({ status: "success", message: "Partner deactivated successfully due to refund/cancellation" });
         } else {
@@ -532,7 +533,7 @@ export function createExpressApp() {
       const queryStr = `${keyword} em ${city}${state ? ` - ${state}` : ""}`;
       console.log(`[Google Places API] Initiating lead hunt for: "${queryStr}" with limit ${limit}`);
 
-      const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.PLACES_API_KEY;
+      const GOOGLE_MAPS_KEY = firstEnv("GOOGLE_MAPS_API_KEY", "PLACES_API_KEY");
 
       const requestedLimit = Math.min(Math.max(Number(limit), 1), 20);
       const allResults: any[] = [];
@@ -866,17 +867,17 @@ export function createExpressApp() {
   });
 
   // --- CREDIT QUERY API INTEGRATION (REDEBE API) ---
-  let REDEBE_TOKEN = process.env.REDEBE_TOKEN;
+  let REDEBE_TOKEN = optionalEnv("REDEBE_TOKEN");
   const REDEBE_API_URL = "https://consultas.redebe.com.br/api/v1/credito/diagnostico-inteligente";
 
-  let INTEGRADOR_API_KEY = process.env.INTEGRADOR_API_KEY;
+  let INTEGRADOR_API_KEY = optionalEnv("INTEGRADOR_API_KEY");
   if (INTEGRADOR_API_KEY === "Tony@3419") {
     INTEGRADOR_API_KEY = "intg_Rx5O65qGdNeY6vR1RFjSiKYH0AmXqE0GYFitRYiqf-c";
   }
 
-  let INTEGRADOR_BASE_URL = process.env.INTEGRADOR_API_BASE_URL;
+  let INTEGRADOR_BASE_URL = optionalEnv("INTEGRADOR_API_BASE_URL");
   if (!INTEGRADOR_BASE_URL || !INTEGRADOR_BASE_URL.startsWith("http")) {
-    console.warn(`Invalid or empty INTEGRADOR_API_BASE_URL "${INTEGRADOR_BASE_URL}". Falling back to production URL.`);
+    console.warn("Invalid or empty INTEGRADOR_API_BASE_URL. Falling back to production URL.");
     INTEGRADOR_BASE_URL = "https://kqfciyqklrosqmgjzjtb.supabase.co/functions/v1";
   }
 
@@ -964,7 +965,7 @@ export function createExpressApp() {
         return res.status(400).json({ error: "Documento inválido. Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido." });
       }
 
-      console.log(`Executing RedeBe credit query for partner ${partnerId} on document ${cleanDoc} (isAdminBypass=${!!isAdminBypass})...`);
+      console.log(`Executing RedeBe credit query for partner ${partnerId} on document ${maskDoc(cleanDoc)} (isAdminBypass=${!!isAdminBypass})...`);
 
       // 3.1 Retrieve partner from Firestore to check balance
       const partnerRef = doc(db, "parceiros", partnerId);
@@ -1011,9 +1012,9 @@ export function createExpressApp() {
       }
 
       // 3.4 Call RedeBe API
-      console.log(`Calling RedeBe API endpoint for document ${cleanDoc}...`);
+      console.log(`Calling RedeBe API endpoint for document ${maskDoc(cleanDoc)}...`);
       const HARDCODED_TOKEN = "ctk_6626261e8e3c6a7ecae118fa6415975852cc6d3b73dabca9fc7f3748eb216851";
-      const envToken = process.env.REDEBE_TOKEN ? process.env.REDEBE_TOKEN.trim() : "";
+      const envToken = optionalEnv("REDEBE_TOKEN");
       const tokenToUse = (envToken.startsWith("ctk_") || envToken.length > 20)
         ? envToken.replace(/^Bearer\s+/i, "").trim()
         : HARDCODED_TOKEN;
@@ -1041,7 +1042,7 @@ export function createExpressApp() {
         }
 
         apiResult = await redebeRes.json();
-        console.log("RedeBe API response successfully received for document:", cleanDoc);
+        console.log("RedeBe API response successfully received for document:", maskDoc(cleanDoc));
         isSuccess = true;
       } catch (fetchErr: any) {
         console.error("Fetch exception while calling RedeBe API:", fetchErr);
@@ -1297,7 +1298,7 @@ export function createExpressApp() {
   let aiClient: any = null;
   function getGeminiAI() {
     if (!aiClient) {
-      const key = process.env.GEMINI_API_KEY;
+      const key = optionalEnv("GEMINI_API_KEY");
       if (!key) {
         throw new Error("A chave GEMINI_API_KEY não foi encontrada no arquivo .env ou no painel de controle.");
       }
@@ -2643,7 +2644,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   // =========================================================================
   app.post("/api/webhooks/lastlink", async (req, res) => {
     // ---- Autenticação obrigatória do webhook (time-safe) ----
-    const expectedLastlinkToken = process.env.LASTLINK_WEBHOOK_TOKEN;
+    const expectedLastlinkToken = optionalEnv("LASTLINK_WEBHOOK_TOKEN");
     if (!expectedLastlinkToken) {
       console.error("[LASTLINK WEBHOOK] LASTLINK_WEBHOOK_TOKEN não configurado no ambiente.");
       return res.status(503).json({ error: "Webhook temporariamente indisponível." });
@@ -2726,7 +2727,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const buyerEmail = (customer.email || order.email || "").toString().trim().toLowerCase();
       const productName = (order.product?.name || dataObj.product_name || dataObj.productName || payload.product_name || "").toString();
 
-      console.log(`[LASTLINK WEBHOOK] Buscando Lead correspondente: CustomId="${customId}", Doc="${buyerDoc}", Email="${buyerEmail}", Produto="${productName}"`);
+      console.log(`[LASTLINK WEBHOOK] Buscando Lead correspondente: CustomId="${customId}", Doc="${maskDoc(buyerDoc)}", Email="${maskEmail(buyerEmail)}", Produto="${productName}"`);
 
       let targetLeadDoc: any = null;
 
@@ -2899,7 +2900,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       if (!documento) return res.status(400).json({ error: "documento é obrigatório." });
 
       if (produto_code === "REDEBE_DIAGNOSTICO_360") {
-        const token = (process.env.REDEBE_TOKEN || "").replace(/^Bearer\s+/i, "").trim();
+        const token = optionalEnv("REDEBE_TOKEN").replace(/^Bearer\s+/i, "").trim();
         if (!token) return res.status(500).json({ error: "REDEBE_TOKEN não configurado." });
         const r = await fetch(REDEBE_API_URL, {
           method: "POST",
@@ -2929,7 +2930,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
   app.post("/api/proxy/places-search", async (req, res) => {
     try {
-      const key = process.env.GOOGLE_MAPS_API_KEY || process.env.PLACES_API_KEY;
+      const key = firstEnv("GOOGLE_MAPS_API_KEY", "PLACES_API_KEY");
       if (!key) return res.status(500).json({ error: "GOOGLE_MAPS_API_KEY não configurada." });
       const { textQuery, pageSize, pageToken } = req.body || {};
       const payload: any = { textQuery, pageSize: Math.min(20, Number(pageSize) || 10) };
@@ -2954,7 +2955,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   // ETAPA B — Migração de senhas em texto puro para o Firebase Auth
   // =====================================================================
   const FIREBASE_API_KEY =
-    process.env.FIREBASE_API_KEY || (firebaseConfig as any).apiKey;
+    optionalEnv("FIREBASE_API_KEY") || (firebaseConfig as any).apiKey;
 
   const authRest = async (endpoint: string, payload: any) => {
     const r = await fetch(
@@ -3085,7 +3086,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
   // Migração em lote — protegida por MIGRATION_ADMIN_TOKEN
   app.post("/api/auth/migrar-parceiros", async (req, res) => {
-    const expected = process.env.MIGRATION_ADMIN_TOKEN;
+    const expected = optionalEnv("MIGRATION_ADMIN_TOKEN");
     if (!expected) {
       return res.status(503).json({ error: "MIGRATION_ADMIN_TOKEN não configurado." });
     }
