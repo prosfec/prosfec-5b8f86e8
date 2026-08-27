@@ -1057,7 +1057,10 @@ export default function PartnerPortal({
   const [dashboardServiceSearch, setDashboardServiceSearch] = useState("");
   const [expandedServiceLeadId, setExpandedServiceLeadId] = useState<string | null>(null);
   const [solicitacoesComissao, setSolicitacoesComissao] = useState<SolicitacaoComissao[]>([]);
-  const [showCommissionPayoutModal, setShowCommissionPayoutModal] = useState(false);
+  // Origem da caixa de saque: "vendas" (comissões de planos/vendas) ou "servicos" (Passo 6)
+  const [payoutModalOrigin, setPayoutModalOrigin] = useState<null | "vendas" | "servicos">(null);
+  const showCommissionPayoutModal = payoutModalOrigin !== null;
+  const setShowCommissionPayoutModal = (open: any) => setPayoutModalOrigin(open ? "servicos" : null);
   const [commissionPayoutSubmitting, setCommissionPayoutSubmitting] = useState(false);
   const [commissionPayoutSuccess, setCommissionPayoutSuccess] = useState<string | null>(null);
   const [payoutPixKey, setPayoutPixKey] = useState("");
@@ -1508,6 +1511,46 @@ export default function PartnerPortal({
     if (p.includes("EXEC")) return 0.015; // 3.0% - 1.5% = 1.5%
     return 0.025; // 3.0% - 0.5% = 2.5% for Starter / others
   };
+
+  // ===== Saldo de COMISSÕES DE VENDAS (planos / Lastlink-Hubla) — usado no card e na caixa de saque "vendas"
+  const salesCommissionStats = (() => {
+    const directMultiplier = getDirectCommissionMultiplier(currentPartner?.plano);
+    const isPaidLead = (l: any) => l.comissaoPaga === true || l.servicoPago === true || l.comissaoMultinivel?.statusGeral === "pago";
+    const isPendingLead = (l: any) =>
+      l.comissaoPaga !== true && l.servicoPago !== true && l.comissaoMultinivel?.statusGeral !== "pago" &&
+      (l.etapa === 7 || l.status === "concluido" || l.servicosRecomendados?.length > 0 || (l.subEtapasPasso6 && l.subEtapasPasso6.length > 0));
+
+    const directPaid = (leads || []).filter(isPaidLead).reduce((acc: number, l: any) =>
+      acc + (l.comissaoMultinivel?.valorComissaoDireta || ((l.valorAprovado || l.limiteEstimado || 0) * directMultiplier)), 0);
+    const directPending = (leads || []).filter(isPendingLead).reduce((acc: number, l: any) =>
+      acc + (l.comissaoMultinivel?.valorComissaoDireta || ((l.valorAprovado || l.limiteEstimado || 0) * directMultiplier)), 0);
+
+    const teamPaid = (teamLeads || []).filter(isPaidLead).reduce((acc: number, l: any) =>
+      acc + (l.comissaoMultinivel?.valorComissaoEquipe || ((l.valorAprovado || l.limiteEstimado || 0) * getOverrideMultiplierForLead(l))), 0);
+    const teamPending = (teamLeads || []).filter(isPendingLead).reduce((acc: number, l: any) =>
+      acc + (l.comissaoMultinivel?.valorComissaoEquipe || ((l.valorAprovado || l.limiteEstimado || 0) * getOverrideMultiplierForLead(l))), 0);
+
+    const master = isFranquiaDigital(currentPartner?.plano);
+    return {
+      totalPaid: directPaid + (master ? teamPaid : 0),
+      totalPending: directPending + (master ? teamPending : 0),
+      leadsPagos: (leads || []).filter(isPaidLead).map((l: any) => l.nomeEmpresa || l.nome || "Empresa"),
+    };
+  })();
+
+  // Origem de uma solicitação antiga (sem campo) = serviços (comportamento anterior)
+  const getSolicitacaoOrigem = (s: any): "vendas" | "servicos" => (s?.origem === "vendas" ? "vendas" : "servicos");
+
+  const somaSaques = (origem: "vendas" | "servicos", status: string) =>
+    (solicitacoesComissao || [])
+      .filter((s: any) => getSolicitacaoOrigem(s) === origem && s.status === status)
+      .reduce((acc: number, s: any) => acc + (s.valor || 0), 0);
+
+  const saquesVendasPagos = somaSaques("vendas", "pago");
+  const saquesVendasPendentes = somaSaques("vendas", "pendente");
+  const saldoVendasDisponivel = Math.max(0, salesCommissionStats.totalPaid - (saquesVendasPagos + saquesVendasPendentes));
+
+
 
   const handleUpdateTeamMemberPlan = async (memberId: string, newPlan: string) => {
     try {
@@ -5071,11 +5114,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <button
                                 onClick={() => {
                                   setPayoutPixKey(currentPartner?.chavePix || "");
+                                  setPayoutAmountCustom(saldoVendasDisponivel > 0 ? saldoVendasDisponivel.toFixed(2) : "0");
                                   setCommissionPayoutSuccess(null);
-                                  setShowCommissionPayoutModal(true);
+                                  setPayoutModalOrigin("vendas");
                                 }}
                                 className="bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold px-4 py-3 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer shrink-0 min-h-[44px]"
-                                title="Solicitar saque/repasse das comissões liberadas"
+                                title="Solicitar saque das comissões de vendas/planos"
                               >
                                 <Coins className="w-4 h-4 text-slate-950 shrink-0" />
                                 <span>Solicitar Comissão</span>
@@ -5391,11 +5435,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                     // Deduções de Saques Solicitados (solicitacoes_comissao)
                     const totalSaquesPagos = solicitacoesComissao
-                      .filter(s => s.status === "pago")
+                      .filter(s => getSolicitacaoOrigem(s) === "servicos" && s.status === "pago")
                       .reduce((acc, s) => acc + (s.valor || 0), 0);
 
                     const totalSaquesPendentes = solicitacoesComissao
-                      .filter(s => s.status === "pendente")
+                      .filter(s => getSolicitacaoOrigem(s) === "servicos" && s.status === "pendente")
                       .reduce((acc, s) => acc + (s.valor || 0), 0);
 
                     // Saldo Disponível Líquido para Novo Saque
@@ -5552,7 +5596,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     setPayoutPixKey(currentPartner?.chavePix || "");
                                     setPayoutAmountCustom(saldoDisponivelParaSaque > 0 ? saldoDisponivelParaSaque.toFixed(2) : "0");
                                     setCommissionPayoutSuccess(null);
-                                    setShowCommissionPayoutModal(true);
+                                    setPayoutModalOrigin("servicos");
                                   }}
                                   disabled={saldoDisponivelParaSaque <= 0}
                                   className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-md bg-[#00A86B] hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 cursor-pointer transition-all shadow-xs"
@@ -5599,8 +5643,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <button
                               onClick={() => {
                                 setPayoutPixKey(currentPartner?.chavePix || "");
+                                setPayoutAmountCustom(saldoDisponivelParaSaque > 0 ? saldoDisponivelParaSaque.toFixed(2) : "0");
                                 setCommissionPayoutSuccess(null);
-                                setShowCommissionPayoutModal(true);
+                                setPayoutModalOrigin("servicos");
                               }}
                               className="px-3.5 py-2 bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 min-h-[40px]"
                             >
@@ -5937,7 +5982,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         {new Date(sol.dataSolicitacao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                                       </td>
                                       <td className="py-2.5 px-3 font-mono font-extrabold text-slate-900">
-                                        {formatCurrencyBRL(sol.valor)}
+                                        <span className="block">{formatCurrencyBRL(sol.valor)}</span>
+                                        <span className={`inline-block mt-0.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                                          getSolicitacaoOrigem(sol) === "vendas"
+                                            ? "bg-sky-50 text-sky-700 border border-sky-200"
+                                            : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                        }`}>
+                                          {getSolicitacaoOrigem(sol) === "vendas" ? "Vendas" : "Serviços P6"}
+                                        </span>
                                       </td>
                                       <td className="py-2.5 px-3 font-mono text-xs text-slate-600 truncate max-w-[140px]" title={sol.chavePix}>
                                         {sol.chavePix}
@@ -11227,10 +11279,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 </div>
                 <div>
                   <h4 className="font-display font-extrabold text-base text-slate-800">
-                    Solicitar Repasse de Comissões
+                    {payoutModalOrigin === "vendas" ? "Saque de Comissões de Vendas" : "Saque de Comissões de Serviços (Passo 6)"}
                   </h4>
                   <p className="text-[11px] text-slate-500">
-                    Comissão de 20% sobre serviços quitados do Passo 6
+                    {payoutModalOrigin === "vendas"
+                      ? "Comissões de planos e vendas liberadas (Lastlink / Hubla)"
+                      : "Comissão sobre serviços quitados do Passo 6"}
                   </p>
                 </div>
               </div>
@@ -11377,15 +11431,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 });
               }
 
-              const totalSaquesJaRealizados = solicitacoesComissao
-                .filter(s => s.status === "pago")
-                .reduce((acc, s) => acc + (s.valor || 0), 0);
+              const isVendas = payoutModalOrigin === "vendas";
+              const origemAtual: "vendas" | "servicos" = isVendas ? "vendas" : "servicos";
 
-              const totalSaquesEmAndamento = solicitacoesComissao
-                .filter(s => s.status === "pendente")
-                .reduce((acc, s) => acc + (s.valor || 0), 0);
+              const totalSaquesJaRealizados = somaSaques(origemAtual, "pago");
+              const totalSaquesEmAndamento = somaSaques(origemAtual, "pendente");
 
-              const saldoLiquidoDisponivel = Math.max(0, totalLiberada - (totalSaquesJaRealizados + totalSaquesEmAndamento));
+              const baseLiberada = isVendas ? salesCommissionStats.totalPaid : totalLiberada;
+              const saldoLiquidoDisponivel = Math.max(0, baseLiberada - (totalSaquesJaRealizados + totalSaquesEmAndamento));
               const valorDigitado = parseFloat(payoutAmountCustom.replace(",", ".")) || 0;
               const isValorValido = valorDigitado > 0 && valorDigitado <= saldoLiquidoDisponivel;
 
@@ -11395,14 +11448,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   <div className="bg-emerald-50/70 border border-emerald-200/80 p-3.5 rounded-2xl flex items-center justify-between">
                     <div>
                       <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wide block">
-                        Saldo Disponível para Saque
+                        {isVendas ? "Saldo de Comissões de Vendas" : "Saldo de Comissões de Serviços (Passo 6)"}
                       </span>
                       <span className="text-xl font-black text-emerald-900 font-display">
                         {formatCurrencyBRL(saldoLiquidoDisponivel)}
                       </span>
                     </div>
                     <div className="text-right text-[10px] font-mono text-emerald-700 space-y-0.5">
-                      <div>Total liberado: {formatCurrencyBRL(totalLiberada)}</div>
+                      <div>Total liberado: {formatCurrencyBRL(baseLiberada)}</div>
                       <div>Em análise/pagos: {formatCurrencyBRL(totalSaquesJaRealizados + totalSaquesEmAndamento)}</div>
                     </div>
                   </div>
@@ -11486,17 +11539,26 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             chavePix: payoutPixKey.trim(),
                             valor: valorDigitado,
                             status: "pendente",
+                            origem: origemAtual,
+                            origemLabel: isVendas ? "Comissões de Vendas (Planos)" : "Comissões de Serviços (Passo 6)",
                             dataSolicitacao: new Date().toISOString(),
-                            detalhes: {
-                              saldoDisponivelMomento: saldoLiquidoDisponivel,
-                              comissaoTotalLiberada: totalLiberada,
-                              comissaoTotalPaga: totalPaga,
-                              comissaoAguardandoCompensacao: totalCompensando,
-                              leadsEnvolvidos: leadNomesLiberados
-                            }
+                            detalhes: isVendas
+                              ? {
+                                  saldoDisponivelMomento: saldoLiquidoDisponivel,
+                                  comissaoTotalLiberada: salesCommissionStats.totalPaid,
+                                  comissaoPendente: salesCommissionStats.totalPending,
+                                  leadsEnvolvidos: salesCommissionStats.leadsPagos
+                                }
+                              : {
+                                  saldoDisponivelMomento: saldoLiquidoDisponivel,
+                                  comissaoTotalLiberada: totalLiberada,
+                                  comissaoTotalPaga: totalPaga,
+                                  comissaoAguardandoCompensacao: totalCompensando,
+                                  leadsEnvolvidos: leadNomesLiberados
+                                }
                           });
 
-                          setCommissionPayoutSuccess(`Solicitação de saque de ${formatCurrencyBRL(valorDigitado)} enviada com sucesso! O valor foi transferido para análise e o repasse será feito via Pix.`);
+                          setCommissionPayoutSuccess(`Solicitação de saque de ${formatCurrencyBRL(valorDigitado)} (${isVendas ? "Comissões de Vendas" : "Serviços Passo 6"}) enviada com sucesso! O repasse será feito via Pix.`);
                         } catch (err) {
                           console.error("Erro ao solicitar comissao:", err);
                           alert("Ocorreu um erro ao registrar sua solicitação no Firestore. Tente novamente.");
