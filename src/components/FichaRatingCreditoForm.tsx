@@ -1077,146 +1077,32 @@ export default function FichaRatingCreditoForm({
                   </span>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    
-                    {/* Foto CNH ou RG (Frente) */}
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700">Foto CNH ou RG (Frente)</span>
-                        {socios[activeSocioTab].fotoCnhRgFrente && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Anexado</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                          <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                          <span className="truncate">{socios[activeSocioTab].fotoCnhRgFrenteNome || "Escolher Foto Frente"}</span>
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            className="hidden"
-                            onChange={(e) => handleSocioFileUpload(activeSocioTab, "fotoCnhRgFrente", e.target.files?.[0] || null)}
-                          />
-                        </label>
-                        {socios[activeSocioTab].fotoCnhRgFrente && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewFile({
-                              name: socios[activeSocioTab].fotoCnhRgFrenteNome || "CNH/RG Frente",
-                              url: socios[activeSocioTab].fotoCnhRgFrente!
-                            })}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                            title="Visualizar anexo"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Foto CNH ou RG (Verso) */}
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700">Foto CNH ou RG (Verso)</span>
-                        {socios[activeSocioTab].fotoCnhRgVerso && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Anexado</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                          <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                          <span className="truncate">{socios[activeSocioTab].fotoCnhRgVersoNome || "Escolher Foto Verso"}</span>
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            className="hidden"
-                            onChange={(e) => handleSocioFileUpload(activeSocioTab, "fotoCnhRgVerso", e.target.files?.[0] || null)}
-                          />
-                        </label>
-                        {socios[activeSocioTab].fotoCnhRgVerso && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewFile({
-                              name: socios[activeSocioTab].fotoCnhRgVersoNome || "CNH/RG Verso",
-                              url: socios[activeSocioTab].fotoCnhRgVerso!
-                            })}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                            title="Visualizar anexo"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    <DocLinkInput
+                      label="Foto CNH ou RG (Frente)"
+                      value={socios[activeSocioTab].fotoCnhRgFrente}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoCnhRgFrente", url, "CNH/RG Frente")}
+                      hint="Compartilhe o arquivo no Google Drive com permissão de visualização e cole o link."
+                    />
 
-                    {/* Selfie segurando o mesmo documento */}
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700">Selfie segurando o documento</span>
-                        {socios[activeSocioTab].selfieComDocumento && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Anexado</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                          <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                          <span className="truncate">{socios[activeSocioTab].selfieComDocumentoNome || "Escolher Selfie"}</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleSocioFileUpload(activeSocioTab, "selfieComDocumento", e.target.files?.[0] || null)}
-                          />
-                        </label>
-                        {socios[activeSocioTab].selfieComDocumento && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewFile({
-                              name: socios[activeSocioTab].selfieComDocumentoNome || "Selfie com documento",
-                              url: socios[activeSocioTab].selfieComDocumento!
-                            })}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                            title="Visualizar anexo"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    <DocLinkInput
+                      label="Foto CNH ou RG (Verso)"
+                      value={socios[activeSocioTab].fotoCnhRgVerso}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoCnhRgVerso", url, "CNH/RG Verso")}
+                    />
 
-                    {/* Foto de Título de Eleitor */}
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700">Foto de Título de Eleitor</span>
-                        {socios[activeSocioTab].fotoTituloEleitor && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Anexado</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl cursor-pointer transition-all truncate">
-                          <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                          <span className="truncate">{socios[activeSocioTab].fotoTituloEleitorNome || "Escolher Título"}</span>
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            className="hidden"
-                            onChange={(e) => handleSocioFileUpload(activeSocioTab, "fotoTituloEleitor", e.target.files?.[0] || null)}
-                          />
-                        </label>
-                        {socios[activeSocioTab].fotoTituloEleitor && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewFile({
-                              name: socios[activeSocioTab].fotoTituloEleitorNome || "Título de Eleitor",
-                              url: socios[activeSocioTab].fotoTituloEleitor!
-                            })}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                            title="Visualizar anexo"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    <DocLinkInput
+                      label="Selfie segurando o documento"
+                      value={socios[activeSocioTab].selfieComDocumento}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "selfieComDocumento", url, "Selfie com documento")}
+                    />
+
+                    <DocLinkInput
+                      label="Foto de Título de Eleitor"
+                      value={socios[activeSocioTab].fotoTituloEleitor}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoTituloEleitor", url, "Título de Eleitor")}
+                    />
+
 
                   </div>
                 </div>
