@@ -3084,6 +3084,42 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // Criação de acesso para membro de equipe (sem senha em texto puro)
+  app.post("/api/auth/provision-membro", async (req, res) => {
+    try {
+      const email = String(req.body?.email || "").trim().toLowerCase();
+      const senha = String(req.body?.senha || "");
+      if (!email || senha.length < 6) {
+        return res
+          .status(400)
+          .json({ error: "E-mail válido e senha de no mínimo 6 caracteres são obrigatórios." });
+      }
+
+      const signUp = await authRest("signUp", { email, password: senha, returnSecureToken: true });
+      if (signUp.ok) {
+        return res.json({ success: true, created: true, localId: signUp.data?.localId || "" });
+      }
+
+      const code = String(signUp.data?.error?.message || "");
+      if (code.startsWith("EMAIL_EXISTS")) {
+        const signIn = await authRest("signInWithPassword", {
+          email,
+          password: senha,
+          returnSecureToken: true,
+        });
+        if (signIn.ok) {
+          return res.json({ success: true, created: false, localId: signIn.data?.localId || "" });
+        }
+        return res.status(409).json({ error: "EMAIL_EXISTS_DIFFERENT_PASSWORD" });
+      }
+
+      return res.status(400).json({ error: "Não foi possível criar o acesso." });
+    } catch (err: any) {
+      console.error("[PROVISION MEMBRO] Falha:", err?.message || "erro");
+      return res.status(500).json({ error: "Erro ao criar o acesso do consultor." });
+    }
+  });
+
   // Migração em lote — protegida por MIGRATION_ADMIN_TOKEN
   app.post("/api/auth/migrar-parceiros", async (req, res) => {
     const expected = optionalEnv("MIGRATION_ADMIN_TOKEN");
