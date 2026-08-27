@@ -3342,6 +3342,141 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     await patchLeadRest(leadId, fields, masks);
   };
 
+  // -------------------------------------------------------------------------
+  // Portal do Cliente — busca pública do lead feita no servidor.
+  // As regras do Firestore exigem sessão para ler /leads; o cliente entra por
+  // protocolo/CNPJ sem estar autenticado, então a leitura passa por aqui com a
+  // identidade de serviço e devolve apenas campos não sensíveis.
+  // -------------------------------------------------------------------------
+  const SENSIVEL_LEAD = /(senha|hash|salt|token|comiss)/i;
+
+  const restValueToJs = (v: any): any => {
+    if (v == null) return null;
+    if ("stringValue" in v) return v.stringValue;
+    if ("integerValue" in v) return Number(v.integerValue);
+    if ("doubleValue" in v) return Number(v.doubleValue);
+    if ("booleanValue" in v) return v.booleanValue;
+    if ("timestampValue" in v) return v.timestampValue;
+    if ("nullValue" in v) return null;
+    if ("arrayValue" in v) return (v.arrayValue?.values || []).map(restValueToJs);
+    if ("mapValue" in v) return restFieldsToJs(v.mapValue?.fields || {});
+    return null;
+  };
+
+  const restFieldsToJs = (fields: any): any => {
+    const out: any = {};
+    for (const k of Object.keys(fields || {})) {
+      if (SENSIVEL_LEAD.test(k)) continue;
+      out[k] = restValueToJs(fields[k]);
+    }
+    return out;
+  };
+
+  const runQueryRest = async (structuredQuery: any) => {
+    const idToken = await getServiceIdToken();
+    const url =
+      `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}` +
+      `/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents:runQuery`;
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ structuredQuery }),
+    });
+    if (!r.ok) return [];
+    const data = await r.json().catch(() => []);
+    return (Array.isArray(data) ? data : []).filter((row: any) => row?.document);
+  };
+
+  const queryLeadsByField = async (field: string, value: string, limit = 1) =>
+    runQueryRest({
+      from: [{ collectionId: "leads" }],
+      where: {
+        fieldFilter: { field: { fieldPath: field }, op: "EQUAL", value: { stringValue: value } },
+      },
+      limit,
+    });
+
+  // Rate limit simples por IP (anti-enumeração de protocolos)
+  const buscaLeadHits = new Map<string, { count: number; reset: number }>();
+  const buscaLeadRateLimited = (ip: string) => {
+    const now = Date.now();
+    const entry = buscaLeadHits.get(ip);
+    if (!entry || now > entry.reset) {
+      buscaLeadHits.set(ip, { count: 1, reset: now + 60_000 });
+      return false;
+    }
+    entry.count += 1;
+    return entry.count > 20;
+  };
+
+  app.post("/api/portal/buscar-lead", async (req, res) => {
+    try {
+      const ip =
+        (req.headers?.["x-forwarded-for"] || "").toString().split(",")[0].trim() || "anon";
+      if (buscaLeadRateLimited(ip)) {
+        return res.status(429).json({ error: "Muitas buscas seguidas. Aguarde um minuto." });
+      }
+
+      const termo = String(req.body?.termo || "").trim();
+      if (!termo || termo.length < 4) {
+        return res.status(400).json({ error: "Informe o protocolo ou o CNPJ." });
+      }
+      const somenteDigitos = termo.replace(/\D/g, "");
+
+      // 1. Protocolo (ID do documento)
+      let fields = await getLeadRest(termo);
+      let leadId = termo;
+
+      // 2. CNPJ (formatado e limpo)
+      if (!fields) {
+        let rows = await queryLeadsByField("cnpj", termo);
+        if (!rows.length && somenteDigitos) rows = await queryLeadsByField("cnpj", somenteDigitos);
+        if (rows.length) {
+          leadId = rows[0].document.name.split("/").pop();
+          fields = rows[0].document.fields;
+        }
+      }
+
+      // 3. WhatsApp exato
+      if (!fields && somenteDigitos.length >= 8) {
+        let rows = await queryLeadsByField("whatsapp", termo);
+        if (!rows.length) rows = await queryLeadsByField("whatsapp", somenteDigitos);
+        if (rows.length) {
+          leadId = rows[0].document.name.split("/").pop();
+          fields = rows[0].document.fields;
+        }
+      }
+
+      if (!fields) return res.status(404).json({ error: "Solicitação não encontrada." });
+
+      const lead = restFieldsToJs(fields);
+      const temSenha = !!(
+        fields.clienteSenhaHash?.stringValue || fields.clienteSenha?.stringValue
+      );
+
+      return res.json({ lead: { id: leadId, ...lead }, temSenha });
+    } catch (err: any) {
+      console.error("[PORTAL] Falha ao buscar lead:", err?.message || "erro");
+      return res.status(500).json({ error: "Erro ao buscar a solicitação." });
+    }
+  });
+
+  // Catálogo de preços exibido antes do login do cliente
+  app.get("/api/portal/precos", async (_req, res) => {
+    try {
+      const idToken = await getServiceIdToken();
+      const r = await fetch(firestoreDocUrl("configuracoes/precos_consultas"), {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!r.ok) return res.json({ servicos: [] });
+      const data = await r.json().catch(() => null);
+      const parsed = restFieldsToJs(data?.fields || {});
+      return res.json({ servicos: Array.isArray(parsed?.servicos) ? parsed.servicos : [] });
+    } catch {
+      return res.json({ servicos: [] });
+    }
+  });
+
   // Login do cliente (com lazy migration da senha em texto puro)
   app.post("/api/auth/cliente-login", async (req, res) => {
     try {
