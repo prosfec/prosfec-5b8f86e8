@@ -1265,107 +1265,24 @@ export default function FichaRatingCreditoForm({
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* Frente */}
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">Doc Foto (Frente)</span>
-                    {dadosCNPJ.documentoFotoFrenteTodosSocios && (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">OK</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-2 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.documentoFotoFrenteTodosSociosNome || "Anexar Frente"}</span>
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("documentoFotoFrenteTodosSocios", e.target.files?.[0] || null, false)}
-                      />
-                    </label>
-                    {dadosCNPJ.documentoFotoFrenteTodosSocios && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.documentoFotoFrenteTodosSociosNome || "Doc Foto Frente",
-                          url: dadosCNPJ.documentoFotoFrenteTodosSocios!
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Doc Foto (Frente)"
+                  value={dadosCNPJ.documentoFotoFrenteTodosSocios}
+                  onChange={(url) => handleCNPJLinkChange("documentoFotoFrenteTodosSocios", url, "Doc Foto Frente")}
+                />
 
-                {/* Verso */}
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">Doc Foto (Verso)</span>
-                    {dadosCNPJ.documentoFotoVersoTodosSocios && (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">OK</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-2 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.documentoFotoVersoTodosSociosNome || "Anexar Verso"}</span>
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("documentoFotoVersoTodosSocios", e.target.files?.[0] || null, false)}
-                      />
-                    </label>
-                    {dadosCNPJ.documentoFotoVersoTodosSocios && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.documentoFotoVersoTodosSociosNome || "Doc Foto Verso",
-                          url: dadosCNPJ.documentoFotoVersoTodosSocios!
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Doc Foto (Verso)"
+                  value={dadosCNPJ.documentoFotoVersoTodosSocios}
+                  onChange={(url) => handleCNPJLinkChange("documentoFotoVersoTodosSocios", url, "Doc Foto Verso")}
+                />
 
-                {/* Selfie */}
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">Selfie dos Sócios</span>
-                    {dadosCNPJ.selfieTodosSocios && (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">OK</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-2 rounded-xl cursor-pointer transition-all truncate">
-                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                      <span className="truncate">{dadosCNPJ.selfieTodosSociosNome || "Anexar Selfie"}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("selfieTodosSocios", e.target.files?.[0] || null, false)}
-                      />
-                    </label>
-                    {dadosCNPJ.selfieTodosSocios && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.selfieTodosSociosNome || "Selfie dos Sócios",
-                          url: dadosCNPJ.selfieTodosSocios!
-                        })}
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <DocLinkInput
+                  label="Selfie dos Sócios"
+                  value={dadosCNPJ.selfieTodosSocios}
+                  onChange={(url) => handleCNPJLinkChange("selfieTodosSocios", url, "Selfie dos Sócios")}
+                />
+
               </div>
             </div>
 
