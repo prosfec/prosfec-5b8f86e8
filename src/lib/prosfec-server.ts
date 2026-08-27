@@ -2793,8 +2793,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     return res.json({ status: "online", gateway: "LastLink Webhook Receiver Active", timestamp: new Date().toISOString() });
   });
 
-    }
-  });
+
+
 
   // --- SECURE PROXIES (mantêm as chaves fora do navegador) ---
   app.get("/api/proxy/integrador-catalogo", async (req, res) => {
