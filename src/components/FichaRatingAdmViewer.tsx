@@ -743,7 +743,21 @@ export default function FichaRatingAdmViewer({
             >
               <X className="w-3.5 h-3.5" />
             </button>
+
+            <button
+              type="button"
+              onClick={() => handleToggleLinkProblema(docKey, title)}
+              className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
+                linkProblema
+                  ? "bg-rose-600 text-white shadow-xs"
+                  : "bg-slate-100 hover:bg-amber-100 text-slate-600 hover:text-amber-700"
+              }`}
+              title={linkProblema ? "Remover sinalização de link inacessível" : "Sinalizar link inacessível"}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+            </button>
           </div>
+
         ) : (
           <div className="pt-1 text-[11px] text-slate-400 italic">
             Aguardando anexo do cliente no portal
