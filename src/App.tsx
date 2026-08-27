@@ -250,8 +250,10 @@ export default function App() {
 
     const trackId = params.get("acompanhamento") || params.get("tracking") || params.get("status") || params.get("leadTrack");
     if (trackId) {
-      setClientTrackingId(trackId);
-      setShowTracking(true);
+      // A partir de agora o acompanhamento do cliente vive na rota própria
+      // /portal-cliente. Redireciona links antigos para a nova URL.
+      window.location.replace(`/portal-cliente?lead=${encodeURIComponent(trackId)}`);
+      return;
     }
 
     const isRegisterForm = params.get("cadastro") === "true" || params.get("cadastro-usuario") === "true" || params.get("cadastro-consultor") === "true" || params.get("novo-usuario") === "true";
