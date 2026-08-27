@@ -71,8 +71,11 @@ import {
   XCircle,
   Save,
   Link2,
-  Calculator
+  Calculator,
+  Menu,
+  LogOut
 } from "lucide-react";
+
 import { 
   formatCurrencyBRL, 
   getAppDomain, 
