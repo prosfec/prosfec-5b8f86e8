@@ -125,7 +125,10 @@ export function createExpressApp() {
           await getServiceIdTokenRef.fn();
           await signInService(serverAuth, email, password);
         } catch (err: any) {
-          console.warn("[SERVICO] Não foi possível autenticar a identidade de serviço.");
+          console.warn(
+            "[SERVICO] Não foi possível autenticar a identidade de serviço:",
+            err?.code || err?.message || "erro",
+          );
           serviceSignInPromise = null;
         }
       })();
