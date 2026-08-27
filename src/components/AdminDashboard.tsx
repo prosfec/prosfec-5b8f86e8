@@ -2621,7 +2621,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     required
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="adm.prosfec@gmail.com"
+                    placeholder="prosfec.tesouraria@gmail.com"
                     className="appearance-none block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#00A86B] focus:border-transparent text-sm font-medium text-slate-900 bg-slate-50 focus:bg-white/75 backdrop-blur-xl transition-all shadow-inner"
                   />
                 </div>
