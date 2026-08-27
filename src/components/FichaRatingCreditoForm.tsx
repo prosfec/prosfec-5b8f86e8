@@ -58,7 +58,9 @@ const DocLinkInput = ({
 }) => {
   const current = value || "";
   const isLegacyBase64 = current.startsWith("data:");
-  const isInvalid = !!current && !isLegacyBase64 && !/^https?:\/\//i.test(current.trim());
+  const trimmed = current.trim();
+  const isEmptyRequired = required && !trimmed;
+  const isInvalid = !!trimmed && !isLegacyBase64 && !/^https?:\/\//i.test(trimmed);
 
   return (
     <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
@@ -88,18 +90,25 @@ const DocLinkInput = ({
           inputMode="url"
           value={current}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Cole aqui o link do Google Drive..."
+          placeholder="Cole aqui o link do Google Drive"
           aria-label={`Link do documento: ${label}`}
           className={`w-full bg-white border text-slate-800 text-[11px] rounded-xl px-2.5 py-2 focus:outline-hidden font-medium ${
-            isInvalid ? "border-rose-300 focus:border-rose-500" : "border-slate-200 focus:border-emerald-600"
+            isInvalid || isEmptyRequired ? "border-rose-300 focus:border-rose-500" : "border-slate-200 focus:border-emerald-600"
           }`}
         />
+      )}
+
+      {isEmptyRequired && (
+        <p className="text-[10px] text-rose-600 font-bold flex items-center gap-1">
+          <AlertTriangle className="w-3 h-3 shrink-0" />
+          Este campo é obrigatório
+        </p>
       )}
 
       {isInvalid && (
         <p className="text-[10px] text-rose-600 font-bold flex items-center gap-1">
           <AlertTriangle className="w-3 h-3 shrink-0" />
-          O link deve começar com https://
+          O link deve começar com http:// ou https://
         </p>
       )}
 
@@ -114,10 +123,10 @@ const DocLinkInput = ({
               href={current}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+              className="flex-1 py-1.5 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              Abrir link
+              Testar link
             </a>
           )}
           <button
@@ -1082,25 +1091,28 @@ export default function FichaRatingCreditoForm({
                       label="Foto CNH ou RG (Frente)"
                       value={socios[activeSocioTab].fotoCnhRgFrente}
                       onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoCnhRgFrente", url, "CNH/RG Frente")}
-                      hint="Compartilhe o arquivo no Google Drive com permissão de visualização e cole o link."
+                      hint="Recomendamos Google Drive. Certifique-se de configurar o compartilhamento como 'Qualquer pessoa com o link pode visualizar', senão o time da Prosfec não conseguirá abrir."
                     />
 
                     <DocLinkInput
                       label="Foto CNH ou RG (Verso)"
                       value={socios[activeSocioTab].fotoCnhRgVerso}
                       onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoCnhRgVerso", url, "CNH/RG Verso")}
+                      hint="Recomendamos Google Drive. Certifique-se de configurar o compartilhamento como 'Qualquer pessoa com o link pode visualizar', senão o time da Prosfec não conseguirá abrir."
                     />
 
                     <DocLinkInput
                       label="Selfie segurando o documento"
                       value={socios[activeSocioTab].selfieComDocumento}
                       onChange={(url) => handleSocioLinkChange(activeSocioTab, "selfieComDocumento", url, "Selfie com documento")}
+                      hint="Recomendamos Google Drive. Certifique-se de configurar o compartilhamento como 'Qualquer pessoa com o link pode visualizar', senão o time da Prosfec não conseguirá abrir."
                     />
 
                     <DocLinkInput
                       label="Foto de Título de Eleitor"
                       value={socios[activeSocioTab].fotoTituloEleitor}
                       onChange={(url) => handleSocioLinkChange(activeSocioTab, "fotoTituloEleitor", url, "Título de Eleitor")}
+                      hint="Recomendamos Google Drive. Certifique-se de configurar o compartilhamento como 'Qualquer pessoa com o link pode visualizar', senão o time da Prosfec não conseguirá abrir."
                     />
 
 
