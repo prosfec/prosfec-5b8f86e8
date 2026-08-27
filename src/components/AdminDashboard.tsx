@@ -2687,9 +2687,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-slate-50 text-slate-800">
+    <div className="min-h-screen flex flex-col font-sans text-slate-800">
       {/* Top Banner Header */}
-      <header className="bg-[#0A3D2E] text-slate-100 border-b border-emerald-800/50 py-3.5 px-4 sm:px-6 sticky top-0 z-40 shadow-sm backdrop-blur-md">
+      <header className="glass-panel-dark rounded-none text-slate-100 border-x-0 border-t-0 py-3.5 px-4 sm:px-6 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-950/70 p-2.5 rounded-xl text-emerald-300 border border-emerald-700/40 shadow-xs">
@@ -2747,7 +2747,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           {/* Sidebar Left Column */}
           <div className="w-full lg:w-80 shrink-0 space-y-6 lg:sticky lg:top-24">
             {/* Admin Profile/Control Card */}
-            <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-xs flex flex-col justify-between border border-emerald-500/20 min-h-[160px]">
+            <div className="glass-panel-dark glass-raise text-white p-5 sm:p-6 relative overflow-hidden flex flex-col justify-between min-h-[160px]">
               <div className="absolute right-[-40px] top-[-40px] w-36 h-36 rounded-full bg-emerald-400/10 pointer-events-none" />
               <div className="space-y-4 relative z-10">
                 <div className="flex items-start justify-between">
@@ -2766,15 +2766,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             </div>
 
             {/* Vertical Navigation Tabs */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-3 shadow-xs flex flex-col gap-1 text-left">
+            <div className="glass-panel p-3 flex flex-col gap-1 text-left">
               <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-widest px-3 py-1 mb-1 block">Gestão do Sistema</span>
               
               <button
                 onClick={() => { setActiveTab("funnel"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "funnel"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2788,8 +2788,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("leads"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "leads"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2803,8 +2803,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("partners"); setSearchTerm(""); setStatusFilter("todos"); setPartnersPage(1); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "partners"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2818,8 +2818,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("announcements"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "announcements"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2833,8 +2833,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("recargas"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group relative ${
                   activeTab === "recargas"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2853,8 +2853,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("comissoes"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group relative ${
                   activeTab === "comissoes"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2873,8 +2873,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("precos"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "precos"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2888,8 +2888,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("servicos_contabilidade"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group ${
                   activeTab === "servicos_contabilidade"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
@@ -2903,8 +2903,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 onClick={() => { setActiveTab("resets"); setSearchTerm(""); setStatusFilter("todos"); }}
                 className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-black transition-all cursor-pointer text-left flex items-center justify-between group relative ${
                   activeTab === "resets"
-                    ? "bg-emerald-50 text-[#064e3b] border-l-4 border-[#047857]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent"
+                    ? "bg-linear-to-r from-emerald-100/90 to-emerald-50/40 text-[#064e3b] border-l-4 border-[#00A86B] shadow-[0_6px_18px_-10px_rgba(0,168,107,0.9)]"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 border-l-4 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2.5">
