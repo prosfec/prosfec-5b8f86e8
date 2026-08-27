@@ -5982,7 +5982,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         {new Date(sol.dataSolicitacao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                                       </td>
                                       <td className="py-2.5 px-3 font-mono font-extrabold text-slate-900">
-                                        {formatCurrencyBRL(sol.valor)}
+                                        <span className="block">{formatCurrencyBRL(sol.valor)}</span>
+                                        <span className={`inline-block mt-0.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                                          getSolicitacaoOrigem(sol) === "vendas"
+                                            ? "bg-sky-50 text-sky-700 border border-sky-200"
+                                            : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                        }`}>
+                                          {getSolicitacaoOrigem(sol) === "vendas" ? "Vendas" : "Serviços P6"}
+                                        </span>
                                       </td>
                                       <td className="py-2.5 px-3 font-mono text-xs text-slate-600 truncate max-w-[140px]" title={sol.chavePix}>
                                         {sol.chavePix}
