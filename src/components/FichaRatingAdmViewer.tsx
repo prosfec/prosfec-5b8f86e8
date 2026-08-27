@@ -101,6 +101,12 @@ export default function FichaRatingAdmViewer({
   const [editingMotivoKey, setEditingMotivoKey] = useState<string | null>(null);
   const [tempMotivoText, setTempMotivoText] = useState<string>("");
 
+  // Links sinalizados como inacessíveis pela Mesa (permissão de compartilhamento etc.)
+  const [linksProblematicos, setLinksProblematicos] = useState<Record<string, { label: string; motivo: string; sinalizadoEm: string }>>(
+    (ratingData as any)?.linksProblematicos || {}
+  );
+
+
   // Post-service Conclusion State
   const [notaRating, setNotaRating] = useState<string>(ratingData?.conclusaoRating?.notaFinalRating || "AA (Muito Bom)");
   const [classificacaoRisco, setClassificacaoRisco] = useState<any>(ratingData?.conclusaoRating?.classificacaoRisco || "Risco Mínimo (AAA/AA)");
