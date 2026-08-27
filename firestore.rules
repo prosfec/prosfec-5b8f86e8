@@ -117,7 +117,9 @@ service cloud.firestore {
                       )
                     && request.resource.data.keys().size() < 80;
 
-      allow update: if isStaff() || (isOwnPartnerDoc(partnerId) && partnerSafeUpdate());
+      allow update: if isStaff()
+                    || (isOwnPartnerDoc(partnerId) && partnerSafeUpdate())
+                    || (isOwnPartnerDoc(partnerId) && partnerAuthMigration());
       allow delete: if isAdmin();
 
       match /{sub=**} {
