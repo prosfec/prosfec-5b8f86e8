@@ -4651,15 +4651,15 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               </div>
 
               {/* Vertical Navigation Tabs */}
-              <div className="order-3 lg:order-none bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/80 p-2.5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col gap-1 text-left">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 mb-0.5 block">Navegação do Portal</span>
+              <div className="order-3 lg:order-none panel-deep p-3 flex flex-col gap-1 text-left">
+                <span className="text-[10px] font-bold text-emerald-300/60 uppercase tracking-[0.14em] px-3 py-1.5 mb-0.5 block">Navegação do Portal</span>
                 
                 <button
                   onClick={() => handleTabClick("dashboard")}
-                  className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer text-left flex items-center justify-between group ${
+                  className={`sidebar-item justify-between text-left group ${
                     activeTab === "dashboard"
-                      ? "bg-emerald-50 text-[#0A3D2E] border-l-4 border-[#00A86B]"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent"
+                      ? "sidebar-item-active"
+                      : ""
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
@@ -4675,10 +4675,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                 <button
                   onClick={() => handleTabClick("leads")}
-                  className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer text-left flex items-center justify-between group ${
+                  className={`sidebar-item justify-between text-left group ${
                     activeTab === "leads"
-                      ? "bg-emerald-50 text-[#0A3D2E] border-l-4 border-[#00A86B]"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent"
+                      ? "sidebar-item-active"
+                      : ""
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
@@ -4695,10 +4695,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 {!currentPartner?.plano?.toUpperCase().includes("AFILIADO") && (
                   <button
                     onClick={() => handleTabClick("caca-leads")}
-                    className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer text-left flex items-center justify-between group ${
+                    className={`sidebar-item justify-between text-left group ${
                       activeTab === "caca-leads"
-                        ? "bg-emerald-50 text-[#0A3D2E] border-l-4 border-[#00A86B]"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent"
+                        ? "sidebar-item-active"
+                        : ""
                     }`}
                   >
                     <span className="flex items-center gap-2.5">
@@ -4719,10 +4719,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 {isFranquiaDigital(currentPartner?.plano) && (
                   <button
                     onClick={() => handleTabClick("equipe")}
-                    className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer text-left flex items-center justify-between group ${
+                    className={`sidebar-item justify-between text-left group ${
                       activeTab === "equipe"
-                        ? "bg-emerald-50 text-[#0A3D2E] border-l-4 border-[#00A86B]"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent"
+                        ? "sidebar-item-active"
+                        : ""
                     }`}
                   >
                     <span className="flex items-center gap-2.5">
@@ -4739,10 +4739,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                 <button
                   onClick={() => handleTabClick("servicos-contabilidade")}
-                  className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer text-left flex items-center justify-between group ${
+                  className={`sidebar-item justify-between text-left group ${
                     activeTab === "servicos-contabilidade"
-                      ? "bg-emerald-50 text-[#0A3D2E] border-l-4 border-[#00A86B]"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent"
+                      ? "sidebar-item-active"
+                      : ""
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
@@ -4761,10 +4761,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                 <button
                   onClick={() => handleTabClick("perfil")}
-                  className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer text-left flex items-center justify-between group ${
+                  className={`sidebar-item justify-between text-left group ${
                     activeTab === "perfil"
-                      ? "bg-emerald-50 text-[#0A3D2E] border-l-4 border-[#00A86B]"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent"
+                      ? "sidebar-item-active"
+                      : ""
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
@@ -4779,10 +4779,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                 <button
                   onClick={() => handleTabClick("terms")}
-                  className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer text-left flex items-center justify-between group ${
+                  className={`sidebar-item justify-between text-left group ${
                     activeTab === "terms"
-                      ? "bg-emerald-50 text-[#0A3D2E] border-l-4 border-[#00A86B]"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent"
+                      ? "sidebar-item-active"
+                      : ""
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
