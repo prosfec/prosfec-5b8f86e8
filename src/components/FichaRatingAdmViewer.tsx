@@ -533,7 +533,7 @@ export default function FichaRatingAdmViewer({
     }
 
     message += `👉 *Como regularizar:* Acesse o seu Portal de Acompanhamento no link abaixo e faça o upload dos arquivos atualizados na aba *Ficha de Rating*:\n`;
-    message += `https://prosfec.com.br/?acompanhamento=${lead.id}\n\n`;
+    message += `https://prosfec.com.br/portal-cliente?lead=${lead.id}\n\n`;
     message += `Qualquer dúvida estamos à inteira disposição para auxiliá-lo!`;
 
     const encoded = encodeURIComponent(message);

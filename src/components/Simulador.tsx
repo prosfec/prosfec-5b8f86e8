@@ -1096,13 +1096,13 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                               <input
                                 type="text"
                                 readOnly
-                                value={`https://prosfec.com.br/?leadTrack=${existingLeadTrack.id}`}
+                                value={`https://prosfec.com.br/portal-cliente?lead=${existingLeadTrack.id}`}
                                 className="bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs px-3 py-2 rounded-lg flex-1 select-all outline-none"
                               />
                               <button
                                 type="button"
                                 onClick={() => {
-                                  navigator.clipboard.writeText(`https://prosfec.com.br/?leadTrack=${existingLeadTrack.id}`);
+                                  navigator.clipboard.writeText(`https://prosfec.com.br/portal-cliente?lead=${existingLeadTrack.id}`);
                                   setCopiedLeadLink(true);
                                   setTimeout(() => setCopiedLeadLink(false), 3000);
                                 }}
@@ -1114,7 +1114,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                             </div>
                             <div className="pt-1">
                               <a
-                                href={`https://prosfec.com.br/?leadTrack=${existingLeadTrack.id}`}
+                                href={`https://prosfec.com.br/portal-cliente?lead=${existingLeadTrack.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-800 hover:text-amber-950 underline"
@@ -2512,7 +2512,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                               </button>
                             </div>
                             <a
-                              href={`https://prosfec.com.br/?leadTrack=${createdLeadId}`}
+                              href={`https://prosfec.com.br/portal-cliente?lead=${createdLeadId}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0A3D2E] hover:text-[#00A86B] transition-colors pt-0.5"
