@@ -3687,6 +3687,77 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // Provisiona (ou vincula) uma conta real no Firebase Auth para o cliente de um lead.
+  // Chamado pelo portal após login/primeiro acesso bem-sucedido, quando o lead tem e-mail.
+  app.post("/api/auth/cliente-provision", async (req, res) => {
+    try {
+      const leadId = String(req.body?.leadId || "").trim();
+      const senha = String(req.body?.senha || "");
+      if (!leadId || senha.length < 4) {
+        return res.status(400).json({ error: "leadId e senha válidos são obrigatórios." });
+      }
+
+      const fields = await getLeadRest(leadId);
+      if (!fields) return res.status(404).json({ error: "Solicitação não encontrada." });
+
+      const normalizedEmail = String(fields.email?.stringValue || "").trim().toLowerCase();
+      if (!normalizedEmail || !normalizedEmail.includes("@")) {
+        return res.status(409).json({ error: "LEAD_SEM_EMAIL", message: "Lead não possui e-mail para autenticação real." });
+      }
+
+      // Verifica se já existe vínculo
+      const existingUid = fields.clienteAuthUid?.stringValue || "";
+      if (existingUid) {
+        return res.json({ success: true, created: false, localId: existingUid });
+      }
+
+      let localId: string | null = null;
+      let created = false;
+
+      const signUp = await authRest("signUp", {
+        email: normalizedEmail,
+        password: senha,
+        returnSecureToken: true,
+      });
+
+      if (signUp.ok) {
+        localId = signUp.data?.localId || null;
+        created = true;
+      } else if (String(signUp.data?.error?.message || "").startsWith("EMAIL_EXISTS")) {
+        // Já existe conta: valida a senha para vincular o uid existente.
+        const signIn = await authRest("signInWithPassword", {
+          email: normalizedEmail,
+          password: senha,
+          returnSecureToken: true,
+        });
+        if (signIn.ok) {
+          localId = signIn.data?.localId || null;
+        } else {
+          return res.status(409).json({ error: "EMAIL_EXISTS_DIFFERENT_PASSWORD" });
+        }
+      } else {
+        return res.status(400).json({ error: signUp.data?.error?.message || "Falha ao criar conta." });
+      }
+
+      if (!localId) {
+        return res.status(500).json({ error: "Não foi possível obter o uid da conta." });
+      }
+
+      // Grava o vínculo no lead usando a identidade de serviço (as regras só
+      // permitem esse campo para serviço/staff).
+      await patchLeadRest(
+        leadId,
+        { clienteAuthUid: { stringValue: localId }, clienteAuthVinculadoEm: { stringValue: new Date().toISOString() } },
+        ["clienteAuthUid", "clienteAuthVinculadoEm"],
+      );
+
+      return res.json({ success: true, created, localId });
+    } catch (err: any) {
+      console.error("[CLIENTE PROVISION] Falha:", err?.message || "erro");
+      return res.status(500).json({ error: "Erro ao provisionar a conta do cliente." });
+    }
+  });
+
   // Migração em lote das senhas de cliente — protegida por MIGRATION_ADMIN_TOKEN
   app.post("/api/auth/migrar-clientes", async (req, res) => {
     const expected = optionalEnv("MIGRATION_ADMIN_TOKEN");
