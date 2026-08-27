@@ -257,6 +257,8 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
 
   // Authentication & Password Gate States
   const [candidateLead, setCandidateLead] = useState<Lead | null>(null);
+  // Indica se o lead já possui senha cadastrada (o servidor nunca devolve o hash).
+  const [candidateTemSenha, setCandidateTemSenha] = useState<boolean>(false);
   const [enteredPassword, setEnteredPassword] = useState("");
   const [newPassword1, setNewPassword1] = useState("");
   const [newPassword2, setNewPassword2] = useState("");
