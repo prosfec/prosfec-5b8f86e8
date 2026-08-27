@@ -370,12 +370,11 @@ export { DEFAULT_SERVICES_CATALOG };
 export type { ServiceCatalogItem };
 
 export default function AdminDashboard({ onExit }: { onExit: () => void }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem("admin_authenticated") === "true";
-  });
-  const [userRole, setUserRole] = useState<"admin" | "contador">(() => {
-    return (sessionStorage.getItem("admin_role") as "admin" | "contador") || "admin";
-  });
+  // Segurança: a sessão administrativa vem SEMPRE do Firebase Auth.
+  // Nada de sessionStorage nem de senha embutida no código.
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [checkingSession, setCheckingSession] = useState<boolean>(true);
+  const [userRole, setUserRole] = useState<"admin" | "contador">("admin");
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -1478,36 +1477,38 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const ADMIN_UID = "FbYFfsN8igZzNUxcDzBfxX0Anlj1";
   const CONTADOR_UID = "vKZFCNniHJfzJ9B3yWlzErNC3892";
 
-  // Real-time synchronization with Firebase Authentication state
+  // Mesma lista autorizada das regras do Firestore (firestore.rules)
+  const ADMIN_EMAILS = ["adm.prosfec@gmail.com", "atendimento.mobitech@gmail.com"];
+  const CONTADOR_EMAILS = ["contador.prosfec@gmail.com"];
+
+  const resolveRole = (user: any): "admin" | "contador" | null => {
+    if (!user) return null;
+    const email = String(user.email || "").toLowerCase();
+    if (user.uid === ADMIN_UID || ADMIN_EMAILS.includes(email)) return "admin";
+    if (user.uid === CONTADOR_UID || CONTADOR_EMAILS.includes(email)) return "contador";
+    return null;
+  };
+
+  // Sessão administrativa controlada exclusivamente pelo Firebase Auth
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        let detectedRole: "admin" | "contador" = "admin";
-        const email = (user.email || "").toLowerCase();
-        if (user.uid === ADMIN_UID || email.includes("adm")) {
-          detectedRole = "admin";
-        } else if (user.uid === CONTADOR_UID || email.includes("contador")) {
-          detectedRole = "contador";
-        }
-        sessionStorage.setItem("admin_authenticated", "true");
-        sessionStorage.setItem("admin_role", detectedRole);
-        sessionStorage.setItem("admin_firebase_uid", user.uid);
-        setUserRole(detectedRole);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      const role = resolveRole(user);
+      if (user && role) {
+        setUserRole(role);
         setIsAuthenticated(true);
       } else {
-        // If user logged out of Firebase auth
-        const wasAuth = sessionStorage.getItem("admin_authenticated") === "true";
-        if (wasAuth && !auth.currentUser) {
-          // If was relying on Firebase Auth session
-          const storedUid = sessionStorage.getItem("admin_firebase_uid");
-          if (storedUid) {
-            sessionStorage.removeItem("admin_authenticated");
-            sessionStorage.removeItem("admin_role");
-            sessionStorage.removeItem("admin_firebase_uid");
-            setIsAuthenticated(false);
+        if (user) {
+          // Usuário autenticado, porém sem permissão administrativa
+          try {
+            await signOut(auth);
+          } catch {
+            /* ignore */
           }
+          setLoginError("Esta conta não tem permissão de acesso ao painel administrativo.");
         }
+        setIsAuthenticated(false);
       }
+      setCheckingSession(false);
     });
 
     return () => unsubscribe();
@@ -1550,55 +1551,32 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       // 1. First attempt: Authenticate directly with Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, cleanPassword);
       const user = userCredential.user;
+      const detectedRole = resolveRole(user);
 
-      let detectedRole: "admin" | "contador" = "admin";
-
-      if (user.uid === ADMIN_UID || normalizedEmail.includes("adm")) {
-        detectedRole = "admin";
-      } else if (user.uid === CONTADOR_UID || normalizedEmail.includes("contador")) {
-        detectedRole = "contador";
-      } else {
-        // Default check based on UID or email pattern
-        detectedRole = "admin";
+      if (!detectedRole) {
+        await signOut(auth);
+        setLoginError("Esta conta não tem permissão de acesso ao painel administrativo.");
+        return;
       }
 
-      sessionStorage.setItem("admin_authenticated", "true");
-      sessionStorage.setItem("admin_role", detectedRole);
-      sessionStorage.setItem("admin_firebase_uid", user.uid);
       setUserRole(detectedRole);
       setIsAuthenticated(true);
+      setPasswordInput("");
     } catch (authErr: any) {
-      console.warn("Firebase Auth attempt failed, evaluating fallback credentials:", authErr?.code, authErr?.message);
-
-      // 2. Fallback attempt for predefined master credentials if offline or transitional
-      const correctEmail = "adm.prosfec@gmail.com";
-      const correctPassword = "PROSFEC@empcap2026";
-
-      const contadorEmail = "contador.prosfec@gmail.com";
-      const contadorPassword = "CONTADOR@prosfec2026";
-
-      if (normalizedEmail === correctEmail && cleanPassword === correctPassword) {
-        sessionStorage.setItem("admin_authenticated", "true");
-        sessionStorage.setItem("admin_role", "admin");
-        sessionStorage.setItem("admin_firebase_uid", ADMIN_UID);
-        setUserRole("admin");
-        setIsAuthenticated(true);
-      } else if (normalizedEmail === contadorEmail && cleanPassword === contadorPassword) {
-        sessionStorage.setItem("admin_authenticated", "true");
-        sessionStorage.setItem("admin_role", "contador");
-        sessionStorage.setItem("admin_firebase_uid", CONTADOR_UID);
-        setUserRole("contador");
-        setIsAuthenticated(true);
+      const code = authErr?.code || "";
+      if (
+        code === "auth/invalid-credential" ||
+        code === "auth/wrong-password" ||
+        code === "auth/user-not-found" ||
+        code === "auth/invalid-email"
+      ) {
+        setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
+      } else if (code === "auth/too-many-requests") {
+        setLoginError("Muitas tentativas malsucedidas. Por segurança, tente novamente em alguns instantes.");
+      } else if (code === "auth/network-request-failed") {
+        setLoginError("Falha de conexão. Verifique sua internet e tente novamente.");
       } else {
-        if (authErr?.code === "auth/invalid-credential" || authErr?.code === "auth/wrong-password" || authErr?.code === "auth/user-not-found") {
-          setLoginError("E-mail ou senha incorretos no Firebase Authentication. Verifique suas credenciais.");
-        } else if (authErr?.code === "auth/too-many-requests") {
-          setLoginError("Muitas tentativas malsucedidas. Por segurança, tente novamente em alguns instantes.");
-        } else if (authErr?.message) {
-          setLoginError(`Falha na autenticação: ${authErr.message}`);
-        } else {
-          setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
-        }
+        setLoginError("Não foi possível concluir a autenticação. Tente novamente.");
       }
     } finally {
       setLoggingIn(false);
@@ -1609,11 +1587,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     try {
       await signOut(auth);
     } catch (err) {
-      console.warn("Error signing out from Firebase Auth:", err);
+      console.warn("Error signing out from Firebase Auth.");
     }
-    sessionStorage.removeItem("admin_authenticated");
-    sessionStorage.removeItem("admin_role");
-    sessionStorage.removeItem("admin_firebase_uid");
     setIsAuthenticated(false);
     setUserRole("admin");
     setEmailInput("");
@@ -2604,6 +2579,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   });
 
   const paginatedPartners = filteredPartners.slice((partnersPage - 1) * itemsPerPage, partnersPage * itemsPerPage);
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 font-sans">
+        <div className="h-10 w-10 rounded-full border-2 border-[#00A86B] border-t-transparent animate-spin" />
+        <p className="text-slate-400 text-sm">Verificando sessão administrativa...</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
