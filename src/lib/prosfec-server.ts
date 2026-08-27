@@ -103,30 +103,21 @@ export function createExpressApp() {
   // Parse JSON payloads for API routes
   app.use(express.json());
 
-  // API Route: Hubla Webhook
+  // API Route: Hubla Webhook (autenticado com comparação time-safe)
   app.post("/api/hubla-webhook", async (req, res) => {
-    // Retrieve Hubla security token from headers or query params
-    const clientToken = 
-      req.headers["x-hubla-token"] || 
-      req.headers["X-Hubla-Token"] || 
-      req.headers["authorization"] || 
-      req.headers["Authorization"] || 
-      req.headers["token"] || 
-      req.headers["Token"] || 
-      req.query.token;
-
     const expectedToken = process.env.HUBLA_WEBHOOK_TOKEN;
+    const cleanClientToken = extractToken(req, "x-hubla-token");
 
-    // Clean Bearer prefix if present
-    let cleanClientToken = typeof clientToken === "string" ? clientToken : "";
-    if (cleanClientToken.toLowerCase().startsWith("bearer ")) {
-      cleanClientToken = cleanClientToken.substring(7).trim();
+    if (!expectedToken) {
+      console.error("[HUBLA WEBHOOK] HUBLA_WEBHOOK_TOKEN não configurado no ambiente.");
+      return res.status(503).json({ error: "Webhook temporariamente indisponível." });
     }
 
-    if (cleanClientToken !== expectedToken) {
-      console.warn("Unauthorized Hubla webhook request. Token mismatch. Received token ends with: " + cleanClientToken.slice(-6));
-      return res.status(401).json({ error: "Unauthorized. Invalid token." });
+    if (!timingSafeCompare(cleanClientToken, expectedToken)) {
+      console.warn("[HUBLA WEBHOOK] Requisição não autorizada: token inválido.");
+      return res.status(401).json({ error: "Unauthorized." });
     }
+
 
     try {
       const payload = req.body;
