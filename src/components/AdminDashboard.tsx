@@ -396,6 +396,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel" | "resets">("leads");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [resetNewPasswords, setResetNewPasswords] = useState<Record<string, string>>({});
   const [savingResetLeadId, setSavingResetLeadId] = useState<string | null>(null);
   const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
