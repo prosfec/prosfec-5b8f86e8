@@ -518,7 +518,7 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
         dataColetaSenhas: new Date().toISOString()
       };
 
-      await updateDoc(docRef, payload);
+      await salvarLeadPortal(lead.id, payload);
 
       triggerWebhookSimulation("gov_credentials_collected_portal", {
         leadId: lead.id,
@@ -583,7 +583,7 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
         dataSimulacaoLead: new Date().toISOString()
       };
 
-      await updateDoc(docRef, {
+      await salvarLeadPortal(lead.id, {
         propostaNegociada: updatedProposal,
         limiteEstimado: clientValor,
         creditLineCode: clientLineCode,
@@ -666,7 +666,7 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
         historicoEtapas: updatedHistory
       };
 
-      await updateDoc(docRef, signaturePayload);
+      await salvarLeadPortal(lead.id, signaturePayload);
 
       // Trigger Webhook
       triggerWebhookSimulation("signature_completed_portal", {
@@ -1195,7 +1195,12 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
 
       if (resp.ok) {
         const data = await resp.json();
-        if (data?.lead?.id) fetchedLead = data.lead as Lead;
+        if (data?.lead?.id) {
+          fetchedLead = data.lead as Lead;
+          // O servidor remove os campos de senha do payload; o indicador
+          // "temSenha" é a única fonte confiável para decidir a tela.
+          setCandidateTemSenha(!!data.temSenha);
+        }
       }
 
 
@@ -1250,7 +1255,18 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
         body: JSON.stringify({ leadId: candidateLead.id, senha: enteredPassword.trim() })
       });
       if (!resp.ok) {
-        setAuthError("Senha incorreta. Verifique os caracteres ou solicite a redefinição de senha com seu consultor.");
+        const errData = await resp.json().catch(() => ({}));
+        if (resp.status === 409 || errData?.error === "SEM_SENHA_CADASTRADA") {
+          // Ainda não existe senha: envia o cliente para o primeiro acesso.
+          setCandidateTemSenha(false);
+          setAuthError("Este acesso ainda não possui senha. Crie sua senha abaixo.");
+          return;
+        }
+        setAuthError(
+          resp.status === 401
+            ? "Senha incorreta. Verifique os caracteres ou solicite a redefinição de senha com seu consultor."
+            : (errData?.error || "Não foi possível validar seu acesso agora.")
+        );
         return;
       }
     } catch (err) {
