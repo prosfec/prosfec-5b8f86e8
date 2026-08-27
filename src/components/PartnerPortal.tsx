@@ -7259,7 +7259,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <input
                               type="text"
                               readOnly
-                              value={`${getAppDomain()}?leadTrack=${registeredLeadId}`}
+                              value={`${getAppDomain()}/portal-cliente?lead=${registeredLeadId}`}
                               className="bg-white/75 backdrop-blur-xl border border-slate-200 text-xs font-mono px-3 py-2 rounded-xl text-slate-700 font-bold flex-1 select-all"
                             />
                             <button
