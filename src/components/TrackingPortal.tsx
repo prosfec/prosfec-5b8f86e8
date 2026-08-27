@@ -37,8 +37,9 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import SignaturePad from "./SignaturePad";
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, deleteDoc, onSnapshot, limit } from "firebase/firestore";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { salvarLeadPortal } from "@/lib/portal-save";
-import { db, handleFirestoreError, OperationType } from "../firebase";
+import { db, auth, handleFirestoreError, OperationType } from "../firebase";
 import type { SystemNotification } from "./PartnerPortal";
 import { formatCurrencyBRL, formatCPF, formatCEP, formatPhone, brazilianUFs, triggerWebhookSimulation, getAppDomain } from "../utils";
 import { GOVERNMENT_CREDIT_LINES, validateCreditLineConditions } from "../utils/creditLineRules";
