@@ -2501,7 +2501,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                               <button
                                 type="button"
                                 onClick={() => {
-                                  navigator.clipboard.writeText(`https://prosfec.com.br/?leadTrack=${createdLeadId}`);
+                                  navigator.clipboard.writeText(`https://prosfec.com.br/portal-cliente?lead=${createdLeadId}`);
                                   setCopiedLeadLink(true);
                                   setTimeout(() => setCopiedLeadLink(false), 3000);
                                 }}
