@@ -58,10 +58,15 @@ O que continua manual: só marcar quem é admin/contador (custom claims) — iss
 
 
 **Etapa C — Blindar webhooks e APIs**
-- Exigir token/assinatura no webhook LastLink (secret novo `LASTLINK_WEBHOOK_TOKEN`).
-- Trocar a comparação do Hubla por `timingSafeEqual`.
+- Exigir o segredo `LASTLINK_WEBHOOK_TOKEN` por cabeçalho no `POST /api/webhooks/lastlink` (aceita `x-lastlink-token` / `authorization: Bearer`), com comparação time-safe e resposta 401 sem vazar detalhe.
+- Trocar a comparação do token Hubla por `crypto.timingSafeEqual`.
 - Idempotência: ignorar evento já processado (evita comissão duplicada em reenvio).
-- Rate limit simples + verificação de sessão nos proxies que gastam crédito.
+- Rate limit simples nos proxies que gastam crédito.
+
+## Execução acordada
+1. Gerar e revisar juntos **A** (arquivo `firestore.rules` completo) e **C** (código do servidor).
+2. Depois de aprovados, seguir para **B** com as rotas `/api/auth/provision-parceiro` e `/api/auth/migrar-parceiros` + lazy migration no login e exclusão do campo `senha` em texto puro.
+3. Por fim **D**.
 
 **Etapa D — Higiene**
 - Centralizar leitura de envs em um único módulo do servidor.
