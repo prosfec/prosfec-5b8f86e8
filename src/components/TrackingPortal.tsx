@@ -450,6 +450,38 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
     return () => unsubscribe();
   }, []);
 
+  // Se o cliente já está autenticado no Firebase e acessou com ?lead=,
+  // tenta ler o lead diretamente (as regras permitem quando clienteAuthUid bate).
+  useEffect(() => {
+    if (!firebaseUser || !searchIdOrCnpj) return;
+    const leadId = searchIdOrCnpj.trim();
+    if (!leadId) return;
+
+    let cancelled = false;
+    const tryDirectRead = async () => {
+      try {
+        const snap = await getDoc(doc(db, "leads", leadId));
+        if (cancelled) return;
+        if (snap.exists()) {
+          const data = snap.data() as Lead;
+          if (data.id === leadId) {
+            setLead(data);
+            initializePartnerForm(data);
+            setCandidateLead(null);
+            setCandidateTemSenha(true);
+            setError(null);
+            setAuthError(null);
+          }
+        }
+      } catch (err) {
+        // Permissão negada ou lead não encontrado: mantém o fluxo de login.
+        console.warn("[PORTAL] Leitura direta do lead falhou:", err);
+      }
+    };
+    tryDirectRead();
+    return () => { cancelled = true; };
+  }, [firebaseUser, searchIdOrCnpj]);
+
   const [clientIp, setClientIp] = useState<string>("");
   const [signName, setSignName] = useState("");
   const [signCpf, setSignCpf] = useState("");
