@@ -1277,7 +1277,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
     // Success! Update last access timestamp and log in
     try {
       const now = new Date().toISOString();
-      await updateDoc(doc(db, "leads", candidateLead.id), {
+      await salvarLeadPortal(candidateLead.id, {
         clienteUltimoAcesso: now,
         clientePrimeiroAcessoConcluido: true
       });
@@ -1354,7 +1354,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
 
     try {
       const now = new Date().toISOString();
-      await updateDoc(doc(db, "leads", candidateLead.id), {
+      await salvarLeadPortal(candidateLead.id, {
         solicitacaoResetSenha: {
           pendente: true,
           dataSolicitacao: now,
@@ -1446,7 +1446,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
         });
       }
 
-      await updateDoc(refDoc, {
+      await salvarLeadPortal(lead.id, {
         socios: sociosList,
         enderecoSocioPrincipal: enderecoSocio,
         etapa: 3, // Advances to Step 3: Consulta diagnóstica no CPF e CNPJ
@@ -1636,7 +1636,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
                   </p>
                 </div>
               </div>
-            ) : (candidateLead.clienteSenha || (candidateLead as any).clienteSenhaHash) ? (
+            ) : candidateTemSenha ? (
               // Stage 2A: Password Login (Password already exists)
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
