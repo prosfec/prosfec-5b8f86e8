@@ -271,6 +271,12 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
   const [isRequestingReset, setIsRequestingReset] = useState(false);
   const [resetRequestedSuccess, setResetRequestedSuccess] = useState(false);
 
+  // Sessão real no Firebase Auth (Modelo B). Quando o lead tem e-mail, o
+  // portal provisiona uma conta e passa a ler o documento via onSnapshot.
+  const [firebaseUser, setFirebaseUser] = useState<any>(null);
+  const [sessionMode, setSessionMode] = useState<"firebase" | "server">("server");
+  const [isProvisioning, setIsProvisioning] = useState(false);
+
   const [partnerWhatsapp, setPartnerWhatsapp] = useState<string | null>(null);
   const [partnerNome, setPartnerNome] = useState<string | null>(null);
   const [mobilePortalTab, setMobilePortalTab] = useState<"esteira" | "ficha">("esteira");
