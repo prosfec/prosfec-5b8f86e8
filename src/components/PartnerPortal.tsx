@@ -5596,7 +5596,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     setPayoutPixKey(currentPartner?.chavePix || "");
                                     setPayoutAmountCustom(saldoDisponivelParaSaque > 0 ? saldoDisponivelParaSaque.toFixed(2) : "0");
                                     setCommissionPayoutSuccess(null);
-                                    setShowCommissionPayoutModal(true);
+                                    setPayoutModalOrigin("servicos");
                                   }}
                                   disabled={saldoDisponivelParaSaque <= 0}
                                   className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-md bg-[#00A86B] hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 cursor-pointer transition-all shadow-xs"
