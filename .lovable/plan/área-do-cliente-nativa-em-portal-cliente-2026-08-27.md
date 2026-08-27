@@ -16,6 +16,7 @@ Sim, é tecnicamente viável, e dá para fazer sem quebrar o Portal do Parceiro 
 Recomendo o **modelo B (Firebase Auth real para o cliente)** como destino, com o modelo A (BFF via servidor) permanecendo como caminho de compatibilidade durante a transição.
 
 ### Modelo B — conta real no Firebase Auth
+
 - Cada lead com acesso ganha uma conta Email/Senha no Firebase Auth (criada pela REST API com a `FIREBASE_API_KEY` que o servidor já usa para provisionar parceiros).
 - O e-mail já existe no lead; quando faltar, o acesso continua pelo modelo A até o cliente cadastrar um e-mail.
 - Vínculo: grava-se `clienteAuthUid` no doc do lead.
@@ -26,6 +27,7 @@ Recomendo o **modelo B (Firebase Auth real para o cliente)** como destino, com o
 - Limitação importante: **custom claims** (ex.: `role: cliente`) exigem chave de conta de serviço (Admin SDK), que hoje não está no projeto. Por isso as regras devem se basear em `uid`/`email` no próprio documento, e não em claims.
 
 ### Modelo A — continua para quem não tem e-mail
+
 Mantém `/api/auth/cliente-login` + `/api/portal/salvar-lead` intactos. Nenhuma regressão para clientes antigos.
 
 ## Como eu estruturaria a migração
@@ -39,15 +41,17 @@ Mantém `/api/auth/cliente-login` + `/api/portal/salvar-lead` intactos. Nenhuma 
 
 ## Riscos
 
-| Risco | Mitigação |
-| --- | --- |
+
+| Risco                                                                   | Mitigação                                                                                               |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Regras novas publicadas incorretamente derrubam o acesso (já aconteceu) | Entregar o arquivo completo, só adicionando blocos; testar admin, parceiro e cliente logo após publicar |
-| Esquecer de publicar as regras no Firebase | Deixar isso explícito como ação manual obrigatória; não avançar sem confirmar a publicação |
-| Lead sem e-mail ou com e-mail duplicado entre leads | Modelo A como fallback; ao provisionar, tratar `EMAIL_EXISTS` vinculando pelo uid existente |
-| Regra por e-mail dá acesso a mais de um lead do mesmo cliente | É o comportamento desejado (mesma empresa/pessoa); a Área do Cliente lista os leads dele |
-| Exposição de campos internos ao ler o lead direto do Firestore | A tela só renderiza os campos já exibidos hoje; campos de senha continuam bloqueados por regra |
-| Quebrar links `?acompanhamento=` já enviados a clientes por WhatsApp | Redirecionamento permanente para a rota nova, mantendo o parâmetro antigo |
-| Regressão em Parceiro/Admin | Nenhum arquivo desses fluxos é alterado; as mudanças em `firestore.rules` são aditivas |
+| Esquecer de publicar as regras no Firebase                              | Deixar isso explícito como ação manual obrigatória; não avançar sem confirmar a publicação              |
+| Lead sem e-mail ou com e-mail duplicado entre leads                     | Modelo A como fallback; ao provisionar, tratar `EMAIL_EXISTS` vinculando pelo uid existente             |
+| Regra por e-mail dá acesso a mais de um lead do mesmo cliente           | É o comportamento desejado (mesma empresa/pessoa); a Área do Cliente lista os leads dele                |
+| Exposição de campos internos ao ler o lead direto do Firestore          | A tela só renderiza os campos já exibidos hoje; campos de senha continuam bloqueados por regra          |
+| Quebrar links `?acompanhamento=` já enviados a clientes por WhatsApp    | Redirecionamento permanente para a rota nova, mantendo o parâmetro antigo                               |
+| Regressão em Parceiro/Admin                                             | Nenhum arquivo desses fluxos é alterado; as mudanças em `firestore.rules` são aditivas                  |
+
 
 ## Impacto nos outros portais
 
@@ -55,14 +59,16 @@ Nenhuma alteração em `PartnerPortal.tsx` ou `AdminDashboard.tsx`, além de tro
 
 ## O que é automático e o que exige ação sua
 
-| Automático (eu faço no código) | Manual (você faz no console) |
-| --- | --- |
-| Criar a rota `/portal-cliente` e redirecionar `?acompanhamento=` | Publicar o `firestore.rules` atualizado no Console do Firebase |
-| Criar `/api/auth/cliente-provision` e ajustar login/senha | Habilitar "Email/Password" no Firebase Authentication (já deve estar ativo) |
-| Atualizar `TrackingPortal.tsx` para usar sessão real | Liberar domínios de preview/produção nas restrições da chave web do Google Cloud, se aparecer erro 403 de referrer |
-| Atualizar todos os links gerados no Admin/Parceiro/Simulador | — |
-| Entregar o `firestore.rules` completo e testado em bloco de código | — |
+
+| Automático (eu faço no código)                                     | Manual (você faz no console)                                                                                       |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| Criar a rota `/portal-cliente` e redirecionar `?acompanhamento=`   | Publicar o `firestore.rules` atualizado no Console do Firebase                                                     |
+| Criar `/api/auth/cliente-provision` e ajustar login/senha          | Habilitar "Email/Password" no Firebase Authentication (já deve estar ativo)                                        |
+| Atualizar `TrackingPortal.tsx` para usar sessão real               | Liberar domínios de preview/produção nas restrições da chave web do Google Cloud, se aparecer erro 403 de referrer |
+| Atualizar todos os links gerados no Admin/Parceiro/Simulador       | —                                                                                                                  |
+| Entregar o `firestore.rules` completo e testado em bloco de código | —                                                                                                                  |
+
 
 ## O que muda para o cliente
 
-Ele passa a acessar `prosfec.com.br/portal-cliente`, entra com e-mail e senha, continua logado ao voltar, vê o andamento atualizando em tempo real e pode recuperar a senha sozinho por e-mail.
+Ele passa a acessar `c`, entra com e-mail e senha, continua logado ao voltar, vê o andamento atualizando em tempo real e pode recuperar a senha sozinho por e-mail.
