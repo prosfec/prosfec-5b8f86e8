@@ -370,12 +370,11 @@ export { DEFAULT_SERVICES_CATALOG };
 export type { ServiceCatalogItem };
 
 export default function AdminDashboard({ onExit }: { onExit: () => void }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem("admin_authenticated") === "true";
-  });
-  const [userRole, setUserRole] = useState<"admin" | "contador">(() => {
-    return (sessionStorage.getItem("admin_role") as "admin" | "contador") || "admin";
-  });
+  // Segurança: a sessão administrativa vem SEMPRE do Firebase Auth.
+  // Nada de sessionStorage nem de senha embutida no código.
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [checkingSession, setCheckingSession] = useState<boolean>(true);
+  const [userRole, setUserRole] = useState<"admin" | "contador">("admin");
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [loginError, setLoginError] = useState("");
