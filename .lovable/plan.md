@@ -39,8 +39,9 @@ Rotas como `/api/proxy/*`, `/api/credit/consultas` e os diagnósticos de IA são
 
 **Etapa A — Fechar o Firestore (maior ganho)**
 - Reescrever `firestore.rules` removendo todos os `|| true` e os `if true`.
-- Modelo: leitura/escrita de leads e parceiros só para usuário autenticado; `configuracoes`, `solicitacoes_comissao` (aprovação), `servicos_contabilidade` e logs de webhook só para admin/contador; criação pública apenas onde o site precisa (ex.: cadastro inicial de lead), com campos limitados.
-- Você aplica publicando as regras no Console (posso deixar o arquivo pronto e o passo a passo).
+- Exceções públicas confirmadas por você: `create` público em `leads` (simulador/captação) e `read` público em `parceiros` (resolver links de indicação) — com projeção de campos limitada.
+- Todo o resto: leitura para autenticado quando necessário e **escrita apenas para Admin/Contador** (`configuracoes`, `solicitacoes_comissao`, `servicos_contabilidade`, `recargas`, `comunicados`, logs de webhook, etc.).
+- Entrego o arquivo pronto para você colar no Console do Firebase.
 
 **Etapa B — Tirar senhas do banco (com migração automática)**
 
