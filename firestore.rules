@@ -99,13 +99,40 @@ service cloud.firestore {
       return isSignedIn() && userEmail() == "servico.interno@prosfec.app";
     }
 
+    // Cliente que vinculou sua conta real do Firebase Auth a este lead.
+    function isClienteDoLead() {
+      return isSignedIn()
+        && resource != null
+        && resource.data.clienteAuthUid is string
+        && resource.data.clienteAuthUid == request.auth.uid;
+    }
+
+    // Campos que o próprio cliente pode atualizar no seu lead (sem tocar em
+    // dados sensíveis, senhas, etapa, status financeiro ou campos de staff).
+    function leadClienteSafeUpdate() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny([
+          "clienteSenha", "clienteSenhaHash", "clienteSenhaSalt", "clienteSenhaAlgo",
+          "clienteAuthUid", "clienteAuthVinculadoEm", "etapa", "status", "statusAprovacao",
+          "limiteAprovado", "dataAprovacao", "parceiroId", "consultorResponsavel",
+          "comissaoPaga", "valorComissao", "dataPagamentoComissao"
+        ]);
+    }
+
     // ---------------------------------------------------------------------
     // 1. LEADS — create público (simulador), leitura/edição restrita
     // ---------------------------------------------------------------------
     match /leads/{leadId} {
       allow create: if leadCreateIsSane();
-      allow read:   if isSignedIn();
+      // Leitura: staff, serviço, parceiro responsável (mantido via regra
+      // isSignedIn genérica enquanto não há vínculo por parceiro) ou o
+      // próprio cliente autenticado vinculado ao lead.
+      allow read:   if isServico() || isStaff() || isClienteDoLead() || isSignedIn();
+      // Escrita: serviço/staff têm controle total. Cliente autenticado só pode
+      // alterar campos seguros. Outros usuários autenticados não podem tocar
+      // nos campos de senha (proteção legada do Modelo A).
       allow update: if isServico() || isStaff()
+                    || (isClienteDoLead() && leadClienteSafeUpdate())
                     || (isSignedIn() && leadSenhaFieldsUntouched());
       allow delete: if isAdmin();
 

@@ -762,7 +762,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const consultantName = consultant?.nome || "Consultor Especialista";
       const consultantPhone = consultant?.whatsapp ? consultant.whatsapp.replace(/\D/g, "") : "";
       const companyName = targetLead.razaoSocial || targetLead.nome || "Empresa";
-      const portalLink = `${getAppDomain()}?acompanhamento=${targetLead.id}`;
+      const portalLink = `${getAppDomain()}/portal-cliente?lead=${targetLead.id}`;
 
       // 1. Create in-app notification for the Consultant
       if ((targetLead as any).parceiroId) {
@@ -1236,7 +1236,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   ];
 
   const handleCopyTrackingLink = (leadId: string) => {
-    const link = `${getAppDomain()}?acompanhamento=${leadId}`;
+    const link = `${getAppDomain()}/portal-cliente?lead=${leadId}`;
     navigator.clipboard.writeText(link);
     setCopiedLeadId(leadId);
     setTimeout(() => setCopiedLeadId(null), 2000);
@@ -5524,7 +5524,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                                 <div className="flex items-center gap-2">
                                   <a
-                                    href={`${getAppDomain()}?acompanhamento=${leadItem.id}`}
+                                    href={`${getAppDomain()}/portal-cliente?lead=${leadItem.id}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer"
@@ -7269,7 +7269,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </button>
 
               <a
-                href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(selectedLead.nome)}!%20Geramos%20o%20seu%20link%20de%20acompanhamento%20exclusivo%20da%20PROSFEC%20para%20a%20sua%20simula%C3%A7%C3%A3o%20Pronampe%202026.%20Acompanhe%20as%20etapas%20de%20libera%C3%A7%C3%A3o%20em%20tempo%20real:%20${encodeURIComponent(getAppDomain() + "?acompanhamento=" + selectedLead.id)}`}
+                href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(selectedLead.nome)}!%20Geramos%20o%20seu%20link%20de%20acompanhamento%20exclusivo%20da%20PROSFEC%20para%20a%20sua%20simula%C3%A7%C3%A3o%20Pronampe%202026.%20Acompanhe%20as%20etapas%20de%20libera%C3%A7%C3%A3o%20em%20tempo%20real:%20${encodeURIComponent(getAppDomain() + "/portal-cliente?lead=" + selectedLead.id)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 bg-[#00A86B] hover:bg-[#00905c] text-white font-extrabold text-sm rounded-lg flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"

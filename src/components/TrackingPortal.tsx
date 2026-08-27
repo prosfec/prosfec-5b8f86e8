@@ -37,8 +37,9 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import SignaturePad from "./SignaturePad";
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, deleteDoc, onSnapshot, limit } from "firebase/firestore";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { salvarLeadPortal } from "@/lib/portal-save";
-import { db, handleFirestoreError, OperationType } from "../firebase";
+import { db, auth, handleFirestoreError, OperationType } from "../firebase";
 import type { SystemNotification } from "./PartnerPortal";
 import { formatCurrencyBRL, formatCPF, formatCEP, formatPhone, brazilianUFs, triggerWebhookSimulation, getAppDomain } from "../utils";
 import { GOVERNMENT_CREDIT_LINES, validateCreditLineConditions } from "../utils/creditLineRules";
@@ -270,6 +271,12 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
   const [isRequestingReset, setIsRequestingReset] = useState(false);
   const [resetRequestedSuccess, setResetRequestedSuccess] = useState(false);
 
+  // Sessão real no Firebase Auth (Modelo B). Quando o lead tem e-mail, o
+  // portal provisiona uma conta e passa a ler o documento via onSnapshot.
+  const [firebaseUser, setFirebaseUser] = useState<any>(null);
+  const [sessionMode, setSessionMode] = useState<"firebase" | "server">("server");
+  const [isProvisioning, setIsProvisioning] = useState(false);
+
   const [partnerWhatsapp, setPartnerWhatsapp] = useState<string | null>(null);
   const [partnerNome, setPartnerNome] = useState<string | null>(null);
   const [mobilePortalTab, setMobilePortalTab] = useState<"esteira" | "ficha">("esteira");
@@ -324,6 +331,22 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
 
     return () => unsubscribe();
   }, [lead]);
+
+  // Quando há sessão real no Firebase Auth, escuta o lead diretamente para
+  // atualizações em tempo real sem depender de polling.
+  useEffect(() => {
+    if (!lead?.id || sessionMode !== "firebase" || !firebaseUser) return;
+    const leadRef = doc(db, "leads", lead.id);
+    const unsubscribe = onSnapshot(leadRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setLead(prev => (prev ? { ...prev, ...data } : data as Lead));
+      }
+    }, (error) => {
+      console.error("Error listening to lead updates:", error);
+    });
+    return () => unsubscribe();
+  }, [lead?.id, sessionMode, firebaseUser]);
 
   const handleMarkNotificationRead = async (notifId: string) => {
     try {
@@ -408,12 +431,56 @@ export default function TrackingPortal({ onBackToHome, initialLeadId, embedded =
   const [sociosSubmitted, setSociosSubmitted] = useState(false);
   const [sociosError, setSociosError] = useState("");
 
-  // Load initial lead if provided
+  // Load initial lead if provided via prop or ?lead= query param
   useEffect(() => {
-    if (initialLeadId) {
-      fetchLead(initialLeadId);
+    const params = new URLSearchParams(window.location.search);
+    const leadId = initialLeadId || params.get("lead") || params.get("acompanhamento") || "";
+    if (leadId) {
+      setSearchIdOrCnpj(leadId);
+      fetchLead(leadId);
     }
   }, [initialLeadId]);
+
+  // Observa sessão Firebase Auth persistente (login real do Modelo B).
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setFirebaseUser(user);
+      setSessionMode(user ? "firebase" : "server");
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Se o cliente já está autenticado no Firebase e acessou com ?lead=,
+  // tenta ler o lead diretamente (as regras permitem quando clienteAuthUid bate).
+  useEffect(() => {
+    if (!firebaseUser || !searchIdOrCnpj) return;
+    const leadId = searchIdOrCnpj.trim();
+    if (!leadId) return;
+
+    let cancelled = false;
+    const tryDirectRead = async () => {
+      try {
+        const snap = await getDoc(doc(db, "leads", leadId));
+        if (cancelled) return;
+        if (snap.exists()) {
+          const data = snap.data() as Lead;
+          if (data.id === leadId) {
+            setLead(data);
+            initializePartnerForm(data);
+            setCandidateLead(null);
+            setCandidateTemSenha(true);
+            setError(null);
+            setAuthError(null);
+          }
+        }
+      } catch (err) {
+        // Permissão negada ou lead não encontrado: mantém o fluxo de login.
+        console.warn("[PORTAL] Leitura direta do lead falhou:", err);
+      }
+    };
+    tryDirectRead();
+    return () => { cancelled = true; };
+  }, [firebaseUser, searchIdOrCnpj]);
 
   const [clientIp, setClientIp] = useState<string>("");
   const [signName, setSignName] = useState("");
@@ -1237,6 +1304,40 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
     }
   };
 
+  const provisionarClienteAuth = async (lead: Lead, senha: string) => {
+    setIsProvisioning(true);
+    try {
+      const resp = await fetch("/api/auth/cliente-provision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: lead.id, senha }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        if (data?.error === "LEAD_SEM_EMAIL") {
+          // Lead sem e-mail: mantém o modo servidor (Modelo A).
+          setSessionMode("server");
+          return;
+        }
+        console.warn("[PORTAL] Provisionamento Auth falhou:", data?.error);
+        setSessionMode("server");
+        return;
+      }
+      if (data?.localId && lead.email) {
+        const cred = await signInWithEmailAndPassword(auth, lead.email, senha);
+        setFirebaseUser(cred.user);
+        setSessionMode("firebase");
+      } else {
+        setSessionMode("server");
+      }
+    } catch (err) {
+      console.warn("[PORTAL] Erro ao provisionar/login Firebase:", err);
+      setSessionMode("server");
+    } finally {
+      setIsProvisioning(false);
+    }
+  };
+
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!candidateLead) return;
@@ -1284,6 +1385,9 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
     } catch (err) {
       console.warn("Could not record last access:", err);
     }
+
+    // Tenta criar/vincular conta real no Firebase Auth (melhor esforço).
+    await provisionarClienteAuth(candidateLead, enteredPassword.trim());
 
     setLead({ ...candidateLead, clienteUltimoAcesso: new Date().toISOString() });
     initializePartnerForm(candidateLead);
@@ -1340,6 +1444,9 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
         clientePrimeiroAcessoConcluido: true,
         clienteUltimoAcesso: now
       };
+
+      // Tenta criar/vincular conta real no Firebase Auth (melhor esforço).
+      await provisionarClienteAuth(updatedLead, pass);
 
       setLead(updatedLead);
       initializePartnerForm(updatedLead);
@@ -1486,7 +1593,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
 
   const handleCopyLink = () => {
     if (!lead) return;
-    const link = `${getAppDomain()}?acompanhamento=${lead.id}`;
+    const link = `${getAppDomain()}/portal-cliente?lead=${lead.id}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

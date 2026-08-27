@@ -2339,13 +2339,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               <input
                 type="text"
                 readOnly
-                value={`${getAppDomain()}?acompanhamento=${lead.id}`}
+                value={`${getAppDomain()}/portal-cliente?lead=${lead.id}`}
                 className="bg-white border border-emerald-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-700 focus:outline-hidden w-full md:w-64 shadow-xs"
               />
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${getAppDomain()}?acompanhamento=${lead.id}`);
+                  navigator.clipboard.writeText(`${getAppDomain()}/portal-cliente?lead=${lead.id}`);
                   setCopiedTrackingLink(true);
                   setTimeout(() => setCopiedTrackingLink(false), 2000);
                 }}
