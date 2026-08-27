@@ -628,6 +628,15 @@ export default function FichaRatingAdmViewer({
           )}
         </div>
 
+        {/* Link inacessível badge */}
+        {linkProblema && (
+          <div className="p-2 bg-rose-600 text-white rounded-xl text-[10px] font-black flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>Link inacessível — solicitar reenvio</span>
+          </div>
+        )}
+
+
         {/* Rejection Motive Display */}
         {isRejected && val?.motivo && (
           <div className="p-2 bg-rose-100/70 border border-rose-200 rounded-xl text-[11px] text-rose-900 font-medium">
