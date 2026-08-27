@@ -581,6 +581,7 @@ export default function FichaRatingAdmViewer({
     const isApproved = val?.status === "aprovado";
     const isRejected = val?.status === "rejeitado";
     const isEditingMotivo = editingMotivoKey === docKey;
+    const linkProblema = linksProblematicos[docKey];
 
     return (
       <div 
