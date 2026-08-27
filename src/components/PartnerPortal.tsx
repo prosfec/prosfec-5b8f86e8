@@ -6487,7 +6487,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <input
                               type="text"
                               readOnly
-                              value={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?leadTrack=${registeredLeadId}`}
+                              value={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}/portal-cliente?lead=${registeredLeadId}`}
                               className="bg-white border border-slate-300 text-xs font-mono px-3 py-2 rounded-xl text-slate-800 font-bold flex-1 select-all"
                             />
                             <button
