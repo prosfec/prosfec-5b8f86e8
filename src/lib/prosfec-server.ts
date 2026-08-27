@@ -3128,6 +3128,270 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // =====================================================================
+  // ETAPA B-2 — Senha do cliente (leads.clienteSenha) com hash PBKDF2
+  // =====================================================================
+
+  // Identidade de serviço: o servidor autentica no Firebase Auth para poder
+  // ler/gravar os campos de senha do lead respeitando as regras do Firestore.
+  let serviceTokenCache: { token: string; exp: number } | null = null;
+
+  const getServiceIdToken = async (): Promise<string> => {
+    if (serviceTokenCache && serviceTokenCache.exp > Date.now() + 60_000) {
+      return serviceTokenCache.token;
+    }
+    const email = optionalEnv("PROSFEC_SERVICE_EMAIL");
+    const password = optionalEnv("PROSFEC_SERVICE_PASSWORD");
+    if (!email || !password) {
+      throw new Error("Identidade de serviço não configurada.");
+    }
+
+    let r = await authRest("signInWithPassword", { email, password, returnSecureToken: true });
+    if (!r.ok && String(r.data?.error?.message || "").startsWith("EMAIL_NOT_FOUND")) {
+      r = await authRest("signUp", { email, password, returnSecureToken: true });
+    }
+    if (!r.ok || !r.data?.idToken) {
+      throw new Error("Falha ao autenticar a identidade de serviço.");
+    }
+    serviceTokenCache = {
+      token: r.data.idToken,
+      exp: Date.now() + (Number(r.data.expiresIn || 3600) - 120) * 1000,
+    };
+    return serviceTokenCache.token;
+  };
+
+  const firestoreDocUrl = (path: string, masks: string[] = []) => {
+    const base =
+      `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}` +
+      `/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents/${path}`;
+    if (!masks.length) return base;
+    return base + "?" + masks.map((m) => `updateMask.fieldPaths=${m}`).join("&");
+  };
+
+  const getLeadRest = async (leadId: string) => {
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(`leads/${leadId}`), {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!r.ok) return null;
+    const data = await r.json().catch(() => null);
+    return data?.fields || null;
+  };
+
+  const patchLeadRest = async (leadId: string, fields: any, masks: string[]) => {
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(`leads/${leadId}`, masks), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ fields }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore PATCH ${r.status}: ${detail.slice(0, 160)}`);
+    }
+  };
+
+  // ---- PBKDF2-SHA256 (WebCrypto, compatível com o runtime edge) ----
+  const PBKDF2_ITERATIONS = 150000;
+
+  const toHex = (buf: ArrayBuffer) =>
+    Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+  const derivarHash = async (senha: string, saltHex: string): Promise<string> => {
+    const enc = new TextEncoder();
+    const salt = new Uint8Array(
+      (saltHex.match(/.{1,2}/g) || []).map((h) => parseInt(h, 16)),
+    );
+    const key = await crypto.subtle.importKey("raw", enc.encode(senha), "PBKDF2", false, [
+      "deriveBits",
+    ]);
+    const bits = await crypto.subtle.deriveBits(
+      { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+      key,
+      256,
+    );
+    return toHex(bits);
+  };
+
+  const gerarSalt = () => toHex(crypto.getRandomValues(new Uint8Array(16)).buffer);
+
+  const camposSenhaCliente = async (senha: string) => {
+    const salt = gerarSalt();
+    const hash = await derivarHash(senha, salt);
+    return {
+      fields: {
+        clienteSenhaHash: { stringValue: hash },
+        clienteSenhaSalt: { stringValue: salt },
+        clienteSenhaAlgo: { stringValue: `PBKDF2-SHA256-${PBKDF2_ITERATIONS}` },
+        clienteSenhaAtualizadaEm: { stringValue: new Date().toISOString() },
+        clienteSenha: { nullValue: null },
+      },
+      masks: [
+        "clienteSenhaHash",
+        "clienteSenhaSalt",
+        "clienteSenhaAlgo",
+        "clienteSenhaAtualizadaEm",
+        "clienteSenha",
+      ],
+    };
+  };
+
+  const gravarSenhaCliente = async (leadId: string, senha: string) => {
+    const { fields, masks } = await camposSenhaCliente(senha);
+    // Remove a senha em texto puro: updateMask sem o campo no corpo = delete.
+    delete (fields as any).clienteSenha;
+    await patchLeadRest(leadId, fields, masks);
+  };
+
+  // Login do cliente (com lazy migration da senha em texto puro)
+  app.post("/api/auth/cliente-login", async (req, res) => {
+    try {
+      const leadId = String(req.body?.leadId || "").trim();
+      const senha = String(req.body?.senha || "");
+      if (!leadId || !senha) {
+        return res.status(400).json({ error: "leadId e senha são obrigatórios." });
+      }
+
+      const fields = await getLeadRest(leadId);
+      if (!fields) return res.status(404).json({ error: "Solicitação não encontrada." });
+
+      const hash = fields.clienteSenhaHash?.stringValue || "";
+      const salt = fields.clienteSenhaSalt?.stringValue || "";
+      const legacy = fields.clienteSenha?.stringValue || "";
+
+      if (hash && salt) {
+        const derived = await derivarHash(senha, salt);
+        if (!timingSafeCompare(derived, hash)) {
+          return res.status(401).json({ error: "Senha incorreta." });
+        }
+        return res.json({ success: true, migrated: false });
+      }
+
+      if (legacy) {
+        if (!timingSafeCompare(senha.trim(), legacy.trim())) {
+          return res.status(401).json({ error: "Senha incorreta." });
+        }
+        // Lazy migration: converte para hash e apaga o texto puro.
+        await gravarSenhaCliente(leadId, senha);
+        return res.json({ success: true, migrated: true });
+      }
+
+      return res.status(409).json({ error: "SEM_SENHA_CADASTRADA" });
+    } catch (err: any) {
+      console.error("[CLIENTE LOGIN] Falha:", err?.message || "erro");
+      return res.status(500).json({ error: "Erro ao validar o acesso." });
+    }
+  });
+
+  // Primeiro acesso: define a senha (só se ainda não existir nenhuma)
+  app.post("/api/auth/cliente-definir-senha", async (req, res) => {
+    try {
+      const leadId = String(req.body?.leadId || "").trim();
+      const senha = String(req.body?.senha || "");
+      if (!leadId || senha.trim().length < 4) {
+        return res.status(400).json({ error: "Senha inválida (mínimo de 4 caracteres)." });
+      }
+
+      const fields = await getLeadRest(leadId);
+      if (!fields) return res.status(404).json({ error: "Solicitação não encontrada." });
+
+      const jaTemSenha =
+        !!(fields.clienteSenhaHash?.stringValue || fields.clienteSenha?.stringValue);
+      if (jaTemSenha) {
+        return res
+          .status(409)
+          .json({ error: "Este acesso já possui senha. Use a redefinição com seu consultor." });
+      }
+
+      await gravarSenhaCliente(leadId, senha.trim());
+      await patchLeadRest(
+        leadId,
+        {
+          clientePrimeiroAcessoConcluido: { booleanValue: true },
+          clienteUltimoAcesso: { stringValue: new Date().toISOString() },
+        },
+        ["clientePrimeiroAcessoConcluido", "clienteUltimoAcesso"],
+      );
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("[CLIENTE SENHA] Falha:", err?.message || "erro");
+      return res.status(500).json({ error: "Erro ao salvar a senha." });
+    }
+  });
+
+  // Redefinição pelo ADM — exige idToken de um administrador autenticado
+  app.post("/api/auth/cliente-reset-senha", async (req, res) => {
+    try {
+      const idToken = extractToken(req, "x-admin-idtoken");
+      if (!idToken) return res.status(401).json({ error: "Unauthorized." });
+
+      const lookup = await authRest("lookup", { idToken });
+      const user = lookup.data?.users?.[0];
+      const email = String(user?.email || "").toLowerCase();
+      const ADMINS = ["adm.prosfec@gmail.com", "atendimento.mobitech@gmail.com"];
+      if (!lookup.ok || !ADMINS.includes(email)) {
+        return res.status(403).json({ error: "Acesso restrito ao administrador." });
+      }
+
+      const leadId = String(req.body?.leadId || "").trim();
+      const senha = String(req.body?.senha || "").trim();
+      if (!leadId || senha.length < 4) {
+        return res.status(400).json({ error: "Senha inválida (mínimo de 4 caracteres)." });
+      }
+
+      await gravarSenhaCliente(leadId, senha);
+      await patchLeadRest(
+        leadId,
+        { clienteResetSolicitado: { booleanValue: false } },
+        ["clienteResetSolicitado"],
+      );
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("[CLIENTE RESET] Falha:", err?.message || "erro");
+      return res.status(500).json({ error: "Erro ao redefinir a senha." });
+    }
+  });
+
+  // Migração em lote das senhas de cliente — protegida por MIGRATION_ADMIN_TOKEN
+  app.post("/api/auth/migrar-clientes", async (req, res) => {
+    const expected = optionalEnv("MIGRATION_ADMIN_TOKEN");
+    if (!expected) {
+      return res.status(503).json({ error: "MIGRATION_ADMIN_TOKEN não configurado." });
+    }
+    if (!timingSafeCompare(extractToken(req, "x-migration-token"), expected)) {
+      return res.status(401).json({ error: "Unauthorized." });
+    }
+
+    try {
+      const dryRun = req.body?.dryRun === true;
+      const snap = await getDocs(collection(db, "leads"));
+      const pending = snap.docs.filter(
+        (d) => typeof d.data()?.clienteSenha === "string" && d.data().clienteSenha.length > 0,
+      );
+
+      if (dryRun) {
+        return res.json({ dryRun: true, total: snap.size, pendentes: pending.length });
+      }
+
+      let migrados = 0;
+      const falhas: any[] = [];
+      for (const d of pending) {
+        try {
+          await gravarSenhaCliente(d.id, String(d.data().clienteSenha));
+          migrados++;
+        } catch (e: any) {
+          falhas.push({ id: d.id, erro: String(e?.message || "erro").slice(0, 120) });
+        }
+      }
+      return res.json({ total: snap.size, pendentes: pending.length, migrados, falhas });
+    } catch (err: any) {
+      return res.status(500).json({ error: "Erro na migração de clientes." });
+    }
+  });
+
   return app;
+
 }
 
