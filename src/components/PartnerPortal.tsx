@@ -1512,6 +1512,46 @@ export default function PartnerPortal({
     return 0.025; // 3.0% - 0.5% = 2.5% for Starter / others
   };
 
+  // ===== Saldo de COMISSÕES DE VENDAS (planos / Lastlink-Hubla) — usado no card e na caixa de saque "vendas"
+  const salesCommissionStats = (() => {
+    const directMultiplier = getDirectCommissionMultiplier(currentPartner?.plano);
+    const isPaidLead = (l: any) => l.comissaoPaga === true || l.servicoPago === true || l.comissaoMultinivel?.statusGeral === "pago";
+    const isPendingLead = (l: any) =>
+      l.comissaoPaga !== true && l.servicoPago !== true && l.comissaoMultinivel?.statusGeral !== "pago" &&
+      (l.etapa === 7 || l.status === "concluido" || l.servicosRecomendados?.length > 0 || (l.subEtapasPasso6 && l.subEtapasPasso6.length > 0));
+
+    const directPaid = (leads || []).filter(isPaidLead).reduce((acc: number, l: any) =>
+      acc + (l.comissaoMultinivel?.valorComissaoDireta || ((l.valorAprovado || l.limiteEstimado || 0) * directMultiplier)), 0);
+    const directPending = (leads || []).filter(isPendingLead).reduce((acc: number, l: any) =>
+      acc + (l.comissaoMultinivel?.valorComissaoDireta || ((l.valorAprovado || l.limiteEstimado || 0) * directMultiplier)), 0);
+
+    const teamPaid = (teamLeads || []).filter(isPaidLead).reduce((acc: number, l: any) =>
+      acc + (l.comissaoMultinivel?.valorComissaoEquipe || ((l.valorAprovado || l.limiteEstimado || 0) * getOverrideMultiplierForLead(l))), 0);
+    const teamPending = (teamLeads || []).filter(isPendingLead).reduce((acc: number, l: any) =>
+      acc + (l.comissaoMultinivel?.valorComissaoEquipe || ((l.valorAprovado || l.limiteEstimado || 0) * getOverrideMultiplierForLead(l))), 0);
+
+    const master = isFranquiaDigital(currentPartner?.plano);
+    return {
+      totalPaid: directPaid + (master ? teamPaid : 0),
+      totalPending: directPending + (master ? teamPending : 0),
+      leadsPagos: (leads || []).filter(isPaidLead).map((l: any) => l.nomeEmpresa || l.nome || "Empresa"),
+    };
+  })();
+
+  // Origem de uma solicitação antiga (sem campo) = serviços (comportamento anterior)
+  const getSolicitacaoOrigem = (s: any): "vendas" | "servicos" => (s?.origem === "vendas" ? "vendas" : "servicos");
+
+  const somaSaques = (origem: "vendas" | "servicos", status: string) =>
+    (solicitacoesComissao || [])
+      .filter((s: any) => getSolicitacaoOrigem(s) === origem && s.status === status)
+      .reduce((acc: number, s: any) => acc + (s.valor || 0), 0);
+
+  const saquesVendasPagos = somaSaques("vendas", "pago");
+  const saquesVendasPendentes = somaSaques("vendas", "pendente");
+  const saldoVendasDisponivel = Math.max(0, salesCommissionStats.totalPaid - (saquesVendasPagos + saquesVendasPendentes));
+
+
+
   const handleUpdateTeamMemberPlan = async (memberId: string, newPlan: string) => {
     try {
       const isExec = newPlan.toUpperCase().includes("EXEC");
