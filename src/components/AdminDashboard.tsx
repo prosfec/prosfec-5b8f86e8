@@ -1477,36 +1477,38 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const ADMIN_UID = "FbYFfsN8igZzNUxcDzBfxX0Anlj1";
   const CONTADOR_UID = "vKZFCNniHJfzJ9B3yWlzErNC3892";
 
-  // Real-time synchronization with Firebase Authentication state
+  // Mesma lista autorizada das regras do Firestore (firestore.rules)
+  const ADMIN_EMAILS = ["adm.prosfec@gmail.com", "atendimento.mobitech@gmail.com"];
+  const CONTADOR_EMAILS = ["contador.prosfec@gmail.com"];
+
+  const resolveRole = (user: any): "admin" | "contador" | null => {
+    if (!user) return null;
+    const email = String(user.email || "").toLowerCase();
+    if (user.uid === ADMIN_UID || ADMIN_EMAILS.includes(email)) return "admin";
+    if (user.uid === CONTADOR_UID || CONTADOR_EMAILS.includes(email)) return "contador";
+    return null;
+  };
+
+  // Sessão administrativa controlada exclusivamente pelo Firebase Auth
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        let detectedRole: "admin" | "contador" = "admin";
-        const email = (user.email || "").toLowerCase();
-        if (user.uid === ADMIN_UID || email.includes("adm")) {
-          detectedRole = "admin";
-        } else if (user.uid === CONTADOR_UID || email.includes("contador")) {
-          detectedRole = "contador";
-        }
-        sessionStorage.setItem("admin_authenticated", "true");
-        sessionStorage.setItem("admin_role", detectedRole);
-        sessionStorage.setItem("admin_firebase_uid", user.uid);
-        setUserRole(detectedRole);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      const role = resolveRole(user);
+      if (user && role) {
+        setUserRole(role);
         setIsAuthenticated(true);
       } else {
-        // If user logged out of Firebase auth
-        const wasAuth = sessionStorage.getItem("admin_authenticated") === "true";
-        if (wasAuth && !auth.currentUser) {
-          // If was relying on Firebase Auth session
-          const storedUid = sessionStorage.getItem("admin_firebase_uid");
-          if (storedUid) {
-            sessionStorage.removeItem("admin_authenticated");
-            sessionStorage.removeItem("admin_role");
-            sessionStorage.removeItem("admin_firebase_uid");
-            setIsAuthenticated(false);
+        if (user) {
+          // Usuário autenticado, porém sem permissão administrativa
+          try {
+            await signOut(auth);
+          } catch {
+            /* ignore */
           }
+          setLoginError("Esta conta não tem permissão de acesso ao painel administrativo.");
         }
+        setIsAuthenticated(false);
       }
+      setCheckingSession(false);
     });
 
     return () => unsubscribe();
