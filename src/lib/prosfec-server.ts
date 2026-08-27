@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
 import express from "./mini-express";
 import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth, signInWithEmailAndPassword as signInService } from "firebase/auth";
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc, runTransaction, deleteField } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
 import { GoogleGenAI, Type } from "@google/genai";
@@ -101,8 +102,45 @@ export function createExpressApp() {
     ? getFirestore(firebaseApp, (firebaseConfig as any).firestoreDatabaseId)
     : getFirestore(firebaseApp);
 
+  // Identidade de serviço no SDK do servidor: garante que leituras/escritas
+  // do backend passem pelas regras do Firestore como usuário autenticado.
+  const serverAuth = getAuth(firebaseApp);
+  let serviceSignInPromise: Promise<any> | null = null;
+  const ensureServiceSession = async () => {
+    if (serverAuth.currentUser) return;
+    if (!serviceSignInPromise) {
+      const email = optionalEnv("PROSFEC_SERVICE_EMAIL");
+      const password = optionalEnv("PROSFEC_SERVICE_PASSWORD");
+      if (!email || !password) return;
+      serviceSignInPromise = (async () => {
+        try {
+          // Garante que a conta exista (cria via REST se necessário).
+          await getServiceIdTokenRef.fn();
+          await signInService(serverAuth, email, password);
+        } catch (err: any) {
+          console.warn("[SERVICO] Não foi possível autenticar a identidade de serviço.");
+          serviceSignInPromise = null;
+        }
+      })();
+    }
+    await serviceSignInPromise;
+  };
+  // Referência tardia (a função é definida mais abaixo no arquivo)
+  const getServiceIdTokenRef: { fn: () => Promise<string> } = {
+    fn: async () => "",
+  };
+
   // Parse JSON payloads for API routes
   app.use(express.json());
+
+  app.use(async (_req, _res, next) => {
+    try {
+      await ensureServiceSession();
+    } catch {
+      /* segue sem sessão de serviço */
+    }
+    next();
+  });
 
   // API Route: Hubla Webhook (autenticado com comparação time-safe)
   app.post("/api/hubla-webhook", async (req, res) => {
@@ -3184,8 +3222,10 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
 
     let r = await authRest("signInWithPassword", { email, password, returnSecureToken: true });
-    if (!r.ok && String(r.data?.error?.message || "").startsWith("EMAIL_NOT_FOUND")) {
-      r = await authRest("signUp", { email, password, returnSecureToken: true });
+    if (!r.ok) {
+      // Conta ainda não existe (EMAIL_NOT_FOUND / INVALID_LOGIN_CREDENTIALS): cria.
+      const created = await authRest("signUp", { email, password, returnSecureToken: true });
+      if (created.ok) r = created;
     }
     if (!r.ok || !r.data?.idToken) {
       throw new Error("Falha ao autenticar a identidade de serviço.");
@@ -3196,6 +3236,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     };
     return serviceTokenCache.token;
   };
+
+  getServiceIdTokenRef.fn = getServiceIdToken;
 
   const firestoreDocUrl = (path: string, masks: string[] = []) => {
     const base =
