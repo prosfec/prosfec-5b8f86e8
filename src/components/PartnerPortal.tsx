@@ -7264,7 +7264,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             />
                             <button
                               onClick={() => {
-                                navigator.clipboard.writeText(`${getAppDomain()}?leadTrack=${registeredLeadId}`);
+                                navigator.clipboard.writeText(`${getAppDomain()}/portal-cliente?lead=${registeredLeadId}`);
                                 setCopiedTrackingLink(true);
                                 setTimeout(() => setCopiedTrackingLink(false), 2000);
                               }}
