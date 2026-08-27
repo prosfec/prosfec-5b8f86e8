@@ -7269,7 +7269,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </button>
 
               <a
-                href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(selectedLead.nome)}!%20Geramos%20o%20seu%20link%20de%20acompanhamento%20exclusivo%20da%20PROSFEC%20para%20a%20sua%20simula%C3%A7%C3%A3o%20Pronampe%202026.%20Acompanhe%20as%20etapas%20de%20libera%C3%A7%C3%A3o%20em%20tempo%20real:%20${encodeURIComponent(getAppDomain() + "?acompanhamento=" + selectedLead.id)}`}
+                href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(selectedLead.nome)}!%20Geramos%20o%20seu%20link%20de%20acompanhamento%20exclusivo%20da%20PROSFEC%20para%20a%20sua%20simula%C3%A7%C3%A3o%20Pronampe%202026.%20Acompanhe%20as%20etapas%20de%20libera%C3%A7%C3%A3o%20em%20tempo%20real:%20${encodeURIComponent(getAppDomain() + "/portal-cliente?lead=" + selectedLead.id)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 bg-[#00A86B] hover:bg-[#00905c] text-white font-extrabold text-sm rounded-lg flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
