@@ -1236,7 +1236,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   ];
 
   const handleCopyTrackingLink = (leadId: string) => {
-    const link = `${getAppDomain()}?acompanhamento=${leadId}`;
+    const link = `${getAppDomain()}/portal-cliente?lead=${leadId}`;
     navigator.clipboard.writeText(link);
     setCopiedLeadId(leadId);
     setTimeout(() => setCopiedLeadId(null), 2000);
