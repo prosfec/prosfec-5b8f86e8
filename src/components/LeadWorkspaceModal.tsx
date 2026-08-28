@@ -60,9 +60,11 @@ import {
   CheckCircle,
   Trash2,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Bookmark
 } from "lucide-react";
 import LeadStepTimeline from "./LeadStepTimeline";
+import LeadConciergeTracker from "./LeadConciergeTracker";
 import FichaRatingAdmViewer from "./FichaRatingAdmViewer";
 import { DossierComparativeViewer } from "./DossierComparativeViewer";
 import { FintechDiagnosisView } from "./FintechDiagnosisView";
