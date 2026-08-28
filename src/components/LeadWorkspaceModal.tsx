@@ -226,7 +226,13 @@ export default function LeadWorkspaceModal({
 
   const [generatingPasso7, setGeneratingPasso7] = useState(false);
 
-  const handleTabClick = (tab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm") => {
+  const handleTabClick = (tab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "concierge") => {
+    if (tab === "concierge") {
+      setWorkspaceTab(tab);
+      setWorkspaceError(null);
+      setWorkspaceSuccess(null);
+      return;
+    }
     if (tab === "rating_adm") {
       if (!isAdminUser) {
         setWorkspaceError("🔒 Acesso restrito apenas para a Mesa de Operações / Administrador.");
