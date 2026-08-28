@@ -217,8 +217,8 @@ export default function LeadWorkspaceModal({
     (currentPartner as any)?.isAdmin
   );
   const stepStatus = calculateLeadStepStatus(lead);
-  const [workspaceTab, setWorkspaceTab] = useState<"details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm">(
-    initialTab && ((initialTab as any) === "rating_adm" ? isAdminUser : stepStatus.isTabUnlocked(initialTab as any)) ? initialTab : "details"
+  const [workspaceTab, setWorkspaceTab] = useState<"details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "concierge">(
+    initialTab === "concierge" || (initialTab && ((initialTab as any) === "rating_adm" ? isAdminUser : stepStatus.isTabUnlocked(initialTab as any))) ? initialTab : "details"
   );
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
