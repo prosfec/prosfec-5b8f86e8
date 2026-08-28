@@ -2420,6 +2420,11 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
             </div>
           ) : (
             <>
+              {/* TAB: Concierge B2B — visão do consultor */}
+              {workspaceTab === "concierge" && (
+                <LeadConciergeTracker lead={lead} />
+              )}
+
               {/* TAB 1: Company details */}
           {workspaceTab === "details" && (
             <form onSubmit={handleSaveWorkspaceCompanyDetails} className="space-y-6">
