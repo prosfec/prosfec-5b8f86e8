@@ -2074,6 +2074,20 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
         <div className="bg-slate-950/80 border-b border-slate-800/80 px-4 md:px-6 flex items-center overflow-x-auto gap-1 backdrop-blur-md text-xs font-extrabold scrollbar-none shrink-0 min-h-[52px]">
           <button
             type="button"
+            onClick={() => handleTabClick("concierge")}
+            className={`py-3.5 px-3.5 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+              workspaceTab === "concierge"
+                ? "border-[#00A86B] text-[#00A86B] bg-[#00A86B]/10"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+            title="Visão Concierge do lead"
+          >
+            <Bookmark className="w-4 h-4 text-[#00A86B]" />
+            Concierge
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleTabClick("details")}
             className={`py-3.5 px-3.5 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
               workspaceTab === "details"
