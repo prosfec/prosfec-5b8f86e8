@@ -1077,51 +1077,17 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                                 Simulação Ativa Encontrada no Banco de Dados
                               </h4>
                               <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
-                                Já identificamos que existe uma solicitação cadastrada para o CNPJ (<strong>{formData.cnpj}</strong>). Você pode acessar o link completo de acompanhamento em tempo real abaixo:
+                                Já identificamos que existe uma solicitação cadastrada para o CNPJ (<strong>{formData.cnpj}</strong>). Um consultor PROSFEC responsável já está com o seu caso e dará continuidade ao atendimento.
                               </p>
                             </div>
                           </div>
 
-                          <div className="bg-white/90 p-3.5 rounded-xl border border-amber-200 space-y-2">
+                          <div className="bg-white/90 p-3.5 rounded-xl border border-amber-200">
                             <div className="flex justify-between items-center text-[11px] font-mono text-amber-900">
                               <span className="font-bold">ID da Solicitação: {existingLeadTrack.id}</span>
                               <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-sans text-[10px] uppercase font-extrabold">
                                 {existingLeadTrack.status}
                               </span>
-                            </div>
-                            <p className="text-[11px] text-slate-500 font-medium">
-                              Link de Acompanhamento Directo:
-                            </p>
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                              <input
-                                type="text"
-                                readOnly
-                                value={`https://prosfec.com.br/portal-cliente?lead=${existingLeadTrack.id}`}
-                                className="bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs px-3 py-2 rounded-lg flex-1 select-all outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(`https://prosfec.com.br/portal-cliente?lead=${existingLeadTrack.id}`);
-                                  setCopiedLeadLink(true);
-                                  setTimeout(() => setCopiedLeadLink(false), 3000);
-                                }}
-                                className="px-3.5 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
-                              >
-                                {copiedLeadLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                <span>{copiedLeadLink ? "Copiado!" : "Copiar Link"}</span>
-                              </button>
-                            </div>
-                            <div className="pt-1">
-                              <a
-                                href={`https://prosfec.com.br/portal-cliente?lead=${existingLeadTrack.id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-800 hover:text-amber-950 underline"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                                <span>Clique aqui para abrir o acompanhamento em tempo real</span>
-                              </a>
                             </div>
                           </div>
                         </motion.div>
@@ -2485,42 +2451,6 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                             Código de Rastreio: {createdLeadId}
                           </p>
 
-                          {/* Direct Link Tracking Box */}
-                          <div className="bg-white p-3.5 rounded-2xl border border-emerald-200/80 shadow-xs w-full max-w-md space-y-2 text-left my-2">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0A3D2E] block flex items-center gap-1">
-                              <Sparkles className="w-3.5 h-3.5 text-[#00A86B]" />
-                              Link Direto de Acompanhamento:
-                            </span>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                readOnly
-                                value={`https://prosfec.com.br/portal-cliente?lead=${createdLeadId}`}
-                                className="flex-1 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-[11px] px-3 py-2 rounded-xl select-all outline-none font-bold"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(`https://prosfec.com.br/portal-cliente?lead=${createdLeadId}`);
-                                  setCopiedLeadLink(true);
-                                  setTimeout(() => setCopiedLeadLink(false), 3000);
-                                }}
-                                className="px-3.5 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 shrink-0 cursor-pointer shadow-xs"
-                              >
-                                {copiedLeadLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                <span>{copiedLeadLink ? "Copiado!" : "Copiar"}</span>
-                              </button>
-                            </div>
-                            <a
-                              href={`https://prosfec.com.br/portal-cliente?lead=${createdLeadId}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0A3D2E] hover:text-[#00A86B] transition-colors pt-0.5"
-                            >
-                              <ExternalLink className="w-3 h-3 text-[#00A86B]" />
-                              <span>Abrir página de acompanhamento em tempo real</span>
-                            </a>
-                          </div>
                           <p className="text-[11px] text-gray-400 max-w-xs leading-normal">
                             Nossa mesa de análise iniciou as consultas automáticas. O consultor {referredByPartnerNome || "PROSFEC"} responsável entrará em contato via WhatsApp para orientar sobre a Etapa 4 de Senha Gov.br.
                           </p>

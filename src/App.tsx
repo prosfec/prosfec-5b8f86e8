@@ -17,7 +17,6 @@ import Parceiros from "./components/Parceiros";
 import FAQ from "./components/FAQ";
 import Footer from "./components/Footer";
 import AdminDashboard from "./components/AdminDashboard";
-import TrackingPortal from "./components/TrackingPortal";
 import PartnerPortal from "./components/PartnerPortal";
 import UserRegistrationForm from "./components/UserRegistrationForm";
 import { LeadData, SimulationResult } from "./types";
@@ -223,8 +222,6 @@ export function executarAnaliseRiscoPreliminar(
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [clientTrackingId, setClientTrackingId] = useState<string | null>(null);
-  const [showTracking, setShowTracking] = useState(false);
   const [showPartnerPortal, setShowPartnerPortal] = useState(false);
   const [showUserRegistration, setShowUserRegistration] = useState(false);
   const [referredByPartnerId, setReferredByPartnerId] = useState<string | null>(null);
@@ -246,14 +243,6 @@ export default function App() {
     const token = params.get("admin") || params.get("painel") || params.get("chave");
     if (token === "admprosfec") {
       setIsAdmin(true);
-    }
-
-    const trackId = params.get("acompanhamento") || params.get("tracking") || params.get("status") || params.get("leadTrack");
-    if (trackId) {
-      // A partir de agora o acompanhamento do cliente vive na rota própria
-      // /portal-cliente. Redireciona links antigos para a nova URL.
-      window.location.replace(`/portal-cliente?lead=${encodeURIComponent(trackId)}`);
-      return;
     }
 
     const isRegisterForm = params.get("cadastro") === "true" || params.get("cadastro-usuario") === "true" || params.get("cadastro-consultor") === "true" || params.get("novo-usuario") === "true";
@@ -446,24 +435,6 @@ export default function App() {
           url.searchParams.delete("chave");
           window.history.replaceState({}, "", url.toString());
           setIsAdmin(false);
-        }}
-      />
-    );
-  }
-
-  if (showTracking) {
-    return (
-      <TrackingPortal
-        initialLeadId={clientTrackingId}
-        onBackToHome={() => {
-          const url = new URL(window.location.href);
-          url.searchParams.delete("acompanhamento");
-          url.searchParams.delete("tracking");
-          url.searchParams.delete("status");
-          url.searchParams.delete("leadTrack");
-          window.history.replaceState({}, "", url.toString());
-          setClientTrackingId(null);
-          setShowTracking(false);
         }}
       />
     );
