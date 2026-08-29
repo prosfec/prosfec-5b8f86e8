@@ -6475,47 +6475,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 </button>
                       </div>
 
-                      {registeredLeadId && (
-                        <div className="pt-3 border-t border-emerald-200/60 space-y-2">
-                          <span className="text-[11px] font-bold text-[#0A3D2E] uppercase tracking-wider block">
-                            🔗 Link de Acompanhamento do Cliente
-                          </span>
-                          <p className="text-xs text-slate-600 leading-normal">
-                            Copie o link abaixo e envie para o seu cliente acompanhar o andamento da análise de fomento dele em tempo real:
-                          </p>
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-1">
-                            <input
-                              type="text"
-                              readOnly
-                              value={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}/portal-cliente?lead=${registeredLeadId}`}
-                              className="bg-white border border-slate-300 text-xs font-mono px-3 py-2 rounded-xl text-slate-800 font-bold flex-1 select-all"
-                            />
-                            <button
-                              onClick={() => {
-                                const domain = window.location.hostname.includes("prosfec.com.br")
-                                  ? window.location.origin
-                                  : "https://prosfec.com.br";
-                                navigator.clipboard.writeText(`${domain}/portal-cliente?lead=${registeredLeadId}`);
-                                setCopiedTrackingLink(true);
-                                setTimeout(() => setCopiedTrackingLink(false), 2000);
-                              }}
-                              className="px-4 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs whitespace-nowrap min-h-[40px]"
-                            >
-                              {copiedTrackingLink ? (
-                                <>
-                                  <Check className="w-4 h-4 text-emerald-300" />
-                                  <span>Link Copiado!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-4 h-4" />
-                                  <span>Copiar Link</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      )}
+
                     </div>
                   )}
 
@@ -7246,34 +7206,18 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
                       </div>
 
-                      {/* Success Registration Tracking Link */}
+                      {/* Lead cadastrado com sucesso */}
                       {registeredLeadId && (
                         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2">
                           <span className="text-[11px] font-black text-[#0A3D2E] uppercase tracking-wider block">
                             🎉 Lead Cadastrado com Sucesso!
                           </span>
                           <p className="text-xs text-slate-600 font-medium">
-                            O lead foi importado para o sistema. Copie o link abaixo e envie para o seu cliente acompanhar o andamento da análise em tempo real:
+                            O lead foi importado para o sistema. Acompanhe e conduza todo o atendimento pelo Workspace do lead na sua fila de prospecção.
                           </p>
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-1">
-                            <input
-                              type="text"
-                              readOnly
-                              value={`${getAppDomain()}/portal-cliente?lead=${registeredLeadId}`}
-                              className="bg-white/75 backdrop-blur-xl border border-slate-200 text-xs font-mono px-3 py-2 rounded-xl text-slate-700 font-bold flex-1 select-all"
-                            />
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(`${getAppDomain()}/portal-cliente?lead=${registeredLeadId}`);
-                                setCopiedTrackingLink(true);
-                                setTimeout(() => setCopiedTrackingLink(false), 2000);
-                              }}
-                              className="px-4 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
-                            >
-                              {copiedTrackingLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                              {copiedTrackingLink ? "Copiado!" : "Copiar Link"}
-                            </button>
-                          </div>
+                          <p className="text-[11px] font-mono font-bold text-slate-500">
+                            Protocolo: {registeredLeadId}
+                          </p>
                         </div>
                       )}
 
