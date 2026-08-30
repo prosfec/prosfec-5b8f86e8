@@ -34,7 +34,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { doc, updateDoc } from "firebase/firestore";
-import { salvarLeadPortal } from "@/lib/portal-save";
 import { db } from "../firebase";
 import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPessoal, AnaliseRTB } from "../types";
 import { formatCurrencyBRL, sanitizeFirestoreData, validateUploadedFile } from "../utils";
@@ -197,6 +196,7 @@ export default function FichaRatingCreditoForm({
 
   const [socios, setSocios] = useState<SocioRatingCPF[]>(initialSocios);
   const [dadosCNPJ, setDadosCNPJ] = useState<DadosRatingCNPJ>(initialCNPJ);
+  const [pastaDocumentosUrl, setPastaDocumentosUrl] = useState<string>(lead.fichaRatingCredito?.pastaDocumentosUrl || "");
   const [openSection, setOpenSection] = useState<"cpf" | "cnpj" | "both">("both");
   const [activeSocioTab, setActiveSocioTab] = useState<number>(0);
   
@@ -219,6 +219,9 @@ export default function FichaRatingCreditoForm({
       }
       if (lead.fichaRatingCredito.dadosCNPJ) {
         setDadosCNPJ(lead.fichaRatingCredito.dadosCNPJ);
+      }
+      if (typeof lead.fichaRatingCredito.pastaDocumentosUrl === "string") {
+        setPastaDocumentosUrl(lead.fichaRatingCredito.pastaDocumentosUrl);
       }
     }
     if (lead.analiseRTB) {
@@ -460,6 +463,8 @@ export default function FichaRatingCreditoForm({
       ...(lead.fichaRatingCredito || {}),
       sociosCPF: socios,
       dadosCNPJ: dadosCNPJ,
+      pastaDocumentosUrl: pastaDocumentosUrl || "",
+      pastaDocumentosAtualizadoEm: pastaDocumentosUrl ? now : (lead.fichaRatingCredito?.pastaDocumentosAtualizadoEm || ""),
       status: isFinalSubmission ? "em_analise" : (lead.fichaRatingCredito?.status || "pendente"),
       faseRating: isFinalSubmission ? "documentos_recebidos" : (lead.fichaRatingCredito?.faseRating || "aguardando_documentos"),
       dataEnvio: isFinalSubmission ? now : (lead.fichaRatingCredito?.dataEnvio || ""),
@@ -468,10 +473,10 @@ export default function FichaRatingCreditoForm({
     };
 
     try {
-      // A gravação passa pelo servidor: o cliente do portal não possui sessão
-      // no Firebase e as regras bloqueiam a escrita direta em /leads.
-      await salvarLeadPortal(lead.id, {
-        fichaRatingCredito: sanitizeFirestoreData(currentRating)
+      // Gravação direta: o parceiro/admin está autenticado no Firebase.
+      await updateDoc(doc(db, "leads", lead.id), {
+        fichaRatingCredito: sanitizeFirestoreData(currentRating),
+        updated_at: now
       });
 
       const updatedLead = {
@@ -486,7 +491,7 @@ export default function FichaRatingCreditoForm({
       setSaveSuccess(
         isFinalSubmission
           ? "Ficha enviada com sucesso para a Central de Análise e Estruturação de Rating!"
-          : "Rascunho salvo com sucesso no portal."
+          : "Rascunho salvo com sucesso."
       );
 
       setTimeout(() => setSaveSuccess(null), 5000);
