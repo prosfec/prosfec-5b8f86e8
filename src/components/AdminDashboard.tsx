@@ -395,14 +395,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [comissaoReceiptText, setComissaoReceiptText] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"leads" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel" | "resets">("leads");
+  const [activeTab, setActiveTab] = useState<"leads" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel">("leads");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [resetNewPasswords, setResetNewPasswords] = useState<Record<string, string>>({});
-  const [savingResetLeadId, setSavingResetLeadId] = useState<string | null>(null);
-  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
-  const [resetsFilter, setResetsFilter] = useState<"pendentes" | "todos">("pendentes");
-  const [resetsSearch, setResetsSearch] = useState("");
   const [showLeadPortalSenha, setShowLeadPortalSenha] = useState<Record<string, boolean>>({});
   const [copiedLeadPortalSenha, setCopiedLeadPortalSenha] = useState<Record<string, boolean>>({});
   const [customBasePrices, setCustomBasePrices] = useState<Record<string, number>>({});
@@ -542,7 +537,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [copiedLeadId, setCopiedLeadId] = useState<string | null>(null);
   const [copiedPartnerId, setCopiedPartnerId] = useState<string | null>(null);
   const [copiedGovbr, setCopiedGovbr] = useState(false);
   const [copiedSerasa, setCopiedSerasa] = useState(false);
@@ -708,112 +702,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       alert("Erro ao salvar comunicado no Firestore.");
     } finally {
       setSavingAnnouncement(false);
-    }
-  };
-
-  const generateClientPassword = () => {
-    const nums = Math.floor(1000 + Math.random() * 9000);
-    return `PROSFEC-${nums}`;
-  };
-
-  const handleAdminResetClientPassword = async (targetLead: Lead, customPassword?: string) => {
-    const passwordToSet = customPassword || resetNewPasswords[targetLead.id] || generateClientPassword();
-    if (!passwordToSet.trim()) {
-      alert("Por favor, digite ou gere uma nova senha para o cliente.");
-      return;
-    }
-
-    setSavingResetLeadId(targetLead.id);
-    setResetSuccessMessage(null);
-
-    try {
-      const now = new Date().toISOString();
-      const docRef = doc(db, "leads", targetLead.id);
-
-      // Etapa B-2: a senha nunca é gravada em texto puro. O servidor calcula o
-      // hash (PBKDF2) e só o hash fica no Firestore.
-      const idToken = await auth.currentUser?.getIdToken();
-      const resp = await fetch("/api/auth/cliente-reset-senha", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-idtoken": idToken || ""
-        },
-        body: JSON.stringify({ leadId: targetLead.id, senha: passwordToSet.trim() })
-      });
-      if (!resp.ok) {
-        const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData?.error || "Falha ao redefinir a senha no servidor.");
-      }
-
-      // Marca o atendimento da solicitação (sem armazenar a senha gerada)
-      await updateDoc(docRef, {
-        clientePrimeiroAcessoConcluido: true,
-        solicitacaoResetSenha: {
-          pendente: false,
-          dataAtendimento: now,
-          atendidoPor: "Administração PROSFEC"
-        },
-        updated_at: now
-      });
-
-      // Find the consultant (partner) for this lead
-      const consultant = partners.find(p => p.id === (targetLead as any).parceiroId);
-      const consultantName = consultant?.nome || "Consultor Especialista";
-      const consultantPhone = consultant?.whatsapp ? consultant.whatsapp.replace(/\D/g, "") : "";
-      const companyName = targetLead.razaoSocial || targetLead.nome || "Empresa";
-      const portalLink = `${getAppDomain()}/portal-cliente?lead=${targetLead.id}`;
-
-      // 1. Create in-app notification for the Consultant
-      if ((targetLead as any).parceiroId) {
-        try {
-          await addDoc(collection(db, "notificacoes"), {
-            recipientId: (targetLead as any).parceiroId,
-            recipientType: "parceiro",
-            titulo: `🔑 Senha do Portal Redefinida: ${companyName}`,
-            mensagem: `A administração da PROSFEC redefiniu a senha do Portal do Cliente da empresa ${companyName} (CNPJ: ${targetLead.cnpj || "N/A"}). A nova credencial foi enviada ao consultor pelo WhatsApp — por segurança, ela não é armazenada no sistema.`,
-            lida: false,
-            dataCriacao: now,
-            tipo: "senha_redefinida",
-            leadId: targetLead.id
-          });
-        } catch (notifErr) {
-          console.error("Error creating notification for consultant:", notifErr);
-        }
-      }
-
-      // 2. Prepare WhatsApp message for Consultant
-      const waText = encodeURIComponent(
-        `Olá *${consultantName}*!\n\n` +
-        `A administração da *PROSFEC* atendeu à solicitação de redefinição de senha de acesso ao *Portal do Cliente* da empresa *${companyName}* (CNPJ: ${targetLead.cnpj || "Não informado"}).\n\n` +
-        `🔐 *Nova Senha de Acesso do Cliente:* *${passwordToSet.trim()}*\n` +
-        `🔗 *Link do Portal:* ${portalLink}\n\n` +
-        `Por favor, encaminhe esta mensagem com a nova senha para o seu cliente acessar o portal com total segurança.`
-      );
-
-      // Open WhatsApp to consultant
-      if (consultantPhone) {
-        window.open(`https://api.whatsapp.com/send?phone=${consultantPhone}&text=${waText}`, "_blank");
-      } else {
-        window.open(`https://api.whatsapp.com/send?text=${waText}`, "_blank");
-      }
-
-      setResetSuccessMessage(`Senha redefinida com sucesso para "${passwordToSet.trim()}". Mensagem do WhatsApp gerada para envio ao consultor!`);
-      setTimeout(() => setResetSuccessMessage(null), 8000);
-
-      // Clear input state for this lead
-      setResetNewPasswords(prev => {
-        const copy = { ...prev };
-        delete copy[targetLead.id];
-        return copy;
-      });
-
-      await fetchData();
-    } catch (err) {
-      console.error("Error resetting client password:", err);
-      alert("Erro ao redefinir a senha do cliente. Tente novamente.");
-    } finally {
-      setSavingResetLeadId(null);
     }
   };
 
@@ -1234,13 +1122,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       publicoAlvo: "todos" as const,
     }
   ];
-
-  const handleCopyTrackingLink = (leadId: string) => {
-    const link = `${getAppDomain()}/portal-cliente?lead=${leadId}`;
-    navigator.clipboard.writeText(link);
-    setCopiedLeadId(leadId);
-    setTimeout(() => setCopiedLeadId(null), 2000);
-  };
 
   const handleCopyPartnerLink = (partnerId: string) => {
     const link = `${getAppDomain()}?ref=${partnerId}`;
@@ -2727,14 +2608,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       tone: "accent"
     },
     { id: "precos", label: "Preços & Serviços", icon: DollarSign, badge: null },
-    { id: "servicos_contabilidade", label: "Contabilidade", icon: Calculator, badge: null },
-    {
-      id: "resets",
-      label: "Reset de Senhas",
-      icon: Key,
-      badge: leads.filter((l) => l.solicitacaoResetSenha?.pendente).length || null,
-      tone: "danger"
-    }
+    { id: "servicos_contabilidade", label: "Contabilidade", icon: Calculator, badge: null }
   ];
 
   const activeNavLabel = adminNavItems.find((i) => i.id === activeTab)?.label || "Painel";
@@ -2912,12 +2786,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     {activeTab === "precos" && <><DollarSign className="w-4 h-4 text-emerald-600" /> Preços de Consultas &amp; Catálogo de Serviços</>}
                     {activeTab === "servicos_contabilidade" && <><Calculator className="w-4 h-4 text-emerald-600" /> Catálogo de Serviços de Contabilidade</>}
                     {activeTab === "funnel" && <><TrendingUp className="w-4 h-4 text-emerald-600" /> Funil de Conversão do Simulador</>}
-                    {activeTab === "resets" && <><Key className="w-4 h-4 text-emerald-600" /> Central de Senhas &amp; Reset do Portal do Cliente</>}
                   </h3>
                 </div>
      
                 {/* Export action */}
-                {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" && activeTab !== "funnel" && activeTab !== "resets" && (
+                {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" && activeTab !== "funnel" && (
                   <button
                     onClick={exportToCSV}
                     disabled={loading || (activeTab === "leads" ? leads.length === 0 : partners.length === 0)}
@@ -2935,7 +2808,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </div>
 
               {/* Filtering controls bar */}
-          {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" && activeTab !== "funnel" && activeTab !== "resets" ? (
+          {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" && activeTab !== "funnel" ? (
             <div className="p-4 bg-white border-b border-slate-100 space-y-3">
               {/* Primary Search & Quick Filter Row */}
               <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
@@ -3662,18 +3535,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <span className="hidden sm:inline">Workspace</span>
                               </button>
 
-                              <button
-                                onClick={() => handleCopyTrackingLink(lead.id)}
-                                className={`p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 ${
-                                  copiedLeadId === lead.id 
-                                    ? "bg-emerald-600 text-white border-emerald-600" 
-                                    : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
-                                }`}
-                                title="Copiar Link de Acompanhamento"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </button>
-
                               <a
                                 href={`https://api.whatsapp.com/send?phone=${lead.whatsapp.replace(/\D/g, "")}`}
                                 target="_blank"
@@ -3836,18 +3697,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   <span>Workspace</span>
                                 </button>
 
-                                <button
-                                  onClick={() => handleCopyTrackingLink(lead.id)}
-                                  className={`px-2 py-1 text-xs rounded-lg font-bold transition-all cursor-pointer ${
-                                    copiedLeadId === lead.id 
-                                      ? "bg-emerald-600 text-white" 
-                                      : "bg-emerald-50 hover:bg-[#00A86B]/25 text-[#0A3D2E] border border-emerald-100"
-                                  }`}
-                                  title="Copiar Link de Acompanhamento do Cliente"
-                                >
-                                  {copiedLeadId === lead.id ? "Copiado!" : "Link"}
-                                </button>
-                                
+
                                 <a
                                   href={`https://api.whatsapp.com/send?phone=${lead.whatsapp.replace(/\D/g, "")}`}
                                   target="_blank"
@@ -5382,272 +5232,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 <AdminServicosContabilidadeTab userRole={userRole} />
               )}
 
-              {/* Tab GESTÃO DE SENHAS & RESETS DO PORTAL DO CLIENTE */}
-              {activeTab === "resets" && (
-                <div className="p-6 animate-fade-in space-y-6 text-left">
-                  {/* Top Intro */}
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
-                    <div>
-                      <h2 className="text-lg font-black text-slate-900 flex items-center gap-2 font-display">
-                        <Key className="w-5 h-5 text-emerald-600" />
-                        Central de Senhas &amp; Reset do Portal do Cliente
-                      </h2>
-                      <p className="text-slate-500 text-xs mt-1 leading-relaxed">
-                        Atenda às solicitações de redefinição de senha dos clientes do Portal. Digite ou gere uma nova senha e envie diretamente para o consultor responsável repassar ao cliente com segurança e sigilo.
-                      </p>
-                    </div>
-                  </div>
-
-                  {resetSuccessMessage && (
-                    <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center gap-3 animate-fade-in shadow-2xs">
-                      <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
-                      <div className="flex-1">{resetSuccessMessage}</div>
-                    </div>
-                  )}
-
-                  {/* Filter & Search Bar */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <button
-                        type="button"
-                        onClick={() => setResetsFilter("pendentes")}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
-                          resetsFilter === "pendentes"
-                            ? "bg-[#0A3D2E] text-white shadow-xs"
-                            : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-                        }`}
-                      >
-                        <span>Solicitações Pendentes</span>
-                        {leads.filter(l => l.solicitacaoResetSenha?.pendente).length > 0 && (
-                          <span className="bg-rose-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
-                            {leads.filter(l => l.solicitacaoResetSenha?.pendente).length}
-                          </span>
-                        )}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setResetsFilter("todos")}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                          resetsFilter === "todos"
-                            ? "bg-[#0A3D2E] text-white shadow-xs"
-                            : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-                        }`}
-                      >
-                        Todos os Leads ({leads.length})
-                      </button>
-                    </div>
-
-                    <div className="relative w-full sm:w-72">
-                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                      <input
-                        type="text"
-                        value={resetsSearch}
-                        onChange={(e) => setResetsSearch(e.target.value)}
-                        placeholder="Buscar por Razão, CNPJ ou Nome..."
-                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl outline-none focus:border-emerald-500 font-medium"
-                      />
-                    </div>
-                  </div>
-
-                  {/* List / Cards of Leads for Reset */}
-                  {(() => {
-                    const filtered = leads.filter(l => {
-                      if (resetsFilter === "pendentes" && !l.solicitacaoResetSenha?.pendente) {
-                        return false;
-                      }
-                      if (resetsSearch.trim()) {
-                        const term = resetsSearch.toLowerCase();
-                        const nome = (l.razaoSocial || l.nome || "").toLowerCase();
-                        const cnpj = (l.cnpj || "").toLowerCase();
-                        return nome.includes(term) || cnpj.includes(term);
-                      }
-                      return true;
-                    });
-
-                    if (filtered.length === 0) {
-                      return (
-                        <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-10 text-center space-y-2">
-                          <Key className="w-10 h-10 text-slate-300 mx-auto" />
-                          <h4 className="text-sm font-bold text-slate-700">
-                            {resetsFilter === "pendentes" 
-                              ? "Nenhuma solicitação de reset de senha pendente no momento." 
-                              : "Nenhum lead encontrado para os filtros selecionados."}
-                          </h4>
-                          <p className="text-xs text-slate-400 max-w-md mx-auto">
-                            Quando um cliente clicar em "Esqueci minha senha" no Portal, a solicitação aparecerá aqui automaticamente para atendimento.
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div className="space-y-4">
-                        {filtered.map((leadItem) => {
-                          const consultant = partners.find(p => p.id === (leadItem as any).parceiroId);
-                          const isPending = leadItem.solicitacaoResetSenha?.pendente;
-                          const currentPass = leadItem.clienteSenha || (leadItem as any).clienteSenhaHash ? "••••••••" : "";
-                          const typedPass = resetNewPasswords[leadItem.id] || "";
-                          const isShowPass = showLeadPortalSenha[leadItem.id];
-                          const isSaving = savingResetLeadId === leadItem.id;
-
-                          return (
-                            <div
-                              key={leadItem.id}
-                              className={`p-5 rounded-2xl border transition-all space-y-4 bg-white shadow-2xs ${
-                                isPending
-                                  ? "border-amber-400 bg-amber-50/20 ring-2 ring-amber-400/20"
-                                  : "border-slate-200/90 hover:border-slate-300"
-                              }`}
-                            >
-                              {/* Card Header */}
-                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-extrabold text-sm text-slate-900 font-display">
-                                      {leadItem.razaoSocial || leadItem.nome}
-                                    </span>
-                                    {isPending && (
-                                      <span className="bg-rose-100 text-rose-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-rose-200 animate-pulse">
-                                        ⚠️ Solicitação de Reset Pendente
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1 font-mono">
-                                    <span>CNPJ: <strong>{leadItem.cnpj || "Não informado"}</strong></span>
-                                    <span>•</span>
-                                    <span>WhatsApp: <strong>{leadItem.whatsapp || "Não informado"}</strong></span>
-                                    <span>•</span>
-                                    <span>ID: {leadItem.id}</span>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                  <a
-                                    href={`${getAppDomain()}/portal-cliente?lead=${leadItem.id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer"
-                                  >
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                    <span>Abrir Portal</span>
-                                  </a>
-                                </div>
-                              </div>
-
-                              {/* Details & Action Grid */}
-                              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-                                {/* Consultant Info */}
-                                <div className="lg:col-span-4 bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
-                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-                                    Consultor Responsável
-                                  </span>
-                                  <p className="text-xs font-bold text-slate-800">
-                                    {consultant ? consultant.nome : "Sem consultor vinculado (Atendimento Direto)"}
-                                  </p>
-                                  {consultant?.whatsapp && (
-                                    <p className="text-[11px] text-emerald-700 font-mono font-semibold flex items-center gap-1">
-                                      <Phone className="w-3 h-3" />
-                                      {consultant.whatsapp}
-                                    </p>
-                                  )}
-                                  {leadItem.solicitacaoResetSenha?.dataSolicitacao && (
-                                    <p className="text-[10px] text-amber-700 font-semibold pt-1 border-t border-slate-200/60 mt-1">
-                                      Solicitado em: {new Date(leadItem.solicitacaoResetSenha.dataSolicitacao).toLocaleString("pt-BR")}
-                                    </p>
-                                  )}
-                                </div>
-
-                                {/* Current Password Badge */}
-                                <div className="lg:col-span-3 bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
-                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-                                    Senha Atual do Portal
-                                  </span>
-                                  {currentPass ? (
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="font-mono text-xs font-black text-slate-900 bg-white/75 backdrop-blur-xl border border-slate-200 px-2 py-1 rounded-lg">
-                                        {isShowPass ? currentPass : "••••••••"}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={() => setShowLeadPortalSenha(prev => ({ ...prev, [leadItem.id]: !prev[leadItem.id] }))}
-                                        className="p-1 hover:bg-slate-200 text-slate-600 rounded transition-colors cursor-pointer"
-                                        title={isShowPass ? "Ocultar" : "Mostrar"}
-                                      >
-                                        {isShowPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          navigator.clipboard.writeText(currentPass);
-                                          setCopiedLeadPortalSenha(prev => ({ ...prev, [leadItem.id]: true }));
-                                          setTimeout(() => setCopiedLeadPortalSenha(prev => ({ ...prev, [leadItem.id]: false })), 2000);
-                                        }}
-                                        className="p-1 hover:bg-slate-200 text-slate-600 rounded transition-colors cursor-pointer"
-                                        title="Copiar Senha"
-                                      >
-                                        {copiedLeadPortalSenha[leadItem.id] ? <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <span className="text-xs text-slate-400 font-medium italic">
-                                      Primeiro acesso pendente
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Reset Form Controls */}
-                                <div className="lg:col-span-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                                  <div className="relative flex-1">
-                                    <input
-                                      type="text"
-                                      value={typedPass}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setResetNewPasswords(prev => ({ ...prev, [leadItem.id]: val }));
-                                      }}
-                                      placeholder="Nova senha ou gere ->"
-                                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 outline-none focus:border-emerald-500"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const gen = generateClientPassword();
-                                        setResetNewPasswords(prev => ({ ...prev, [leadItem.id]: gen }));
-                                      }}
-                                      className="absolute right-1.5 top-1.5 px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
-                                      title="Gerar Senha Automática"
-                                    >
-                                      🎲 Gerar
-                                    </button>
-                                  </div>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => handleAdminResetClientPassword(leadItem)}
-                                    disabled={isSaving}
-                                    className="px-3.5 py-2 bg-[#0A3D2E] hover:bg-emerald-700 text-white font-black text-xs rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                                    title="Salva a nova senha no Firestore e abre o WhatsApp para enviar ao consultor"
-                                  >
-                                    {isSaving ? (
-                                      <span>Salvando...</span>
-                                    ) : (
-                                      <>
-                                        <Send className="w-3.5 h-3.5" />
-                                        <span>Salvar &amp; Enviar</span>
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
 
             </div>
           )}
@@ -5655,7 +5239,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           {/* Table Footer count info */}
           <div className="p-4 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 font-medium flex justify-between items-center">
             <div>
-              Exibindo {activeTab === "leads" ? filteredLeads.length : activeTab === "recargas" ? recargas.length : activeTab === "precos" ? CREDIT_PRODUCTS.length : activeTab === "servicos_contabilidade" ? 33 : activeTab === "funnel" ? leads.length : activeTab === "resets" ? leads.length : activeTab === "partners" ? filteredPartners.length : partners.length} registros
+              Exibindo {activeTab === "leads" ? filteredLeads.length : activeTab === "recargas" ? recargas.length : activeTab === "precos" ? CREDIT_PRODUCTS.length : activeTab === "servicos_contabilidade" ? 33 : activeTab === "funnel" ? leads.length : activeTab === "partners" ? filteredPartners.length : partners.length} registros
             </div>
             <div>
               Desenvolvido de forma segura &bull; Firestore ativo
@@ -5932,84 +5516,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-2"
                     >
                       {savingPendencia ? "Enviando..." : "💬 Enviar Mensagem no Chat"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Seção: Acesso do Cliente ao Portal (Senha & Reset) */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <Key className="w-4 h-4 text-emerald-600" /> Acesso do Cliente ao Portal &amp; Senha
-                </h4>
-                <div className={`p-4 rounded-xl border space-y-3 bg-white shadow-xs ${
-                  selectedLead.solicitacaoResetSenha?.pendente ? "border-amber-400 bg-amber-50/20 ring-1 ring-amber-400/30" : "border-slate-100"
-                }`}>
-                  {selectedLead.solicitacaoResetSenha?.pendente && (
-                    <div className="p-3 bg-amber-100 border border-amber-300 text-amber-900 rounded-xl text-xs font-bold flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5">
-                        <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
-                        Solicitação de redefinição de senha pendente enviada pelo cliente.
-                      </span>
-                      {selectedLead.solicitacaoResetSenha.dataSolicitacao && (
-                        <span className="text-[10px] text-amber-800 font-mono">
-                          {new Date(selectedLead.solicitacaoResetSenha.dataSolicitacao).toLocaleString("pt-BR")}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div>
-                      <span className="text-slate-400 font-bold block mb-1">Status do Acesso:</span>
-                      <span className={`px-2.5 py-1 rounded-full font-bold inline-block text-[11px] ${
-                        (selectedLead.clienteSenha || (selectedLead as any).clienteSenhaHash) ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                      }`}>
-                        {(selectedLead.clienteSenha || (selectedLead as any).clienteSenhaHash) ? "✓ Senha Cadastrada" : "⏳ Primeiro Acesso Pendente"}
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-slate-400 font-bold block mb-1">Senha Atual do Portal:</span>
-                      <span className="text-slate-500 italic text-[11px] leading-snug block">
-                        Protegida por criptografia (hash). Não é possível visualizar — gere uma nova senha abaixo para enviar ao consultor.
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Quick Reset in Modal */}
-                  <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                    <div className="relative flex-1">
-                      <input
-                        type="text"
-                        value={resetNewPasswords[selectedLead.id] || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setResetNewPasswords(prev => ({ ...prev, [selectedLead.id]: val }));
-                        }}
-                        placeholder="Digitar ou gerar nova senha ->"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono font-bold text-slate-800 outline-none focus:border-emerald-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const gen = generateClientPassword();
-                          setResetNewPasswords(prev => ({ ...prev, [selectedLead.id]: gen }));
-                        }}
-                        className="absolute right-1 top-1 px-2 py-0.5 bg-white/75 backdrop-blur-xl hover:bg-slate-100 text-slate-700 text-[10px] font-bold rounded-lg border border-slate-200 cursor-pointer"
-                      >
-                        🎲 Gerar
-                      </button>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleAdminResetClientPassword(selectedLead)}
-                      disabled={savingResetLeadId === selectedLead.id}
-                      className="px-3.5 py-1.5 bg-[#0A3D2E] hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>{selectedLead.solicitacaoResetSenha?.pendente ? "Atender Reset & Enviar WhatsApp" : "Redefinir & Enviar ao Consultor"}</span>
                     </button>
                   </div>
                 </div>
@@ -6884,84 +6390,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 </div>
               </div>
 
-              {/* Seção: Acesso do Cliente ao Portal (Senha & Reset) */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <Key className="w-4 h-4 text-emerald-600" /> Acesso do Cliente ao Portal &amp; Senha
-                </h4>
-                <div className={`p-4 rounded-xl border space-y-3 bg-white shadow-xs ${
-                  selectedLead.solicitacaoResetSenha?.pendente ? "border-amber-400 bg-amber-50/20 ring-1 ring-amber-400/30" : "border-slate-100"
-                }`}>
-                  {selectedLead.solicitacaoResetSenha?.pendente && (
-                    <div className="p-3 bg-amber-100 border border-amber-300 text-amber-900 rounded-xl text-xs font-bold flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5">
-                        <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
-                        Solicitação de redefinição de senha pendente enviada pelo cliente.
-                      </span>
-                      {selectedLead.solicitacaoResetSenha.dataSolicitacao && (
-                        <span className="text-[10px] text-amber-800 font-mono">
-                          {new Date(selectedLead.solicitacaoResetSenha.dataSolicitacao).toLocaleString("pt-BR")}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div>
-                      <span className="text-slate-400 font-bold block mb-1">Status do Acesso:</span>
-                      <span className={`px-2.5 py-1 rounded-full font-bold inline-block text-[11px] ${
-                        (selectedLead.clienteSenha || (selectedLead as any).clienteSenhaHash) ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                      }`}>
-                        {(selectedLead.clienteSenha || (selectedLead as any).clienteSenhaHash) ? "✓ Senha Cadastrada" : "⏳ Primeiro Acesso Pendente"}
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-slate-400 font-bold block mb-1">Senha Atual do Portal:</span>
-                      <span className="text-slate-500 italic text-[11px] leading-snug block">
-                        Protegida por criptografia (hash). Não é possível visualizar — gere uma nova senha abaixo para enviar ao consultor.
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Quick Reset in Modal */}
-                  <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                    <div className="relative flex-1">
-                      <input
-                        type="text"
-                        value={resetNewPasswords[selectedLead.id] || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setResetNewPasswords(prev => ({ ...prev, [selectedLead.id]: val }));
-                        }}
-                        placeholder="Digitar ou gerar nova senha ->"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono font-bold text-slate-800 outline-none focus:border-emerald-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const gen = generateClientPassword();
-                          setResetNewPasswords(prev => ({ ...prev, [selectedLead.id]: gen }));
-                        }}
-                        className="absolute right-1 top-1 px-2 py-0.5 bg-white/75 backdrop-blur-xl hover:bg-slate-100 text-slate-700 text-[10px] font-bold rounded-lg border border-slate-200 cursor-pointer"
-                      >
-                        🎲 Gerar
-                      </button>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleAdminResetClientPassword(selectedLead)}
-                      disabled={savingResetLeadId === selectedLead.id}
-                      className="px-3.5 py-1.5 bg-[#0A3D2E] hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>{selectedLead.solicitacaoResetSenha?.pendente ? "Atender Reset & Enviar WhatsApp" : "Redefinir & Enviar ao Consultor"}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
               {/* Gestão de Sub-etapas do Passo 6 (Melhoria do Perfil de Crédito) */}
               <div className="bg-emerald-50/40 border border-emerald-200 p-5 rounded-2xl space-y-4 text-left">
                 <div className="flex items-center justify-between border-b border-emerald-300/30 pb-2">
@@ -7256,28 +6684,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 Fechar Detalhes
               </button>
 
-              <button
-                onClick={() => handleCopyTrackingLink(selectedLead.id)}
-                className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer ${
-                  copiedLeadId === selectedLead.id 
-                    ? "bg-emerald-600 text-white animate-pulse" 
-                    : "bg-[#0A3D2E]/10 hover:bg-[#0A3D2E]/20 text-[#0A3D2E]"
-                }`}
-              >
-                <Copy className="w-4 h-4" />
-                {copiedLeadId === selectedLead.id ? "Link Copiado!" : "Copiar Link de Acompanhamento"}
-              </button>
 
-              <a
-                href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(selectedLead.nome)}!%20Geramos%20o%20seu%20link%20de%20acompanhamento%20exclusivo%20da%20PROSFEC%20para%20a%20sua%20simula%C3%A7%C3%A3o%20Pronampe%202026.%20Acompanhe%20as%20etapas%20de%20libera%C3%A7%C3%A3o%20em%20tempo%20real:%20${encodeURIComponent(getAppDomain() + "/portal-cliente?lead=" + selectedLead.id)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 bg-[#00A86B] hover:bg-[#00905c] text-white font-extrabold text-sm rounded-lg flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
-              >
-                <Phone className="w-4 h-4 fill-current" />
-                Enviar Link p/ WhatsApp
-              </a>
-              
               <a
                 href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(selectedLead.nome)}!%20Sou%20consultor%20da%20PROSFEC.%20Recebi%20seu%20cadastro%20no%20nosso%20Simulador%20Pronampe%20e%20gostaria%20de%20apresentar%20seu%20diagn%C3%B3stico%20de%20cr%C3%A9dito.`}
                 target="_blank"
