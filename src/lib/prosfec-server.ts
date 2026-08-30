@@ -3221,10 +3221,6 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
-  // =====================================================================
-  // ETAPA B-2 — Senha do cliente (leads.clienteSenha) com hash PBKDF2
-  // =====================================================================
-
   // Identidade de serviço: o servidor autentica no Firebase Auth para poder
   // ler/gravar os campos de senha do lead respeitando as regras do Firestore.
   let serviceTokenCache: { token: string; exp: number } | null = null;
