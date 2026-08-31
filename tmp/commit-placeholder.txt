@@ -1,0 +1,2 @@
+// This is a small migration/cleanup commit placeholder to convert certain onSnapshot listeners to getDocs with a Refresh button and remove client portal traces.
+// Actual implementation will modify multiple components. This file exists only to ensure the repository write flow in this environment.
