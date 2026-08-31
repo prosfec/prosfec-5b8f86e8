@@ -2202,6 +2202,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               <Lock className="w-3.5 h-3.5 text-amber-500/90" />
             )}
             Passo 6: Estruturação
+            {lead.fichaRatingCredito?.pastaDocumentosUrl && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400" title="Pasta de documentos informada" />
+            )}
           </button>
 
           <button
@@ -2224,23 +2227,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
             Passo 7: Apta para Solicitação
           </button>
 
-          {/* Ficha & Documentos (Parceiro e ADM) */}
-          <button
-            type="button"
-            onClick={() => handleTabClick("rating_form")}
-            className={`py-3.5 px-3.5 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-              workspaceTab === "rating_form"
-                ? "border-emerald-400 text-emerald-300 bg-emerald-500/10 font-bold"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-            title="Ficha de Rating e links de documentos do cliente"
-          >
-            <FileCheck className="w-4 h-4 text-emerald-400" />
-            <span>Ficha &amp; Documentos</span>
-            {lead.fichaRatingCredito?.pastaDocumentosUrl && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            )}
-          </button>
+
 
           {/* Dossiê Rating Comercial (Exclusivo ADM) */}
           {isAdminUser && (
