@@ -221,8 +221,9 @@ export default function LeadWorkspaceModal({
     (currentPartner as any)?.isAdmin
   );
   const stepStatus = calculateLeadStepStatus(lead);
-  const [workspaceTab, setWorkspaceTab] = useState<"details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge">(
-    initialTab === "concierge" || (initialTab && ((initialTab as any) === "rating_adm" ? isAdminUser : stepStatus.isTabUnlocked(initialTab as any))) ? initialTab : "details"
+  const normalizedInitialTab = initialTab === "rating_form" ? "simulador" : initialTab;
+  const [workspaceTab, setWorkspaceTab] = useState<"details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "concierge">(
+    normalizedInitialTab === "concierge" || (normalizedInitialTab && ((normalizedInitialTab as any) === "rating_adm" ? isAdminUser : stepStatus.isTabUnlocked(normalizedInitialTab as any))) ? (normalizedInitialTab as any) : "details"
   );
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
