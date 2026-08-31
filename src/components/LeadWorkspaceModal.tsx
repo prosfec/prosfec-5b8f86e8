@@ -231,15 +231,13 @@ export default function LeadWorkspaceModal({
 
   const [generatingPasso7, setGeneratingPasso7] = useState(false);
 
-  const handleTabClick = (tab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge") => {
+  const handleTabClick = (rawTab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge") => {
+    // A Ficha & Documentos agora vive dentro do Passo 6 (Estruturação)
+    const tab = (rawTab === "rating_form" ? "simulador" : rawTab) as Exclude<typeof rawTab, "rating_form">;
     if (tab === "concierge") {
       setWorkspaceTab(tab);
       setWorkspaceError(null);
       setWorkspaceSuccess(null);
-      return;
-    }
-    if (tab === "rating_form") {
-      setWorkspaceTab("rating_form");
       return;
     }
     if (tab === "rating_adm") {
