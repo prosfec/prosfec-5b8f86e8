@@ -61,7 +61,8 @@ import {
   Trash2,
   RefreshCw,
   ExternalLink,
-  Bookmark
+  Bookmark,
+  FileCheck
 } from "lucide-react";
 import LeadStepTimeline from "./LeadStepTimeline";
 import LeadConciergeTracker from "./LeadConciergeTracker";
