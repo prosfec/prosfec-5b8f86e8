@@ -66,6 +66,7 @@ import {
 import LeadStepTimeline from "./LeadStepTimeline";
 import LeadConciergeTracker from "./LeadConciergeTracker";
 import FichaRatingAdmViewer from "./FichaRatingAdmViewer";
+import FichaRatingCreditoForm from "./FichaRatingCreditoForm";
 import { DossierComparativeViewer } from "./DossierComparativeViewer";
 import { FintechDiagnosisView } from "./FintechDiagnosisView";
 import { calculateLeadStepStatus } from "../utils/stepValidation";
@@ -189,7 +190,7 @@ interface LeadWorkspaceModalProps {
   onClose: () => void;
   onRefreshLeads?: () => void;
   onLeadUpdated?: (updated: any) => void;
-  initialTab?: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "concierge";
+  initialTab?: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge";
   isAdmin?: boolean;
 }
 
@@ -219,7 +220,7 @@ export default function LeadWorkspaceModal({
     (currentPartner as any)?.isAdmin
   );
   const stepStatus = calculateLeadStepStatus(lead);
-  const [workspaceTab, setWorkspaceTab] = useState<"details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "concierge">(
+  const [workspaceTab, setWorkspaceTab] = useState<"details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge">(
     initialTab === "concierge" || (initialTab && ((initialTab as any) === "rating_adm" ? isAdminUser : stepStatus.isTabUnlocked(initialTab as any))) ? initialTab : "details"
   );
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
@@ -228,11 +229,15 @@ export default function LeadWorkspaceModal({
 
   const [generatingPasso7, setGeneratingPasso7] = useState(false);
 
-  const handleTabClick = (tab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "concierge") => {
+  const handleTabClick = (tab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge") => {
     if (tab === "concierge") {
       setWorkspaceTab(tab);
       setWorkspaceError(null);
       setWorkspaceSuccess(null);
+      return;
+    }
+    if (tab === "rating_form") {
+      setWorkspaceTab("rating_form");
       return;
     }
     if (tab === "rating_adm") {
@@ -2217,6 +2222,24 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               <Lock className="w-3.5 h-3.5 text-amber-500/90" />
             )}
             Passo 7: Apta para Solicitação
+          </button>
+
+          {/* Ficha & Documentos (Parceiro e ADM) */}
+          <button
+            type="button"
+            onClick={() => handleTabClick("rating_form")}
+            className={`py-3.5 px-3.5 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+              workspaceTab === "rating_form"
+                ? "border-emerald-400 text-emerald-300 bg-emerald-500/10 font-bold"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+            title="Ficha de Rating e links de documentos do cliente"
+          >
+            <FileCheck className="w-4 h-4 text-emerald-400" />
+            <span>Ficha &amp; Documentos</span>
+            {lead.fichaRatingCredito?.pastaDocumentosUrl && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            )}
           </button>
 
           {/* Dossiê Rating Comercial (Exclusivo ADM) */}
@@ -4491,6 +4514,19 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 }}
               />
             </div>
+          )}
+
+          {/* TAB: Ficha & Documentos (Parceiro e ADM) */}
+          {workspaceTab === "rating_form" && (
+            <FichaRatingCreditoForm
+              lead={lead as any}
+              isUnlocked={true}
+              onUpdateLead={(updated) => {
+                if (onLeadUpdated) {
+                  onLeadUpdated(updated as any);
+                }
+              }}
+            />
           )}
 
           {/* TAB: Dossiê de Rating Comercial (Exclusivo Administrador) */}

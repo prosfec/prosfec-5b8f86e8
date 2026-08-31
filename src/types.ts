@@ -334,6 +334,8 @@ export interface FichaRatingCredito {
   observacoesAdm?: string;
   progressoPercentual?: number;
   validacoesDocumentos?: Record<string, ValidacaoItemDoc>;
+  pastaDocumentosUrl?: string;
+  pastaDocumentosAtualizadoEm?: string;
   conclusaoRating?: ConclusaoRatingPosServico;
 }
 export interface SolicitacaoComissao {
