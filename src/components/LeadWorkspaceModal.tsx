@@ -4503,18 +4503,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
             </div>
           )}
 
-          {/* TAB: Ficha & Documentos (Parceiro e ADM) */}
-          {workspaceTab === "rating_form" && (
-            <FichaRatingCreditoForm
-              lead={lead as any}
-              isUnlocked={true}
-              onUpdateLead={(updated) => {
-                if (onLeadUpdated) {
-                  onLeadUpdated(updated as any);
-                }
-              }}
-            />
-          )}
+
+
 
           {/* TAB: Dossiê de Rating Comercial (Exclusivo Administrador) */}
           {isAdminUser && workspaceTab === "rating_adm" && (
