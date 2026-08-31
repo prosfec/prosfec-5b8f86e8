@@ -3387,6 +3387,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </select>
                               </div>
 
+                              {lead.fichaRatingCredito?.pastaDocumentosUrl && (
+                                <a
+                                  href={lead.fichaRatingCredito.pastaDocumentosUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-2.5 py-1.5 text-[10px] font-black text-emerald-800 hover:bg-emerald-100 transition-colors"
+                                  title={lead.fichaRatingCredito.pastaDocumentosUrl}
+                                >
+                                  <span className="uppercase tracking-wider">Pasta de Documentos</span>
+                                  <span className="underline">Abrir</span>
+                                </a>
+                              )}
+
                               {/* Funnel pipeline visualization bar */}
                               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                                 <div className="flex justify-between items-center mb-1.5">
