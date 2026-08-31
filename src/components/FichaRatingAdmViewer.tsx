@@ -768,7 +768,40 @@ export default function FichaRatingAdmViewer({
 
   return (
     <div className="space-y-6 text-left">
-      
+
+      {/* Link da pasta de documentos enviada pelo parceiro */}
+      <div className={`rounded-2xl border p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between ${
+        lead.fichaRatingCredito?.pastaDocumentosUrl
+          ? "bg-emerald-50 border-emerald-200"
+          : "bg-amber-50 border-amber-200"
+      }`}>
+        <div className="min-w-0">
+          <span className="text-[10px] font-black uppercase tracking-wider font-mono text-slate-600 block">
+            Pasta de Documentos do Cliente
+          </span>
+          {lead.fichaRatingCredito?.pastaDocumentosUrl ? (
+            <p className="text-xs font-bold text-emerald-900 truncate">
+              {lead.fichaRatingCredito.pastaDocumentosUrl}
+            </p>
+          ) : (
+            <p className="text-xs font-bold text-amber-900">
+              Nenhum link de pasta informado pelo parceiro até o momento.
+            </p>
+          )}
+        </div>
+        {lead.fichaRatingCredito?.pastaDocumentosUrl && (
+          <a
+            href={lead.fichaRatingCredito.pastaDocumentosUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center justify-center gap-1.5 shrink-0"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Abrir pasta
+          </a>
+        )}
+      </div>
+
       {/* TOP HEADER: Rating Workflow Phase Lifecycle Stepper */}
       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-[#0A3D2E] text-white p-5 sm:p-6 rounded-3xl shadow-xl space-y-4">
         
