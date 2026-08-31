@@ -221,8 +221,9 @@ export default function LeadWorkspaceModal({
     (currentPartner as any)?.isAdmin
   );
   const stepStatus = calculateLeadStepStatus(lead);
-  const [workspaceTab, setWorkspaceTab] = useState<"details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge">(
-    initialTab === "concierge" || (initialTab && ((initialTab as any) === "rating_adm" ? isAdminUser : stepStatus.isTabUnlocked(initialTab as any))) ? initialTab : "details"
+  const normalizedInitialTab = initialTab === "rating_form" ? "simulador" : initialTab;
+  const [workspaceTab, setWorkspaceTab] = useState<"details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "concierge">(
+    normalizedInitialTab === "concierge" || (normalizedInitialTab && ((normalizedInitialTab as any) === "rating_adm" ? isAdminUser : stepStatus.isTabUnlocked(normalizedInitialTab as any))) ? (normalizedInitialTab as any) : "details"
   );
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
@@ -230,15 +231,13 @@ export default function LeadWorkspaceModal({
 
   const [generatingPasso7, setGeneratingPasso7] = useState(false);
 
-  const handleTabClick = (tab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge") => {
+  const handleTabClick = (rawTab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge") => {
+    // A Ficha & Documentos agora vive dentro do Passo 6 (Estruturação)
+    const tab = (rawTab === "rating_form" ? "simulador" : rawTab) as Exclude<typeof rawTab, "rating_form">;
     if (tab === "concierge") {
       setWorkspaceTab(tab);
       setWorkspaceError(null);
       setWorkspaceSuccess(null);
-      return;
-    }
-    if (tab === "rating_form") {
-      setWorkspaceTab("rating_form");
       return;
     }
     if (tab === "rating_adm") {
@@ -2203,6 +2202,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               <Lock className="w-3.5 h-3.5 text-amber-500/90" />
             )}
             Passo 6: Estruturação
+            {lead.fichaRatingCredito?.pastaDocumentosUrl && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400" title="Pasta de documentos informada" />
+            )}
           </button>
 
           <button
@@ -2225,23 +2227,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
             Passo 7: Apta para Solicitação
           </button>
 
-          {/* Ficha & Documentos (Parceiro e ADM) */}
-          <button
-            type="button"
-            onClick={() => handleTabClick("rating_form")}
-            className={`py-3.5 px-3.5 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-              workspaceTab === "rating_form"
-                ? "border-emerald-400 text-emerald-300 bg-emerald-500/10 font-bold"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-            title="Ficha de Rating e links de documentos do cliente"
-          >
-            <FileCheck className="w-4 h-4 text-emerald-400" />
-            <span>Ficha &amp; Documentos</span>
-            {lead.fichaRatingCredito?.pastaDocumentosUrl && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            )}
-          </button>
+
 
           {/* Dossiê Rating Comercial (Exclusivo ADM) */}
           {isAdminUser && (
@@ -4517,18 +4503,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
             </div>
           )}
 
-          {/* TAB: Ficha & Documentos (Parceiro e ADM) */}
-          {workspaceTab === "rating_form" && (
-            <FichaRatingCreditoForm
-              lead={lead as any}
-              isUnlocked={true}
-              onUpdateLead={(updated) => {
-                if (onLeadUpdated) {
-                  onLeadUpdated(updated as any);
-                }
-              }}
-            />
-          )}
+
+
 
           {/* TAB: Dossiê de Rating Comercial (Exclusivo Administrador) */}
           {isAdminUser && workspaceTab === "rating_adm" && (
