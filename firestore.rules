@@ -242,13 +242,20 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
-    // 6. LEADS DISTRIBUIDOS — distribuição controlada pelo ADM
+    // 6. LEADS DISTRIBUIDOS — Master gerencia a carteira da sua rede
     // ---------------------------------------------------------------------
     match /leads_distribuidos/{distId} {
       allow read:   if isSignedIn();
       allow create, update: if isSignedIn();
-      allow delete: if isStaff();
+      // Staff, o Master dono da distribuição ou o próprio consultor da carteira
+      // podem excluir definitivamente (limpeza de leads descartados).
+      allow delete: if isStaff()
+                    || (isSignedIn() && resource != null && (
+                         partnerDocBelongsToMe(resource.data.parentPartnerId) ||
+                         partnerDocBelongsToMe(resource.data.teamMemberId)
+                       ));
     }
+
 
     // ---------------------------------------------------------------------
     // 7. NOTIFICACOES
