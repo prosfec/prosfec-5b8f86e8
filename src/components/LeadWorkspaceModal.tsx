@@ -226,6 +226,10 @@ export default function LeadWorkspaceModal({
     normalizedInitialTab === "concierge" || (normalizedInitialTab && ((normalizedInitialTab as any) === "rating_adm" ? isAdminUser : stepStatus.isTabUnlocked(normalizedInitialTab as any))) ? (normalizedInitialTab as any) : "details"
   );
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
+  const [contratosAssinadosUrl, setContratosAssinadosUrl] = useState<string>(lead?.contratosAssinadosUrl || "");
+  const [savingContratosUrl, setSavingContratosUrl] = useState(false);
+  const [contratosUrlFeedback, setContratosUrlFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const [workspaceSuccess, setWorkspaceSuccess] = useState<string | null>(null);
 
