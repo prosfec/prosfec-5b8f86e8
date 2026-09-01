@@ -32,7 +32,7 @@ service cloud.firestore {
       return isSignedIn() && (
         request.auth.uid == "Nso5FBoBVHXNY60RDw6NNKeaCC23" ||
         request.auth.token.admin == true ||
-        userEmail() == "prosfec.tesouraria@gmail.com"
+        userEmail().lower() == "prosfec.tesouraria@gmail.com"
       );
     }
 
@@ -40,7 +40,7 @@ service cloud.firestore {
       return isSignedIn() && (
         request.auth.uid == "vKZFCNniHJfzJ9B3yWlzErNC3892" ||
         request.auth.token.contador == true ||
-        userEmail() == "contador.prosfec@gmail.com"
+        userEmail().lower() == "contador.prosfec@gmail.com"
       );
     }
 
@@ -141,7 +141,7 @@ service cloud.firestore {
 
     // Identidade de serviço do backend PROSFEC (login por e-mail/senha).
     function isServico() {
-      return isSignedIn() && userEmail() == "servico.interno@prosfec.app";
+      return isSignedIn() && userEmail().lower() == "servico.interno@prosfec.app";
     }
 
     // Cliente que vinculou sua conta real do Firebase Auth a este lead.

@@ -1,7 +1,8 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { doc, updateDoc, collection, query, where, getDocs, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { db, auth } from "../firebase";
 import { 
   DEFAULT_SERVICES_CATALOG, 
   sanitizeAndSyncServicosList, 
@@ -534,11 +535,18 @@ export default function LeadWorkspaceModal({
     }
   };
 
-  // Run lead query listener on active tab
+  // Run lead query listener on active tab (only after Firebase Auth resolves,
+  // otherwise the rules reject the query with permission-denied)
   useEffect(() => {
-    if (workspaceTab === "diagnostico") {
+    if (workspaceTab !== "diagnostico") return;
+    if (auth.currentUser) {
       loadLeadConsultas();
+      return;
     }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) loadLeadConsultas();
+    });
+    return unsubscribe;
   }, [workspaceTab, lead.id]);
 
   // Execute a credit query directly from lead sheet
