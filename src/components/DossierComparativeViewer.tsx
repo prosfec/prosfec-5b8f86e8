@@ -81,7 +81,7 @@ export const DossierComparativeViewer: React.FC<DossierComparativeViewerProps> =
             <span>
               {isAdmin 
                 ? "Utilize o painel de consulta acima para executar a consulta RedeBE sem custo de saldo e emitir o dossiê oficial."
-                : "Nossa mesa de operações está efetuando a reavaliação oficial dos dados para liberar a homologação bancária."}
+                : "Execute a reavaliação oficial dos dados no fluxo operacional para emitir o dossiê e liberar a homologação bancária."}
             </span>
           </div>
         </div>

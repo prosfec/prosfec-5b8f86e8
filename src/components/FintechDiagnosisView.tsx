@@ -30,7 +30,6 @@ interface FintechDiagnosisViewProps {
   consultas?: any[];
   onOpenFullReport?: () => void;
   renderMarkdownContent?: (text: string) => React.ReactNode;
-  isClientView?: boolean;
   defaultExpanded?: boolean;
 }
 
@@ -48,7 +47,6 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
   diagnostico,
   consultas: initialConsultas = [],
   renderMarkdownContent,
-  isClientView = false,
   defaultExpanded = false,
 }) => {
   const [showFullDetails, setShowFullDetails] = useState(defaultExpanded);
@@ -688,12 +686,6 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
           {showFullDetails ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
         </button>
         
-        {!isClientView && (
-          <p className="text-center text-[10px] font-bold text-slate-400">
-            Visível para admin, consultor e cliente final
-          </p>
-        )}
-
         {/* EXPANSÃO DO RELATÓRIO COMPLETO */}
         {showFullDetails && (
           <div className="mt-4 p-5 sm:p-7 bg-slate-50/90 border border-slate-200/90 rounded-2xl space-y-4 animate-in fade-in duration-200 shadow-xs">
