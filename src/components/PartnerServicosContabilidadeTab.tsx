@@ -294,6 +294,9 @@ export default function PartnerServicosContabilidadeTab({
         nomeServico: data.nomeServico,
       });
 
+      // Sem listener em tempo real: recarrega a lista de pedidos após a criação
+      fetchMyPedidos();
+
       // Atualiza o saldo local no objeto do parceiro se aplicável
       if (currentPartner && data.newBalance !== undefined) {
         (currentPartner as any).saldoGeral = data.newBalance;
