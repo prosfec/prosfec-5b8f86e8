@@ -3,20 +3,9 @@ import React, { useState } from "react";
 import { 
   Brain, 
   CheckCircle2, 
-  DollarSign, 
-  Building2, 
-  ShieldCheck, 
-  ShieldAlert, 
-  AlertTriangle, 
-  FileText, 
   Copy, 
   Check, 
-  Sparkles,
-  Lock,
-  Clock,
-  ExternalLink,
-  ChevronDown,
-  ChevronUp
+  Clock
 } from "lucide-react";
 import { Lead } from "../types";
 import { FintechDiagnosisView } from "./FintechDiagnosisView";
@@ -67,7 +56,7 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
         </div>
 
         <p className="text-xs text-slate-600 leading-relaxed pt-1">
-          O resultado detalhado do perfil financeiro e diagnóstico com inteligência artificial é gerado exclusivamente após a execução da consulta de crédito oficial via API realizada pelo seu consultor/parceiro credenciado PROSFEC.
+          O resultado detalhado do perfil financeiro e o diagnóstico com inteligência artificial serão gerados após a equipe responsável executar a consulta de crédito oficial via API.
         </p>
 
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center gap-2.5">
@@ -150,7 +139,6 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
         lead={lead}
         diagnostico={formattedDiag}
         consultas={lead.consultasExecutadas || (lead as any).consultas}
-        isClientView={true}
         defaultExpanded={true}
         renderMarkdownContent={renderExecutiveMarkdown}
       />
