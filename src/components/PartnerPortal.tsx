@@ -1481,7 +1481,10 @@ export default function PartnerPortal({
     }
   };
 
+  const [reactivatingMemberId, setReactivatingMemberId] = useState<string | null>(null);
+
   const handleReactivateTeamMember = async (memberId: string) => {
+    setReactivatingMemberId(memberId);
     try {
       const nowIso = new Date().toISOString();
       const docRef = doc(db, "parceiros", memberId);
