@@ -69,6 +69,18 @@ service cloud.firestore {
         ]);
     }
 
+    // O documento de parceiro cujo ID foi informado pertence ao usuário logado?
+    // (o parentPartnerId gravado pelo app é o ID do DOCUMENTO do Master, não o
+    // UID do Firebase Auth — por isso resolvemos o doc e conferimos o authUid)
+    function partnerDocBelongsToMe(partnerDocId) {
+      return partnerDocId is string
+        && exists(/databases/$(database)/documents/parceiros/$(partnerDocId))
+        && (
+          partnerDocId == request.auth.uid ||
+          get(/databases/$(database)/documents/parceiros/$(partnerDocId)).data.authUid == request.auth.uid
+        );
+    }
+
     // Parceiro Master gerenciando um consultor direto da sua equipe:
     // pode reativar/pausar o acesso e ajustar o plano de comissão, mas nunca
     // mexer em senha, saldo, papel administrativo ou vínculo de Auth.
@@ -78,12 +90,20 @@ service cloud.firestore {
         && (
           (resource.data.parentPartnerId is string && (
             resource.data.parentPartnerId == request.auth.uid ||
-            resource.data.parentPartnerId == request.auth.token.partnerId
+            resource.data.parentPartnerId == request.auth.token.partnerId ||
+            partnerDocBelongsToMe(resource.data.parentPartnerId)
           )) ||
-          (resource.data.masterId is string && resource.data.masterId == request.auth.uid) ||
-          (resource.data.parceiroMasterId is string && resource.data.parceiroMasterId == request.auth.uid)
+          (resource.data.masterId is string && (
+            resource.data.masterId == request.auth.uid ||
+            partnerDocBelongsToMe(resource.data.masterId)
+          )) ||
+          (resource.data.parceiroMasterId is string && (
+            resource.data.parceiroMasterId == request.auth.uid ||
+            partnerDocBelongsToMe(resource.data.parceiroMasterId)
+          ))
         );
     }
+
 
     function masterConsultantUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys()
@@ -222,13 +242,20 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
-    // 6. LEADS DISTRIBUIDOS — distribuição controlada pelo ADM
+    // 6. LEADS DISTRIBUIDOS — Master gerencia a carteira da sua rede
     // ---------------------------------------------------------------------
     match /leads_distribuidos/{distId} {
       allow read:   if isSignedIn();
       allow create, update: if isSignedIn();
-      allow delete: if isStaff();
+      // Staff, o Master dono da distribuição ou o próprio consultor da carteira
+      // podem excluir definitivamente (limpeza de leads descartados).
+      allow delete: if isStaff()
+                    || (isSignedIn() && resource != null && (
+                         partnerDocBelongsToMe(resource.data.parentPartnerId) ||
+                         partnerDocBelongsToMe(resource.data.teamMemberId)
+                       ));
     }
+
 
     // ---------------------------------------------------------------------
     // 7. NOTIFICACOES

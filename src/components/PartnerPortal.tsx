@@ -1859,9 +1859,13 @@ export default function PartnerPortal({
         }
         return copy;
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao excluir lead permanentemente:", error);
-      alert("Erro ao excluir o lead definitivamente.");
+      alert(
+        error?.code === "permission-denied"
+          ? "Permissão negada pelo banco ao excluir o lead (permission-denied). Publique a versão mais recente do firestore.rules no console do Firebase."
+          : `Erro ao excluir o lead definitivamente${error?.code ? ` (${error.code})` : ""}.`
+      );
     }
   };
 
@@ -1881,32 +1885,55 @@ export default function PartnerPortal({
 
     setBulkDeletingDiscardedLoading(true);
     try {
-      const deletePromises = discardedLeads.map(l => deleteDoc(doc(db, "leads_distribuidos", l.id)));
-      await Promise.all(deletePromises);
+      const results = await Promise.allSettled(
+        discardedLeads.map(l => deleteDoc(doc(db, "leads_distribuidos", l.id)))
+      );
 
-      const discardedIds = new Set(discardedLeads.map(l => l.id));
-
-      // Update local states
-      setAllParentDistributedLeads(prev => prev.filter(l => !discardedIds.has(l.id)));
-      setLeadsDistributedToMe(prev => prev.filter(l => !discardedIds.has(l.id)));
-      setDistributedLeadsMap(prev => {
-        const copy = { ...prev };
-        for (const [key, value] of Object.entries(copy)) {
-          if (value && discardedIds.has((value as any).id)) {
-            delete copy[key];
-          }
+      const deletedIds = new Set<string>();
+      const failures: any[] = [];
+      results.forEach((r, i) => {
+        if (r.status === "fulfilled") {
+          deletedIds.add(discardedLeads[i].id);
+        } else {
+          failures.push(r.reason);
         }
-        return copy;
       });
 
-      alert(`Exclusão concluída! ${discardedLeads.length} lead(s) descartado(s) foram excluídos definitivamente com sucesso.`);
-    } catch (error) {
+      // Update local states apenas com o que realmente foi excluído
+      if (deletedIds.size > 0) {
+        setAllParentDistributedLeads(prev => prev.filter(l => !deletedIds.has(l.id)));
+        setLeadsDistributedToMe(prev => prev.filter(l => !deletedIds.has(l.id)));
+        setDistributedLeadsMap(prev => {
+          const copy = { ...prev };
+          for (const [key, value] of Object.entries(copy)) {
+            if (value && deletedIds.has((value as any).id)) {
+              delete copy[key];
+            }
+          }
+          return copy;
+        });
+      }
+
+      if (failures.length === 0) {
+        alert(`Exclusão concluída! ${deletedIds.size} lead(s) descartado(s) foram excluídos definitivamente com sucesso.`);
+      } else {
+        console.error("Falhas ao excluir leads descartados:", failures);
+        const permissao = failures.some((f: any) => f?.code === "permission-denied");
+        alert(
+          `${deletedIds.size} lead(s) excluído(s), ${failures.length} falharam.` +
+          (permissao
+            ? "\n\nPermissão negada pelo banco (permission-denied). Publique a versão mais recente do firestore.rules no console do Firebase."
+            : "")
+        );
+      }
+    } catch (error: any) {
       console.error("Erro ao excluir leads descartados em lote:", error);
-      alert("Ocorreu um erro ao excluir os leads descartados.");
+      alert(`Ocorreu um erro ao excluir os leads descartados${error?.code ? ` (${error.code})` : ""}.`);
     } finally {
       setBulkDeletingDiscardedLoading(false);
     }
   };
+
 
   // Handle reassigning an individual distributed lead to a new consultant
   const handleReassignDistributedLead = async () => {
