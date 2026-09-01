@@ -48,7 +48,7 @@ interface Partner {
 
 interface LeadRegisterFormProps {
   currentPartner: Partner;
-  onSuccess: (message: string, docId?: string) => void;
+  onSuccess?: (message: string, docId?: string) => void;
   onCancel: () => void;
   hideCredentialsSection?: boolean;
   initialData?: {
