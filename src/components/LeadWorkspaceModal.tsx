@@ -229,6 +229,20 @@ export default function LeadWorkspaceModal({
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const [workspaceSuccess, setWorkspaceSuccess] = useState<string | null>(null);
 
+  // Callbacks de pós-save NUNCA podem derrubar o fluxo para o catch de gravação:
+  // executa de forma isolada e engole qualquer erro do callback com warn.
+  const safeRefreshLeads = () => {
+    try {
+      if (typeof onRefreshLeads !== "function") return;
+      const result = (onRefreshLeads as any)();
+      if (result && typeof result.catch === "function") {
+        result.catch((e: any) => console.warn("onRefreshLeads callback falhou (ignorado):", e));
+      }
+    } catch (e) {
+      console.warn("onRefreshLeads callback falhou (ignorado):", e);
+    }
+  };
+
   const [generatingPasso7, setGeneratingPasso7] = useState(false);
 
   const handleTabClick = (rawTab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge") => {
