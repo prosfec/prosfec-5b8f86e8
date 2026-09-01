@@ -8,8 +8,7 @@ import {
   setDoc,
   query, 
   where,
-  orderBy,
-  onSnapshot
+  orderBy
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { ServicoContabilidade } from "../types";
