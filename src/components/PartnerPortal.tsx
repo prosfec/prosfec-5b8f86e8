@@ -534,10 +534,10 @@ export default function PartnerPortal({
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list = snapshot.docs.map(doc => ({
+      const list = (snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })) as SystemNotification[];
+      })) as SystemNotification[]).filter(n => (n as any).lida !== true);
       // Sort client-side by dataCriacao desc
       list.sort((a, b) => new Date(b.dataCriacao).getTime() - new Date(a.dataCriacao).getTime());
       setNotifications(list);
