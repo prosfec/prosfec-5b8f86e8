@@ -4,8 +4,7 @@ import {
   collection, 
   getDocs, 
   query, 
-  where,
-  onSnapshot
+  where
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { ServicoContabilidade, Partner, PedidoServicoContabilidade } from "../types";
