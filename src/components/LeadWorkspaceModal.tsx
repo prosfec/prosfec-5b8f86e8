@@ -229,6 +229,20 @@ export default function LeadWorkspaceModal({
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const [workspaceSuccess, setWorkspaceSuccess] = useState<string | null>(null);
 
+  // Callbacks de pós-save NUNCA podem derrubar o fluxo para o catch de gravação:
+  // executa de forma isolada e engole qualquer erro do callback com warn.
+  const safeRefreshLeads = () => {
+    try {
+      if (typeof onRefreshLeads !== "function") return;
+      const result = (onRefreshLeads as any)();
+      if (result && typeof result.catch === "function") {
+        result.catch((e: any) => console.warn("onRefreshLeads callback falhou (ignorado):", e));
+      }
+    } catch (e) {
+      console.warn("onRefreshLeads callback falhou (ignorado):", e);
+    }
+  };
+
   const [generatingPasso7, setGeneratingPasso7] = useState(false);
 
   const handleTabClick = (rawTab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge") => {
@@ -341,7 +355,7 @@ export default function LeadWorkspaceModal({
       setServicosRecomendados(listToSave);
       setSubEtapasPasso6(commissionPayload.subEtapasPasso6);
       setWorkspaceSuccess("Serviços recomendados e comissões multinível atualizados com sucesso!");
-      onRefreshLeads?.();
+      safeRefreshLeads();
       onLeadUpdated?.({
         ...lead,
         servicosRecomendados: listToSave,
@@ -431,7 +445,7 @@ export default function LeadWorkspaceModal({
         setServicosRecomendados(syncedServicos);
       }
       setWorkspaceSuccess("Checklist do Passo 6 e comissões atualizados com sucesso!");
-      onRefreshLeads?.();
+      safeRefreshLeads();
       onLeadUpdated?.({
         ...lead,
         subEtapasPasso6: commissionPayload.subEtapasPasso6,
@@ -560,7 +574,7 @@ export default function LeadWorkspaceModal({
       setLocalQuerySuccess(`Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}`);
       // Reload matching queries & refresh parent leads so partner credits update
       loadLeadConsultas();
-      onRefreshLeads();
+      safeRefreshLeads();
     } catch (err: any) {
       setLocalQueryError(err.message || "Erro ao executar consulta.");
     } finally {
@@ -626,7 +640,7 @@ export default function LeadWorkspaceModal({
         setSubEtapasPasso6(data.subEtapasPasso6);
       }
       setWorkspaceSuccess("Diagnóstico PROSFEC IA gerado e Checklist do Passo 6 (Estruturação) configurado automaticamente com sucesso!");
-      onRefreshLeads?.();
+      safeRefreshLeads();
       onLeadUpdated?.({
         ...lead,
         diagnosticoPROSFEC: data.diagnostico,
@@ -1751,7 +1765,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       });
 
       setWorkspaceSuccess("Dados cadastrais do CNPJ (Passo 1) atualizados com sucesso!");
-      onRefreshLeads();
+      safeRefreshLeads();
     } catch (err) {
       console.error(err);
       setWorkspaceError("Erro ao salvar alterações da empresa.");
@@ -1794,7 +1808,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       });
 
       setWorkspaceSuccess("Credenciais salvas com sucesso! O lead avançou para o Passo 6: Estruturação da Operação.");
-      onRefreshLeads();
+      safeRefreshLeads();
     } catch (err) {
       console.error(err);
       setWorkspaceError("Erro ao salvar credenciais de acesso.");
@@ -1842,7 +1856,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
 
       setWorkspaceSuccess("Sua resposta à pendência foi enviada com sucesso!");
       setPartnerReply("");
-      onRefreshLeads();
+      safeRefreshLeads();
     } catch (err) {
       console.error("Error saving partner reply to Firestore:", err);
       setWorkspaceError("Erro ao enviar a resposta da pendência. Tente novamente.");
@@ -1941,7 +1955,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       });
 
       setWorkspaceSuccess(`Ficha Cadastral dos Sócios e Endereço atualizados! (Etapa: ${targetEtapa})`);
-      onRefreshLeads();
+      safeRefreshLeads();
     } catch (err) {
       console.error(err);
       setWorkspaceError("Erro ao salvar dados dos sócios.");
@@ -1997,7 +2011,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       });
 
       setWorkspaceSuccess("Proposta comercial vinculada ao lead com sucesso! Etapa avançada para: 5. Proposta Emitida.");
-      onRefreshLeads();
+      safeRefreshLeads();
     } catch (err) {
       console.error(err);
       setWorkspaceError("Erro ao vincular a proposta.");
@@ -4557,7 +4571,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       throw new Error(data.error || "Erro ao gerar diagnóstico pós-estruturação.");
                     }
                     setWorkspaceSuccess("Dossiê Comparativo Pós-Estruturação gerado com sucesso!");
-                    onRefreshLeads?.();
+                    safeRefreshLeads();
                     onLeadUpdated?.({
                       ...lead,
                       etapa: Math.max(lead.etapa || 1, 7),

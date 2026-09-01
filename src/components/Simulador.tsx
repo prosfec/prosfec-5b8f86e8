@@ -51,7 +51,7 @@ import {
 } from "lucide-react";
 
 interface SimuladorProps {
-  onLeadCaptured: (lead: LeadData & { id: string; result: SimulationResult }) => void;
+  onLeadCaptured?: (lead: LeadData & { id: string; result: SimulationResult }) => void;
   referredByPartnerWhatsapp?: string | null;
   referredByPartnerNome?: string | null;
   referredByPartnerId?: string | null;
@@ -593,7 +593,7 @@ export default function Simulador({
         };
 
         triggerWebhookSimulation("lead_simulation_completed", finalLead);
-        onLeadCaptured(finalLead);
+        if (typeof onLeadCaptured === "function") onLeadCaptured(finalLead);
         return;
       }
     } catch (error) {
@@ -815,7 +815,7 @@ export default function Simulador({
     };
 
     triggerWebhookSimulation("lead_simulation_completed", finalLead);
-    onLeadCaptured(finalLead);
+    if (typeof onLeadCaptured === "function") onLeadCaptured(finalLead);
   };
 
   const resetAll = () => {

@@ -7661,6 +7661,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           lead={workspaceLead}
           isAdmin={true}
           onClose={() => setWorkspaceLead(null)}
+          onRefreshLeads={async () => {
+            // Recarga silenciosa e focada apenas nos leads (não derruba a tela com loading global)
+            try {
+              const leadsSnapshot = await getDocs(query(collection(db, "leads"), orderBy("dataCriacao", "desc")));
+              const leadsList = leadsSnapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Lead[];
+              setLeads(leadsList);
+              const refreshed = leadsList.find(l => l.id === workspaceLead.id);
+              if (refreshed) {
+                setWorkspaceLead(refreshed);
+                if (selectedLead?.id === refreshed.id) setSelectedLead(refreshed);
+              }
+            } catch (err) {
+              console.warn("Erro ao recarregar leads no Admin após salvar:", err);
+            }
+          }}
           onLeadUpdated={(updated) => {
             setLeads(prev => prev.map(l => l.id === updated.id ? updated : l));
             if (selectedLead?.id === updated.id) {
