@@ -1507,10 +1507,16 @@ export default function PartnerPortal({
 
       setTeamSuccess("Acesso do consultor reativado com sucesso! A contagem de 3 dias de inatividade foi zerada.");
       setTimeout(() => setTeamSuccess(null), 4000);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error reactivating team member:", err);
-      setTeamError("Erro ao reativar acesso do consultor.");
-      setTimeout(() => setTeamError(null), 3500);
+      setTeamError(
+        err?.code === "permission-denied"
+          ? "Permissão negada pelo banco ao reativar o consultor. As regras de segurança precisam estar atualizadas (publique a versão mais recente do firestore.rules)."
+          : `Erro ao reativar acesso do consultor${err?.code ? ` (${err.code})` : ""}.`
+      );
+      setTimeout(() => setTeamError(null), 6000);
+    } finally {
+      setReactivatingMemberId(null);
     }
   };
 
