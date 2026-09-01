@@ -409,7 +409,9 @@ export default function LeadRegisterForm({
         }
       });
 
-      onSuccess(`Sucesso! Lead ${leadRazaoSocial} registrado e qualificado no portal PROSFEC na Etapa 3. ID: ${docId}`, docId);
+      if (typeof onSuccess === "function") {
+        onSuccess(`Sucesso! Lead ${leadRazaoSocial} registrado e qualificado no portal PROSFEC na Etapa 3. ID: ${docId}`, docId);
+      }
     } catch (err) {
       console.error("Error creating lead with partners:", err);
       setRegLeadError("Erro ao registrar a ficha de crédito. Por favor, tente novamente.");
