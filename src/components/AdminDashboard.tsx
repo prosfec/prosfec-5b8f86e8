@@ -3387,13 +3387,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </select>
                               </div>
 
-                              {lead.fichaRatingCredito?.pastaDocumentosUrl && (
+                              {(lead.fichaRatingCredito?.pastaDocumentosUrl || (lead as any).linkDocumentos) && (
                                 <a
-                                  href={lead.fichaRatingCredito.pastaDocumentosUrl}
+                                  href={lead.fichaRatingCredito?.pastaDocumentosUrl || (lead as any).linkDocumentos}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-2.5 py-1.5 text-[10px] font-black text-emerald-800 hover:bg-emerald-100 transition-colors"
-                                  title={lead.fichaRatingCredito.pastaDocumentosUrl}
+                                  title={lead.fichaRatingCredito?.pastaDocumentosUrl || (lead as any).linkDocumentos}
                                 >
                                   <span className="uppercase tracking-wider">Pasta de Documentos</span>
                                   <span className="underline">Abrir</span>

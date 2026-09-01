@@ -534,10 +534,10 @@ export default function PartnerPortal({
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list = snapshot.docs.map(doc => ({
+      const list = (snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })) as SystemNotification[];
+      })) as SystemNotification[]).filter(n => (n as any).lida !== true);
       // Sort client-side by dataCriacao desc
       list.sort((a, b) => new Date(b.dataCriacao).getTime() - new Date(a.dataCriacao).getTime());
       setNotifications(list);
@@ -602,21 +602,44 @@ export default function PartnerPortal({
     }
   };
 
+  const [notificationsError, setNotificationsError] = useState<string | null>(null);
+
+  // Marcar como lida (update é permitido ao parceiro; delete é restrito ao staff).
+  const markNotificationAsRead = async (notifId: string) => {
+    await updateDoc(doc(db, "notificacoes", notifId), {
+      lida: true,
+      dataLeitura: new Date().toISOString()
+    });
+  };
+
   const handleMarkNotificationRead = async (notifId: string) => {
+    // Remoção otimista da bandeja
+    setNotifications(prev => prev.filter(n => n.id !== notifId));
+    setNotificationsError(null);
     try {
-      // Deletar a notificação diretamente do Firestore para economizar espaço e evitar acúmulo no banco
-      await deleteDoc(doc(db, "notificacoes", notifId));
-    } catch (err) {
-      console.error("Error deleting notification upon read:", err);
+      await markNotificationAsRead(notifId);
+    } catch (err: any) {
+      console.error("Erro ao marcar notificação como lida:", err);
+      setNotificationsError(err?.code === "permission-denied"
+        ? "Sem permissão para limpar esta notificação."
+        : "Não foi possível limpar a notificação. Tente novamente.");
+      setTimeout(() => setNotificationsError(null), 4000);
     }
   };
 
   const handleMarkAllNotificationsRead = async () => {
+    const pending = [...notifications];
+    setNotifications([]);
+    setNotificationsError(null);
     try {
-      // Deletar todas as notificações do Firestore para limpar o banco
-      await Promise.all(notifications.map(n => deleteDoc(doc(db, "notificacoes", n.id))));
+      const results = await Promise.allSettled(pending.map(n => markNotificationAsRead(n.id)));
+      const failed = results.filter(r => r.status === "rejected").length;
+      if (failed > 0) {
+        setNotificationsError(`Não foi possível limpar ${failed} notificação(ões). Tente novamente.`);
+        setTimeout(() => setNotificationsError(null), 5000);
+      }
     } catch (err) {
-      console.error("Error deleting all notifications:", err);
+      console.error("Erro ao marcar todas as notificações como lidas:", err);
     }
   };
 
@@ -1458,7 +1481,10 @@ export default function PartnerPortal({
     }
   };
 
+  const [reactivatingMemberId, setReactivatingMemberId] = useState<string | null>(null);
+
   const handleReactivateTeamMember = async (memberId: string) => {
+    setReactivatingMemberId(memberId);
     try {
       const nowIso = new Date().toISOString();
       const docRef = doc(db, "parceiros", memberId);
@@ -1481,10 +1507,16 @@ export default function PartnerPortal({
 
       setTeamSuccess("Acesso do consultor reativado com sucesso! A contagem de 3 dias de inatividade foi zerada.");
       setTimeout(() => setTeamSuccess(null), 4000);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error reactivating team member:", err);
-      setTeamError("Erro ao reativar acesso do consultor.");
-      setTimeout(() => setTeamError(null), 3500);
+      setTeamError(
+        err?.code === "permission-denied"
+          ? "Permissão negada pelo banco ao reativar o consultor. As regras de segurança precisam estar atualizadas (publique a versão mais recente do firestore.rules)."
+          : `Erro ao reativar acesso do consultor${err?.code ? ` (${err.code})` : ""}.`
+      );
+      setTimeout(() => setTeamError(null), 6000);
+    } finally {
+      setReactivatingMemberId(null);
     }
   };
 
@@ -4071,6 +4103,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </button>
                           )}
                         </div>
+
+                        {notificationsError && (
+                          <div className="px-4 py-2 bg-rose-50 border-b border-rose-100 text-[11px] font-bold text-rose-700">
+                            {notificationsError}
+                          </div>
+                        )}
 
                         <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
                           {notifications.length === 0 ? (
@@ -8951,10 +8989,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                               <button
                                                 type="button"
                                                 onClick={() => handleReactivateTeamMember(member.id)}
-                                                className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] rounded-lg shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                                                disabled={reactivatingMemberId === member.id}
+                                                className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-extrabold text-[10px] rounded-lg shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
                                               >
                                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200" />
-                                                Reativar Consultor (Zerar 3 Dias)
+                                                {reactivatingMemberId === member.id ? "Reativando..." : "Reativar Consultor (Zerar 3 Dias)"}
                                               </button>
                                             </div>
                                           )}

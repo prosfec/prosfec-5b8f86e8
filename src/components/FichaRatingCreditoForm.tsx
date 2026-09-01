@@ -476,11 +476,14 @@ export default function FichaRatingCreditoForm({
       // Gravação direta: o parceiro/admin está autenticado no Firebase.
       await updateDoc(doc(db, "leads", lead.id), {
         fichaRatingCredito: sanitizeFirestoreData(currentRating),
+        // Espelho na raiz do lead para leitura rápida no painel do Admin
+        linkDocumentos: pastaDocumentosUrl || "",
         updated_at: now
       });
 
       const updatedLead = {
         ...lead,
+        linkDocumentos: pastaDocumentosUrl || "",
         fichaRatingCredito: currentRating
       };
 

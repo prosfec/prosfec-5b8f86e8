@@ -69,6 +69,31 @@ service cloud.firestore {
         ]);
     }
 
+    // Parceiro Master gerenciando um consultor direto da sua equipe:
+    // pode reativar/pausar o acesso e ajustar o plano de comissão, mas nunca
+    // mexer em senha, saldo, papel administrativo ou vínculo de Auth.
+    function isMyDirectConsultant() {
+      return isSignedIn()
+        && resource != null
+        && (
+          (resource.data.parentPartnerId is string && (
+            resource.data.parentPartnerId == request.auth.uid ||
+            resource.data.parentPartnerId == request.auth.token.partnerId
+          )) ||
+          (resource.data.masterId is string && resource.data.masterId == request.auth.uid) ||
+          (resource.data.parceiroMasterId is string && resource.data.parceiroMasterId == request.auth.uid)
+        );
+    }
+
+    function masterConsultantUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly([
+          "status", "inativoPorInatividade", "motivoInativacao",
+          "dataUltimoAcesso", "dataReativacao", "dataInativacao",
+          "plano", "planoComissao", "tipoConsultor"
+        ]);
+    }
+
     // Migração para o Firebase Auth: o próprio parceiro (já autenticado) pode
     // APENAS remover a senha em texto puro e gravar o vínculo com o Auth.
     function partnerAuthMigration() {
@@ -161,7 +186,8 @@ service cloud.firestore {
 
       allow update: if isStaff()
                     || (isOwnPartnerDoc(partnerId) && partnerSafeUpdate())
-                    || (isOwnPartnerDoc(partnerId) && partnerAuthMigration());
+                    || (isOwnPartnerDoc(partnerId) && partnerAuthMigration())
+                    || (isMyDirectConsultant() && masterConsultantUpdate());
       allow delete: if isAdmin();
 
       match /{sub=**} {

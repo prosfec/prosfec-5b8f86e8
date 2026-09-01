@@ -142,6 +142,8 @@ export interface Lead {
     atendidoPor?: string;
   };
   fichaRatingCredito?: FichaRatingCredito;
+  /** Espelho na raiz do lead do link da pasta de documentos (Drive/Dropbox/OneDrive) */
+  linkDocumentos?: string;
   analiseRTB?: AnaliseRTB;
   pagamentoConfirmado?: boolean;
   pagamentoServicosConfirmado?: boolean;
