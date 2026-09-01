@@ -186,7 +186,8 @@ service cloud.firestore {
 
       allow update: if isStaff()
                     || (isOwnPartnerDoc(partnerId) && partnerSafeUpdate())
-                    || (isOwnPartnerDoc(partnerId) && partnerAuthMigration());
+                    || (isOwnPartnerDoc(partnerId) && partnerAuthMigration())
+                    || (isMyDirectConsultant() && masterConsultantUpdate());
       allow delete: if isAdmin();
 
       match /{sub=**} {
