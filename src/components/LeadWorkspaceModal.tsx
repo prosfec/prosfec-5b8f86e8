@@ -3708,6 +3708,76 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   </div>
                 </div>
 
+                {/* SEÇÃO 0: FICHA DE RATING & DOCUMENTOS DO CLIENTE (Concierge B2B) */}
+                {(() => {
+                  const ficha: any = (lead as any).fichaRatingCredito || {};
+                  const validacoes: any = ficha.validacoesDocumentos || {};
+                  const vals = Object.values(validacoes) as any[];
+                  const aprovados = vals.filter(v => v?.status === "aprovado").length;
+                  const rejeitados = vals.filter(v => v?.status === "rejeitado");
+                  const faseLabel =
+                    ficha.faseRating === "concluido" ? "Rating concluído"
+                    : ficha.faseRating === "em_aplicacao" ? "Rating em aplicação"
+                    : ficha.faseRating === "documentos_recebidos" ? "Documentos recebidos"
+                    : "Aguardando documentos";
+
+                  return (
+                    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+                      <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50/70">
+                        <div className="space-y-0.5">
+                          <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
+                            <FileCheck className="w-5 h-5 text-[#00A86B]" />
+                            Ficha de Rating & Documentos do Cliente
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Preenchimento feito pelo parceiro em nome do cliente. Inclui o link da pasta de documentos em nuvem.
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[11px] font-extrabold bg-slate-100 text-slate-700 px-3 py-1 rounded-xl border border-slate-200">
+                            {faseLabel}
+                          </span>
+                          <span className="text-[11px] font-extrabold bg-emerald-50 text-emerald-800 px-3 py-1 rounded-xl border border-emerald-200">
+                            {aprovados} aprovado(s) pela Mesa
+                          </span>
+                          {rejeitados.length > 0 && (
+                            <span className="text-[11px] font-extrabold bg-red-50 text-red-700 px-3 py-1 rounded-xl border border-red-200">
+                              {rejeitados.length} rejeitado(s)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {rejeitados.length > 0 && (
+                        <div className="px-6 py-3 bg-red-50/70 border-b border-red-100 space-y-1">
+                          <p className="text-[11px] font-black text-red-700 uppercase tracking-wider">
+                            Correções solicitadas pela Mesa de Operações
+                          </p>
+                          {rejeitados.slice(0, 5).map((v: any, i: number) => (
+                            <p key={i} className="text-[11px] text-red-700">
+                              • {v?.motivo || "Documento ilegível ou incorreto. Favor reenviar."}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="p-4 sm:p-6">
+                        <FichaRatingCreditoForm
+                          lead={lead as any}
+                          isUnlocked={true}
+                          onUpdateLead={(updated: any) => {
+                            if (onLeadUpdated) {
+                              onLeadUpdated(updated as any);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+
+
+
                 {/* SEÇÃO 1: CHECKLIST DA ETAPA 6 (ESTRUTURAÇÃO) — PROSFEC IA */}
                 <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">

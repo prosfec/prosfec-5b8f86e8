@@ -802,6 +802,42 @@ export default function FichaRatingAdmViewer({
         )}
       </div>
 
+      {/* Andamento do Passo 6 (Estruturação) — sincronizado com o painel do parceiro */}
+      {(() => {
+        const subs: any[] = Array.isArray((lead as any).subEtapasPasso6) ? (lead as any).subEtapasPasso6 : [];
+        const done = subs.filter(s => s?.concluida).length;
+        const pct = subs.length > 0 ? Math.round((done / subs.length) * 100) : 0;
+        return (
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider font-mono text-slate-600">
+                Passo 6 — Estruturação da Operação
+              </span>
+              <span className="text-xs font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-xl">
+                {done}/{subs.length} concluídas ({pct}%)
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{ width: `${Math.max(3, pct)}%` }} />
+            </div>
+            {subs.length === 0 ? (
+              <p className="text-[11px] text-slate-500">Nenhum serviço de estruturação configurado para este lead.</p>
+            ) : (
+              <ul className="grid sm:grid-cols-2 gap-1.5">
+                {subs.map((s: any, i: number) => (
+                  <li key={s?.id || i} className="text-[11px] flex items-center gap-1.5 text-slate-700">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${s?.concluida ? "bg-emerald-500" : "bg-slate-300"}`} />
+                    <span className={s?.concluida ? "line-through text-slate-500" : ""}>{s?.titulo || `Serviço ${i + 1}`}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })()}
+
+
+
       {/* TOP HEADER: Rating Workflow Phase Lifecycle Stepper */}
       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-[#0A3D2E] text-white p-5 sm:p-6 rounded-3xl shadow-xl space-y-4">
         
