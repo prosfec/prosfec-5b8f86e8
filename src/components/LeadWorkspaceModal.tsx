@@ -560,7 +560,7 @@ export default function LeadWorkspaceModal({
       setLocalQuerySuccess(`Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}`);
       // Reload matching queries & refresh parent leads so partner credits update
       loadLeadConsultas();
-      onRefreshLeads();
+      onRefreshLeads?.();
     } catch (err: any) {
       setLocalQueryError(err.message || "Erro ao executar consulta.");
     } finally {
@@ -1751,7 +1751,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       });
 
       setWorkspaceSuccess("Dados cadastrais do CNPJ (Passo 1) atualizados com sucesso!");
-      onRefreshLeads();
+      onRefreshLeads?.();
     } catch (err) {
       console.error(err);
       setWorkspaceError("Erro ao salvar alterações da empresa.");
@@ -1794,7 +1794,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       });
 
       setWorkspaceSuccess("Credenciais salvas com sucesso! O lead avançou para o Passo 6: Estruturação da Operação.");
-      onRefreshLeads();
+      onRefreshLeads?.();
     } catch (err) {
       console.error(err);
       setWorkspaceError("Erro ao salvar credenciais de acesso.");
@@ -1842,7 +1842,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
 
       setWorkspaceSuccess("Sua resposta à pendência foi enviada com sucesso!");
       setPartnerReply("");
-      onRefreshLeads();
+      onRefreshLeads?.();
     } catch (err) {
       console.error("Error saving partner reply to Firestore:", err);
       setWorkspaceError("Erro ao enviar a resposta da pendência. Tente novamente.");
@@ -1941,7 +1941,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       });
 
       setWorkspaceSuccess(`Ficha Cadastral dos Sócios e Endereço atualizados! (Etapa: ${targetEtapa})`);
-      onRefreshLeads();
+      onRefreshLeads?.();
     } catch (err) {
       console.error(err);
       setWorkspaceError("Erro ao salvar dados dos sócios.");
@@ -1997,7 +1997,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       });
 
       setWorkspaceSuccess("Proposta comercial vinculada ao lead com sucesso! Etapa avançada para: 5. Proposta Emitida.");
-      onRefreshLeads();
+      onRefreshLeads?.();
     } catch (err) {
       console.error(err);
       setWorkspaceError("Erro ao vincular a proposta.");
