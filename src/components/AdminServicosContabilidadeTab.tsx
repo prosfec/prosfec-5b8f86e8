@@ -64,20 +64,20 @@ export default function AdminServicosContabilidadeTab({ userRole }: AdminServico
   const [globalErrorMsg, setGlobalErrorMsg] = useState<string | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
-  // Monitorar contagem de pedidos pendentes para o badge
-  useEffect(() => {
+  // Contagem de pedidos pendentes para o badge (consulta estática, sem listener)
+  const fetchPedidosPendentesCount = async () => {
     try {
       const pedidosRef = collection(db, "pedidos_servicos_contabilidade");
       const qPending = query(pedidosRef, where("status", "in", ["solicitado", "em_andamento"]));
-      const unsub = onSnapshot(qPending, (snap) => {
-        setPedidosPendentesCount(snap.size);
-      }, (err) => {
-        console.warn("Badge snapshot error:", err);
-      });
-      return () => unsub();
+      const snap = await getDocs(qPending);
+      setPedidosPendentesCount(snap.size);
     } catch (e) {
-      console.warn("Error setting up badge snapshot:", e);
+      console.warn("Erro ao contar pedidos pendentes:", e);
     }
+  };
+
+  useEffect(() => {
+    fetchPedidosPendentesCount();
   }, []);
 
   const fetchServicos = async () => {
