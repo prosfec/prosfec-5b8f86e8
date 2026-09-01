@@ -72,31 +72,32 @@ export default function PartnerServicosContabilidadeTab({
     nomeServico: string;
   } | null>(null);
 
-  // Escuta pedidos deste parceiro em tempo real
-  useEffect(() => {
+  // Pedidos deste parceiro: consulta estática (sem listener em tempo real)
+  const [pedidosUpdatedAt, setPedidosUpdatedAt] = useState<Date | null>(null);
+
+  const fetchMyPedidos = async () => {
     if (!currentPartner?.id) return;
     setLoadingPedidos(true);
     try {
       const pedidosRef = collection(db, "pedidos_servicos_contabilidade");
       const q = query(pedidosRef, where("parceiroId", "==", currentPartner.id));
-      const unsub = onSnapshot(q, (snap) => {
-        const list: PedidoServicoContabilidade[] = [];
-        snap.forEach((d) => {
-          list.push({ id: d.id, ...d.data() } as PedidoServicoContabilidade);
-        });
-        list.sort((a, b) => new Date(b.dataSolicitacao || 0).getTime() - new Date(a.dataSolicitacao || 0).getTime());
-        setMyPedidos(list);
-        setLoadingPedidos(false);
-      }, (err) => {
-        console.warn("Erro ao ouvir pedidos do parceiro:", err);
-        setLoadingPedidos(false);
+      const snap = await getDocs(q);
+      const list: PedidoServicoContabilidade[] = [];
+      snap.forEach((d) => {
+        list.push({ id: d.id, ...d.data() } as PedidoServicoContabilidade);
       });
-
-      return () => unsub();
+      list.sort((a, b) => new Date(b.dataSolicitacao || 0).getTime() - new Date(a.dataSolicitacao || 0).getTime());
+      setMyPedidos(list);
+      setPedidosUpdatedAt(new Date());
     } catch (err) {
-      console.warn("Erro setup snapshot parceiro:", err);
+      console.warn("Erro ao carregar pedidos do parceiro:", err);
+    } finally {
       setLoadingPedidos(false);
     }
+  };
+
+  useEffect(() => {
+    fetchMyPedidos();
   }, [currentPartner?.id]);
 
   // Busca apenas serviços ativos do Firestore (com cache de sessão de 15 minutos)

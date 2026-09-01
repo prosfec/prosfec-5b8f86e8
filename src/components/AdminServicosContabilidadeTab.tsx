@@ -8,8 +8,7 @@ import {
   setDoc,
   query, 
   where,
-  orderBy,
-  onSnapshot
+  orderBy
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { ServicoContabilidade } from "../types";
@@ -64,20 +63,20 @@ export default function AdminServicosContabilidadeTab({ userRole }: AdminServico
   const [globalErrorMsg, setGlobalErrorMsg] = useState<string | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
-  // Monitorar contagem de pedidos pendentes para o badge
-  useEffect(() => {
+  // Contagem de pedidos pendentes para o badge (consulta estática, sem listener)
+  const fetchPedidosPendentesCount = async () => {
     try {
       const pedidosRef = collection(db, "pedidos_servicos_contabilidade");
       const qPending = query(pedidosRef, where("status", "in", ["solicitado", "em_andamento"]));
-      const unsub = onSnapshot(qPending, (snap) => {
-        setPedidosPendentesCount(snap.size);
-      }, (err) => {
-        console.warn("Badge snapshot error:", err);
-      });
-      return () => unsub();
+      const snap = await getDocs(qPending);
+      setPedidosPendentesCount(snap.size);
     } catch (e) {
-      console.warn("Error setting up badge snapshot:", e);
+      console.warn("Erro ao contar pedidos pendentes:", e);
     }
+  };
+
+  useEffect(() => {
+    fetchPedidosPendentesCount();
   }, []);
 
   const fetchServicos = async () => {
@@ -363,7 +362,7 @@ export default function AdminServicosContabilidadeTab({ userRole }: AdminServico
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <button
                 type="button"
-                onClick={fetchServicos}
+                onClick={() => { fetchServicos(); fetchPedidosPendentesCount(); }}
                 disabled={loading}
                 className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
                 title="Recarregar dados do Firestore"
