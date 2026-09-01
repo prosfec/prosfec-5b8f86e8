@@ -4553,7 +4553,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 lead={lead as any}
                 diagnosticoPosEstruturacao={(lead as any).diagnosticoPosEstruturacao}
                 isAdmin={isAdminUser}
-                onGeneratePosEstruturacao={async () => {
+                isRefreshing={generatingPasso7}
+                onRefresh={async () => {
                   setGeneratingPasso7(true);
                   setWorkspaceError(null);
                   setWorkspaceSuccess(null);
