@@ -188,6 +188,10 @@ export default function AdminPedidosContabilidadeTab({ userRole }: AdminPedidosC
       }
 
       setUpdateSuccessMsg("Solicitação atualizada com sucesso no sistema!");
+
+      // Sem listener em tempo real: recarrega a lista após a escrita
+      fetchPedidos();
+      
       
       // Atualiza o objeto no modal localmente
       setSelectedPedido({
