@@ -602,21 +602,44 @@ export default function PartnerPortal({
     }
   };
 
+  const [notificationsError, setNotificationsError] = useState<string | null>(null);
+
+  // Marcar como lida (update é permitido ao parceiro; delete é restrito ao staff).
+  const markNotificationAsRead = async (notifId: string) => {
+    await updateDoc(doc(db, "notificacoes", notifId), {
+      lida: true,
+      dataLeitura: new Date().toISOString()
+    });
+  };
+
   const handleMarkNotificationRead = async (notifId: string) => {
+    // Remoção otimista da bandeja
+    setNotifications(prev => prev.filter(n => n.id !== notifId));
+    setNotificationsError(null);
     try {
-      // Deletar a notificação diretamente do Firestore para economizar espaço e evitar acúmulo no banco
-      await deleteDoc(doc(db, "notificacoes", notifId));
-    } catch (err) {
-      console.error("Error deleting notification upon read:", err);
+      await markNotificationAsRead(notifId);
+    } catch (err: any) {
+      console.error("Erro ao marcar notificação como lida:", err);
+      setNotificationsError(err?.code === "permission-denied"
+        ? "Sem permissão para limpar esta notificação."
+        : "Não foi possível limpar a notificação. Tente novamente.");
+      setTimeout(() => setNotificationsError(null), 4000);
     }
   };
 
   const handleMarkAllNotificationsRead = async () => {
+    const pending = [...notifications];
+    setNotifications([]);
+    setNotificationsError(null);
     try {
-      // Deletar todas as notificações do Firestore para limpar o banco
-      await Promise.all(notifications.map(n => deleteDoc(doc(db, "notificacoes", n.id))));
+      const results = await Promise.allSettled(pending.map(n => markNotificationAsRead(n.id)));
+      const failed = results.filter(r => r.status === "rejected").length;
+      if (failed > 0) {
+        setNotificationsError(`Não foi possível limpar ${failed} notificação(ões). Tente novamente.`);
+        setTimeout(() => setNotificationsError(null), 5000);
+      }
     } catch (err) {
-      console.error("Error deleting all notifications:", err);
+      console.error("Erro ao marcar todas as notificações como lidas:", err);
     }
   };
 
