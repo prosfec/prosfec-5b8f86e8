@@ -380,14 +380,33 @@ export default function PartnerServicosContabilidadeTab({
       {activeSubTab === "meus_pedidos" ? (
         /* ABA DE MINHAS SOLICITAÇÕES */
         <div className="space-y-4">
-          <div className="bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
-            <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-[#00A86B]" />
-              Acompanhamento de Serviços Contábeis Solicitados
-            </h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Consulte o status da execução, relatórios, pareceres técnicos e baixe os documentos gerados pela equipe contábil.
-            </p>
+          <div className="bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <ClipboardList className="w-5 h-5 text-[#00A86B]" />
+                Acompanhamento de Serviços Contábeis Solicitados
+              </h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Consulte o status da execução, relatórios, pareceres técnicos e baixe os documentos gerados pela equipe contábil.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {pedidosUpdatedAt && (
+                <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap hidden sm:inline">
+                  Atualizado às {pedidosUpdatedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={fetchMyPedidos}
+                disabled={loadingPedidos}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                title="Recarregar meus pedidos"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loadingPedidos ? "animate-spin" : ""}`} />
+                <span>Atualizar dados</span>
+              </button>
+            </div>
           </div>
 
           {loadingPedidos ? (
