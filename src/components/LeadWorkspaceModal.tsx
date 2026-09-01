@@ -2729,6 +2729,61 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 </div>
               </div>
 
+              {/* Contratos assinados externamente via GOV.br */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70 space-y-2.5">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    Link da Pasta do Drive (Contratos Assinados GOV.br)
+                  </label>
+                  {lead.contratosAssinadosUrl && (
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase tracking-wider">
+                      Anexado
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  Cole aqui o link da pasta (Google Drive, OneDrive, Dropbox) com os contratos baixados e assinados pelo cliente via GOV.br. Ao salvar, o lead avança automaticamente para o Passo 5.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    value={contratosAssinadosUrl}
+                    onChange={(e) => setContratosAssinadosUrl(e.target.value)}
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    className="flex-1 text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveContratosAssinadosUrl}
+                      disabled={savingContratosUrl}
+                      className="px-4 py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-60 text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap"
+                    >
+                      {savingContratosUrl ? "Salvando..." : "Salvar"}
+                    </button>
+                    {lead.contratosAssinadosUrl && (
+                      <a
+                        href={lead.contratosAssinadosUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2.5 bg-white border border-slate-200 hover:border-[#0A3D2E] text-slate-700 text-xs font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Abrir
+                      </a>
+                    )}
+                  </div>
+                </div>
+                {contratosUrlFeedback && (
+                  <p className={`text-[11px] font-bold ${contratosUrlFeedback.type === "success" ? "text-emerald-700" : "text-red-600"}`}>
+                    {contratosUrlFeedback.msg}
+                  </p>
+                )}
+              </div>
+
+
+
               {lead.contratoAssinado ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
                   <div className="space-y-1.5 text-slate-700">
