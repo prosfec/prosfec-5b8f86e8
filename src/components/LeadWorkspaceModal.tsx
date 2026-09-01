@@ -1778,6 +1778,67 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
     }
   };
 
+  // Passo 4 — Link da pasta do Drive com os contratos assinados via GOV.br
+  const handleSaveContratosAssinadosUrl = async () => {
+    const url = (contratosAssinadosUrl || "").trim();
+    setContratosUrlFeedback(null);
+
+    if (!url) {
+      setContratosUrlFeedback({ type: "error", msg: "Informe o link da pasta do Drive com os contratos assinados." });
+      return;
+    }
+    if (!/^https?:\/\//i.test(url)) {
+      setContratosUrlFeedback({ type: "error", msg: "O link deve começar com http:// ou https://" });
+      return;
+    }
+
+    setSavingContratosUrl(true);
+    try {
+      const nowIso = new Date().toISOString();
+      const currentEtapa = Number(lead.etapa || 1);
+      const nextEtapa = Math.max(currentEtapa, 5);
+
+      const payload: Record<string, any> = {
+        contratosAssinadosUrl: url,
+        contratosAssinadosAtualizadoEm: nowIso,
+      };
+
+      if (nextEtapa !== currentEtapa) {
+        const newHistoryItem = {
+          data: nowIso,
+          etapaAnterior: currentEtapa,
+          etapaNova: nextEtapa,
+          autor: "Parceiro",
+          detalhes: "Link da pasta com contratos assinados via GOV.br informado no Passo 4."
+        };
+        payload.etapa = nextEtapa;
+        payload.historicoEtapas = lead.historicoEtapas ? [...lead.historicoEtapas, newHistoryItem] : [newHistoryItem];
+      }
+
+      await updateDoc(doc(db, "leads", lead.id), payload);
+
+      setContratosUrlFeedback({
+        type: "success",
+        msg: nextEtapa !== currentEtapa
+          ? "Link salvo! O lead avançou automaticamente para o Passo 5."
+          : "Link dos contratos assinados salvo com sucesso."
+      });
+      safeRefreshLeads();
+      onLeadUpdated?.({ ...lead, ...payload });
+    } catch (err: any) {
+      console.error("Erro ao salvar link dos contratos assinados:", err);
+      setContratosUrlFeedback({
+        type: "error",
+        msg: err?.code === "permission-denied"
+          ? "Permissão negada pelo banco ao salvar o link (permission-denied). Verifique as regras publicadas."
+          : `Erro ao salvar o link${err?.code ? ` (${err.code})` : ""}.`
+      });
+    } finally {
+      setSavingContratosUrl(false);
+    }
+  };
+
+
   const handleSaveCredenciais = async (e: React.FormEvent) => {
     e.preventDefault();
     setWorkspaceLoading(true);
