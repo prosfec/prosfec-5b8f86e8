@@ -8989,10 +8989,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                               <button
                                                 type="button"
                                                 onClick={() => handleReactivateTeamMember(member.id)}
-                                                className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] rounded-lg shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                                                disabled={reactivatingMemberId === member.id}
+                                                className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-extrabold text-[10px] rounded-lg shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
                                               >
                                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200" />
-                                                Reativar Consultor (Zerar 3 Dias)
+                                                {reactivatingMemberId === member.id ? "Reativando..." : "Reativar Consultor (Zerar 3 Dias)"}
                                               </button>
                                             </div>
                                           )}
