@@ -442,6 +442,24 @@ export default function AdminPedidosContabilidadeTab({ userRole }: AdminPedidosC
               </button>
             );
           })}
+
+          <div className="ml-auto flex items-center gap-2 shrink-0">
+            {lastUpdatedAt && (
+              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap hidden sm:inline">
+                Atualizado às {lastUpdatedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={fetchPedidos}
+              disabled={loading}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+              title="Recarregar pedidos do Firestore"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? "animate-spin" : ""}`} />
+              <span>Atualizar dados</span>
+            </button>
+          </div>
         </div>
       </div>
 
