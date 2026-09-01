@@ -65,11 +65,13 @@ export function calculateLeadStepStatus(lead: Lead | null | undefined): StepLock
     currentEtapa >= 3
   );
 
-  // Step 4: Termos & Contrato (Contract signed or accepted)
+  // Step 4: Termos & Contrato (assinatura eletrônica OU contratos assinados via GOV.br)
   const isStep4Complete = Boolean(
     lead.contratoAssinado === true ||
+    (typeof lead.contratosAssinadosUrl === "string" && lead.contratosAssinadosUrl.trim().length > 0) ||
     currentEtapa >= 4
   );
+
 
   // Step 5: Credenciais (GOV.br / Serasa / Certificado A1 passwords submitted)
   const isStep5Complete = Boolean(
