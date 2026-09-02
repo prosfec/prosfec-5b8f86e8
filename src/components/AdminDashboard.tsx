@@ -1923,7 +1923,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
-  const toggleManualPaymentForSubEtapa = async (idx: number) => {
+  const toggleManualPaymentForSubEtapa = async (idx: number, metodo?: "PIX" | "CARTAO") => {
     if (!selectedLead) return;
 
     // Verificação de Integridade: Apenas leads no Passo 6 podem ter baixa manual nas sub-etapas
@@ -1936,12 +1936,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     const isPaid = (target as any)?.statusPagamento === "pago" || (target as any)?.pago === true;
     const newPaidState = !isPaid;
 
+    const now = new Date();
+    const dataPagamentoIso = now.toISOString();
+    // Trava de liberação da comissão: 48h para PIX, 15 dias corridos para Cartão
+    const dataLiberacaoSaqueIso = new Date(
+      now.getTime() + (metodo === "CARTAO" ? 15 * 24 * 60 * 60 * 1000 : 48 * 60 * 60 * 1000)
+    ).toISOString();
+
     const updated = [...editingSubEtapasPasso6];
     updated[idx] = {
       ...updated[idx],
       statusPagamento: newPaidState ? "pago" : "pendente",
-      formaPagamento: newPaidState ? "manual_adm" : null,
-      dataPagamento: newPaidState ? new Date().toISOString() : null,
+      formaPagamento: newPaidState ? (metodo || "PIX") : null,
+      dataPagamento: newPaidState ? dataPagamentoIso : null,
+      dataLiberacaoSaque: newPaidState ? dataLiberacaoSaqueIso : null,
+      origemConfirmacao: newPaidState ? "manual_adm" : null,
       pago: newPaidState,
       concluida: newPaidState ? true : updated[idx].concluida
     } as any;
