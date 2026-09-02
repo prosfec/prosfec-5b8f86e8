@@ -252,7 +252,7 @@ export default function FichaRatingAdmViewer({
   return (
     <div className="space-y-6 text-left">
       <section
-        className={`rounded-2xl border p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between ${
+        className={`rounded-xl border p-5 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center gap-4 shadow-sm ${
           pastaDocumentosUrl
             ? "bg-emerald-50 border-emerald-200"
             : "bg-amber-50 border-amber-200"
@@ -294,7 +294,7 @@ export default function FichaRatingAdmViewer({
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-3 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-[10px] font-black uppercase tracking-wider font-mono text-slate-600">
             Passo 6 — Estruturação da Operação
@@ -312,7 +312,7 @@ export default function FichaRatingAdmViewer({
         {subEtapas.length === 0 ? (
           <p className="text-[11px] text-slate-500">Nenhum serviço de estruturação configurado para este lead.</p>
         ) : (
-          <ul className="grid sm:grid-cols-2 gap-1.5">
+          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {subEtapas.map((item, index) => (
               <li key={item?.id || index} className="text-[11px] flex items-center gap-1.5 text-slate-700">
                 <span
@@ -329,7 +329,7 @@ export default function FichaRatingAdmViewer({
         )}
       </section>
 
-      <header className="bg-gradient-to-br from-slate-900 via-slate-800 to-[#0A3D2E] text-white p-5 sm:p-6 rounded-3xl shadow-xl">
+      <header className="bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-xl shadow-sm border border-emerald-900/40">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-mono inline-flex items-center gap-1 mb-2">
@@ -388,7 +388,7 @@ export default function FichaRatingAdmViewer({
         </motion.div>
       )}
 
-      <section className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-6">
+      <section className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-6">
         <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div>
             <span className="text-xs font-black text-emerald-800 uppercase tracking-wider font-mono block">
@@ -403,13 +403,13 @@ export default function FichaRatingAdmViewer({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-700 uppercase">Nota de Rating Atribuída</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">Nota de Rating Atribuída</label>
             <select
               value={notaRating}
               onChange={(event) => setNotaRating(event.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl px-3 py-2.5 text-xs font-black text-[#0A3D2E] outline-none"
+              className="w-full bg-slate-50/50 border border-slate-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 outline-hidden transition-all"
             >
               {NOTAS_RATING_PRESETS.map((nota) => (
                 <option key={nota} value={nota}>{nota}</option>
@@ -417,11 +417,11 @@ export default function FichaRatingAdmViewer({
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-700 uppercase">Classificação de Risco</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">Classificação de Risco</label>
             <select
               value={classificacaoRisco}
               onChange={(event) => setClassificacaoRisco(event.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 outline-none"
+              className="w-full bg-slate-50/50 border border-slate-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 outline-hidden transition-all"
             >
               <option value="Risco Mínimo (AAA/AA)">Risco Mínimo (AAA/AA)</option>
               <option value="Risco Baixo (A1/A2)">Risco Baixo (A1/A2)</option>
@@ -430,13 +430,13 @@ export default function FichaRatingAdmViewer({
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-700 uppercase">Capacidade de Tomada Sugerida (R$)</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">Capacidade de Tomada Sugerida (R$)</label>
             <input
               type="text"
               value={capacidadeTomada}
               onChange={(event) => setCapacidadeTomada(event.target.value)}
               placeholder="Ex: R$ 350.000,00"
-              className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl px-3 py-2.5 text-xs font-black font-mono text-emerald-800 outline-none"
+              className="w-full bg-slate-50/50 border border-slate-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 outline-hidden transition-all"
             />
           </div>
         </div>
@@ -516,17 +516,17 @@ export default function FichaRatingAdmViewer({
         </div>
       </section>
 
-      <section className="bg-slate-50 rounded-3xl p-5 sm:p-6 border border-slate-200 space-y-4">
+      <section className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
         <span className="text-xs font-black text-slate-700 uppercase tracking-wider font-mono block">
           Status Administrativo Geral do Lead
         </span>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Status do Dossiê de Rating</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Status do Dossiê de Rating</label>
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value as FichaRatingCredito["status"])}
-              className="w-full bg-white border border-slate-200 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none"
+              className="w-full bg-slate-50/50 border border-slate-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 outline-hidden transition-all"
             >
               <option value="pendente">Pendente de envio da pasta</option>
               <option value="em_analise">Em Análise Técnica / Estruturação</option>
@@ -535,7 +535,7 @@ export default function FichaRatingAdmViewer({
             </select>
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
               Observações e Orientações Técnicas
             </label>
             <input
@@ -543,7 +543,7 @@ export default function FichaRatingAdmViewer({
               value={observacoes}
               onChange={(event) => setObservacoes(event.target.value)}
               placeholder="Ex: Pasta recebida. Validando informações com a contabilidade..."
-              className="w-full bg-white border border-slate-200 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none"
+              className="w-full bg-slate-50/50 border border-slate-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 outline-hidden transition-all"
             />
           </div>
         </div>

@@ -37,10 +37,10 @@ export const LeadStepTimeline: React.FC<LeadStepTimelineProps> = ({
 
   if (compact) {
     return (
-      <div className="w-full bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+      <div className="w-full bg-white p-2 rounded-lg border border-slate-200">
         <div className="flex items-center justify-between text-[11px] mb-2 font-mono">
-          <span className="text-slate-400 font-bold">Progresso na Jornada do Lead:</span>
-          <span className="text-emerald-400 font-extrabold">{safeEtapa}/8 Concluído</span>
+          <span className="text-slate-500 font-semibold uppercase tracking-wider">Progresso da jornada</span>
+          <span className="text-emerald-700 font-extrabold">{safeEtapa}/8 concluído</span>
         </div>
         <div className="grid grid-cols-8 gap-1">
           {STEPS_CONFIG.map((s) => {
@@ -57,7 +57,7 @@ export const LeadStepTimeline: React.FC<LeadStepTimelineProps> = ({
                     ? "bg-emerald-500 shadow-xs shadow-emerald-500/50"
                     : isInProgress
                     ? "bg-amber-400 animate-pulse"
-                    : "bg-slate-800"
+                    : "bg-slate-200"
                 }`}
               >
                 {/* Tooltip on hover */}

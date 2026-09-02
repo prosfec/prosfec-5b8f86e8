@@ -509,9 +509,9 @@ export default function FichaRatingCreditoForm({
   // Locked State View
   if (!isUnlocked) {
     return (
-      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-lg space-y-5 text-left relative overflow-hidden">
+      <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5 text-left relative overflow-hidden">
         <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-          <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
             <Lock className="w-5 h-5" />
           </div>
           <div>
@@ -524,7 +524,7 @@ export default function FichaRatingCreditoForm({
           </div>
         </div>
 
-        <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-3">
+        <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-3">
           <div className="flex items-start gap-2.5">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="space-y-1">
@@ -575,20 +575,20 @@ export default function FichaRatingCreditoForm({
 
   // Unlocked Active Form View
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xl space-y-6 text-left relative">
+    <div className="bg-slate-50 rounded-xl p-4 sm:p-6 border border-slate-200 shadow-sm space-y-6 text-left relative">
       
       {/* Top Header */}
-      <div className="space-y-3 border-b border-slate-100 pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+      <div className="space-y-4 bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="w-10 h-10 shrink-0 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
               <FileCheck className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wider font-mono block">
                 Etapa de Estruturação
               </span>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 font-display">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 font-display truncate">
                 Ficha de Cadastro de Rating
               </h2>
             </div>
@@ -622,7 +622,7 @@ export default function FichaRatingCreditoForm({
         </div>
 
         {/* Link único da pasta de documentos (Drive, Dropbox, OneDrive) */}
-        <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-2xl space-y-2">
+        <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2">
           <div className="flex items-center gap-2">
             <Link2 className="w-4 h-4 text-emerald-700 shrink-0" />
             <span className="text-[11px] font-black text-emerald-900 uppercase tracking-wide font-mono">
@@ -680,7 +680,7 @@ export default function FichaRatingCreditoForm({
           const activeIndex = phaseIndex >= 0 ? phaseIndex : 0;
 
           return (
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 sm:p-4 space-y-2">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 space-y-2">
               <div className="flex items-center justify-between text-[11px] font-extrabold text-slate-700">
                 <span className="flex items-center gap-1.5 font-mono text-emerald-800">
                   <ShieldCheck className="w-4 h-4 text-[#00A86B]" />
@@ -690,7 +690,7 @@ export default function FichaRatingCreditoForm({
                   {phases[activeIndex]?.label}
                 </span>
               </div>
-              <div className="grid grid-cols-4 gap-1 sm:gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {phases.map((p, idx) => {
                   const isDone = idx < activeIndex;
                   const isCurrent = idx === activeIndex;
@@ -726,14 +726,14 @@ export default function FichaRatingCreditoForm({
 
         {/* Post-Service Technical Conclusion & Final Rating Card */}
         {(lead.fichaRatingCredito?.conclusaoRating?.notaFinalRating || lead.fichaRatingCredito?.faseRating === "concluido") && (
-          <div className="bg-gradient-to-br from-[#0A3D2E] via-[#0d4f3b] to-[#0A3D2E] text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-emerald-500/40 relative overflow-hidden space-y-4">
+          <div className="bg-[#0A3D2E] text-white rounded-xl p-5 sm:p-6 shadow-sm border border-emerald-800 relative overflow-hidden space-y-4">
             <div className="absolute right-0 top-0 opacity-10 pointer-events-none transform translate-x-4 -translate-y-4">
               <Award className="w-48 h-48 text-white" />
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-500/30 pb-4 relative z-10">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md text-emerald-300 flex items-center justify-center font-bold border border-emerald-400/30 shadow-inner">
+                <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md text-emerald-300 flex items-center justify-center font-bold border border-emerald-400/30 shadow-inner">
                   <Award className="w-6 h-6 text-emerald-300" />
                 </div>
                 <div>
@@ -886,13 +886,13 @@ export default function FichaRatingCreditoForm({
       </div>
 
       {/* SECTION 1: Dados para estruturação de Rating Comercial de Crédito CPF(Sócios) */}
-      <div className="rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <button
           type="button"
           onClick={() => setOpenSection(prev => prev === "cpf" ? "cnpj" : "cpf")}
-          className="w-full p-4 bg-slate-50/80 hover:bg-slate-100 flex items-center justify-between text-left transition-all cursor-pointer"
+          className="w-full p-4 bg-white hover:bg-slate-50 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 text-left transition-all cursor-pointer"
         >
-          <div className="flex items-center gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
             <div className="p-2 rounded-xl bg-emerald-100/70 text-emerald-800">
               <User className="w-4 h-4" />
             </div>
@@ -913,7 +913,7 @@ export default function FichaRatingCreditoForm({
         </button>
 
         {(openSection === "cpf" || openSection === "both") && (
-          <div className="p-4 sm:p-5 space-y-6 bg-white border-t border-slate-100">
+          <div className="p-4 sm:p-6 space-y-6 bg-slate-50 border-t border-slate-200">
             
             {/* Multi-Sócio Tabs */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
@@ -946,7 +946,7 @@ export default function FichaRatingCreditoForm({
 
             {/* Active Sócio Form */}
             {socios[activeSocioTab] && (
-              <div className="space-y-5">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-slate-700 uppercase tracking-wider font-mono">
                     Identificação do Sócio {activeSocioTab + 1}
@@ -963,7 +963,7 @@ export default function FichaRatingCreditoForm({
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
                       Nome Completo do Sócio *
@@ -1197,13 +1197,13 @@ export default function FichaRatingCreditoForm({
       </div>
 
       {/* SECTION 2: Dados para estruturação de Rating Comercial de Crédito CNPJ(Empresa) */}
-      <div className="rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <button
           type="button"
           onClick={() => setOpenSection(prev => prev === "cnpj" ? "cpf" : "cnpj")}
-          className="w-full p-4 bg-slate-50/80 hover:bg-slate-100 flex items-center justify-between text-left transition-all cursor-pointer"
+          className="w-full p-4 bg-white hover:bg-slate-50 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 text-left transition-all cursor-pointer"
         >
-          <div className="flex items-center gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
             <div className="p-2 rounded-xl bg-teal-100/70 text-teal-800">
               <Building2 className="w-4 h-4" />
             </div>
@@ -1224,7 +1224,7 @@ export default function FichaRatingCreditoForm({
         </button>
 
         {(openSection === "cnpj" || openSection === "both") && (
-          <div className="p-4 sm:p-5 space-y-6 bg-white border-t border-slate-100">
+          <div className="p-4 sm:p-6 space-y-6 bg-slate-50 border-t border-slate-200">
             
             {/* General partner photos for company file */}
             <div className="space-y-3">
@@ -1232,7 +1232,7 @@ export default function FichaRatingCreditoForm({
                 Documentos com Foto dos Sócios (Todos os Sócios)
               </span>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <DocLinkInput
                   label="Doc Foto (Frente)"
                   value={dadosCNPJ.documentoFotoFrenteTodosSocios}

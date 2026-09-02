@@ -50,19 +50,19 @@ export const DossierComparativeViewer: React.FC<DossierComparativeViewerProps> =
 
   if (!diag) {
     return (
-      <div className="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 md:p-8 space-y-4 text-left shadow-2xl relative overflow-hidden">
+      <div className="bg-white text-slate-900 rounded-xl border border-slate-200 p-5 md:p-6 space-y-4 text-left shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center gap-3 border-b border-slate-200 pb-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-2xl border border-emerald-500/30">
-              <Sparkles className="w-6 h-6" />
+                <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-display font-black text-base md:text-lg text-slate-100 uppercase tracking-wider">
+              <h4 className="font-display font-black text-base md:text-lg text-slate-900 uppercase tracking-wider">
                 Passo 7: Operação Apta para Solicitação Bancária
               </h4>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Dossiê Comparativo & Validação Final de Crédito (Antes vs. Depois)
               </p>
             </div>
@@ -72,11 +72,11 @@ export const DossierComparativeViewer: React.FC<DossierComparativeViewerProps> =
           </span>
         </div>
 
-        <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700/80 space-y-3">
-          <p className="text-sm text-slate-300 leading-relaxed">
+        <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+          <p className="text-sm text-slate-700 leading-relaxed">
             O Dossiê Comparativo Oficial de Crédito é emitido após a execução da nova consulta de crédito oficial pós-estruturação no Passo 7.
           </p>
-          <div className="flex items-center gap-2.5 text-xs text-slate-400">
+          <div className="flex items-center gap-2.5 text-xs text-slate-600">
             <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
               {isAdmin 
@@ -166,27 +166,27 @@ ${diag.parecerTecnico}`;
   };
 
   return (
-    <div className="bg-[#021811] text-white rounded-3xl border border-emerald-800/80 p-6 md:p-8 space-y-6 text-left shadow-2xl relative overflow-hidden">
+    <div className="bg-slate-50 text-slate-900 rounded-xl border border-slate-200 p-5 md:p-6 space-y-6 text-left shadow-sm relative overflow-hidden">
       {/* Background glow effects */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#00A86B]/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header with Protocol & Status */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-emerald-800/80 pb-5 relative z-10">
-        <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-gradient-to-br from-emerald-400 to-[#0A3D2E] text-white rounded-2xl shadow-lg shadow-emerald-950 border border-emerald-400/40">
+      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center gap-4 border-b border-slate-200 pb-5 relative z-10">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <div className="p-3 bg-[#0A3D2E] text-white rounded-xl shadow-sm border border-emerald-800">
             <Award className="w-7 h-7" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-display font-black text-base md:text-xl text-emerald-100 uppercase tracking-wider">
+              <h3 className="font-display font-black text-base md:text-xl text-slate-900 uppercase tracking-wider">
                 Dossiê de Homologação Bancária
               </h3>
               <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full border border-emerald-500/40">
                 Passo 7
               </span>
             </div>
-            <p className="text-xs text-emerald-300/80 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Diagnóstico Pós-Estruturação & Relatório de Aptidão de Crédito
             </p>
           </div>
@@ -194,10 +194,10 @@ ${diag.parecerTecnico}`;
 
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="text-right hidden sm:block">
-            <span className="text-[10px] font-mono text-emerald-400/80 block uppercase">
+            <span className="text-[10px] font-mono text-slate-500 block uppercase">
               Protocolo Oficial
             </span>
-            <span className="text-xs font-mono font-black text-emerald-200 block">
+            <span className="text-xs font-mono font-black text-slate-900 block">
               {metrics.protocoloHomologacao}
             </span>
           </div>
@@ -211,7 +211,7 @@ ${diag.parecerTecnico}`;
             <button
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="p-2.5 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 rounded-xl border border-emerald-700/80 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+              className="p-2.5 bg-white hover:bg-slate-100 text-emerald-700 rounded-lg border border-slate-200 transition-all cursor-pointer shadow-sm disabled:opacity-50"
               title="Recalcular análise comparativa IA"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -221,14 +221,14 @@ ${diag.parecerTecnico}`;
       </div>
 
       {/* Side-by-Side Comparative Grid (Antes vs. Depois) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 relative z-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
         
         {/* Card 1: ANTES (Passo 3 - Diagnóstico de Entrada) */}
-        <div className="bg-slate-950/70 border border-slate-800 p-5 rounded-2xl space-y-4 shadow-lg backdrop-blur-sm relative overflow-hidden">
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+        <div className="bg-white border border-slate-200 p-5 rounded-xl space-y-4 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-              <span className="text-xs font-black text-slate-400 uppercase tracking-wider font-mono">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Antes (Passo 3: Entrada)
               </span>
             </div>
@@ -238,8 +238,8 @@ ${diag.parecerTecnico}`;
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 font-bold uppercase block">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">
                 Score Serasa/SCR
               </span>
               <span className="text-xl font-black text-rose-400 font-display mt-0.5 block">
@@ -247,8 +247,8 @@ ${diag.parecerTecnico}`;
               </span>
             </div>
 
-            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 font-bold uppercase block">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">
                 Restrições Ativas
               </span>
               <span className="text-xl font-black text-rose-400 font-display mt-0.5 block">
@@ -256,8 +256,8 @@ ${diag.parecerTecnico}`;
               </span>
             </div>
 
-            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 font-bold uppercase block">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">
                 Capacidade Inicial
               </span>
               <span className="text-sm font-black text-slate-400 mt-1 block">
@@ -265,8 +265,8 @@ ${diag.parecerTecnico}`;
               </span>
             </div>
 
-            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 font-bold uppercase block">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">
                 Situação Fiscal
               </span>
               <span className="text-xs font-bold text-rose-400 mt-1 block">
@@ -282,13 +282,13 @@ ${diag.parecerTecnico}`;
         </div>
 
         {/* Card 2: DEPOIS (Passo 7 - Diagnóstico Pós-Estruturação) */}
-        <div className="bg-gradient-to-b from-emerald-950/80 to-[#0A3D2E]/40 border-2 border-emerald-500/80 p-5 rounded-2xl space-y-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
+        <div className="bg-emerald-50 border border-emerald-300 p-5 rounded-xl space-y-4 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
 
           <div className="flex items-center justify-between border-b border-emerald-700/60 pb-3">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-black text-emerald-300 uppercase tracking-wider font-mono">
+              <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
                 Depois (Passo 7: Pós-Estruturação)
               </span>
             </div>
@@ -298,9 +298,9 @@ ${diag.parecerTecnico}`;
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/70">
+            <div className="bg-white p-3 rounded-xl border border-emerald-200">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-emerald-300 font-bold uppercase block">
+                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">
                   Score Otimizado
                 </span>
                 <span className="text-[9px] font-black bg-emerald-500/30 text-emerald-200 px-1.5 py-0.2 rounded font-mono">
@@ -312,8 +312,8 @@ ${diag.parecerTecnico}`;
               </span>
             </div>
 
-            <div className="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/70">
-              <span className="text-[10px] text-emerald-300 font-bold uppercase block">
+            <div className="bg-white p-3 rounded-xl border border-emerald-200">
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">
                 Restrições Ativas
               </span>
               <span className="text-lg font-black text-emerald-300 font-display mt-0.5 block flex items-center gap-1.5">
@@ -322,8 +322,8 @@ ${diag.parecerTecnico}`;
               </span>
             </div>
 
-            <div className="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/70">
-              <span className="text-[10px] text-emerald-300 font-bold uppercase block">
+            <div className="bg-white p-3 rounded-xl border border-emerald-200">
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">
                 Limite Aprovável Apto
               </span>
               <span className="text-base font-black text-emerald-300 font-display mt-0.5 block">
@@ -331,11 +331,11 @@ ${diag.parecerTecnico}`;
               </span>
             </div>
 
-            <div className="bg-emerald-900/50 p-3 rounded-xl border border-emerald-700/70">
-              <span className="text-[10px] text-emerald-300 font-bold uppercase block">
+            <div className="bg-white p-3 rounded-xl border border-emerald-200">
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">
                 Rating Homologado
               </span>
-              <span className="text-xs font-black text-white mt-1 block">
+              <span className="text-xs font-black text-slate-900 mt-1 block">
                 {metrics.ratingBancario}
               </span>
             </div>
@@ -349,24 +349,24 @@ ${diag.parecerTecnico}`;
       </div>
 
       {/* Evolution Summary Bar */}
-      <div className="bg-emerald-950/60 border border-emerald-800/80 p-4 md:p-5 rounded-2xl space-y-3 relative z-10">
+      <div className="bg-white border border-slate-200 p-4 md:p-5 rounded-xl space-y-3 relative z-10 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-800/50 pb-2.5">
-          <span className="text-xs font-black text-emerald-300 uppercase tracking-wider flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-400" />
             Linhas de Crédito Homologadas &amp; Esteiras Ativas
           </span>
-          <span className="text-[11px] font-mono text-emerald-400">
+          <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
             Enquadramento Técnico Concluído
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
           {(metrics.esteirasAptas || ["PRONAMPE (FGO)", "FGI PEAC", "Capital de Giro Bancário", "BNDES Automático"]).map((esteira, idx) => (
-            <div key={idx} className="bg-emerald-900/40 border border-emerald-700/60 p-3 rounded-xl flex items-center gap-2.5">
+            <div key={idx} className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-center gap-2.5">
               <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-xs font-bold font-mono">
                 ✓
               </div>
-              <span className="text-xs font-bold text-emerald-100 truncate">
+              <span className="text-xs font-bold text-emerald-900 truncate">
                 {esteira}
               </span>
             </div>
