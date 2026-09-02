@@ -1395,15 +1395,13 @@ export function createExpressApp() {
 
       console.log(`Generating PROSFEC IA Diagnosis for lead: ${leadId}...`);
 
-      // 1. Fetch Lead data
-      const leadRef = doc(db, "leads", leadId);
-      const leadSnap = await getDoc(leadRef);
+      // 1. Fetch Lead data (via REST/fetch — SDK web depende de XMLHttpRequest)
+      const leadData: any = await getDocRest(`leads/${leadId}`);
 
-      if (!leadSnap.exists()) {
+      if (!leadData) {
         return res.status(404).json({ error: "Lead não encontrado no banco de dados." });
       }
 
-      const leadData = leadSnap.data();
 
       // Check generation count limit (Initial generation = 1, Refazer = 2 max)
       const previousGeracoesCount = Number(
