@@ -3821,7 +3821,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
             return (
               <div className="space-y-6 animate-fade-in">
                 {/* Header Principal do Passo 6 */}
-                <div className="bg-gradient-to-r from-[#0A3D2E] via-slate-900 to-[#0A3D2E] text-white p-6 rounded-3xl border border-emerald-800/40 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-xl border border-emerald-800 shadow-sm grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] md:items-center gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider font-mono">
@@ -3869,7 +3869,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     : "Aguardando documentos";
 
                   return (
-                    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                       <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50/70">
                         <div className="space-y-0.5">
                           <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
@@ -3926,7 +3926,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
 
                 {/* SEÇÃO 1: CHECKLIST DA ETAPA 6 (ESTRUTURAÇÃO) — PROSFEC IA */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+                <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                     <div className="space-y-0.5">
                       <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
@@ -4254,7 +4254,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 </div>
 
                 {/* SEÇÃO 2: SIMULADOR & PROPOSTA DE CRÉDITO GOVERNAMENTAL */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+                <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                   <div className="border-b border-slate-100 pb-3">
                     <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
                       <Calculator className="w-4 h-4 text-emerald-600" />
@@ -4600,7 +4600,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 </div>
 
                 {/* SEÇÃO 3: LINHA DO TEMPO & HISTÓRICO AUDITÁVEL DA OPERAÇÃO */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+                <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <div className="space-y-0.5">
                       <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">

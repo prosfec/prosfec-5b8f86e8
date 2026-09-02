@@ -509,9 +509,9 @@ export default function FichaRatingCreditoForm({
   // Locked State View
   if (!isUnlocked) {
     return (
-      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-lg space-y-5 text-left relative overflow-hidden">
+      <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5 text-left relative overflow-hidden">
         <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-          <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
             <Lock className="w-5 h-5" />
           </div>
           <div>
@@ -524,7 +524,7 @@ export default function FichaRatingCreditoForm({
           </div>
         </div>
 
-        <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-3">
+        <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-3">
           <div className="flex items-start gap-2.5">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="space-y-1">
@@ -726,14 +726,14 @@ export default function FichaRatingCreditoForm({
 
         {/* Post-Service Technical Conclusion & Final Rating Card */}
         {(lead.fichaRatingCredito?.conclusaoRating?.notaFinalRating || lead.fichaRatingCredito?.faseRating === "concluido") && (
-          <div className="bg-gradient-to-br from-[#0A3D2E] via-[#0d4f3b] to-[#0A3D2E] text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-emerald-500/40 relative overflow-hidden space-y-4">
+          <div className="bg-[#0A3D2E] text-white rounded-xl p-5 sm:p-6 shadow-sm border border-emerald-800 relative overflow-hidden space-y-4">
             <div className="absolute right-0 top-0 opacity-10 pointer-events-none transform translate-x-4 -translate-y-4">
               <Award className="w-48 h-48 text-white" />
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-500/30 pb-4 relative z-10">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md text-emerald-300 flex items-center justify-center font-bold border border-emerald-400/30 shadow-inner">
+                <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md text-emerald-300 flex items-center justify-center font-bold border border-emerald-400/30 shadow-inner">
                   <Award className="w-6 h-6 text-emerald-300" />
                 </div>
                 <div>

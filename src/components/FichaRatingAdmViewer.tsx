@@ -516,17 +516,17 @@ export default function FichaRatingAdmViewer({
         </div>
       </section>
 
-      <section className="bg-slate-50 rounded-3xl p-5 sm:p-6 border border-slate-200 space-y-4">
+      <section className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
         <span className="text-xs font-black text-slate-700 uppercase tracking-wider font-mono block">
           Status Administrativo Geral do Lead
         </span>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Status do Dossiê de Rating</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Status do Dossiê de Rating</label>
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value as FichaRatingCredito["status"])}
-              className="w-full bg-white border border-slate-200 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none"
+              className="w-full bg-slate-50/50 border border-slate-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 outline-hidden transition-all"
             >
               <option value="pendente">Pendente de envio da pasta</option>
               <option value="em_analise">Em Análise Técnica / Estruturação</option>
@@ -535,7 +535,7 @@ export default function FichaRatingAdmViewer({
             </select>
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
               Observações e Orientações Técnicas
             </label>
             <input
@@ -543,7 +543,7 @@ export default function FichaRatingAdmViewer({
               value={observacoes}
               onChange={(event) => setObservacoes(event.target.value)}
               placeholder="Ex: Pasta recebida. Validando informações com a contabilidade..."
-              className="w-full bg-white border border-slate-200 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none"
+              className="w-full bg-slate-50/50 border border-slate-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 outline-hidden transition-all"
             />
           </div>
         </div>
