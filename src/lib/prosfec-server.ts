@@ -1020,17 +1020,17 @@ export function createExpressApp() {
 
       console.log(`Executing RedeBe credit query for partner ${partnerId} on document ${maskDoc(cleanDoc)} (isAdminBypass=${!!isAdminBypass})...`);
 
-      // 3.1 Retrieve partner from Firestore to check balance
-      const partnerRef = doc(db, "parceiros", partnerId);
-      const partnerSnap = await getDoc(partnerRef);
+      // 3.1 Retrieve partner from Firestore to check balance (via REST/fetch)
+      const partnerData: any = await getDocRest(`parceiros/${partnerId}`);
+      const partnerExists = !!partnerData;
 
       let currentBalance = 0;
-      let partnerData: any = null;
       const isAdminUser = partnerId === "admin" || partnerId === "mesa_operacoes" || !!isAdminBypass;
 
-      if (partnerSnap.exists()) {
-        partnerData = partnerSnap.data();
-        currentBalance = partnerData?.saldoGeral !== undefined ? Number(partnerData.saldoGeral) : 0.00;
+      if (partnerExists) {
+        currentBalance = partnerData?.saldoGeral !== undefined && partnerData?.saldoGeral !== null
+          ? Number(partnerData.saldoGeral)
+          : 0.00;
       } else if (isAdminUser) {
         currentBalance = 999999;
       } else {
@@ -1040,13 +1040,14 @@ export function createExpressApp() {
       // 3.2 Determine price (Base R$ 49.90 + 40% Lucro Prosfec = R$ 69.86)
       let customBasePrices: Record<string, number> = {};
       try {
-        const configSnap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
-        if (configSnap.exists()) {
-          customBasePrices = configSnap.data().precos || {};
+        const configData: any = await getDocRest("configuracoes/precos_consultas");
+        if (configData) {
+          customBasePrices = configData.precos || {};
         }
       } catch (err) {
         console.warn("Could not load custom base prices from config:", err);
       }
+
 
       const catalogItem = FALLBACK_CATALOG.find((item: any) => item.code === codeToUse) || FALLBACK_CATALOG[0];
       let origPrice = catalogItem.price;
