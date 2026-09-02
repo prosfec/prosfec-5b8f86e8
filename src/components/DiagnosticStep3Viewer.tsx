@@ -35,7 +35,7 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
 
   if (!hasRealConsulta) {
     return (
-      <div className="bg-white text-slate-800 rounded-3xl border border-slate-200/90 p-6 md:p-8 space-y-4 text-left shadow-sm relative overflow-hidden">
+      <div className="bg-white text-slate-800 rounded-xl border border-slate-200 p-5 md:p-6 space-y-4 text-left shadow-sm relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-200/70">
@@ -85,12 +85,12 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-7 md:p-8 space-y-6 text-left shadow-sm relative overflow-hidden">
+    <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 space-y-6 text-left shadow-sm relative overflow-hidden">
       
       {/* Header Executivo */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-5">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-200/70 shadow-2xs">
+      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center gap-3 border-b border-slate-200 pb-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="p-3 shrink-0 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200/70 shadow-2xs">
             <Brain className="w-6 h-6 text-emerald-600" />
           </div>
           <div>

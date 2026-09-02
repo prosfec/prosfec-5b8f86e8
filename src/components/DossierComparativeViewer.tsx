@@ -50,19 +50,19 @@ export const DossierComparativeViewer: React.FC<DossierComparativeViewerProps> =
 
   if (!diag) {
     return (
-      <div className="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 md:p-8 space-y-4 text-left shadow-2xl relative overflow-hidden">
+      <div className="bg-white text-slate-900 rounded-xl border border-slate-200 p-5 md:p-6 space-y-4 text-left shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center gap-3 border-b border-slate-200 pb-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-2xl border border-emerald-500/30">
-              <Sparkles className="w-6 h-6" />
+                <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-display font-black text-base md:text-lg text-slate-100 uppercase tracking-wider">
+              <h4 className="font-display font-black text-base md:text-lg text-slate-900 uppercase tracking-wider">
                 Passo 7: Operação Apta para Solicitação Bancária
               </h4>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Dossiê Comparativo & Validação Final de Crédito (Antes vs. Depois)
               </p>
             </div>
@@ -72,11 +72,11 @@ export const DossierComparativeViewer: React.FC<DossierComparativeViewerProps> =
           </span>
         </div>
 
-        <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700/80 space-y-3">
-          <p className="text-sm text-slate-300 leading-relaxed">
+        <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+          <p className="text-sm text-slate-700 leading-relaxed">
             O Dossiê Comparativo Oficial de Crédito é emitido após a execução da nova consulta de crédito oficial pós-estruturação no Passo 7.
           </p>
-          <div className="flex items-center gap-2.5 text-xs text-slate-400">
+          <div className="flex items-center gap-2.5 text-xs text-slate-600">
             <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
               {isAdmin 
@@ -221,7 +221,7 @@ ${diag.parecerTecnico}`;
       </div>
 
       {/* Side-by-Side Comparative Grid (Antes vs. Depois) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 relative z-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
         
         {/* Card 1: ANTES (Passo 3 - Diagnóstico de Entrada) */}
         <div className="bg-slate-950/70 border border-slate-800 p-5 rounded-2xl space-y-4 shadow-lg backdrop-blur-sm relative overflow-hidden">
@@ -349,24 +349,24 @@ ${diag.parecerTecnico}`;
       </div>
 
       {/* Evolution Summary Bar */}
-      <div className="bg-emerald-950/60 border border-emerald-800/80 p-4 md:p-5 rounded-2xl space-y-3 relative z-10">
+      <div className="bg-white border border-slate-200 p-4 md:p-5 rounded-xl space-y-3 relative z-10 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-800/50 pb-2.5">
-          <span className="text-xs font-black text-emerald-300 uppercase tracking-wider flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-400" />
             Linhas de Crédito Homologadas &amp; Esteiras Ativas
           </span>
-          <span className="text-[11px] font-mono text-emerald-400">
+          <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
             Enquadramento Técnico Concluído
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
           {(metrics.esteirasAptas || ["PRONAMPE (FGO)", "FGI PEAC", "Capital de Giro Bancário", "BNDES Automático"]).map((esteira, idx) => (
-            <div key={idx} className="bg-emerald-900/40 border border-emerald-700/60 p-3 rounded-xl flex items-center gap-2.5">
+            <div key={idx} className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-center gap-2.5">
               <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-xs font-bold font-mono">
                 ✓
               </div>
-              <span className="text-xs font-bold text-emerald-100 truncate">
+              <span className="text-xs font-bold text-emerald-900 truncate">
                 {esteira}
               </span>
             </div>

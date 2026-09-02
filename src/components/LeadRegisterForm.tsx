@@ -421,13 +421,13 @@ export default function LeadRegisterForm({
   };
 
   return (
-    <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200/80 shadow-md space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-        <div>
+    <div className="bg-slate-50 p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 border-b border-slate-200 pb-4">
+        <div className="min-w-0">
           <span className="text-[10px] bg-[#0A3D2E] text-white font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider font-mono">
             Cadastro do Lead & Ficha do CNPJ
           </span>
-          <h4 className="font-display font-extrabold text-lg text-[#0A3D2E] mt-2 flex items-center gap-2">
+          <h4 className="font-display font-extrabold text-lg text-slate-900 mt-2 flex items-center gap-2">
             📋 Cadastrar Lead & Simulação Inicial
           </h4>
           <p className="text-xs text-slate-500 mt-1">
@@ -436,7 +436,7 @@ export default function LeadRegisterForm({
         </div>
         <button 
           onClick={onCancel}
-          className="p-1.5 rounded-full hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
+          className="min-h-11 min-w-11 grid place-items-center rounded-lg hover:bg-white transition-colors text-slate-500 hover:text-slate-900 border border-transparent hover:border-slate-200"
         >
           <X className="w-5 h-5" />
         </button>
@@ -451,13 +451,13 @@ export default function LeadRegisterForm({
 
       <form onSubmit={handleCreateLeadWithSocios} className="space-y-6">
         {/* Seção 1: Dados do Cliente e Empresa */}
-        <div className="space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-5">
           <h5 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
             <Briefcase className="w-4 h-4 text-slate-400" />
             1. Dados Cadastrais da Empresa e Contato
           </h5>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-slate-500 block">Razão Social *</label>
               <input
@@ -623,14 +623,14 @@ export default function LeadRegisterForm({
         </div>
 
         {/* Seção 2: Endereço Sócio / Empresa (Opcional - Preenchimento Automático via CNPJ) */}
-        <div className="space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-5">
           <h5 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
             <MapPin className="w-4 h-4 text-slate-400" />
             2. Endereço da Empresa / Sócio Principal (Opcional - Consulta CNPJ)
           </h5>
 
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-            <div className="sm:col-span-3 space-y-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-500 block">CEP</label>
               <input
                 type="text"
@@ -640,7 +640,7 @@ export default function LeadRegisterForm({
                 className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
               />
             </div>
-            <div className="sm:col-span-6 space-y-1">
+            <div className="md:col-span-2 space-y-1.5">
               <label className="text-[11px] font-bold text-slate-500 block">Logradouro / Rua</label>
               <input
                 type="text"
@@ -650,7 +650,7 @@ export default function LeadRegisterForm({
                 className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
               />
             </div>
-            <div className="sm:col-span-3 space-y-1">
+            <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-500 block">Número</label>
               <input
                 type="text"
@@ -661,7 +661,7 @@ export default function LeadRegisterForm({
               />
             </div>
 
-            <div className="sm:col-span-4 space-y-1">
+            <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-500 block">Bairro</label>
               <input
                 type="text"
@@ -671,7 +671,7 @@ export default function LeadRegisterForm({
                 className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
               />
             </div>
-            <div className="sm:col-span-5 space-y-1">
+            <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-500 block">Cidade</label>
               <input
                 type="text"
@@ -681,7 +681,7 @@ export default function LeadRegisterForm({
                 className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
               />
             </div>
-            <div className="sm:col-span-3 space-y-1">
+            <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-500 block">UF</label>
               <select
                 value={endUf}
@@ -705,7 +705,7 @@ export default function LeadRegisterForm({
               </select>
             </div>
 
-            <div className="sm:col-span-12 space-y-1">
+            <div className="md:col-span-2 lg:col-span-3 space-y-1.5">
               <label className="text-[11px] font-bold text-slate-500 block">Complemento</label>
               <input
                 type="text"
@@ -719,13 +719,13 @@ export default function LeadRegisterForm({
         </div>
 
         {/* Seção 3: Sócio 1 (Principal) */}
-        <div className="space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-5">
           <h5 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
             <User className="w-4 h-4 text-slate-400" />
             3. Informações do Sócio Administrador (Opcional nesta etapa inicial)
           </h5>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-slate-500 block">Nome Completo do Sócio</label>
               <input
@@ -759,7 +759,7 @@ export default function LeadRegisterForm({
         </div>
 
         {/* Seção 4: Sócio 2 (Opcional) */}
-        <div className="space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
             <h5 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Users className="w-4 h-4 text-slate-400" />
@@ -779,7 +779,7 @@ export default function LeadRegisterForm({
           </div>
 
           {hasSocio2 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-slate-500 block">Nome Completo *</label>
                 <input

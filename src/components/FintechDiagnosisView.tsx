@@ -399,18 +399,18 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
     <div className="w-full space-y-6 animate-in fade-in duration-300">
       
       {/* 1. TOP 3 KPI METRICS CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
         {/* CARD 1: RATING */}
-        <div className={`p-5 rounded-2xl border transition-all shadow-xs flex flex-col justify-between min-h-[140px] ${ratingCardBg}`}>
+        <div className={`p-4 rounded-xl border transition-all shadow-sm flex flex-col justify-between min-h-32 ${ratingCardBg}`}>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-widest text-[#9B2C2C] opacity-80">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               RATING
             </span>
             <span className={`w-2.5 h-2.5 rounded-full ${isGoodRating ? "bg-emerald-500" : isMediumRating ? "bg-amber-500" : "bg-rose-500"} animate-pulse`} />
           </div>
           <div className="my-1">
-            <div className={`text-4xl font-black font-mono tracking-tight ${ratingTextColor}`}>
+            <div className={`text-3xl font-extrabold font-display ${ratingTextColor}`}>
               {metrics.ratingLetter}
             </div>
           </div>
@@ -420,9 +420,9 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
         </div>
 
         {/* CARD 2: SCORE BACEN */}
-        <div className="p-5 rounded-2xl border border-amber-200/80 bg-[#FFFDF5] text-amber-950 shadow-xs flex flex-col justify-between min-h-[140px]">
+        <div className="p-4 rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm flex flex-col justify-between min-h-32">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-widest text-amber-800 opacity-80">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               SCORE BACEN
             </span>
             <span className="text-[10px] font-bold font-mono text-amber-700/80 bg-amber-100/80 px-2 py-0.5 rounded-md">
@@ -430,7 +430,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
             </span>
           </div>
           <div className="my-1">
-            <div className="text-4xl font-black font-mono tracking-tight text-amber-800">
+            <div className="text-3xl font-extrabold font-display text-slate-900">
               {metrics.scoreVal}
             </div>
           </div>
@@ -449,15 +449,15 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
         </div>
 
         {/* CARD 3: INADIMPLÊNCIA */}
-        <div className="p-5 rounded-2xl border border-rose-200/70 bg-[#FFF8F8] text-rose-950 shadow-xs flex flex-col justify-between min-h-[140px]">
+        <div className="p-4 rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm flex flex-col justify-between min-h-32">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-widest text-rose-800 opacity-80">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               INADIMPLÊNCIA
             </span>
             <Percent className="w-3.5 h-3.5 text-rose-500" />
           </div>
           <div className="my-1">
-            <div className="text-4xl font-black font-mono tracking-tight text-rose-700">
+            <div className="text-3xl font-extrabold font-display text-rose-700">
               {metrics.inadimplenciaPercent}%
             </div>
           </div>
@@ -469,10 +469,10 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
       </div>
 
       {/* 2. CHIPS / BADGES DE APONTAMENTOS EM LINHA */}
-      <div className="flex flex-wrap items-center gap-2.5 pt-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
         
         {/* Chip Negativações */}
-        <div className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+        <div className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all border ${
           metrics.negativacoesCount > 0 || metrics.negativacoesValor > 0
             ? "bg-[#FFF0F0] text-[#9B2C2C] border-[#FED7D7]"
             : "bg-emerald-50 text-emerald-800 border-emerald-200"
@@ -490,7 +490,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
         </div>
 
         {/* Chip Protestos */}
-        <div className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+        <div className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all border ${
           metrics.protestosCount > 0 || metrics.protestosValor > 0
             ? "bg-[#FFF0F0] text-[#9B2C2C] border-[#FED7D7]"
             : "bg-emerald-50 text-emerald-800 border-emerald-200"
@@ -508,7 +508,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
         </div>
 
         {/* Chip CADIN */}
-        <div className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+        <div className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all border ${
           metrics.cadinCount > 0 || metrics.cadinValor > 0
             ? "bg-[#FFF0F0] text-[#9B2C2C] border-[#FED7D7]"
             : "bg-emerald-50 text-emerald-800 border-emerald-200"
@@ -526,7 +526,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
         </div>
 
         {/* Chip Cheques sem fundo */}
-        <div className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+        <div className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all border ${
           metrics.chequesCount > 0
             ? "bg-[#FFF0F0] text-[#9B2C2C] border-[#FED7D7]"
             : "bg-[#E6F9F0] text-[#0A5F38] border-[#BCECD2]"
@@ -544,12 +544,12 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
       </div>
 
       {/* 3. PLANO DE AÇÃO PROSFEC */}
-      <div className="space-y-3 pt-2">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
         <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-widest">
           Plano de ação Prosfec
         </h4>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           
           {/* Passo 1 */}
           <div className="flex items-start gap-3.5">
@@ -604,7 +604,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
       </div>
 
       {/* 4. HERO VERDE ESCURO - POTENCIAL DE CAPTAÇÃO PÓS-INTERVENÇÃO */}
-      <div className="bg-[#062D20] text-white p-6 sm:p-7 rounded-2xl border border-emerald-700/30 shadow-md relative overflow-hidden">
+      <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-xl border border-emerald-700/30 shadow-sm relative overflow-hidden">
         {/* Glow de fundo */}
         <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         
@@ -614,7 +614,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
             POTENCIAL DE CAPTAÇÃO PÓS-INTERVENÇÃO
           </div>
 
-          <div className="text-2xl sm:text-3xl md:text-4xl font-black font-mono tracking-tight text-white py-1">
+          <div className="text-2xl sm:text-3xl font-extrabold font-display text-white py-1">
             R$ {metrics.capMin.toLocaleString("pt-BR")} – {metrics.capMax.toLocaleString("pt-BR")}
           </div>
 
@@ -635,7 +635,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
           </span>
         </div>
 
-        <div className="space-y-2.5 bg-slate-50/50 p-4 rounded-xl border border-slate-200/60">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           {displayServices.map((serv: any, idx: number) => {
             const isZero = !serv.valor || Number(serv.valor) === 0;
             const servNome = (serv.nome || serv.titulo || "").toString();
@@ -646,7 +646,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
               servNome.toLowerCase().includes("demanda");
 
             return (
-              <div key={serv.id || idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs py-1.5 border-b border-slate-100 last:border-0">
+              <div key={serv.id || idx} className="flex flex-col justify-between gap-2 text-xs p-3 rounded-lg border border-slate-200 bg-slate-50/50">
                 <div className="flex items-center gap-2">
                   <span className="text-slate-700 font-medium capitalize">
                     {serv.nome || serv.titulo}
@@ -679,7 +679,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
         <button
           type="button"
           onClick={() => setShowFullDetails(!showFullDetails)}
-          className="w-full py-4 px-6 bg-[#16181A] hover:bg-[#222529] active:scale-[0.99] text-white text-xs sm:text-sm font-extrabold rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full py-3 px-6 bg-[#0A3D2E] hover:bg-emerald-800 active:scale-[0.99] text-white text-xs sm:text-sm font-extrabold rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
         >
           <FileText className="w-4 h-4 text-slate-300" />
           <span>{showFullDetails ? "Recolher laudo técnico detalhado" : "Visualizar laudo técnico e perícia detalhada"}</span>
@@ -688,7 +688,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
         
         {/* EXPANSÃO DO RELATÓRIO COMPLETO */}
         {showFullDetails && (
-          <div className="mt-4 p-5 sm:p-7 bg-slate-50/90 border border-slate-200/90 rounded-2xl space-y-4 animate-in fade-in duration-200 shadow-xs">
+          <div className="mt-4 p-5 sm:p-7 bg-white border border-slate-200 rounded-xl space-y-4 animate-in fade-in duration-200 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500 border-b border-slate-200/80 pb-2.5">
               <span className="font-extrabold flex items-center gap-1.5 text-emerald-900 tracking-wide">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />

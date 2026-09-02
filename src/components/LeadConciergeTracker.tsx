@@ -124,14 +124,14 @@ export const LeadConciergeTracker: React.FC<LeadConciergeTrackerProps> = ({ lead
   return (
     <div className="space-y-6">
       {/* Header card */}
-      <div className="panel p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-1">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] md:items-center gap-4">
+          <div className="min-w-0 space-y-1">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#5b6f68]">
               <Bookmark className="w-3.5 h-3.5 text-[#00A86B]" />
               Concierge B2B — Visão do Consultor
             </div>
-            <h2 className="font-display font-extrabold text-lg text-[#0b1f18]">
+            <h2 className="font-display font-extrabold text-lg text-slate-900 truncate">
               {lead?.razaoSocial || lead?.nome || "Lead sem nome"}
             </h2>
             <div className="flex flex-wrap items-center gap-3 text-xs text-[#5b6f68]">
@@ -161,7 +161,7 @@ export const LeadConciergeTracker: React.FC<LeadConciergeTrackerProps> = ({ lead
         </div>
 
         {/* Next action banner */}
-        <div className="mt-5 p-4 rounded-xl bg-gradient-to-r from-[#02241a] to-[#0a3d2e] text-[#e8f5ef] flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="mt-5 p-4 rounded-xl bg-[#0A3D2E] text-emerald-50 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1">
             <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Próxima ação recomendada</span>
             <p className="text-sm font-semibold mt-0.5">{currentStep.acao}</p>
@@ -171,12 +171,12 @@ export const LeadConciergeTracker: React.FC<LeadConciergeTrackerProps> = ({ lead
       </div>
 
       {/* Timeline */}
-      <div className="panel p-6 md:p-8">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
         <h3 className="font-display font-extrabold text-sm text-[#0b1f18] uppercase tracking-wider mb-6">
           Etapas da Jornada de Crédito
         </h3>
 
-        <div className="relative border-l-2 border-[#e3e9e6] pl-6 ml-3 space-y-8">
+        <div className="relative border-l-2 border-slate-200 pl-6 ml-3 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-7">
           {STEPS.map((step) => {
             const status = getStepStatus(step.number, lead);
             const isCompleted = status === "completed";
