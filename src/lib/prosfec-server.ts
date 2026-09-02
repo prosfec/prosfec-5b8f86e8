@@ -1434,21 +1434,26 @@ export function createExpressApp() {
       let matchingConsultas: any[] = [];
       if (docList.length > 0) {
         try {
-          const consultasRef = collection(db, "consultas_realizadas");
-          const q = query(consultasRef, where("documento", "in", docList));
-          const querySnap = await getDocs(q);
-          
-          matchingConsultas = querySnap.docs.map(doc => ({
-            id: doc.id,
-            produto_nome: doc.data().produto_nome,
-            produto_code: doc.data().produto_code,
-            dataConsulta: doc.data().dataConsulta,
-            resultado: doc.data().resultado
+          const rows = await runQueryRest("consultas_realizadas", {
+            fieldFilter: {
+              field: { fieldPath: "documento" },
+              op: "IN",
+              value: { arrayValue: { values: docList.map((d) => ({ stringValue: d })) } }
+            }
+          });
+
+          matchingConsultas = rows.map((r: any) => ({
+            id: r.id,
+            produto_nome: r.data.produto_nome,
+            produto_code: r.data.produto_code,
+            dataConsulta: r.data.dataConsulta,
+            resultado: r.data.resultado
           }));
         } catch (dbErr) {
           console.warn("Could not load matching consultations from Firestore:", dbErr);
         }
       }
+
 
       // Compile summaries of consultations
       const consultationsSummary = matchingConsultas.map(c => {
