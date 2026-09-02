@@ -6583,12 +6583,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                       )}
                                       <button
                                         type="button"
-                                        onClick={() => toggleManualPaymentForSubEtapa(idx)}
+                                        onClick={() => toggleManualPaymentForSubEtapa(idx, "PIX")}
                                         className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold rounded-lg shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                                        title="Confirmar recebimento do pagamento manual via PIX/Transferência para esta sub-etapa"
+                                        title="Confirmar recebimento via Pix — libera a comissão em 48h"
                                       >
                                         <CheckCircle className="w-3.5 h-3.5 text-white" />
-                                        <span>Confirmar Pagamento Manual</span>
+                                        <span>Confirmar Pagamento no Pix</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleManualPaymentForSubEtapa(idx, "CARTAO")}
+                                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-extrabold rounded-lg shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                        title="Confirmar recebimento via Cartão de Crédito — libera a comissão em 15 dias corridos"
+                                      >
+                                        <CheckCircle className="w-3.5 h-3.5 text-white" />
+                                        <span>Confirmar Pagamento no Cartão</span>
                                       </button>
                                     </div>
                                   );
