@@ -3284,7 +3284,114 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   };
 
+  // -------------------------------------------------------------------
+  // Cliente Firestore genérico via REST + fetch.
+  // O SDK web (firebase/firestore) depende de XMLHttpRequest, que não
+  // existe no runtime Edge/Worker do servidor ("ReferenceError:
+  // XMLHttpRequest is not defined"). Estes helpers usam apenas fetch.
+  // -------------------------------------------------------------------
+  const toFirestoreValue = (val: any): any => {
+    if (val === null || val === undefined) return { nullValue: null };
+    if (typeof val === "string") return { stringValue: val };
+    if (typeof val === "boolean") return { booleanValue: val };
+    if (typeof val === "number") {
+      return Number.isInteger(val)
+        ? { integerValue: String(val) }
+        : { doubleValue: val };
+    }
+    if (val instanceof Date) return { timestampValue: val.toISOString() };
+    if (Array.isArray(val)) {
+      return { arrayValue: { values: val.map((v) => toFirestoreValue(v)) } };
+    }
+    if (typeof val === "object") {
+      const fields: any = {};
+      for (const [k, v] of Object.entries(val)) {
+        if (v !== undefined) fields[k] = toFirestoreValue(v);
+      }
+      return { mapValue: { fields } };
+    }
+    return { stringValue: String(val) };
+  };
+
+  const toFirestoreFields = (obj: any): any => {
+    const fields: any = {};
+    for (const [k, v] of Object.entries(obj || {})) {
+      if (v !== undefined) fields[k] = toFirestoreValue(v);
+    }
+    return fields;
+  };
+
+  const fromFirestoreValue = (val: any): any => {
+    if (!val || typeof val !== "object") return null;
+    if ("nullValue" in val) return null;
+    if ("stringValue" in val) return val.stringValue;
+    if ("booleanValue" in val) return val.booleanValue;
+    if ("integerValue" in val) return Number(val.integerValue);
+    if ("doubleValue" in val) return Number(val.doubleValue);
+    if ("timestampValue" in val) return val.timestampValue;
+    if ("arrayValue" in val) {
+      return (val.arrayValue?.values || []).map((v: any) => fromFirestoreValue(v));
+    }
+    if ("mapValue" in val) return fromFirestoreFields(val.mapValue?.fields);
+    return null;
+  };
+
+  const fromFirestoreFields = (fields: any): any => {
+    const out: any = {};
+    for (const [k, v] of Object.entries(fields || {})) {
+      out[k] = fromFirestoreValue(v);
+    }
+    return out;
+  };
+
+  /** Lê um documento. Retorna null quando não existe. */
+  const getDocRest = async (path: string): Promise<any | null> => {
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(path), {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!r.ok) return null;
+    const data = await r.json().catch(() => null);
+    if (!data?.fields) return null;
+    return fromFirestoreFields(data.fields);
+  };
+
+  /** Cria um documento com ID automático. Retorna { id }. */
+  const createDocRest = async (collectionPath: string, data: any): Promise<{ id: string }> => {
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(collectionPath), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ fields: toFirestoreFields(cleanForFirestore(data)) }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore CREATE ${r.status}: ${detail.slice(0, 160)}`);
+    }
+    const created = await r.json().catch(() => null);
+    const name: string = created?.name || "";
+    return { id: name.split("/").pop() || "" };
+  };
+
+  /** Atualiza campos de um documento (merge via updateMask). */
+  const patchDocRest = async (path: string, data: any): Promise<void> => {
+    const clean = cleanForFirestore(data);
+    const masks = Object.keys(clean || {});
+    if (!masks.length) return;
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(path, masks), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ fields: toFirestoreFields(clean) }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore PATCH ${r.status}: ${detail.slice(0, 160)}`);
+    }
+  };
+
   return app;
+
 
 }
 
