@@ -1973,7 +1973,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       await updateDoc(leadRef, firestoreUpdate);
       setSelectedLead(prev => prev ? { ...prev, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : null);
       setLeads(prev => prev.map(l => l.id === selectedLead.id ? { ...l, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : l));
-      alert(newPaidState ? "Pagamento verificado e confirmado manualmente com sucesso!" : "Status de pagamento alterado para pendente.");
+      alert(newPaidState
+        ? `Pagamento ${metodo === "CARTAO" ? "no Cartão" : "no Pix"} confirmado! Comissão liberada para saque em ${new Date(dataLiberacaoSaqueIso).toLocaleDateString("pt-BR")} (${metodo === "CARTAO" ? "15 dias" : "48h"}).`
+        : "Status de pagamento alterado para pendente.");
     } catch (err) {
       console.error("Erro ao salvar baixa manual:", err);
       alert("Erro ao registrar confirmação manual no Firestore.");
