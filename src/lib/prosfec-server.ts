@@ -3393,7 +3393,34 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   };
 
+  /** Executa runQuery numa coleção. Retorna [{ id, data }]. */
+  const runQueryRest = async (collectionId: string, where?: any, limit?: number): Promise<any[]> => {
+    const idToken = await getServiceIdToken();
+    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents:runQuery`;
+    const structuredQuery: any = { from: [{ collectionId }] };
+    if (where) structuredQuery.where = where;
+    if (limit) structuredQuery.limit = limit;
+
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ structuredQuery }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore QUERY ${r.status}: ${detail.slice(0, 160)}`);
+    }
+    const rows = await r.json().catch(() => []);
+    return (Array.isArray(rows) ? rows : [])
+      .filter((row: any) => row?.document)
+      .map((row: any) => ({
+        id: String(row.document.name || "").split("/").pop(),
+        data: fromFirestoreFields(row.document.fields),
+      }));
+  };
+
   return app;
+
 
 
 }
