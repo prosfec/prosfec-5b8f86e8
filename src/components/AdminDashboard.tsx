@@ -1923,7 +1923,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
-  const toggleManualPaymentForSubEtapa = async (idx: number) => {
+  const toggleManualPaymentForSubEtapa = async (idx: number, metodo?: "PIX" | "CARTAO") => {
     if (!selectedLead) return;
 
     // Verificação de Integridade: Apenas leads no Passo 6 podem ter baixa manual nas sub-etapas
@@ -1936,12 +1936,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     const isPaid = (target as any)?.statusPagamento === "pago" || (target as any)?.pago === true;
     const newPaidState = !isPaid;
 
+    const now = new Date();
+    const dataPagamentoIso = now.toISOString();
+    // Trava de liberação da comissão: 48h para PIX, 15 dias corridos para Cartão
+    const dataLiberacaoSaqueIso = new Date(
+      now.getTime() + (metodo === "CARTAO" ? 15 * 24 * 60 * 60 * 1000 : 48 * 60 * 60 * 1000)
+    ).toISOString();
+
     const updated = [...editingSubEtapasPasso6];
     updated[idx] = {
       ...updated[idx],
       statusPagamento: newPaidState ? "pago" : "pendente",
-      formaPagamento: newPaidState ? "manual_adm" : null,
-      dataPagamento: newPaidState ? new Date().toISOString() : null,
+      formaPagamento: newPaidState ? (metodo || "PIX") : null,
+      dataPagamento: newPaidState ? dataPagamentoIso : null,
+      dataLiberacaoSaque: newPaidState ? dataLiberacaoSaqueIso : null,
+      origemConfirmacao: newPaidState ? "manual_adm" : null,
       pago: newPaidState,
       concluida: newPaidState ? true : updated[idx].concluida
     } as any;
@@ -1964,7 +1973,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       await updateDoc(leadRef, firestoreUpdate);
       setSelectedLead(prev => prev ? { ...prev, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : null);
       setLeads(prev => prev.map(l => l.id === selectedLead.id ? { ...l, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : l));
-      alert(newPaidState ? "Pagamento verificado e confirmado manualmente com sucesso!" : "Status de pagamento alterado para pendente.");
+      alert(newPaidState
+        ? `Pagamento ${metodo === "CARTAO" ? "no Cartão" : "no Pix"} confirmado! Comissão liberada para saque em ${new Date(dataLiberacaoSaqueIso).toLocaleDateString("pt-BR")} (${metodo === "CARTAO" ? "15 dias" : "48h"}).`
+        : "Status de pagamento alterado para pendente.");
     } catch (err) {
       console.error("Erro ao salvar baixa manual:", err);
       alert("Erro ao registrar confirmação manual no Firestore.");
@@ -6574,12 +6585,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                       )}
                                       <button
                                         type="button"
-                                        onClick={() => toggleManualPaymentForSubEtapa(idx)}
+                                        onClick={() => toggleManualPaymentForSubEtapa(idx, "PIX")}
                                         className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold rounded-lg shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                                        title="Confirmar recebimento do pagamento manual via PIX/Transferência para esta sub-etapa"
+                                        title="Confirmar recebimento via Pix — libera a comissão em 48h"
                                       >
                                         <CheckCircle className="w-3.5 h-3.5 text-white" />
-                                        <span>Confirmar Pagamento Manual</span>
+                                        <span>Confirmar Pagamento no Pix</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleManualPaymentForSubEtapa(idx, "CARTAO")}
+                                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-extrabold rounded-lg shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                        title="Confirmar recebimento via Cartão de Crédito — libera a comissão em 15 dias corridos"
+                                      >
+                                        <CheckCircle className="w-3.5 h-3.5 text-white" />
+                                        <span>Confirmar Pagamento no Cartão</span>
                                       </button>
                                     </div>
                                   );
