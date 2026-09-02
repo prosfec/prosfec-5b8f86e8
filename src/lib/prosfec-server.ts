@@ -1105,29 +1105,26 @@ export function createExpressApp() {
         });
       }
 
-      // 3.5 Deduct balance atomically in Firestore using runTransaction (reads saldoGeral, validates sufficiency, and updates saldoGeral)
+      // 3.5 Deduct balance in Firestore via REST (relê o saldo antes de debitar)
       let newBalance = currentBalance;
-      if (partnerSnap.exists() && !isAdminUser) {
+      if (partnerExists && !isAdminUser) {
         try {
-          await runTransaction(db, async (transaction) => {
-            const freshPartnerSnap = await transaction.get(partnerRef);
-            if (!freshPartnerSnap.exists()) {
-              throw new Error("Parceiro não encontrado durante a transação de débito.");
-            }
-            const freshData = freshPartnerSnap.data() || {};
-            const freshBalance = freshData.saldoGeral !== undefined ? Number(freshData.saldoGeral) : 0.00;
+          const freshData: any = await getDocRest(`parceiros/${partnerId}`);
+          if (!freshData) {
+            throw new Error("Parceiro não encontrado durante o débito do saldo.");
+          }
+          const freshBalance = freshData.saldoGeral !== undefined && freshData.saldoGeral !== null
+            ? Number(freshData.saldoGeral)
+            : 0.00;
 
-            if (freshBalance < partnerPrice) {
-              const err = new Error(`Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${freshBalance.toFixed(2).replace(".", ",")}. Realize uma recarga via Pix para prosseguir.`);
-              (err as any).isInsufficientBalance = true;
-              throw err;
-            }
+          if (freshBalance < partnerPrice) {
+            const err: any = new Error(`Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${freshBalance.toFixed(2).replace(".", ",")}. Realize uma recarga via Pix para prosseguir.`);
+            err.isInsufficientBalance = true;
+            throw err;
+          }
 
-            newBalance = Number((freshBalance - partnerPrice).toFixed(2));
-            transaction.update(partnerRef, {
-              saldoGeral: newBalance
-            });
-          });
+          newBalance = Number((freshBalance - partnerPrice).toFixed(2));
+          await patchDocRest(`parceiros/${partnerId}`, { saldoGeral: newBalance });
         } catch (transErr: any) {
           if (transErr.isInsufficientBalance) {
             return res.status(400).json({ error: transErr.message });
@@ -1153,12 +1150,12 @@ export function createExpressApp() {
         resultado: apiResult
       };
 
-      const consultaRef = await addDoc(collection(db, "consultas_realizadas"), consultaDoc);
+      const consultaRef = await createDocRest("consultas_realizadas", consultaDoc);
 
       // Create local notification for the partner if not admin bypass
       if (!isAdminUser) {
         try {
-          await addDoc(collection(db, "notificacoes"), {
+          await createDocRest("notificacoes", {
             recipientId: partnerId,
             recipientType: "parceiro",
             titulo: "Consulta Realizada (RedeBe 360)",
@@ -1175,6 +1172,7 @@ export function createExpressApp() {
       return res.json({
         success: true,
         consulta_id: consultaRef.id,
+
         newBalance: newBalance,
         produto_nome: produtoNome,
         data: apiResult,
