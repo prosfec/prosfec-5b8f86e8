@@ -1020,17 +1020,17 @@ export function createExpressApp() {
 
       console.log(`Executing RedeBe credit query for partner ${partnerId} on document ${maskDoc(cleanDoc)} (isAdminBypass=${!!isAdminBypass})...`);
 
-      // 3.1 Retrieve partner from Firestore to check balance
-      const partnerRef = doc(db, "parceiros", partnerId);
-      const partnerSnap = await getDoc(partnerRef);
+      // 3.1 Retrieve partner from Firestore to check balance (via REST/fetch)
+      const partnerData: any = await getDocRest(`parceiros/${partnerId}`);
+      const partnerExists = !!partnerData;
 
       let currentBalance = 0;
-      let partnerData: any = null;
       const isAdminUser = partnerId === "admin" || partnerId === "mesa_operacoes" || !!isAdminBypass;
 
-      if (partnerSnap.exists()) {
-        partnerData = partnerSnap.data();
-        currentBalance = partnerData?.saldoGeral !== undefined ? Number(partnerData.saldoGeral) : 0.00;
+      if (partnerExists) {
+        currentBalance = partnerData?.saldoGeral !== undefined && partnerData?.saldoGeral !== null
+          ? Number(partnerData.saldoGeral)
+          : 0.00;
       } else if (isAdminUser) {
         currentBalance = 999999;
       } else {
@@ -1040,13 +1040,14 @@ export function createExpressApp() {
       // 3.2 Determine price (Base R$ 49.90 + 40% Lucro Prosfec = R$ 69.86)
       let customBasePrices: Record<string, number> = {};
       try {
-        const configSnap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
-        if (configSnap.exists()) {
-          customBasePrices = configSnap.data().precos || {};
+        const configData: any = await getDocRest("configuracoes/precos_consultas");
+        if (configData) {
+          customBasePrices = configData.precos || {};
         }
       } catch (err) {
         console.warn("Could not load custom base prices from config:", err);
       }
+
 
       const catalogItem = FALLBACK_CATALOG.find((item: any) => item.code === codeToUse) || FALLBACK_CATALOG[0];
       let origPrice = catalogItem.price;
@@ -1104,29 +1105,26 @@ export function createExpressApp() {
         });
       }
 
-      // 3.5 Deduct balance atomically in Firestore using runTransaction (reads saldoGeral, validates sufficiency, and updates saldoGeral)
+      // 3.5 Deduct balance in Firestore via REST (relê o saldo antes de debitar)
       let newBalance = currentBalance;
-      if (partnerSnap.exists() && !isAdminUser) {
+      if (partnerExists && !isAdminUser) {
         try {
-          await runTransaction(db, async (transaction) => {
-            const freshPartnerSnap = await transaction.get(partnerRef);
-            if (!freshPartnerSnap.exists()) {
-              throw new Error("Parceiro não encontrado durante a transação de débito.");
-            }
-            const freshData = freshPartnerSnap.data() || {};
-            const freshBalance = freshData.saldoGeral !== undefined ? Number(freshData.saldoGeral) : 0.00;
+          const freshData: any = await getDocRest(`parceiros/${partnerId}`);
+          if (!freshData) {
+            throw new Error("Parceiro não encontrado durante o débito do saldo.");
+          }
+          const freshBalance = freshData.saldoGeral !== undefined && freshData.saldoGeral !== null
+            ? Number(freshData.saldoGeral)
+            : 0.00;
 
-            if (freshBalance < partnerPrice) {
-              const err = new Error(`Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${freshBalance.toFixed(2).replace(".", ",")}. Realize uma recarga via Pix para prosseguir.`);
-              (err as any).isInsufficientBalance = true;
-              throw err;
-            }
+          if (freshBalance < partnerPrice) {
+            const err: any = new Error(`Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${freshBalance.toFixed(2).replace(".", ",")}. Realize uma recarga via Pix para prosseguir.`);
+            err.isInsufficientBalance = true;
+            throw err;
+          }
 
-            newBalance = Number((freshBalance - partnerPrice).toFixed(2));
-            transaction.update(partnerRef, {
-              saldoGeral: newBalance
-            });
-          });
+          newBalance = Number((freshBalance - partnerPrice).toFixed(2));
+          await patchDocRest(`parceiros/${partnerId}`, { saldoGeral: newBalance });
         } catch (transErr: any) {
           if (transErr.isInsufficientBalance) {
             return res.status(400).json({ error: transErr.message });
@@ -1152,12 +1150,12 @@ export function createExpressApp() {
         resultado: apiResult
       };
 
-      const consultaRef = await addDoc(collection(db, "consultas_realizadas"), consultaDoc);
+      const consultaRef = await createDocRest("consultas_realizadas", consultaDoc);
 
       // Create local notification for the partner if not admin bypass
       if (!isAdminUser) {
         try {
-          await addDoc(collection(db, "notificacoes"), {
+          await createDocRest("notificacoes", {
             recipientId: partnerId,
             recipientType: "parceiro",
             titulo: "Consulta Realizada (RedeBe 360)",
@@ -1174,6 +1172,7 @@ export function createExpressApp() {
       return res.json({
         success: true,
         consulta_id: consultaRef.id,
+
         newBalance: newBalance,
         produto_nome: produtoNome,
         data: apiResult,
@@ -1396,15 +1395,13 @@ export function createExpressApp() {
 
       console.log(`Generating PROSFEC IA Diagnosis for lead: ${leadId}...`);
 
-      // 1. Fetch Lead data
-      const leadRef = doc(db, "leads", leadId);
-      const leadSnap = await getDoc(leadRef);
+      // 1. Fetch Lead data (via REST/fetch — SDK web depende de XMLHttpRequest)
+      const leadData: any = await getDocRest(`leads/${leadId}`);
 
-      if (!leadSnap.exists()) {
+      if (!leadData) {
         return res.status(404).json({ error: "Lead não encontrado no banco de dados." });
       }
 
-      const leadData = leadSnap.data();
 
       // Check generation count limit (Initial generation = 1, Refazer = 2 max)
       const previousGeracoesCount = Number(
@@ -1437,21 +1434,26 @@ export function createExpressApp() {
       let matchingConsultas: any[] = [];
       if (docList.length > 0) {
         try {
-          const consultasRef = collection(db, "consultas_realizadas");
-          const q = query(consultasRef, where("documento", "in", docList));
-          const querySnap = await getDocs(q);
-          
-          matchingConsultas = querySnap.docs.map(doc => ({
-            id: doc.id,
-            produto_nome: doc.data().produto_nome,
-            produto_code: doc.data().produto_code,
-            dataConsulta: doc.data().dataConsulta,
-            resultado: doc.data().resultado
+          const rows = await runQueryRest("consultas_realizadas", {
+            fieldFilter: {
+              field: { fieldPath: "documento" },
+              op: "IN",
+              value: { arrayValue: { values: docList.map((d) => ({ stringValue: d })) } }
+            }
+          });
+
+          matchingConsultas = rows.map((r: any) => ({
+            id: r.id,
+            produto_nome: r.data.produto_nome,
+            produto_code: r.data.produto_code,
+            dataConsulta: r.data.dataConsulta,
+            resultado: r.data.resultado
           }));
         } catch (dbErr) {
           console.warn("Could not load matching consultations from Firestore:", dbErr);
         }
       }
+
 
       // Compile summaries of consultations
       const consultationsSummary = matchingConsultas.map(c => {
@@ -1845,13 +1847,14 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
       const sanitizedSubEtapas = cleanForFirestore(customSubEtapas);
       const sanitizedServicos = cleanForFirestore(customServicos);
 
-      await updateDoc(leadRef, cleanForFirestore({
+      await patchDocRest(`leads/${leadId}`, cleanForFirestore({
         diagnosticoPROSFEC: currentDiagnostico,
         diagnosticoGeracoesCount: newGeracoesCount,
         subEtapasPasso6: sanitizedSubEtapas,
         servicosRecomendados: sanitizedServicos,
         etapa: nextEtapaVal
       }));
+
 
       console.log(`PROSFEC IA Diagnosis, Services & Step 6 Sub-etapas successfully saved and lead ${leadId} advanced to stage ${nextEtapaVal}`);
 
@@ -3284,7 +3287,141 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   };
 
+  // -------------------------------------------------------------------
+  // Cliente Firestore genérico via REST + fetch.
+  // O SDK web (firebase/firestore) depende de XMLHttpRequest, que não
+  // existe no runtime Edge/Worker do servidor ("ReferenceError:
+  // XMLHttpRequest is not defined"). Estes helpers usam apenas fetch.
+  // -------------------------------------------------------------------
+  const toFirestoreValue = (val: any): any => {
+    if (val === null || val === undefined) return { nullValue: null };
+    if (typeof val === "string") return { stringValue: val };
+    if (typeof val === "boolean") return { booleanValue: val };
+    if (typeof val === "number") {
+      return Number.isInteger(val)
+        ? { integerValue: String(val) }
+        : { doubleValue: val };
+    }
+    if (val instanceof Date) return { timestampValue: val.toISOString() };
+    if (Array.isArray(val)) {
+      return { arrayValue: { values: val.map((v) => toFirestoreValue(v)) } };
+    }
+    if (typeof val === "object") {
+      const fields: any = {};
+      for (const [k, v] of Object.entries(val)) {
+        if (v !== undefined) fields[k] = toFirestoreValue(v);
+      }
+      return { mapValue: { fields } };
+    }
+    return { stringValue: String(val) };
+  };
+
+  const toFirestoreFields = (obj: any): any => {
+    const fields: any = {};
+    for (const [k, v] of Object.entries(obj || {})) {
+      if (v !== undefined) fields[k] = toFirestoreValue(v);
+    }
+    return fields;
+  };
+
+  const fromFirestoreValue = (val: any): any => {
+    if (!val || typeof val !== "object") return null;
+    if ("nullValue" in val) return null;
+    if ("stringValue" in val) return val.stringValue;
+    if ("booleanValue" in val) return val.booleanValue;
+    if ("integerValue" in val) return Number(val.integerValue);
+    if ("doubleValue" in val) return Number(val.doubleValue);
+    if ("timestampValue" in val) return val.timestampValue;
+    if ("arrayValue" in val) {
+      return (val.arrayValue?.values || []).map((v: any) => fromFirestoreValue(v));
+    }
+    if ("mapValue" in val) return fromFirestoreFields(val.mapValue?.fields);
+    return null;
+  };
+
+  const fromFirestoreFields = (fields: any): any => {
+    const out: any = {};
+    for (const [k, v] of Object.entries(fields || {})) {
+      out[k] = fromFirestoreValue(v);
+    }
+    return out;
+  };
+
+  /** Lê um documento. Retorna null quando não existe. */
+  const getDocRest = async (path: string): Promise<any | null> => {
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(path), {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!r.ok) return null;
+    const data = await r.json().catch(() => null);
+    if (!data?.fields) return null;
+    return fromFirestoreFields(data.fields);
+  };
+
+  /** Cria um documento com ID automático. Retorna { id }. */
+  const createDocRest = async (collectionPath: string, data: any): Promise<{ id: string }> => {
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(collectionPath), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ fields: toFirestoreFields(cleanForFirestore(data)) }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore CREATE ${r.status}: ${detail.slice(0, 160)}`);
+    }
+    const created = await r.json().catch(() => null);
+    const name: string = created?.name || "";
+    return { id: name.split("/").pop() || "" };
+  };
+
+  /** Atualiza campos de um documento (merge via updateMask). */
+  const patchDocRest = async (path: string, data: any): Promise<void> => {
+    const clean = cleanForFirestore(data);
+    const masks = Object.keys(clean || {});
+    if (!masks.length) return;
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(path, masks), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ fields: toFirestoreFields(clean) }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore PATCH ${r.status}: ${detail.slice(0, 160)}`);
+    }
+  };
+
+  /** Executa runQuery numa coleção. Retorna [{ id, data }]. */
+  const runQueryRest = async (collectionId: string, where?: any, limit?: number): Promise<any[]> => {
+    const idToken = await getServiceIdToken();
+    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents:runQuery`;
+    const structuredQuery: any = { from: [{ collectionId }] };
+    if (where) structuredQuery.where = where;
+    if (limit) structuredQuery.limit = limit;
+
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ structuredQuery }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore QUERY ${r.status}: ${detail.slice(0, 160)}`);
+    }
+    const rows = await r.json().catch(() => []);
+    return (Array.isArray(rows) ? rows : [])
+      .filter((row: any) => row?.document)
+      .map((row: any) => ({
+        id: String(row.document.name || "").split("/").pop(),
+        data: fromFirestoreFields(row.document.fields),
+      }));
+  };
+
   return app;
+
+
 
 }
 
