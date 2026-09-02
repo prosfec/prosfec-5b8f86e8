@@ -1847,13 +1847,14 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
       const sanitizedSubEtapas = cleanForFirestore(customSubEtapas);
       const sanitizedServicos = cleanForFirestore(customServicos);
 
-      await updateDoc(leadRef, cleanForFirestore({
+      await patchDocRest(`leads/${leadId}`, cleanForFirestore({
         diagnosticoPROSFEC: currentDiagnostico,
         diagnosticoGeracoesCount: newGeracoesCount,
         subEtapasPasso6: sanitizedSubEtapas,
         servicosRecomendados: sanitizedServicos,
         etapa: nextEtapaVal
       }));
+
 
       console.log(`PROSFEC IA Diagnosis, Services & Step 6 Sub-etapas successfully saved and lead ${leadId} advanced to stage ${nextEtapaVal}`);
 
