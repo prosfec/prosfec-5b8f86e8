@@ -2498,29 +2498,29 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               {/* TAB 1: Company details */}
           {workspaceTab === "details" && (
             <form onSubmit={handleSaveWorkspaceCompanyDetails} className="space-y-6">
-              <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                 <h4 className="font-display font-extrabold text-sm text-[#0A3D2E] uppercase tracking-wider border-b border-slate-100 pb-2">
                   📋 Editar Dados Cadastrais da Empresa
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Razão Social *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Razão Social *</label>
                     <input
                       type="text"
                       value={editRazaoSocial}
                       onChange={(e) => setEditRazaoSocial(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
                       required
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">CNPJ *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CNPJ *</label>
                     <div className="relative">
                       <input
                         type="text"
                         value={editCnpj}
                         onChange={(e) => setEditCnpj(formatCNPJ(e.target.value))}
-                        className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E] pr-10"
+                        className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 focus:bg-white focus:outline-hidden focus:border-[#0A3D2E] pr-10"
                         required
                       />
                       {isConsultingCnpj && (
@@ -2536,51 +2536,51 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Nome do Contato *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Nome do Contato *</label>
                     <input
                       type="text"
                       value={editNome}
                       onChange={(e) => setEditNome(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
                       required
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">WhatsApp *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">WhatsApp *</label>
                     <input
                       type="text"
                       value={editWhatsapp}
                       onChange={(e) => setEditWhatsapp(formatPhone(e.target.value))}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
                       required
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">E-mail *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">E-mail *</label>
                     <input
                       type="email"
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
                       required
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Ramo de Atividade *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Ramo de Atividade *</label>
                     <input
                       type="text"
                       value={editRamo}
                       onChange={(e) => setEditRamo(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
                       required
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Porte da Empresa *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Porte da Empresa *</label>
                     <select
                       value={editPorte}
                       onChange={(e) => setEditPorte(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 focus:bg-white"
                     >
                       <option value="MEI">MEI (Microfaturamento Individual)</option>
                       <option value="ME">ME (Microempresa)</option>
@@ -2589,11 +2589,11 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Banco de Preferência *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Banco de Preferência *</label>
                     <select
                       value={editBancoPrincipal}
                       onChange={(e) => setEditBancoPrincipal(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 focus:bg-white"
                     >
                       <option value="Banco do Brasil">Banco do Brasil</option>
                       <option value="Caixa Econômica">Caixa Econômica Federal</option>
@@ -2623,7 +2623,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   {editMenosDe12Meses ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-500 block">Capital Social (R$) *</label>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Capital Social (R$) *</label>
                         <input
                           type="number"
                           value={editCapitalSocial}
@@ -2633,7 +2633,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-500 block">Média de Receita Mensal (R$) *</label>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Média de Receita Mensal (R$) *</label>
                         <input
                           type="number"
                           value={editMediaReceitaMensal}
@@ -2645,7 +2645,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-500 block">Faturamento Anual Declarado (R$) *</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Faturamento Anual Declarado (R$) *</label>
                       <input
                         type="number"
                         value={editFaturamento}
@@ -2658,14 +2658,14 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                 <h4 className="font-display font-extrabold text-sm text-[#0A3D2E] uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
                   <span>💎 Análise de Elegibilidade e Enquadramento ({advCreditLineCode})</span>
                   <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-0.5 rounded-full font-black font-mono">
                     {advCreditLineCode}
                   </span>
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
                     <span className="text-[10px] text-slate-400 uppercase font-black">Previsão de Crédito Máximo</span>
                     <div className="text-lg font-black text-[#0A3D2E]">
@@ -2718,7 +2718,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
         {/* TAB 4: Contratos e Assinatura Eletrônica */}
         {workspaceTab === "contrato" && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
               <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h4 className="font-display font-extrabold text-sm text-[#0A3D2E] uppercase tracking-wider flex items-center gap-1.5">
@@ -2798,7 +2798,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
 
               {lead.contratoAssinado ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
                   <div className="space-y-1.5 text-slate-700">
                     <p><strong className="text-slate-900">Signatário:</strong> {lead.contratoAssinadoNome}</p>
                     <p><strong className="text-slate-900">CPF:</strong> {lead.contratoAssinadoCpf}</p>
@@ -2864,7 +2864,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
         {/* TAB 5: Credenciais (Senhas GOV, Serasa e Certificado Digital A1) */}
         {workspaceTab === "credenciais" && (
           <form onSubmit={handleSaveCredenciais} className="space-y-6">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
               <h4 className="font-display font-extrabold text-sm text-[#0A3D2E] uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
                 <Key className="w-5 h-5 text-amber-500" />
                 Passo 5: Recolhimento de Senha GOV, Serasa e Certificado Digital A1
@@ -2880,23 +2880,23 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   </span>
                   <div className="space-y-2 mt-2">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-500 block">CPF / Usuário Gov.br</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CPF / Usuário Gov.br</label>
                       <input
                         type="text"
                         value={govbrLogin}
                         onChange={(e) => setGovbrLogin(e.target.value)}
                         placeholder="000.000.000-00"
-                        className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                        className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-500 block">Senha Gov.br</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Senha Gov.br</label>
                       <input
                         type="text"
                         value={govbrSenha}
                         onChange={(e) => setGovbrSenha(e.target.value)}
                         placeholder="Senha gov.br"
-                        className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                        className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                       />
                     </div>
                   </div>
@@ -2909,23 +2909,23 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   </span>
                   <div className="space-y-2 mt-2">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-500 block">CPF / CNPJ / Usuário SERASA</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CPF / CNPJ / Usuário SERASA</label>
                       <input
                         type="text"
                         value={serasaLogin}
                         onChange={(e) => setSerasaLogin(e.target.value)}
                         placeholder="Login do Serasa"
-                        className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                        className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-500 block">Senha SERASA</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Senha SERASA</label>
                       <input
                         type="text"
                         value={serasaSenha}
                         onChange={(e) => setSerasaSenha(e.target.value)}
                         placeholder="Senha serasa"
-                        className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                        className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                       />
                     </div>
                   </div>
@@ -2938,18 +2938,18 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-500 block">Senha do Certificado A1</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Senha do Certificado A1</label>
                       <input
                         type="text"
                         value={certificadoSenha}
                         onChange={(e) => setCertificadoSenha(e.target.value)}
                         placeholder="Senha do certificado"
-                        className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                        className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                       />
                     </div>
                     
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-500 block">Arquivo do Certificado Digital (.pfx / .p12)</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Arquivo do Certificado Digital (.pfx / .p12)</label>
                       <div className="relative flex items-center gap-2">
                         <input
                           type="file"
@@ -3008,39 +3008,39 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
           {/* TAB 2: Socios cadastral */}
           {workspaceTab === "socios" && (
             <form onSubmit={handleSaveWorkspaceSocios} className="space-y-6">
-              <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                 <h4 className="font-display font-extrabold text-sm text-[#0A3D2E] uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
                   <User className="w-4 h-4" />
                   1. Sócio Administrador Principal
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Nome Completo *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Nome Completo *</label>
                     <input
                       type="text"
                       value={editSocio1Nome}
                       onChange={(e) => setEditSocio1Nome(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                       required
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">CPF *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CPF *</label>
                     <input
                       type="text"
                       value={editSocio1Cpf}
                       onChange={(e) => setEditSocio1Cpf(formatCPF(e.target.value))}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                       required
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Data de Nascimento *</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Data de Nascimento *</label>
                     <input
                       type="date"
                       value={editSocio1Birth}
                       onChange={(e) => setEditSocio1Birth(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                       required
                     />
                   </div>
@@ -3048,7 +3048,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               </div>
 
               {/* Socio 2 */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h4 className="font-display font-extrabold text-sm text-[#0A3D2E] uppercase tracking-wider flex items-center gap-1.5">
                     <Users className="w-4 h-4" />
@@ -3066,34 +3066,34 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 </div>
 
                 {editHasSocio2 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-500 block">Nome Completo *</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Nome Completo *</label>
                       <input
                         type="text"
                         value={editSocio2Nome}
                         onChange={(e) => setEditSocio2Nome(e.target.value)}
-                        className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                        className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                         required={editHasSocio2}
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-500 block">CPF *</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CPF *</label>
                       <input
                         type="text"
                         value={editSocio2Cpf}
                         onChange={(e) => setEditSocio2Cpf(formatCPF(e.target.value))}
-                        className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                        className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                         required={editHasSocio2}
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-500 block">Data de Nascimento *</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Data de Nascimento *</label>
                       <input
                         type="date"
                         value={editSocio2Birth}
                         onChange={(e) => setEditSocio2Birth(e.target.value)}
-                        className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                        className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                         required={editHasSocio2}
                       />
                     </div>
@@ -3393,7 +3393,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               </div>
 
               {/* Section 2: PROSFEC IA DIAGNOSTIC ENGINE */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                 <div className="flex flex-col gap-3 border-b border-slate-100 pb-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>

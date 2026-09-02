@@ -459,25 +459,25 @@ export default function LeadRegisterForm({
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">Razão Social *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Razão Social *</label>
               <input
                 type="text"
                 placeholder="Razão Social Ltda"
                 value={leadRazaoSocial}
                 onChange={(e) => setLeadRazaoSocial(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">CNPJ *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CNPJ *</label>
               <div className="relative">
                 <input
                   type="text"
                   placeholder="00.000.000/0001-00"
                   value={leadCnpj}
                   onChange={(e) => setLeadCnpj(formatCNPJ(e.target.value))}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E] pr-10"
+                  className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 pr-10"
                   required
                 />
                 {isConsultingCnpj && (
@@ -493,55 +493,55 @@ export default function LeadRegisterForm({
               )}
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">Nome do Solicitante / Cliente *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Nome do Solicitante / Cliente *</label>
               <input
                 type="text"
                 placeholder="Nome Completo"
                 value={leadNome}
                 onChange={(e) => setLeadNome(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">WhatsApp de Contato *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">WhatsApp de Contato *</label>
               <input
                 type="tel"
                 placeholder="(11) 99999-9999"
                 value={leadWhatsapp}
                 onChange={(e) => setLeadWhatsapp(formatPhone(e.target.value))}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">E-mail *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">E-mail *</label>
               <input
                 type="email"
                 placeholder="cliente@email.com"
                 value={leadEmail}
                 onChange={(e) => setLeadEmail(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">Ramo de Atividade *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Ramo de Atividade *</label>
               <input
                 type="text"
                 placeholder="Ex: Comércio, Tecnologia, Serviços"
                 value={leadRamo}
                 onChange={(e) => setLeadRamo(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">Porte da Empresa *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Porte da Empresa *</label>
               <select
                 value={leadPorte}
                 onChange={(e) => setLeadPorte(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               >
                 <option value="MEI">MEI (Microempreendedor Individual)</option>
                 <option value="ME">ME (Microempresa)</option>
@@ -550,11 +550,11 @@ export default function LeadRegisterForm({
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">Banco de Preferência *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Banco de Preferência *</label>
               <select
                 value={leadBancoPrincipal}
                 onChange={(e) => setLeadBancoPrincipal(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               >
                 <option value="Banco do Brasil">Banco do Brasil</option>
                 <option value="Caixa Econômica">Caixa Econômica Federal</option>
@@ -584,37 +584,37 @@ export default function LeadRegisterForm({
             {leadMenosDe12Meses ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 block">Capital Social Registrado (R$) *</label>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Capital Social Registrado (R$) *</label>
                   <input
                     type="number"
                     placeholder="Ex: 50000"
                     value={leadCapitalSocial}
                     onChange={(e) => setLeadCapitalSocial(e.target.value)}
-                    className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
+                    className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                     required={leadMenosDe12Meses}
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 block">Média de Faturamento Mensal (R$) *</label>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Média de Faturamento Mensal (R$) *</label>
                   <input
                     type="number"
                     placeholder="Ex: 15000"
                     value={leadMediaReceitaMensal}
                     onChange={(e) => setLeadMediaReceitaMensal(e.target.value)}
-                    className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
+                    className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                     required={leadMenosDe12Meses}
                   />
                 </div>
               </div>
             ) : (
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 block">Faturamento Anual Bruto Declarado (R$) *</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Faturamento Anual Bruto Declarado (R$) *</label>
                 <input
                   type="number"
                   placeholder="Ex: 240000"
                   value={leadFaturamento}
                   onChange={(e) => setLeadFaturamento(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
+                  className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                   required={!leadMenosDe12Meses}
                 />
               </div>
@@ -631,62 +631,62 @@ export default function LeadRegisterForm({
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 block">CEP</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CEP</label>
               <input
                 type="text"
                 placeholder="00000-000"
                 value={endCep}
                 onChange={(e) => setEndCep(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               />
             </div>
             <div className="md:col-span-2 space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 block">Logradouro / Rua</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Logradouro / Rua</label>
               <input
                 type="text"
                 placeholder="Rua, Avenida, etc."
                 value={endLogradouro}
                 onChange={(e) => setEndLogradouro(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 block">Número</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Número</label>
               <input
                 type="text"
                 placeholder="123"
                 value={endNumero}
                 onChange={(e) => setEndNumero(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 block">Bairro</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Bairro</label>
               <input
                 type="text"
                 placeholder="Centro"
                 value={endBairro}
                 onChange={(e) => setEndBairro(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 block">Cidade</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Cidade</label>
               <input
                 type="text"
                 placeholder="São Paulo"
                 value={endCidade}
                 onChange={(e) => setEndCidade(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 block">UF</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">UF</label>
               <select
                 value={endUf}
                 onChange={(e) => setEndUf(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               >
                 <option value="AC">AC</option><option value="AL">AL</option>
                 <option value="AM">AM</option><option value="AP">AP</option>
@@ -706,13 +706,13 @@ export default function LeadRegisterForm({
             </div>
 
             <div className="md:col-span-2 lg:col-span-3 space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 block">Complemento</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Complemento</label>
               <input
                 type="text"
                 placeholder="Sala 4, Bloco B"
                 value={endComplemento}
                 onChange={(e) => setEndComplemento(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               />
             </div>
           </div>
@@ -727,32 +727,32 @@ export default function LeadRegisterForm({
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">Nome Completo do Sócio</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Nome Completo do Sócio</label>
               <input
                 type="text"
                 placeholder="Nome conforme Receita"
                 value={socio1Nome}
                 onChange={(e) => setSocio1Nome(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">CPF do Sócio</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CPF do Sócio</label>
               <input
                 type="text"
                 placeholder="000.000.000-00"
                 value={socio1Cpf}
                 onChange={(e) => setSocio1Cpf(formatCPF(e.target.value))}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 block">Data de Nascimento</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Data de Nascimento</label>
               <input
                 type="date"
                 value={socio1Birth}
                 onChange={(e) => setSocio1Birth(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
               />
             </div>
           </div>
@@ -781,34 +781,34 @@ export default function LeadRegisterForm({
           {hasSocio2 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 block">Nome Completo *</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Nome Completo *</label>
                 <input
                   type="text"
                   placeholder="Nome do segundo sócio"
                   value={socio2Nome}
                   onChange={(e) => setSocio2Nome(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                  className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                   required={hasSocio2}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 block">CPF *</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CPF *</label>
                 <input
                   type="text"
                   placeholder="000.000.000-00"
                   value={socio2Cpf}
                   onChange={(e) => setSocio2Cpf(formatCPF(e.target.value))}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                  className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                   required={hasSocio2}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 block">Data de Nascimento *</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Data de Nascimento *</label>
                 <input
                   type="date"
                   value={socio2Birth}
                   onChange={(e) => setSocio2Birth(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                  className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                   required={hasSocio2}
                 />
               </div>
@@ -834,23 +834,23 @@ export default function LeadRegisterForm({
                 </span>
                 <div className="space-y-2 mt-1">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">CPF / Usuário Gov.br</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CPF / Usuário Gov.br</label>
                     <input
                       type="text"
                       placeholder="000.000.000-00"
                       value={govbrLogin}
                       onChange={(e) => setGovbrLogin(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Senha Gov.br</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Senha Gov.br</label>
                     <input
                       type="text"
                       placeholder="Senha gov.br"
                       value={govbrSenha}
                       onChange={(e) => setGovbrSenha(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                     />
                   </div>
                 </div>
@@ -863,23 +863,23 @@ export default function LeadRegisterForm({
                 </span>
                 <div className="space-y-2 mt-1">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">CPF / CNPJ / Usuário SERASA</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CPF / CNPJ / Usuário SERASA</label>
                     <input
                       type="text"
                       placeholder="Login SERASA"
                       value={serasaLogin}
                       onChange={(e) => setSerasaLogin(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Senha SERASA</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Senha SERASA</label>
                     <input
                       type="text"
                       placeholder="Senha SERASA"
                       value={serasaSenha}
                       onChange={(e) => setSerasaSenha(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                     />
                   </div>
                 </div>
@@ -892,18 +892,18 @@ export default function LeadRegisterForm({
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Senha do Certificado A1</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Senha do Certificado A1</label>
                     <input
                       type="text"
                       placeholder="Senha do certificado"
                       value={certificadoSenha}
                       onChange={(e) => setCertificadoSenha(e.target.value)}
-                      className="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:border-[#0A3D2E]"
+                      className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 block">Arquivo do Certificado Digital (.pfx / .p12)</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Arquivo do Certificado Digital (.pfx / .p12)</label>
                     <div className="relative flex items-center gap-2">
                       <input
                         type="file"
