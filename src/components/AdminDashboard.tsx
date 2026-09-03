@@ -5462,25 +5462,25 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               className={`flex flex-col ${isAdmin ? "items-start" : "items-end"}`}
                             >
                               <div
-                                className={`max-w-[88%] p-3.5 rounded-2xl text-xs space-y-1.5 shadow-sm ${
+                                className={`max-w-[88%] p-3.5 rounded-xl text-xs space-y-1.5 shadow-sm border ${
                                   isAdmin
-                                    ? "bg-amber-500/15 border border-amber-500/30 text-amber-100 rounded-tl-xs"
-                                    : "bg-emerald-500/15 border border-emerald-500/30 text-emerald-100 rounded-tr-xs"
+                                    ? "bg-white border-slate-200 text-slate-900 rounded-tl-xs"
+                                    : "bg-emerald-50 border-emerald-100 text-slate-900 rounded-tr-xs"
                                 }`}
                               >
-                                <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-1">
-                                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
-                                    isAdmin ? "bg-amber-500/30 text-amber-300" : "bg-emerald-500/30 text-emerald-300"
+                                <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 pb-1">
+                                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                                    isAdmin ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
                                   }`}>
-                                    {isAdmin ? "🏛️ Mesa de Operações" : `👤 ${item.nomeAutor || "Parceiro"}`}
+                                    {isAdmin ? "Mesa de Operações" : `${item.nomeAutor || "Parceiro"}`}
                                   </span>
                                   {item.data && (
-                                    <span className="text-[9px] text-slate-400 font-mono">
+                                    <span className="text-[10px] text-slate-400 font-mono">
                                       {new Date(item.data).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
                                     </span>
                                   )}
                                 </div>
-                                <p className="font-medium leading-relaxed whitespace-pre-wrap text-slate-100">
+                                <p className="font-medium leading-relaxed whitespace-pre-wrap text-slate-700">
                                   {item.mensagem}
                                 </p>
                               </div>
@@ -5489,17 +5489,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         })
                       ) : selectedLead.pendencias?.resposta ? (
                         <div className="flex flex-col items-end">
-                          <div className="max-w-[88%] bg-emerald-500/15 border border-emerald-500/30 p-3.5 rounded-2xl rounded-tr-xs text-xs text-emerald-100 space-y-1">
-                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/30 text-emerald-300">
-                              👤 Resposta do Parceiro
+                          <div className="max-w-[88%] bg-emerald-50 border border-emerald-100 p-3.5 rounded-xl rounded-tr-xs text-xs space-y-1.5 shadow-sm">
+                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                              Resposta do Parceiro
                             </span>
-                            <p className="font-medium leading-relaxed whitespace-pre-wrap text-slate-100">
+                            <p className="font-medium leading-relaxed whitespace-pre-wrap text-slate-700">
                               {selectedLead.pendencias.resposta}
                             </p>
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-6 text-slate-500 text-xs font-semibold italic">
+                        <div className="text-center py-6 text-slate-400 text-xs font-medium">
                           Nenhuma mensagem registrada. Digite uma instrução abaixo para iniciar o chat com o parceiro.
                         </div>
                       )}
