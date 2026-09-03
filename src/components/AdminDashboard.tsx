@@ -5547,38 +5547,38 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </div>
 
               {/* Painel Financeiro e Comissões do Lead */}
-              <div className="bg-[#052E22]/5 border border-emerald-500/20 p-5 rounded-2xl space-y-4 text-left">
-                <div className="flex items-center gap-2 border-b border-emerald-500/10 pb-2">
-                  <Coins className="w-5 h-5 text-[#0A3D2E]" />
-                  <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider font-display">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden text-left">
+                <div className="flex items-center gap-2 border-b border-slate-200 bg-emerald-50/40 px-4 py-3">
+                  <Coins className="w-4 h-4 text-[#0A3D2E]" />
+                  <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider font-display">
                     Painel Financeiro &amp; Controle de Comissão
                   </h4>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                   {/* Campo de Valor Real Aprovado & Controles de Análise */}
                   <div className="space-y-3">
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs text-slate-700 font-black uppercase block">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
                           Crédito Real Aprovado (R$)
                         </label>
                         {selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado" ? (
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700">
                             Crédito Recusado
                           </span>
                         ) : (selectedLead.valorAprovado && selectedLead.valorAprovado > 0) ? (
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
                             Aprovado: {formatCurrencyBRL(selectedLead.valorAprovado)}
                           </span>
                         ) : (
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                             Em Análise Bancária
                           </span>
                         )}
                       </div>
                       <div className="relative">
-                        <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">R$</span>
+                        <span className="absolute left-3 top-2.5 text-xs font-semibold text-slate-400">R$</span>
                         <input
                           type="number"
                           placeholder="0,00"
@@ -5587,16 +5587,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             const val = e.target.value === "" ? 0 : Number(e.target.value);
                             handleUpdateValorAprovado(selectedLead.id, val);
                           }}
-                          className="w-full text-xs font-black pl-8 pr-3 py-2 rounded-lg border border-slate-200 focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] focus:outline-hidden"
+                          className="w-full text-sm font-semibold text-slate-900 pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-slate-50/50 transition-all focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         />
                       </div>
-                      <span className="text-[10px] text-slate-400 block">
+                      <span className="text-xs text-slate-400 block">
                         *Preencha o valor liberado pelos bancos parceiros na Etapa 7.
                       </span>
                     </div>
 
                     {/* Botões de Ação Rápida: Recusado / Aprovado / Pagamento do Serviço */}
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/60">
+                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200">
                       {/* Botão de Crédito Recusado */}
                       <button
                         type="button"
