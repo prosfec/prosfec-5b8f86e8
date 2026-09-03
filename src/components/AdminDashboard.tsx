@@ -5414,27 +5414,27 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </div>
 
               {/* Controle de Pendências e Alertas para o Parceiro */}
-              <div className="bg-amber-50/50 border border-amber-300 p-5 rounded-2xl space-y-4 text-left">
-                <div className="flex items-center gap-2 border-b border-amber-500/20 pb-2">
-                  <AlertTriangle className="w-5 h-5 text-amber-700" />
-                  <h4 className="text-sm font-black text-amber-950 uppercase tracking-wider font-display">
-                    💬 Chat de Pendências &amp; Atendimento (Mesa de Operações)
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden text-left">
+                <div className="flex items-center gap-2 border-b border-slate-200 bg-amber-50/50 px-4 py-3">
+                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider font-display">
+                    Chat de Pendências &amp; Atendimento (Mesa de Operações)
                   </h4>
                 </div>
 
-                <div className="space-y-3">
-                  <p className="text-xs text-slate-600 leading-relaxed font-bold">
+                <div className="space-y-3 p-4">
+                  <p className="text-xs text-slate-500 leading-relaxed font-medium">
                     Troque mensagens diretamente com o parceiro deste lead. Cada orientação enviada fica registrada no histórico em tempo real.
                   </p>
 
                   {/* Histórico estilo Chat de Conversa */}
-                  <div className="bg-slate-900/90 text-white p-4 rounded-2xl border border-slate-800 space-y-3 text-left shadow-inner">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                      <span className="text-[11px] font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
-                        💬 Linha do Tempo da Conversa
+                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3 text-left">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        Linha do Tempo da Conversa
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] bg-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded-full border border-slate-700">
+                        <span className="text-xs bg-white text-slate-600 font-bold px-2.5 py-0.5 rounded-full border border-slate-200">
                           {selectedLead.pendencias?.historico?.length || (selectedLead.pendencias?.resposta ? 1 : 0)} mensagem(ns)
                         </span>
                         {((selectedLead.pendencias?.historico && selectedLead.pendencias.historico.length > 0) || selectedLead.pendencias?.resposta || selectedLead.pendencias?.mensagem) && (
@@ -5442,14 +5442,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             type="button"
                             onClick={() => handleClearChatHistory(selectedLead.id)}
                             disabled={savingPendencia}
-                            className="text-[10px] bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 font-bold px-2 py-0.5 rounded-lg border border-rose-500/30 transition-colors cursor-pointer"
+                            className="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold px-2.5 py-0.5 rounded-full border border-rose-100 transition-all cursor-pointer"
                             title="Apagar todo o histórico de mensagens deste lead"
                           >
-                            🗑️ Limpar Chat
+                            Limpar Chat
                           </button>
                         )}
                       </div>
                     </div>
+
 
                     <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                       {selectedLead.pendencias?.historico && selectedLead.pendencias.historico.length > 0 ? (
