@@ -5392,13 +5392,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </div>
 
               {/* Quick Contact & Status Bar */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div className="space-y-1.5">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Status do Lead</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Status do Lead</p>
                   <select
                     value={selectedLead.status || "novo"}
                     onChange={(e) => handleUpdateStatus(selectedLead.id, "leads", e.target.value)}
-                    className={`text-xs px-3 py-1.5 rounded-lg font-extrabold cursor-pointer focus:outline-hidden ${getStatusBadgeClass(selectedLead.status)}`}
+                    className={`text-xs px-3 py-1.5 rounded-full font-bold cursor-pointer transition-all focus:outline-hidden focus:ring-2 focus:ring-primary/20 ${getStatusBadgeClass(selectedLead.status)}`}
                   >
                     <option value="novo">Novo</option>
                     <option value="em atendimento">Em Atendimento</option>
@@ -5407,9 +5407,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   </select>
                 </div>
 
-                <div className="space-y-1">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Data de Cadastro</p>
-                  <p className="text-sm text-slate-700 font-medium font-mono">{formatDate(selectedLead.dataCriacao)}</p>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data de Cadastro</p>
+                  <p className="text-sm font-medium text-slate-900 font-mono">{formatDate(selectedLead.dataCriacao)}</p>
                 </div>
               </div>
 
