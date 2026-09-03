@@ -5279,27 +5279,27 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       {/* LEAD DETAIL MODAL - Caixa Flutuante (Floating Modal) */}
       {selectedLead && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 animate-fade-in">
-          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-100 animate-scale-in">
+          <div className="bg-slate-50 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-scale-in">
             
             {/* Header */}
-            <div className="flex justify-between items-start border-b border-slate-100 p-6 bg-slate-50/50 shrink-0">
-              <div>
-                <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
+            <div className="flex justify-between items-start gap-4 border-b border-slate-200 p-5 sm:p-6 bg-white shrink-0">
+              <div className="min-w-0">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
                   Ficha de Lead de Crédito
                 </span>
-                <h2 className="text-2xl font-black text-slate-900 mt-2 font-display leading-tight">{selectedLead.nome}</h2>
-                <p className="text-xs text-slate-500 mt-1 font-mono">ID do Registro: {selectedLead.id}</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-display leading-tight truncate">{selectedLead.nome}</h2>
+                <p className="text-xs font-medium text-slate-500 mt-1 font-mono truncate">ID do Registro: {selectedLead.id}</p>
               </div>
               <button 
                 onClick={() => setSelectedLead(null)}
-                className="p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 cursor-pointer transition-all"
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer transition-all shrink-0"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Content Details Grid */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 text-left">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-left bg-slate-50">
               
               {/* Linha do Tempo Visual de Progresso das Etapas (Stepper Interativo) */}
               <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-md space-y-3">
