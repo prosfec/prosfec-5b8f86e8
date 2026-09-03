@@ -5279,55 +5279,55 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       {/* LEAD DETAIL MODAL - Caixa Flutuante (Floating Modal) */}
       {selectedLead && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 animate-fade-in">
-          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-100 animate-scale-in">
+          <div className="bg-slate-50 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-scale-in">
             
             {/* Header */}
-            <div className="flex justify-between items-start border-b border-slate-100 p-6 bg-slate-50/50 shrink-0">
-              <div>
-                <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
+            <div className="flex justify-between items-start gap-4 border-b border-slate-200 p-5 sm:p-6 bg-white shrink-0">
+              <div className="min-w-0">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
                   Ficha de Lead de Crédito
                 </span>
-                <h2 className="text-2xl font-black text-slate-900 mt-2 font-display leading-tight">{selectedLead.nome}</h2>
-                <p className="text-xs text-slate-500 mt-1 font-mono">ID do Registro: {selectedLead.id}</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-display leading-tight truncate">{selectedLead.nome}</h2>
+                <p className="text-xs font-medium text-slate-500 mt-1 font-mono truncate">ID do Registro: {selectedLead.id}</p>
               </div>
               <button 
                 onClick={() => setSelectedLead(null)}
-                className="p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 cursor-pointer transition-all"
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer transition-all shrink-0"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Content Details Grid */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 text-left">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-left bg-slate-50">
               
               {/* Linha do Tempo Visual de Progresso das Etapas (Stepper Interativo) */}
-              <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-md space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs font-black text-slate-200 uppercase tracking-wider font-mono">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       Jornada do Lead (Etapa {selectedLead.etapa || 1} de 8)
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-emerald-400 font-extrabold bg-emerald-950/60 px-2.5 py-0.5 rounded-md border border-emerald-800/60">
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                       {ETAPAS_LABELS[selectedLead.etapa || 1] || `Passo ${selectedLead.etapa || 1}`}
                     </span>
                     <button
                       type="button"
                       onClick={() => setWorkspaceLead(selectedLead)}
-                      className="px-2.5 py-1 bg-[#0A3D2E] hover:bg-emerald-700 text-white text-[11px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                      className="px-3 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-semibold rounded-lg transition-all hover:shadow-md cursor-pointer flex items-center gap-1.5"
                       title="Abrir Workspace Completo deste Lead"
                     >
-                      <Briefcase className="w-3 h-3 text-emerald-300" />
+                      <Briefcase className="w-3.5 h-3.5" />
                       <span>Abrir Workspace</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Stepper Horizontal Interativo */}
-                <div className="overflow-x-auto pb-1 pt-1 scrollbar-none">
+                <div className="overflow-x-auto p-4 scrollbar-none">
                   <div className="flex items-center justify-between min-w-[620px] gap-1 px-1">
                     {STEPS_CONFIG.map((s, idx) => {
                       const currentEtapaNum = selectedLead.etapa || 1;
@@ -5339,7 +5339,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           {idx > 0 && (
                             <div
                               className={`h-0.5 flex-1 mx-1 rounded-full transition-all duration-300 ${
-                                isCompleted ? "bg-emerald-500" : isCurrent ? "bg-amber-400/70" : "bg-slate-800"
+                                isCompleted ? "bg-emerald-400" : isCurrent ? "bg-emerald-200" : "bg-slate-200"
                               }`}
                             />
                           )}
@@ -5348,37 +5348,37 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             type="button"
                             onClick={() => handleUpdateEtapa(selectedLead.id, s.step)}
                             title={`Clique para avançar/retornar lead para ${s.fullLabel}`}
-                            className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all cursor-pointer group ${
+                            className={`flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all cursor-pointer group ${
                               isCurrent
-                                ? "bg-amber-950/50 border border-amber-500/80 shadow-md ring-1 ring-amber-400/40"
+                                ? "bg-emerald-50 border border-emerald-200 shadow-sm"
                                 : isCompleted
-                                ? "bg-slate-800/50 hover:bg-slate-800 border border-emerald-900/60"
-                                : "bg-slate-900/40 hover:bg-slate-800/40 border border-slate-800/50 opacity-60 hover:opacity-100"
+                                ? "bg-white hover:bg-slate-50 border border-slate-200"
+                                : "bg-white hover:bg-slate-50 border border-slate-100"
                             }`}
                           >
                             <div
-                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                                 isCompleted
-                                  ? "bg-emerald-500 text-slate-950 font-bold"
+                                  ? "bg-emerald-500 text-white"
                                   : isCurrent
-                                  ? "bg-amber-400 text-slate-950 font-black ring-4 ring-amber-400/20 animate-pulse"
-                                  : "bg-slate-800 text-slate-400 group-hover:text-slate-200"
+                                  ? "bg-[#0A3D2E] text-white ring-4 ring-emerald-100"
+                                  : "bg-slate-100 text-slate-400 group-hover:text-slate-600"
                               }`}
                             >
                               {isCompleted ? (
-                                <CheckCircle className="w-4 h-4 text-slate-950" />
+                                <CheckCircle className="w-4 h-4" />
                               ) : (
                                 <span>{s.step}</span>
                               )}
                             </div>
 
                             <span
-                              className={`text-[10px] font-bold whitespace-nowrap text-center ${
+                              className={`text-[10px] font-semibold whitespace-nowrap text-center ${
                                 isCurrent
-                                  ? "text-amber-300 font-extrabold"
+                                  ? "text-[#0A3D2E]"
                                   : isCompleted
-                                  ? "text-emerald-300"
-                                  : "text-slate-400 group-hover:text-slate-300"
+                                  ? "text-emerald-600"
+                                  : "text-slate-400 group-hover:text-slate-600"
                               }`}
                             >
                               {s.label.replace(`Passo ${s.step}: `, "")}
@@ -5392,13 +5392,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </div>
 
               {/* Quick Contact & Status Bar */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div className="space-y-1.5">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Status do Lead</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Status do Lead</p>
                   <select
                     value={selectedLead.status || "novo"}
                     onChange={(e) => handleUpdateStatus(selectedLead.id, "leads", e.target.value)}
-                    className={`text-xs px-3 py-1.5 rounded-lg font-extrabold cursor-pointer focus:outline-hidden ${getStatusBadgeClass(selectedLead.status)}`}
+                    className={`text-xs px-3 py-1.5 rounded-full font-bold cursor-pointer transition-all focus:outline-hidden focus:ring-2 focus:ring-primary/20 ${getStatusBadgeClass(selectedLead.status)}`}
                   >
                     <option value="novo">Novo</option>
                     <option value="em atendimento">Em Atendimento</option>
@@ -5407,34 +5407,34 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   </select>
                 </div>
 
-                <div className="space-y-1">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Data de Cadastro</p>
-                  <p className="text-sm text-slate-700 font-medium font-mono">{formatDate(selectedLead.dataCriacao)}</p>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data de Cadastro</p>
+                  <p className="text-sm font-medium text-slate-900 font-mono">{formatDate(selectedLead.dataCriacao)}</p>
                 </div>
               </div>
 
               {/* Controle de Pendências e Alertas para o Parceiro */}
-              <div className="bg-amber-50/50 border border-amber-300 p-5 rounded-2xl space-y-4 text-left">
-                <div className="flex items-center gap-2 border-b border-amber-500/20 pb-2">
-                  <AlertTriangle className="w-5 h-5 text-amber-700" />
-                  <h4 className="text-sm font-black text-amber-950 uppercase tracking-wider font-display">
-                    💬 Chat de Pendências &amp; Atendimento (Mesa de Operações)
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden text-left">
+                <div className="flex items-center gap-2 border-b border-slate-200 bg-amber-50/50 px-4 py-3">
+                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider font-display">
+                    Chat de Pendências &amp; Atendimento (Mesa de Operações)
                   </h4>
                 </div>
 
-                <div className="space-y-3">
-                  <p className="text-xs text-slate-600 leading-relaxed font-bold">
+                <div className="space-y-3 p-4">
+                  <p className="text-xs text-slate-500 leading-relaxed font-medium">
                     Troque mensagens diretamente com o parceiro deste lead. Cada orientação enviada fica registrada no histórico em tempo real.
                   </p>
 
                   {/* Histórico estilo Chat de Conversa */}
-                  <div className="bg-slate-900/90 text-white p-4 rounded-2xl border border-slate-800 space-y-3 text-left shadow-inner">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                      <span className="text-[11px] font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
-                        💬 Linha do Tempo da Conversa
+                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3 text-left">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        Linha do Tempo da Conversa
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] bg-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded-full border border-slate-700">
+                        <span className="text-xs bg-white text-slate-600 font-bold px-2.5 py-0.5 rounded-full border border-slate-200">
                           {selectedLead.pendencias?.historico?.length || (selectedLead.pendencias?.resposta ? 1 : 0)} mensagem(ns)
                         </span>
                         {((selectedLead.pendencias?.historico && selectedLead.pendencias.historico.length > 0) || selectedLead.pendencias?.resposta || selectedLead.pendencias?.mensagem) && (
@@ -5442,14 +5442,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             type="button"
                             onClick={() => handleClearChatHistory(selectedLead.id)}
                             disabled={savingPendencia}
-                            className="text-[10px] bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 font-bold px-2 py-0.5 rounded-lg border border-rose-500/30 transition-colors cursor-pointer"
+                            className="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold px-2.5 py-0.5 rounded-full border border-rose-100 transition-all cursor-pointer"
                             title="Apagar todo o histórico de mensagens deste lead"
                           >
-                            🗑️ Limpar Chat
+                            Limpar Chat
                           </button>
                         )}
                       </div>
                     </div>
+
 
                     <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                       {selectedLead.pendencias?.historico && selectedLead.pendencias.historico.length > 0 ? (
@@ -5461,25 +5462,25 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               className={`flex flex-col ${isAdmin ? "items-start" : "items-end"}`}
                             >
                               <div
-                                className={`max-w-[88%] p-3.5 rounded-2xl text-xs space-y-1.5 shadow-sm ${
+                                className={`max-w-[88%] p-3.5 rounded-xl text-xs space-y-1.5 shadow-sm border ${
                                   isAdmin
-                                    ? "bg-amber-500/15 border border-amber-500/30 text-amber-100 rounded-tl-xs"
-                                    : "bg-emerald-500/15 border border-emerald-500/30 text-emerald-100 rounded-tr-xs"
+                                    ? "bg-white border-slate-200 text-slate-900 rounded-tl-xs"
+                                    : "bg-emerald-50 border-emerald-100 text-slate-900 rounded-tr-xs"
                                 }`}
                               >
-                                <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-1">
-                                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
-                                    isAdmin ? "bg-amber-500/30 text-amber-300" : "bg-emerald-500/30 text-emerald-300"
+                                <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 pb-1">
+                                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                                    isAdmin ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
                                   }`}>
-                                    {isAdmin ? "🏛️ Mesa de Operações" : `👤 ${item.nomeAutor || "Parceiro"}`}
+                                    {isAdmin ? "Mesa de Operações" : `${item.nomeAutor || "Parceiro"}`}
                                   </span>
                                   {item.data && (
-                                    <span className="text-[9px] text-slate-400 font-mono">
+                                    <span className="text-[10px] text-slate-400 font-mono">
                                       {new Date(item.data).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
                                     </span>
                                   )}
                                 </div>
-                                <p className="font-medium leading-relaxed whitespace-pre-wrap text-slate-100">
+                                <p className="font-medium leading-relaxed whitespace-pre-wrap text-slate-700">
                                   {item.mensagem}
                                 </p>
                               </div>
@@ -5488,17 +5489,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         })
                       ) : selectedLead.pendencias?.resposta ? (
                         <div className="flex flex-col items-end">
-                          <div className="max-w-[88%] bg-emerald-500/15 border border-emerald-500/30 p-3.5 rounded-2xl rounded-tr-xs text-xs text-emerald-100 space-y-1">
-                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/30 text-emerald-300">
-                              👤 Resposta do Parceiro
+                          <div className="max-w-[88%] bg-emerald-50 border border-emerald-100 p-3.5 rounded-xl rounded-tr-xs text-xs space-y-1.5 shadow-sm">
+                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                              Resposta do Parceiro
                             </span>
-                            <p className="font-medium leading-relaxed whitespace-pre-wrap text-slate-100">
+                            <p className="font-medium leading-relaxed whitespace-pre-wrap text-slate-700">
                               {selectedLead.pendencias.resposta}
                             </p>
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-6 text-slate-500 text-xs font-semibold italic">
+                        <div className="text-center py-6 text-slate-400 text-xs font-medium">
                           Nenhuma mensagem registrada. Digite uma instrução abaixo para iniciar o chat com o parceiro.
                         </div>
                       )}
@@ -5506,29 +5507,29 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   </div>
 
                   <div className="space-y-1.5 pt-1">
-                    <label className="text-[11px] text-slate-600 font-black uppercase tracking-wider block">
-                      Status Atual da Pendência:
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+                      Status Atual da Pendência
                     </label>
                     <select
                       value={editingPendenciasStatus}
                       onChange={(e) => setEditingPendenciasStatus(e.target.value as 'pendente' | 'resolvida')}
-                      className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] focus:outline-hidden bg-white/75 backdrop-blur-xl text-slate-800"
+                      className="w-full text-sm font-medium text-slate-900 p-2.5 rounded-lg border border-slate-200 bg-slate-50/50 transition-all focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     >
-                      <option value="pendente">⚠️ Pendente (Requer Atenção do Parceiro)</option>
-                      <option value="resolvida">✓ Resolvida / Sem Pendências</option>
+                      <option value="pendente">Pendente (Requer Atenção do Parceiro)</option>
+                      <option value="resolvida">Resolvida / Sem Pendências</option>
                     </select>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] text-slate-600 font-black uppercase tracking-wider block">
-                      Enviar Nova Mensagem da Mesa de Operações:
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+                      Enviar Nova Mensagem da Mesa de Operações
                     </label>
                     <textarea
                       rows={3}
                       value={editingPendenciasMsg}
                       onChange={(e) => setEditingPendenciasMsg(e.target.value)}
                       placeholder="Ex: Por gentileza, nos envie a declaração de faturamento dos últimos 12 meses assinada pelo contador."
-                      className="w-full text-xs font-semibold p-3 rounded-xl border border-slate-200 focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] focus:outline-hidden bg-white/75 backdrop-blur-xl text-slate-800"
+                      className="w-full text-sm font-medium text-slate-900 p-3 rounded-lg border border-slate-200 bg-slate-50/50 transition-all focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>
 
@@ -5537,47 +5538,47 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       type="button"
                       onClick={() => handleUpdatePendencias(selectedLead.id, editingPendenciasStatus, editingPendenciasMsg)}
                       disabled={savingPendencia}
-                      className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-2"
+                      className="px-4 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-sm font-semibold rounded-lg transition-all hover:shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-2"
                     >
-                      {savingPendencia ? "Enviando..." : "💬 Enviar Mensagem no Chat"}
+                      {savingPendencia ? "Enviando..." : "Enviar Mensagem no Chat"}
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* Painel Financeiro e Comissões do Lead */}
-              <div className="bg-[#052E22]/5 border border-emerald-500/20 p-5 rounded-2xl space-y-4 text-left">
-                <div className="flex items-center gap-2 border-b border-emerald-500/10 pb-2">
-                  <Coins className="w-5 h-5 text-[#0A3D2E]" />
-                  <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider font-display">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden text-left">
+                <div className="flex items-center gap-2 border-b border-slate-200 bg-emerald-50/40 px-4 py-3">
+                  <Coins className="w-4 h-4 text-[#0A3D2E]" />
+                  <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider font-display">
                     Painel Financeiro &amp; Controle de Comissão
                   </h4>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                   {/* Campo de Valor Real Aprovado & Controles de Análise */}
                   <div className="space-y-3">
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs text-slate-700 font-black uppercase block">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
                           Crédito Real Aprovado (R$)
                         </label>
                         {selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado" ? (
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700">
                             Crédito Recusado
                           </span>
                         ) : (selectedLead.valorAprovado && selectedLead.valorAprovado > 0) ? (
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
                             Aprovado: {formatCurrencyBRL(selectedLead.valorAprovado)}
                           </span>
                         ) : (
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                             Em Análise Bancária
                           </span>
                         )}
                       </div>
                       <div className="relative">
-                        <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">R$</span>
+                        <span className="absolute left-3 top-2.5 text-xs font-semibold text-slate-400">R$</span>
                         <input
                           type="number"
                           placeholder="0,00"
@@ -5586,16 +5587,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             const val = e.target.value === "" ? 0 : Number(e.target.value);
                             handleUpdateValorAprovado(selectedLead.id, val);
                           }}
-                          className="w-full text-xs font-black pl-8 pr-3 py-2 rounded-lg border border-slate-200 focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] focus:outline-hidden"
+                          className="w-full text-sm font-semibold text-slate-900 pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-slate-50/50 transition-all focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         />
                       </div>
-                      <span className="text-[10px] text-slate-400 block">
+                      <span className="text-xs text-slate-400 block">
                         *Preencha o valor liberado pelos bancos parceiros na Etapa 7.
                       </span>
                     </div>
 
                     {/* Botões de Ação Rápida: Recusado / Aprovado / Pagamento do Serviço */}
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/60">
+                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200">
                       {/* Botão de Crédito Recusado */}
                       <button
                         type="button"
