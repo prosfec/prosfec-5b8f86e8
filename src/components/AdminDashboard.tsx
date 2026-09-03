@@ -5507,29 +5507,29 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   </div>
 
                   <div className="space-y-1.5 pt-1">
-                    <label className="text-[11px] text-slate-600 font-black uppercase tracking-wider block">
-                      Status Atual da Pendência:
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+                      Status Atual da Pendência
                     </label>
                     <select
                       value={editingPendenciasStatus}
                       onChange={(e) => setEditingPendenciasStatus(e.target.value as 'pendente' | 'resolvida')}
-                      className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] focus:outline-hidden bg-white/75 backdrop-blur-xl text-slate-800"
+                      className="w-full text-sm font-medium text-slate-900 p-2.5 rounded-lg border border-slate-200 bg-slate-50/50 transition-all focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     >
-                      <option value="pendente">⚠️ Pendente (Requer Atenção do Parceiro)</option>
-                      <option value="resolvida">✓ Resolvida / Sem Pendências</option>
+                      <option value="pendente">Pendente (Requer Atenção do Parceiro)</option>
+                      <option value="resolvida">Resolvida / Sem Pendências</option>
                     </select>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] text-slate-600 font-black uppercase tracking-wider block">
-                      Enviar Nova Mensagem da Mesa de Operações:
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+                      Enviar Nova Mensagem da Mesa de Operações
                     </label>
                     <textarea
                       rows={3}
                       value={editingPendenciasMsg}
                       onChange={(e) => setEditingPendenciasMsg(e.target.value)}
                       placeholder="Ex: Por gentileza, nos envie a declaração de faturamento dos últimos 12 meses assinada pelo contador."
-                      className="w-full text-xs font-semibold p-3 rounded-xl border border-slate-200 focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] focus:outline-hidden bg-white/75 backdrop-blur-xl text-slate-800"
+                      className="w-full text-sm font-medium text-slate-900 p-3 rounded-lg border border-slate-200 bg-slate-50/50 transition-all focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>
 
@@ -5538,9 +5538,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       type="button"
                       onClick={() => handleUpdatePendencias(selectedLead.id, editingPendenciasStatus, editingPendenciasMsg)}
                       disabled={savingPendencia}
-                      className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-2"
+                      className="px-4 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-sm font-semibold rounded-lg transition-all hover:shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-2"
                     >
-                      {savingPendencia ? "Enviando..." : "💬 Enviar Mensagem no Chat"}
+                      {savingPendencia ? "Enviando..." : "Enviar Mensagem no Chat"}
                     </button>
                   </div>
                 </div>
