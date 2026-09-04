@@ -2794,58 +2794,6 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 </div>
               </div>
 
-              {/* Contratos assinados externamente via GOV.br */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70 space-y-2.5">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                    <FileText className="w-4 h-4 text-blue-600" />
-                    Link da Pasta do Drive (Contratos Assinados GOV.br)
-                  </label>
-                  {lead.contratosAssinadosUrl && (
-                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase tracking-wider">
-                      Anexado
-                    </span>
-                  )}
-                </div>
-                <p className="text-[10px] text-slate-500">
-                  Cole aqui o link da pasta (Google Drive, OneDrive, Dropbox) com os contratos baixados e assinados pelo cliente via GOV.br. Ao salvar, o lead avança automaticamente para o Passo 5.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="url"
-                    value={contratosAssinadosUrl}
-                    onChange={(e) => setContratosAssinadosUrl(e.target.value)}
-                    placeholder="https://drive.google.com/drive/folders/..."
-                    className="flex-1 text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0A3D2E]"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handleSaveContratosAssinadosUrl}
-                      disabled={savingContratosUrl}
-                      className="px-4 py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-60 text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap"
-                    >
-                      {savingContratosUrl ? "Salvando..." : "Salvar"}
-                    </button>
-                    {lead.contratosAssinadosUrl && (
-                      <a
-                        href={lead.contratosAssinadosUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2.5 bg-white border border-slate-200 hover:border-[#0A3D2E] text-slate-700 text-xs font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
-                      >
-                        <Eye className="w-4 h-4" />
-                        Abrir
-                      </a>
-                    )}
-                  </div>
-                </div>
-                {contratosUrlFeedback && (
-                  <p className={`text-[11px] font-bold ${contratosUrlFeedback.type === "success" ? "text-emerald-700" : "text-red-600"}`}>
-                    {contratosUrlFeedback.msg}
-                  </p>
-                )}
-              </div>
 
               {/* Definição de Contrato e Assinatura (modelo comercial híbrido) */}
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
@@ -2865,7 +2813,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     >
                       <option value="">Selecione...</option>
                       <option value="Avulso">Avulso</option>
-                      <option value="Assessoria Essential">Assessoria Essential — R$ 597,00/mês</option>
+                      <option value="Assessoria Essential">Assessoria Essential — R$ 497,00/mês</option>
                       <option value="Assessoria Growth">Assessoria Growth — R$ 797,00/mês</option>
                       <option value="Assessoria Corporate">Assessoria Corporate — R$ 1.497,00/mês</option>
                     </select>
@@ -2883,7 +2831,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   </div>
                 </div>
 
-                {lead.modeloContratacao && (
+                {planoContratacaoFeedback && (
+                  <p className={`text-[11px] font-bold ${planoContratacaoFeedback.type === "success" ? "text-emerald-700" : "text-red-600"}`}>
+                    {planoContratacaoFeedback.msg}
+                  </p>
+                )}
+
+                {(planoContratacaoFeedback?.type === "success" || lead.modeloContratacao) && (
                   <div className="space-y-2">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Link público de assinatura
@@ -2892,7 +2846,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       <input
                         readOnly
                         value={contratoPublicLink}
-                        className="flex-1 bg-slate-50/50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-mono text-slate-700 outline-none"
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-mono text-slate-700 outline-none"
                       />
                       <button
                         type="button"
@@ -2902,24 +2856,21 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         {linkContratoCopiado ? "Copiado!" : "Copiar Link"}
                       </button>
                     </div>
-                    <p className="text-[11px] text-slate-500">
-                      Plano definido: <strong className="text-slate-900">{lead.planoEscolhido || lead.modeloContratacao}</strong>
-                      {Number(lead.valorMensalidade || 0) > 0
-                        ? ` — R$ ${Number(lead.valorMensalidade).toFixed(2).replace(".", ",")}/mês`
-                        : ""}
-                    </p>
+                    {lead.modeloContratacao && (
+                      <p className="text-[11px] text-slate-500">
+                        Plano definido: <strong className="text-slate-900">{lead.planoEscolhido || lead.modeloContratacao}</strong>
+                        {Number(lead.valorMensalidade || 0) > 0
+                          ? ` — R$ ${Number(lead.valorMensalidade).toFixed(2).replace(".", ",")}/mês`
+                          : ""}
+                      </p>
+                    )}
                   </div>
-                )}
-
-                {planoContratacaoFeedback && (
-                  <p className={`text-[11px] font-bold ${planoContratacaoFeedback.type === "success" ? "text-emerald-700" : "text-red-600"}`}>
-                    {planoContratacaoFeedback.msg}
-                  </p>
                 )}
               </div>
 
 
-              {lead.contratoAssinado ? (
+
+              {lead.contratoAssinado && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
                   <div className="space-y-1.5 text-slate-700">
                     <p><strong className="text-slate-900">Signatário:</strong> {lead.contratoAssinadoNome}</p>
@@ -2950,24 +2901,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="bg-slate-50 p-5 rounded-xl border border-dashed border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
-                  <p className="text-xs text-slate-500 max-w-md">
-                    O cliente assina este termo eletronicamente no link de acompanhamento no <strong className="text-slate-700">Passo 4</strong>. Você pode também visualizar e imprimir a minuta completa.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActivePdfTab("contrato");
-                      setShowContractPdfModal(true);
-                    }}
-                    className="py-2.5 px-4 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shadow-xs"
-                  >
-                    <Eye className="w-4 h-4" />
-                    <span>Visualizar Minuta do Contrato</span>
-                  </button>
-                </div>
               )}
+
 
               <div className="flex justify-end pt-4 border-t border-slate-100">
                 <button
