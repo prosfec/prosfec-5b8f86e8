@@ -5252,7 +5252,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       </div>
                     </div>
                   </div>
-                        </button>
                   <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6">
                     <div className="mb-4">
                       <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
