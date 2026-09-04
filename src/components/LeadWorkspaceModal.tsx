@@ -11,7 +11,11 @@ import {
   getApplicableContracts,
   getHublaLinkForService,
   cleanForFirestore,
-  ServiceCatalogItem
+  ServiceCatalogItem,
+  DEFAULT_MENSALIDADES,
+  normalizeMensalidades,
+  buildPlanoValores,
+  type MensalidadesAssessoria
 } from "../utils/serviceUtils";
 import { 
   formatCurrencyBRL, 
@@ -304,12 +308,16 @@ export default function LeadWorkspaceModal({
   });
   const [savingServicos, setSavingServicos] = useState(false);
   const [catalogServices, setCatalogServices] = useState<ServiceCatalogItem[]>(DEFAULT_SERVICES_CATALOG);
+  const [mensalidadesConfig, setMensalidadesConfig] = useState<MensalidadesAssessoria>(DEFAULT_MENSALIDADES);
 
   useEffect(() => {
     let activeCatalog = catalogServices;
     const loadCatalog = async () => {
       try {
         const snap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
+        if (snap.exists()) {
+          setMensalidadesConfig(normalizeMensalidades(snap.data().mensalidades));
+        }
         if (snap.exists() && snap.data().servicos && Array.isArray(snap.data().servicos) && snap.data().servicos.length > 0) {
           activeCatalog = snap.data().servicos;
           setCatalogServices(activeCatalog);
@@ -2011,12 +2019,9 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
   };
 
   // ---- Definição de contrato e link público de assinatura ----
-  const PLANO_VALORES: Record<string, number> = {
-    "Avulso": 0,
-    "Assessoria Essential": 497,
-    "Assessoria Growth": 797,
-    "Assessoria Corporate": 1497,
-  };
+  const PLANO_VALORES: Record<string, number> = buildPlanoValores(mensalidadesConfig);
+  const formatMensalidadeBRL = (v: number) =>
+    Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
   const [planoContratacao, setPlanoContratacao] = useState<string>(
     lead.planoEscolhido || lead.modeloContratacao || ""
@@ -2991,9 +2996,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     >
                       <option value="">Selecione...</option>
                       <option value="Avulso">Avulso</option>
-                      <option value="Assessoria Essential">Assessoria Essential — R$ 497,00/mês</option>
-                      <option value="Assessoria Growth">Assessoria Growth — R$ 797,00/mês</option>
-                      <option value="Assessoria Corporate">Assessoria Corporate — R$ 1.497,00/mês</option>
+                      <option value="Assessoria Essential">Assessoria Essential — {formatMensalidadeBRL(mensalidadesConfig.essential)}/mês</option>
+                      <option value="Assessoria Growth">Assessoria Growth — {formatMensalidadeBRL(mensalidadesConfig.growth)}/mês</option>
+                      <option value="Assessoria Corporate">Assessoria Corporate — {formatMensalidadeBRL(mensalidadesConfig.corporate)}/mês</option>
                     </select>
                   </div>
 

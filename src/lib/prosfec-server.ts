@@ -10,6 +10,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { getBankSpecificRules } from "../utils/creditLineRules";
 import { BankRulesManager } from "../utils/BankRulesManager";
 import { optionalEnv, requireEnv, firstEnv, maskEmail, maskDoc, redact } from "../utils/env";
+import { normalizeMensalidades, DEFAULT_MENSALIDADES } from "../utils/serviceUtils";
 
 export function cleanForFirestore<T = any>(obj: T): T {
   if (obj === undefined) return null as any;
@@ -937,6 +938,17 @@ export function createExpressApp() {
   const FALLBACK_CATALOG = [
     { code: "REDEBE_DIAGNOSTICO_360", name: "Rating de Crédito + Diagnóstico Finan. 360", price: 49.90 }
   ];
+
+  // 0. Valores das mensalidades da Assessoria (público — leitura apenas dos 3 preços)
+  app.get("/api/config/mensalidades", async (_req, res) => {
+    try {
+      const configData: any = await getDocRest("configuracoes/precos_consultas");
+      return res.status(200).json(normalizeMensalidades(configData?.mensalidades));
+    } catch (err) {
+      console.warn("Could not load mensalidades config:", err);
+      return res.status(200).json(DEFAULT_MENSALIDADES);
+    }
+  });
 
   // 1. List Credit Catalog (RedeBe 360 product at R$ 49.90 + 40% Prosfec profit = R$ 69.86)
   app.get("/api/credit/catalogo", async (req, res) => {

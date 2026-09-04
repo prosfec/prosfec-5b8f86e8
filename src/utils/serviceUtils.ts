@@ -436,3 +436,42 @@ export function getApplicableContracts(lead: any): ApplicableContractTab[] {
 
 // Re-export Multilevel Commission Logic
 export * from "./commissionUtils";
+
+// ============================================================
+// MENSALIDADES DA ASSESSORIA (configuráveis pelo Administrador)
+// ============================================================
+
+export interface MensalidadesAssessoria {
+  essential: number;
+  growth: number;
+  corporate: number;
+}
+
+export const DEFAULT_MENSALIDADES: MensalidadesAssessoria = {
+  essential: 497,
+  growth: 797,
+  corporate: 1497,
+};
+
+/** Normaliza os valores vindos do Firestore, aplicando o padrão quando ausentes/inválidos. */
+export function normalizeMensalidades(raw: any): MensalidadesAssessoria {
+  const pick = (v: any, fallback: number) => {
+    const n = typeof v === "number" ? v : parseFloat(String(v ?? "").replace(",", "."));
+    return Number.isFinite(n) && n >= 0 ? n : fallback;
+  };
+  return {
+    essential: pick(raw?.essential, DEFAULT_MENSALIDADES.essential),
+    growth: pick(raw?.growth, DEFAULT_MENSALIDADES.growth),
+    corporate: pick(raw?.corporate, DEFAULT_MENSALIDADES.corporate),
+  };
+}
+
+/** Mapa plano → valor mensal, usado na Etapa 4 (Definição de Contrato). */
+export function buildPlanoValores(mensalidades: MensalidadesAssessoria): Record<string, number> {
+  return {
+    "Avulso": 0,
+    "Assessoria Essential": mensalidades.essential,
+    "Assessoria Growth": mensalidades.growth,
+    "Assessoria Corporate": mensalidades.corporate,
+  };
+}

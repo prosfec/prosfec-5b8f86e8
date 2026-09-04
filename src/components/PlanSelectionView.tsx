@@ -13,10 +13,16 @@
  *   EPP/superior  → Assessoria Corporate (R$ 1.497,00/mês)
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Check, MessageCircle, Sparkles } from "lucide-react";
+import { DEFAULT_MENSALIDADES, normalizeMensalidades } from "../utils/serviceUtils";
 
-export const PLANOS_PROSFEC = [
+const formatBRL = (v: number) =>
+  Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
+
+export function buildPlanosProsfec(mensalidades = DEFAULT_MENSALIDADES) {
+  const m = normalizeMensalidades(mensalidades);
+  return [
   {
     id: "avulso",
     nome: "Modelo Avulso",
@@ -30,8 +36,8 @@ export const PLANOS_PROSFEC = [
   {
     id: "essential",
     nome: "Assessoria Essential",
-    valorLabel: "R$ 497,00/mês",
-    valorMensal: 497,
+    valorLabel: `${formatBRL(m.essential)}/mês`,
+    valorMensal: m.essential,
     descricao: "Estruturação completa da empresa para o mercado de crédito.",
     itens: [
       "Diagnóstico Estratégico",
@@ -45,8 +51,8 @@ export const PLANOS_PROSFEC = [
   {
     id: "growth",
     nome: "Assessoria Growth",
-    valorLabel: "R$ 797,00/mês",
-    valorMensal: 797,
+    valorLabel: `${formatBRL(m.growth)}/mês`,
+    valorMensal: m.growth,
     descricao: "Tudo do Essential com presença digital e eficiência fiscal.",
     itens: [
       "Tudo do Essential",
@@ -60,8 +66,8 @@ export const PLANOS_PROSFEC = [
   {
     id: "corporate",
     nome: "Assessoria Corporate",
-    valorLabel: "R$ 1.497,00/mês",
-    valorMensal: 1497,
+    valorLabel: `${formatBRL(m.corporate)}/mês`,
+    valorMensal: m.corporate,
     descricao: "Estrutura corporativa completa e projetos internacionais.",
     itens: [
       "Tudo do Growth",
@@ -71,15 +77,19 @@ export const PLANOS_PROSFEC = [
     destaque: false,
     dark: true,
   },
-];
+  ];
+}
+
+/** Catálogo padrão (valores default) — mantido para compatibilidade. */
+export const PLANOS_PROSFEC = buildPlanosProsfec();
 
 /** Resolve o plano de assessoria recomendado conforme o porte da empresa. */
-export function planoParaPorte(porte?: string): (typeof PLANOS_PROSFEC)[number] {
+export function planoParaPorte(porte?: string, planos = PLANOS_PROSFEC): (typeof PLANOS_PROSFEC)[number] {
   const p = String(porte || "").toUpperCase().trim();
-  if (p === "MEI") return PLANOS_PROSFEC.find((x) => x.id === "essential")!;
-  if (p === "ME") return PLANOS_PROSFEC.find((x) => x.id === "growth")!;
+  if (p === "MEI") return planos.find((x) => x.id === "essential")!;
+  if (p === "ME") return planos.find((x) => x.id === "growth")!;
   // EPP, EMP, EGP, LTDA, S/A, superiores ou indefinido → Corporate
-  return PLANOS_PROSFEC.find((x) => x.id === "corporate")!;
+  return planos.find((x) => x.id === "corporate")!;
 }
 
 const MENSAGEM_ESPECIALISTA =
@@ -106,8 +116,24 @@ export default function PlanSelectionView({ partnerWhatsapp, partnerNome, porte 
     }
   };
 
-  const planoAvulso = PLANOS_PROSFEC.find((x) => x.id === "avulso")!;
-  const planoRecomendado = planoParaPorte(porte);
+  const [mensalidades, setMensalidades] = useState(DEFAULT_MENSALIDADES);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/config/mensalidades")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (active && d) setMensalidades(normalizeMensalidades(d));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const planos = React.useMemo(() => buildPlanosProsfec(mensalidades), [mensalidades]);
+  const planoAvulso = planos.find((x) => x.id === "avulso")!;
+  const planoRecomendado = planoParaPorte(porte, planos);
   const planosVisiveis = [planoAvulso, planoRecomendado];
 
   return (
