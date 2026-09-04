@@ -324,15 +324,15 @@ export default function AssessoriaContractText({
 
       <H>Cláusula 11ª – Da Confidencialidade e Proteção de Dados</H>
       <p>
-        9.1. A CONTRATADA compromete-se a manter sigilo sobre as informações e documentos recebidos
+        11.1. A CONTRATADA compromete-se a manter sigilo sobre as informações e documentos recebidos
         em razão da execução dos serviços.
       </p>
       <p>
-        9.2. As partes comprometem-se a observar a legislação aplicável à proteção de dados
+        11.2. As partes comprometem-se a observar a legislação aplicável à proteção de dados
         pessoais, especialmente a Lei nº 13.709/2018 – LGPD.
       </p>
       <p>
-        9.3. A CONTRATANTE autoriza o tratamento dos dados necessários à execução dos serviços
+        11.3. A CONTRATANTE autoriza o tratamento dos dados necessários à execução dos serviços
         contratados, observadas as finalidades e bases legais aplicáveis.
       </p>
 
