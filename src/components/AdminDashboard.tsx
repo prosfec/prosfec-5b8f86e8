@@ -5653,14 +5653,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </div>
 
                     {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (
-                      <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 flex items-center justify-between text-[10px]">
-                        <span className="text-slate-500 font-bold">Status do Pagamento do Serviço (Passo 6):</span>
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pagamento do Serviço (Passo 6)</span>
                         {selectedLead.servicoPago ? (
-                          <span className="font-black text-emerald-700 uppercase bg-emerald-100 px-2 py-0.5 rounded">
-                            Pago pelo Cliente (Liberado no Painel do Parceiro)
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
+                            Pago pelo Cliente
                           </span>
                         ) : (
-                          <span className="font-black text-amber-700 uppercase bg-amber-100 px-2 py-0.5 rounded">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                             Pendente de Pagamento
                           </span>
                         )}
@@ -5676,37 +5676,37 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     const directCommissionValue = (selectedLead.valorAprovado || selectedLead.limiteEstimado || 0) * commissionMultiplier;
 
                     return (
-                      <div className="bg-white p-3.5 border border-emerald-100 rounded-xl space-y-3 text-left">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <span className="text-[9px] uppercase font-black text-slate-400 block">Parceiro</span>
-                            <span className="text-xs font-bold text-slate-800">{partnerObj?.nome || selectedLead.parceiroNome || "Não identificado"}</span>
+                      <div className="bg-slate-50 p-4 border border-slate-200 rounded-lg space-y-3 text-left">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="min-w-0">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Parceiro</span>
+                            <span className="text-sm font-medium text-slate-900 truncate block">{partnerObj?.nome || selectedLead.parceiroNome || "Não identificado"}</span>
                           </div>
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 shrink-0">
                             Plano {partnerObj?.plano || "Starter"}
                           </span>
                         </div>
 
-                        <div className="flex justify-between items-center border-t border-slate-100 pt-2 text-xs">
-                          <span className="text-slate-500 font-medium">Repasse ({(commissionMultiplier * 100).toFixed(1)}%):</span>
-                          <span className="font-extrabold text-[#0A3D2E]">
+                        <div className="flex justify-between items-center border-t border-slate-200 pt-3">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Repasse ({(commissionMultiplier * 100).toFixed(1)}%)</span>
+                          <span className="text-sm font-bold text-[#0A3D2E] font-display">
                             {formatCurrencyBRL(directCommissionValue)}
                           </span>
                         </div>
 
-                        <div className="flex justify-between items-center border-t border-slate-100 pt-2">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">Status Repasse:</span>
+                        <div className="flex flex-wrap justify-between items-center gap-2 border-t border-slate-200 pt-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Status Repasse</span>
                             {selectedLead.comissaoPaga ? (
-                              <span className="text-[9px] font-black uppercase bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
                                 Pago
                               </span>
                             ) : isConcluidoOrAprovado ? (
-                              <span className="text-[9px] font-black uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                                 Pendente
                               </span>
                             ) : (
-                              <span className="text-[9px] font-black uppercase bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600">
                                 Aguardando
                               </span>
                             )}
@@ -5714,19 +5714,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                           <button
                             onClick={() => handleUpdateComissaoPaga(selectedLead.id, !selectedLead.comissaoPaga)}
-                            className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:shadow-md cursor-pointer ${
                               selectedLead.comissaoPaga
-                                ? "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
-                                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                                ? "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                                : "bg-[#0A3D2E] hover:bg-[#00A86B] text-white"
                             }`}
                           >
-                            {selectedLead.comissaoPaga ? "Marcar Pendente" : "Marcar Pago ✓"}
+                            {selectedLead.comissaoPaga ? "Marcar Pendente" : "Marcar Pago"}
                           </button>
                         </div>
                       </div>
                     );
                   })() : (
-                    <div className="bg-slate-100/50 p-4 border border-slate-200/60 rounded-xl flex items-center justify-center text-center text-xs text-slate-400">
+                    <div className="bg-slate-50 p-4 border border-slate-200 rounded-lg flex items-center justify-center text-center text-xs font-medium text-slate-400">
                       Este lead não possui parceiro indicado associado. Nenhuma comissão é gerada.
                     </div>
                   )}
