@@ -67,6 +67,26 @@ export default function AvulsoContractText({
         (incluindo linhas como PRONAMPE, Proger, FINEP, FAMP, BNDES e repasses bancários).
       </p>
       <p>
+        2.2. Reabilitação de Crédito. O CONTRATADO prestará serviços de consultoria e assessoria
+        voltados à reabilitação de crédito da CONTRATANTE, compreendendo o diagnóstico da situação
+        cadastral e financeira, a identificação de restrições junto a órgãos de proteção ao crédito e
+        bureaus, e a elaboração de plano de ação para regularização e reestabelecimento da
+        capacidade de crédito empresarial.
+      </p>
+      <p>
+        2.3. Melhoria de Rating e Score. O escopo dos serviços inclui estratégias e orientações
+        direcionadas à melhoria do rating e do score da CONTRATANTE junto aos órgãos de proteção ao
+        crédito e bureaus de crédito, mediante análise de indicadores financeiros, histórico de
+        pagamentos, relacionamento com instituições financeiras e adoção de boas práticas de gestão
+        cadastral e fiscal.
+      </p>
+      <p>
+        2.4. Mapeamento de Pendências e Apontamentos. O CONTRATADO realizará o mapeamento de
+        pendências, restrições e apontamentos passíveis de regularização, indicando as providências
+        necessárias para correção cadastral, fiscal e financeira, sem, contudo, assumir obrigação de
+        resultado quanto à aprovação futura de operações de crédito.
+      </p>
+      <p>
         Parágrafo Primeiro. Os serviços possuem natureza exclusivamente consultiva e técnica. O
         CONTRATADO não é instituição financeira, não realiza concessão direta de crédito, não atua
         como correspondente bancário exclusivo de agente financeiro e não garante a aprovação final
@@ -78,6 +98,7 @@ export default function AvulsoContractText({
         carência e exigência de garantias ou avalistas compete unicamente ao agente financeiro
         concedente.
       </p>
+
 
       <H>Cláusula 3 – Dos Honorários de Êxito e Forma de Pagamento</H>
       <p>
