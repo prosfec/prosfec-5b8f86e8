@@ -270,7 +270,59 @@ export default function AssessoriaContractText({
       <p>8.3. A rescisão não elimina a obrigação de pagamento de valores já vencidos.</p>
       <p>8.4. A cláusula penal observará os limites previstos na legislação aplicável.</p>
 
-      <H>Cláusula 9ª – Da Confidencialidade e Proteção de Dados</H>
+      <H>Cláusula 9ª – Dos Honorários de Êxito e Forma de Pagamento</H>
+      <p>
+        Sem prejuízo do pagamento pontual das mensalidades pactuadas na Cláusula
+        Segunda, caso o acompanhamento estratégico resulte na aprovação e efetiva
+        liberação de crédito(s) em favor da CONTRATANTE, aplicar-se-ão as
+        seguintes regras de honorários de êxito:
+      </p>
+      <p>
+        9.1. A remuneração adicional da CONTRATADA, nesta hipótese, adota o
+        modelo de ÊXITO. A CONTRATANTE pagará à CONTRATADA honorários de êxito
+        correspondentes a 5% (cinco por cento) sobre o valor bruto do crédito
+        efetivamente aprovado, contratado e liberado pela instituição financeira.
+      </p>
+      <p>
+        §1º Fato Gerador: O fato gerador da obrigação de pagamento é a efetiva
+        disponibilização, crédito, liberação ou desembolso dos recursos na conta
+        bancária da CONTRATANTE ou de seus sócios/garantidores por ela indicados.
+      </p>
+      <p>
+        §2º Prazo de Pagamento: Os honorários deverão ser pagos pela CONTRATANTE
+        em até 2 (dois) dias úteis contados da efetiva liberação dos recursos na
+        conta, via PIX ou transferência bancária para a conta oficial da
+        CONTRATADA.
+      </p>
+      <p>
+        §3º Liberações Parciais: Em caso de liberação parcelada ou em tranches,
+        os honorários de 5% incidirão proporcionalmente sobre o valor de cada
+        parcela disponibilizada.
+      </p>
+      <p>
+        §4º Isenção Prévia: Não haverá qualquer cobrança antecipada de taxa de
+        cadastro, análise documental, consulta ou abertura de crédito antes da
+        liberação efetiva do valor.
+      </p>
+
+      <H>Cláusula 10ª – Da Cláusula Anti-Burla e Boa-Fé Contratual</H>
+      <p>
+        10.1. Caso a CONTRATANTE, após a montagem do dossiê, encaminhamento de
+        proposta ou aprovação do crédito viabilizado pela assessoria da
+        CONTRATADA, tente omitir a liberação dos recursos, cancelar este contrato
+        de má-fé ou efetuar a contratação/desembolso diretamente com o agente
+        financeiro para eximir-se do pagamento dos honorários, a comissão de 5%
+        (cinco por cento) sobre o valor total viabilizado permanecerá
+        integralmente devida.
+      </p>
+      <p>
+        Parágrafo Único. Na hipótese descrita no caput, incidirá ainda multa
+        compensatória infracontratual de 10% (dez por cento) sobre o valor total
+        do crédito aprovado, sem prejuízo da cobrança judicial de honorários e
+        perdas e danos.
+      </p>
+
+      <H>Cláusula 11ª – Da Confidencialidade e Proteção de Dados</H>
       <p>
         9.1. A CONTRATADA compromete-se a manter sigilo sobre as informações e documentos recebidos
         em razão da execução dos serviços.
