@@ -270,41 +270,93 @@ export default function AssessoriaContractText({
       <p>8.3. A rescisão não elimina a obrigação de pagamento de valores já vencidos.</p>
       <p>8.4. A cláusula penal observará os limites previstos na legislação aplicável.</p>
 
-      <H>Cláusula 9ª – Da Confidencialidade e Proteção de Dados</H>
+      <H>Cláusula 9ª – Dos Honorários de Êxito e Forma de Pagamento</H>
       <p>
-        9.1. A CONTRATADA compromete-se a manter sigilo sobre as informações e documentos recebidos
+        Sem prejuízo do pagamento pontual das mensalidades pactuadas na Cláusula
+        Segunda, caso o acompanhamento estratégico resulte na aprovação e efetiva
+        liberação de crédito(s) em favor da CONTRATANTE, aplicar-se-ão as
+        seguintes regras de honorários de êxito:
+      </p>
+      <p>
+        9.1. A remuneração adicional da CONTRATADA, nesta hipótese, adota o
+        modelo de ÊXITO. A CONTRATANTE pagará à CONTRATADA honorários de êxito
+        correspondentes a 5% (cinco por cento) sobre o valor bruto do crédito
+        efetivamente aprovado, contratado e liberado pela instituição financeira.
+      </p>
+      <p>
+        §1º Fato Gerador: O fato gerador da obrigação de pagamento é a efetiva
+        disponibilização, crédito, liberação ou desembolso dos recursos na conta
+        bancária da CONTRATANTE ou de seus sócios/garantidores por ela indicados.
+      </p>
+      <p>
+        §2º Prazo de Pagamento: Os honorários deverão ser pagos pela CONTRATANTE
+        em até 2 (dois) dias úteis contados da efetiva liberação dos recursos na
+        conta, via PIX ou transferência bancária para a conta oficial da
+        CONTRATADA.
+      </p>
+      <p>
+        §3º Liberações Parciais: Em caso de liberação parcelada ou em tranches,
+        os honorários de 5% incidirão proporcionalmente sobre o valor de cada
+        parcela disponibilizada.
+      </p>
+      <p>
+        §4º Isenção Prévia: Não haverá qualquer cobrança antecipada de taxa de
+        cadastro, análise documental, consulta ou abertura de crédito antes da
+        liberação efetiva do valor.
+      </p>
+
+      <H>Cláusula 10ª – Da Cláusula Anti-Burla e Boa-Fé Contratual</H>
+      <p>
+        10.1. Caso a CONTRATANTE, após a montagem do dossiê, encaminhamento de
+        proposta ou aprovação do crédito viabilizado pela assessoria da
+        CONTRATADA, tente omitir a liberação dos recursos, cancelar este contrato
+        de má-fé ou efetuar a contratação/desembolso diretamente com o agente
+        financeiro para eximir-se do pagamento dos honorários, a comissão de 5%
+        (cinco por cento) sobre o valor total viabilizado permanecerá
+        integralmente devida.
+      </p>
+      <p>
+        Parágrafo Único. Na hipótese descrita no caput, incidirá ainda multa
+        compensatória infracontratual de 10% (dez por cento) sobre o valor total
+        do crédito aprovado, sem prejuízo da cobrança judicial de honorários e
+        perdas e danos.
+      </p>
+
+      <H>Cláusula 11ª – Da Confidencialidade e Proteção de Dados</H>
+      <p>
+        11.1. A CONTRATADA compromete-se a manter sigilo sobre as informações e documentos recebidos
         em razão da execução dos serviços.
       </p>
       <p>
-        9.2. As partes comprometem-se a observar a legislação aplicável à proteção de dados
+        11.2. As partes comprometem-se a observar a legislação aplicável à proteção de dados
         pessoais, especialmente a Lei nº 13.709/2018 – LGPD.
       </p>
       <p>
-        9.3. A CONTRATANTE autoriza o tratamento dos dados necessários à execução dos serviços
+        11.3. A CONTRATANTE autoriza o tratamento dos dados necessários à execução dos serviços
         contratados, observadas as finalidades e bases legais aplicáveis.
       </p>
 
-      <H>Cláusula 10ª – Da Plataforma PROSFEC</H>
+      <H>Cláusula 12ª – Da Plataforma PROSFEC</H>
       <p>
-        10.1. Quando previsto no plano, a CONTRATANTE terá acesso à plataforma PROSFEC durante a
+        12.1. Quando previsto no plano, a CONTRATANTE terá acesso à plataforma PROSFEC durante a
         vigência do contrato.
       </p>
       <p>
-        10.2. A plataforma poderá disponibilizar informações, documentos, indicadores, tarefas,
+        12.2. A plataforma poderá disponibilizar informações, documentos, indicadores, tarefas,
         relatórios, comunicações e acompanhamento da evolução da Assessoria.
       </p>
-      <p>10.3. O acesso é pessoal e não poderá ser compartilhado indevidamente com terceiros.</p>
+      <p>12.3. O acesso é pessoal e não poderá ser compartilhado indevidamente com terceiros.</p>
       <p>
-        10.4. A plataforma, sua tecnologia, metodologia, marca, estrutura e demais recursos
+        12.4. A plataforma, sua tecnologia, metodologia, marca, estrutura e demais recursos
         permanecem de propriedade da PROSFEC ou de seus respectivos titulares.
       </p>
 
-      <H>Cláusula 11ª – Da Assinatura Eletrônica</H>
+      <H>Cláusula 13ª – Da Assinatura Eletrônica</H>
       <p>
-        11.1. As partes reconhecem como válida a assinatura e formalização eletrônica deste contrato
+        13.1. As partes reconhecem como válida a assinatura e formalização eletrônica deste contrato
         por meio da plataforma PROSFEC.
       </p>
-      <p>11.2. O sistema poderá registrar, para fins de comprovação da contratação:</p>
+      <p>13.2. O sistema poderá registrar, para fins de comprovação da contratação:</p>
       <ul className="list-disc pl-6 space-y-1">
         <li>nome do signatário;</li>
         <li>CPF/CNPJ;</li>
@@ -317,7 +369,7 @@ export default function AssessoriaContractText({
         <li>demais informações técnicas disponíveis.</li>
       </ul>
       <p>
-        11.3. Os registros eletrônicos poderão ser utilizados como elementos de comprovação da
+        13.3. Os registros eletrônicos poderão ser utilizados como elementos de comprovação da
         manifestação de vontade das partes, observada a legislação aplicável.
       </p>
       <p>
@@ -334,21 +386,21 @@ export default function AssessoriaContractText({
         <strong>Versão do Contrato:</strong> {VERSAO_CONTRATO}
       </p>
 
-      <H>Cláusula 12ª – Das Disposições Finais</H>
+      <H>Cláusula 14ª – Das Disposições Finais</H>
       <p>
-        12.1. A contratação da Assessoria não garante aprovação de crédito, concessão de
+        14.1. A contratação da Assessoria não garante aprovação de crédito, concessão de
         financiamento ou qualquer resultado específico dependente de terceiros.
       </p>
       <p>
-        12.2. A CONTRATANTE permanece responsável pelas decisões tomadas com base nas orientações
+        14.2. A CONTRATANTE permanece responsável pelas decisões tomadas com base nas orientações
         recebidas e pela veracidade das informações fornecidas.
       </p>
       <p>
-        12.3. Eventuais alterações deste contrato deverão ser formalizadas por meio eletrônico ou
+        14.3. Eventuais alterações deste contrato deverão ser formalizadas por meio eletrônico ou
         outro meio válido.
       </p>
       <p>
-        12.4. Fica eleito o foro de {FORO}, ressalvadas as hipóteses de competência legal
+        14.4. Fica eleito o foro de {FORO}, ressalvadas as hipóteses de competência legal
         obrigatória, para dirimir eventuais questões decorrentes deste contrato.
       </p>
       <p>E, estando de acordo, as partes manifestam seu aceite eletrônico.</p>
