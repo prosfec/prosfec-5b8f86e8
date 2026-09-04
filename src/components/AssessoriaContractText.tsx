@@ -19,6 +19,7 @@ const FORO = "São Luís/MA";
 const VERSAO_CONTRATO = "v2 — Assessoria 12 meses";
 
 const ENTREGAVEIS_ESSENTIAL = [
+  "Serviço de Estruturação Completa: englobando Reabilitação de Crédito, Melhoria de Rating e Score, e mapeamento de pendências",
   "Diagnóstico Estratégico Inicial",
   "Adequação de Perfil e Dossiê Completo",
   "Implantação de Gateway de pagamento com Sistema de Gestão Financeira integrado",
@@ -26,6 +27,7 @@ const ENTREGAVEIS_ESSENTIAL = [
 ];
 
 const ENTREGAVEIS_GROWTH = [
+  "Serviço de Estruturação Completa: englobando Reabilitação de Crédito, Melhoria de Rating e Score, e mapeamento de pendências",
   "Todos os itens do plano Essential",
   "Auditoria Fiscal e Contábil",
   "Criação de Site Institucional",
@@ -33,6 +35,7 @@ const ENTREGAVEIS_GROWTH = [
 ];
 
 const ENTREGAVEIS_CORPORATE = [
+  "Serviço de Estruturação Completa: englobando Reabilitação de Crédito, Melhoria de Rating e Score, e mapeamento de pendências",
   "Todos os itens do plano Growth",
   "Auditoria Financeira profunda",
   "Projeto Comercial Estruturado (Bancos Suíços)",
@@ -146,6 +149,13 @@ export default function AssessoriaContractText({
       <p>
         1.2. A Assessoria poderá envolver análises, orientações, acompanhamento, planejamento e
         execução de medidas compatíveis com o plano contratado e com a situação da CONTRATANTE.
+      </p>
+      <p>
+        1.3. O serviço poderá compreender, conforme o plano contratado e a elegibilidade da
+        CONTRATANTE: a) estruturação e reabilitação de crédito; b) diagnóstico financeiro e
+        creditício inicial; c) análise do perfil financeiro e bancário; d) mapeamento de informações
+        cadastrais e restrições; e) melhoria e análise de Score/Rating; f) elaboração de plano
+        estratégico; g) monitoramento contínuo.
       </p>
 
       <H>Cláusula 2ª – Do Plano e do Escopo</H>
