@@ -5239,6 +5239,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
                           Sincronizar Leads Existentes
+                        </button>
                         <button
                           type="button"
                           onClick={handleSavePrices}
