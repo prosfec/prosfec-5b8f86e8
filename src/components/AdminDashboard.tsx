@@ -370,7 +370,10 @@ import {
   isServiceWithoutUpfrontCost,
   isDemandAccountingService,
   cleanForFirestore,
-  sanitizeServiceCatalogForFirestore
+  sanitizeServiceCatalogForFirestore,
+  DEFAULT_MENSALIDADES,
+  normalizeMensalidades,
+  type MensalidadesAssessoria
 } from "../utils/serviceUtils";
 export { DEFAULT_SERVICES_CATALOG };
 export type { ServiceCatalogItem };
@@ -409,6 +412,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [newServNome, setNewServNome] = useState("");
   const [newServValor, setNewServValor] = useState<number | "">("");
   const [newServHublaLink, setNewServHublaLink] = useState("");
+  const [editMensalidades, setEditMensalidades] = useState<MensalidadesAssessoria>(DEFAULT_MENSALIDADES);
 
   const CREDIT_PRODUCTS = [
     { code: "REDEBE_DIAGNOSTICO_360", name: "Rating de Crédito + Diagnóstico Finan. 360", defaultPrice: 49.90 }
@@ -830,9 +834,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         }
       }
 
+      const sanitizedMensalidades = normalizeMensalidades(editMensalidades);
+
       const payload = cleanForFirestore({
         precos: sanitizedPrices,
         servicos: sanitizedServices,
+        mensalidades: sanitizedMensalidades,
         updatedAt: new Date().toISOString()
       });
 
@@ -843,6 +850,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
       setCustomBasePrices(sanitizedPrices);
       setCustomServices(sanitizedServices);
+      setEditMensalidades(sanitizedMensalidades);
       alert(`Tabela de preços de consultas e catálogo de serviços atualizada com sucesso!${updatedLeadsCount > 0 ? `\n\n${updatedLeadsCount} lead(s) cadastrados no painel tiveram seus serviços e comissões atualizados automaticamente.` : ''}`);
       await fetchData();
     } catch (err) {
@@ -871,6 +879,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const payload = cleanForFirestore({
         precos: {},
         servicos: defaultSanitized,
+        mensalidades: DEFAULT_MENSALIDADES,
         updatedAt: new Date().toISOString()
       });
 
@@ -1272,6 +1281,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         if (configSnap.exists()) {
           const data = configSnap.data();
           setCustomBasePrices(data.precos || {});
+          setEditMensalidades(normalizeMensalidades(data.mensalidades));
           if (data.servicos && Array.isArray(data.servicos) && data.servicos.length > 0) {
             // Remove obsolete items: "Diagnóstico de Crédito — CPF ou CNPJ", "Recarga do Caça-Leads" e BACEN avulso legado
             const rawServs = data.servicos.filter((s: any) => 
