@@ -147,6 +147,9 @@ interface Lead {
   contratoAssinadoCpf?: string;
   contratoAssinadoDispositivo?: string;
   contratoAssinadoDesenho?: string;
+  modeloContratacao?: string;
+  planoEscolhido?: string;
+  valorMensalidade?: number;
   pendente?: boolean;
   pendenciaDescricao?: string;
   pendencias?: {
