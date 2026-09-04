@@ -2870,7 +2870,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
 
 
-              {lead.contratoAssinado ? (
+              {lead.contratoAssinado && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
                   <div className="space-y-1.5 text-slate-700">
                     <p><strong className="text-slate-900">Signatário:</strong> {lead.contratoAssinadoNome}</p>
@@ -2901,24 +2901,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="bg-slate-50 p-5 rounded-xl border border-dashed border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
-                  <p className="text-xs text-slate-500 max-w-md">
-                    O cliente assina este termo eletronicamente no link de acompanhamento no <strong className="text-slate-700">Passo 4</strong>. Você pode também visualizar e imprimir a minuta completa.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActivePdfTab("contrato");
-                      setShowContractPdfModal(true);
-                    }}
-                    className="py-2.5 px-4 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shadow-xs"
-                  >
-                    <Eye className="w-4 h-4" />
-                    <span>Visualizar Minuta do Contrato</span>
-                  </button>
-                </div>
               )}
+
 
               <div className="flex justify-end pt-4 border-t border-slate-100">
                 <button
