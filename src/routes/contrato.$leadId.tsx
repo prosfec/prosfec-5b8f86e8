@@ -56,6 +56,7 @@ function ContratoPublicoPage() {
   const [enviando, setEnviando] = useState(false);
   const [concluido, setConcluido] = useState(false);
   const [formErro, setFormErro] = useState<string | null>(null);
+  const [registro, setRegistro] = useState<any>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -114,6 +115,7 @@ function ContratoPublicoPage() {
       if (!r.ok) {
         setFormErro(json?.error || "Não foi possível registrar a assinatura.");
       } else {
+        setRegistro(json?.registro || null);
         setConcluido(true);
       }
     } catch {
