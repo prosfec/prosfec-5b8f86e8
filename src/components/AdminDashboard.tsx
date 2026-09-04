@@ -5822,41 +5822,43 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">2. Contato do Responsável</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">Nome do Solicitante</span>
-                    <span className="text-sm text-slate-800 font-semibold">{selectedLead.nome}</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Nome do Solicitante</span>
+                    <span className="text-sm font-medium text-slate-900">{selectedLead.nome}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">Cargo</span>
-                    <span className="text-sm text-slate-800 font-semibold">{selectedLead.cargo || "-"}</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Cargo</span>
+                    <span className="text-sm font-medium text-slate-900">{selectedLead.cargo || "-"}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">WhatsApp</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">WhatsApp</span>
                     <a 
                       href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-sm text-emerald-600 hover:text-[#25D366] font-bold flex items-center gap-1 inline-block mt-0.5"
+                      className="text-sm font-medium text-emerald-600 hover:text-[#25D366] flex items-center gap-1.5 transition-colors"
                     >
                       <Phone className="w-4 h-4 fill-current" /> {selectedLead.whatsapp} <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">E-mail</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">E-mail</span>
                     <a 
                       href={`mailto:${selectedLead.email}`}
-                      className="text-sm text-blue-600 hover:underline font-semibold flex items-center gap-1 inline-block mt-0.5"
+                      className="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1.5 break-all"
                     >
-                      <Mail className="w-4 h-4" /> {selectedLead.email}
+                      <Mail className="w-4 h-4 shrink-0" /> {selectedLead.email}
                     </a>
                   </div>
                 </div>
               </div>
 
               {/* Dados dos Sócios & Endereço Residencial */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">Dados dos Sócios e Residência</h4>
-                <div className="border border-slate-100 p-4 rounded-xl bg-white shadow-xs space-y-4">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Dados dos Sócios e Residência</h4>
+                </div>
+                <div className="p-4 space-y-4">
                   {selectedLead.socios && selectedLead.socios.length > 0 ? (
                     <div className="space-y-4">
                       {selectedLead.socios.map((socio, idx) => (
