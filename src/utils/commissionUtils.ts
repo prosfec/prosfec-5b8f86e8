@@ -557,3 +557,22 @@ export function buildLeadMultilevelFirestorePayload(
 
   return cleanForFirestore(payload);
 }
+
+/**
+ * Identifica itens de mensalidade (Assessoria) espelhados dentro de subEtapasPasso6.
+ * Esses itens existem apenas para reaproveitar o motor de comissão e NÃO devem
+ * aparecer nas listas de serviços de estruturação do Passo 6.
+ */
+export function isMensalidadeItem(item: any): boolean {
+  return item?.tipo === "mensalidade" || String(item?.id || "").startsWith("sub_custom_mensalidade_");
+}
+
+/** Retorna apenas os itens de serviço (sem mensalidades) */
+export function withoutMensalidades(list: any[]): any[] {
+  return Array.isArray(list) ? list.filter((s) => !isMensalidadeItem(s)) : [];
+}
+
+/** Retorna apenas os itens espelho de mensalidade */
+export function onlyMensalidades(list: any[]): any[] {
+  return Array.isArray(list) ? list.filter((s) => isMensalidadeItem(s)) : [];
+}
