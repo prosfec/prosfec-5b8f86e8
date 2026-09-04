@@ -1,0 +1,166 @@
+// @ts-nocheck
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Vitrine comercial (Venda Consultiva): exibida após a simulação do lead.
+ * Nenhum botão leva a checkout — todos abrem o WhatsApp do parceiro vinculado.
+ */
+
+import React from "react";
+import { Check, MessageCircle, Sparkles } from "lucide-react";
+
+export const PLANOS_PROSFEC = [
+  {
+    id: "avulso",
+    nome: "Modelo Avulso",
+    valorLabel: "Investimento sob consulta",
+    valorMensal: 0,
+    descricao: "Para quem precisa apenas do diagnóstico e da recomendação técnica.",
+    itens: ["Diagnóstico de crédito", "Recomendação de soluções"],
+    destaque: false,
+    dark: false,
+  },
+  {
+    id: "essential",
+    nome: "Assessoria Essential",
+    valorLabel: "R$ 597,00/mês",
+    valorMensal: 597,
+    descricao: "Estruturação completa da empresa para o mercado de crédito.",
+    itens: [
+      "Diagnóstico Estratégico",
+      "Estruturação Completa",
+      "Conta Digital / Gateway Carto",
+      "Monitoramento por 12 meses",
+    ],
+    destaque: false,
+    dark: false,
+  },
+  {
+    id: "growth",
+    nome: "Assessoria Growth",
+    valorLabel: "R$ 797,00/mês",
+    valorMensal: 797,
+    descricao: "Tudo do Essential com presença digital e eficiência fiscal.",
+    itens: [
+      "Tudo do Essential",
+      "Auditoria Fiscal",
+      "Site institucional",
+      "Automação de WhatsApp",
+    ],
+    destaque: true,
+    dark: false,
+  },
+  {
+    id: "corporate",
+    nome: "Assessoria Corporate",
+    valorLabel: "R$ 1.497,00/mês",
+    valorMensal: 1497,
+    descricao: "Estrutura corporativa completa e projetos internacionais.",
+    itens: [
+      "Tudo do Growth",
+      "Auditoria Financeira",
+      "Projeto Bancos Suíços",
+    ],
+    destaque: false,
+    dark: true,
+  },
+];
+
+const MENSAGEM_ESPECIALISTA =
+  "Olá, acabei de fazer a simulação na PROSFEC e gostaria de agendar uma reunião para definirmos o formato de assessoria para minha empresa.";
+
+interface PlanSelectionViewProps {
+  partnerWhatsapp?: string;
+  partnerNome?: string;
+}
+
+export default function PlanSelectionView({ partnerWhatsapp, partnerNome }: PlanSelectionViewProps) {
+  const handleFalarComEspecialista = () => {
+    const targetPhone = partnerWhatsapp
+      ? String(partnerWhatsapp).replace(/\D/g, "")
+      : "5598987353253";
+    const url = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(MENSAGEM_ESPECIALISTA)}`;
+    try {
+      const opened = window.open(url, "_blank");
+      if (!opened) window.location.href = url;
+    } catch {
+      window.location.href = url;
+    }
+  };
+
+  return (
+    <section className="mt-8 pt-8 border-t border-slate-200">
+      <div className="text-center max-w-2xl mx-auto space-y-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-full inline-block">
+          Próximo passo
+        </span>
+        <h3 className="text-xl sm:text-2xl font-display font-extrabold text-slate-900">
+          Escolha o formato de assessoria da sua empresa
+        </h3>
+        <p className="text-sm text-slate-500 leading-relaxed">
+          Nossa equipe define com você o modelo ideal em uma reunião de diagnóstico.
+          {partnerNome ? ` Seu consultor responsável é ${partnerNome}.` : ""}
+        </p>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 text-left">
+        {PLANOS_PROSFEC.map((plano) => {
+          const base = plano.dark
+            ? "bg-slate-900 border-slate-800 text-white"
+            : "bg-white border-slate-200 text-slate-900";
+          const ring = plano.destaque ? "border-[#00A86B] ring-2 ring-emerald-100" : "";
+
+          return (
+            <div
+              key={plano.id}
+              className={`relative flex flex-col rounded-xl border shadow-sm p-5 transition-all hover:shadow-md ${base} ${ring}`}
+            >
+              {plano.destaque && (
+                <span className="absolute -top-2.5 left-5 text-[10px] font-bold uppercase tracking-wider bg-[#00A86B] text-white px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Mais escolhido
+                </span>
+              )}
+
+              <p className={`text-xs font-semibold uppercase tracking-wider ${plano.dark ? "text-slate-300" : "text-slate-500"}`}>
+                {plano.nome}
+              </p>
+              <p className={`mt-2 text-lg font-extrabold font-display ${plano.dark ? "text-white" : "text-slate-900"}`}>
+                {plano.valorLabel}
+              </p>
+              <p className={`mt-1 text-xs leading-relaxed ${plano.dark ? "text-slate-400" : "text-slate-500"}`}>
+                {plano.descricao}
+              </p>
+
+              <ul className="mt-4 space-y-2 flex-1">
+                {plano.itens.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <Check className={`w-4 h-4 shrink-0 mt-0.5 ${plano.dark ? "text-emerald-400" : "text-emerald-600"}`} />
+                    <span className={`text-xs font-medium ${plano.dark ? "text-slate-200" : "text-slate-700"}`}>
+                      {item}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                type="button"
+                onClick={handleFalarComEspecialista}
+                className={`mt-5 w-full px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all hover:shadow-md cursor-pointer ${
+                  plano.dark
+                    ? "bg-white text-slate-900 hover:bg-slate-100"
+                    : plano.destaque
+                    ? "bg-[#00A86B] text-white hover:bg-[#0A3D2E]"
+                    : "bg-[#0A3D2E] text-white hover:bg-[#00A86B]"
+                }`}
+              >
+                <MessageCircle className="w-4 h-4" />
+                Falar com Especialista
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}

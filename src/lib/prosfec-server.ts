@@ -3419,6 +3419,128 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       }));
   };
 
+  // =====================================================================
+  // Contrato público (assinatura por link) — sem autenticação do cliente
+  // =====================================================================
+
+  const sanitizeLeadId = (raw: any): string => {
+    const id = String(raw || "").trim();
+    return /^[A-Za-z0-9_-]{6,80}$/.test(id) ? id : "";
+  };
+
+  app.get("/api/public/contrato/:leadId", async (req, res) => {
+    try {
+      const leadId = sanitizeLeadId(req.params?.leadId);
+      if (!leadId) return res.status(400).json({ error: "Identificador de contrato inválido." });
+
+      const lead = await getDocRest(`leads/${leadId}`);
+      if (!lead) return res.status(404).json({ error: "Contrato não encontrado." });
+
+      if (!lead.modeloContratacao) {
+        return res.status(404).json({ error: "Contrato ainda não disponibilizado para assinatura." });
+      }
+
+      return res.json({
+        success: true,
+        contrato: {
+          leadId,
+          nomeEmpresa: lead.nomeEmpresa || lead.razaoSocial || "",
+          cnpj: lead.cnpj || "",
+          nomeContato: lead.nomeContato || lead.nome || "",
+          modeloContratacao: lead.modeloContratacao,
+          planoEscolhido: lead.planoEscolhido || "",
+          valorMensalidade: Number(lead.valorMensalidade || 0),
+          contratoAssinado: !!lead.contratoAssinado,
+          contratoAssinadoData: lead.contratoAssinadoData || null,
+        },
+      });
+    } catch (err: any) {
+      console.error("Erro ao carregar contrato público:", err?.message || err);
+      return res.status(500).json({ error: "Erro ao carregar o contrato." });
+    }
+  });
+
+  app.post("/api/public/contrato/:leadId/assinar", async (req, res) => {
+    try {
+      const leadId = sanitizeLeadId(req.params?.leadId);
+      if (!leadId) return res.status(400).json({ error: "Identificador de contrato inválido." });
+
+      const body = req.body || {};
+      const nome = String(body.nome || "").trim();
+      const cpf = String(body.cpf || "").replace(/\D/g, "");
+      const assinatura = String(body.assinatura || "");
+      const ip = String(body.ip || "").slice(0, 60);
+      const dispositivo = String(body.dispositivo || req.headers?.["user-agent"] || "").slice(0, 400);
+
+      if (nome.length < 5) return res.status(400).json({ error: "Informe o nome completo do responsável." });
+      if (cpf.length !== 11) return res.status(400).json({ error: "Informe um CPF válido." });
+      if (!assinatura.startsWith("data:image/")) {
+        return res.status(400).json({ error: "Assinatura inválida. Desenhe sua assinatura no quadro." });
+      }
+      if (assinatura.length > 900000) {
+        return res.status(400).json({ error: "Assinatura muito grande. Tente novamente." });
+      }
+
+      const lead = await getDocRest(`leads/${leadId}`);
+      if (!lead || !lead.modeloContratacao) {
+        return res.status(404).json({ error: "Contrato não encontrado." });
+      }
+      if (lead.contratoAssinado) {
+        return res.status(409).json({ error: "Este contrato já foi assinado." });
+      }
+
+      const nowIso = new Date().toISOString();
+      const currentEtapa = Number(lead.etapa || 1);
+      const nextEtapa = Math.max(currentEtapa, 5);
+
+      const payload: Record<string, any> = {
+        contratoAssinado: true,
+        contratoAssinadoData: nowIso,
+        contratoAssinadoIp: ip,
+        contratoAssinadoNome: nome,
+        contratoAssinadoCpf: cpf,
+        contratoAssinadoDispositivo: dispositivo,
+        contratoAssinadoDesenho: assinatura,
+      };
+
+      if (nextEtapa !== currentEtapa) {
+        const historyItem = {
+          data: nowIso,
+          etapaAnterior: currentEtapa,
+          etapaNova: nextEtapa,
+          autor: "Cliente (Assinatura Digital)",
+          detalhes: `Contrato ${lead.planoEscolhido || lead.modeloContratacao} assinado digitalmente via link público.`,
+        };
+        payload.etapa = nextEtapa;
+        payload.historicoEtapas = Array.isArray(lead.historicoEtapas)
+          ? [...lead.historicoEtapas, historyItem]
+          : [historyItem];
+      }
+
+      await patchDocRest(`leads/${leadId}`, payload);
+
+      try {
+        await createDocRest("notificacoes", {
+          recipientId: "admin",
+          recipientType: "admin",
+          titulo: "Novo contrato assinado",
+          mensagem: `Novo contrato assinado: ${lead.nomeEmpresa || lead.razaoSocial || leadId} — ${lead.planoEscolhido || lead.modeloContratacao}. Gere o link de cobrança (InfinitePay) para prosseguir.`,
+          tipo: "success",
+          lida: false,
+          leadId,
+          dataCriacao: nowIso,
+        });
+      } catch (notifErr: any) {
+        console.error("Falha ao notificar contrato assinado:", notifErr?.message || notifErr);
+      }
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("Erro ao assinar contrato público:", err?.message || err);
+      return res.status(500).json({ error: "Erro ao registrar a assinatura." });
+    }
+  });
+
   return app;
 
 

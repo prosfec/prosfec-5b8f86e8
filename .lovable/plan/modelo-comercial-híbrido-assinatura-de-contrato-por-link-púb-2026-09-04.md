@@ -8,7 +8,7 @@ Novo componente `src/components/PlanSelectionView.tsx`, exibido na tela de resul
 
 - Grid `grid-cols-1 md:grid-cols-2 lg:grid-cols-4`, estética Fintech Premium (`bg-white rounded-xl border border-slate-200 shadow-sm`).
 - Card 1 — Avulso: "Investimento sob consulta" · Diagnóstico de crédito e recomendação de soluções.
-- Card 2 — Essential: R$ 497,00/mês · Diagnóstico Estratégico, Estruturação Completa, Conta Digital/Gateway Carto, Monitoramento 12 meses.
+- Card 2 — Essential: R$ 597,00/mês · Diagnóstico Estratégico, Estruturação Completa, Conta Digital/Gateway Carto, Monitoramento 12 meses.
 - Card 3 — Growth (destaque, borda verde primária): R$ 797,00/mês · tudo do Essential + Auditoria Fiscal + Site + Automação de WhatsApp.
 - Card 4 — Corporate: R$ 1.497,00/mês · tudo do Growth + Auditoria Financeira + Projeto Bancos Suíços. Estética `bg-slate-900` com texto branco.
 - Os 4 botões dizem "Falar com Especialista" e abrem o WhatsApp do parceiro vinculado ao lead (mesma resolução já usada hoje no Simulador: WhatsApp do parceiro indicador, com fallback para o número institucional quando o lead não tem parceiro), com a mensagem: "Olá, acabei de fazer a simulação na PROSFEC e gostaria de agendar uma reunião para definirmos o formato de assessoria para minha empresa."

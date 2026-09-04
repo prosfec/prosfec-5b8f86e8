@@ -20,6 +20,7 @@ import {
   fetchCNPJ
 } from "../utils";
 import { LeadData, SimulationResult } from "../types";
+import PlanSelectionView from "./PlanSelectionView";
 import { doc, updateDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../firebase";
 import {
@@ -2459,6 +2460,11 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                     </AnimatePresence>
                   </div>
                 </div>
+
+                <PlanSelectionView
+                  partnerWhatsapp={referredByPartnerWhatsapp}
+                  partnerNome={referredByPartnerNome}
+                />
 
                 {/* Final Call to conversation (Brazillian Premium conversion focused) */}
                 <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
