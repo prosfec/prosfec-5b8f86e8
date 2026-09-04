@@ -9,6 +9,7 @@
 import React, { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import SignaturePad from "../components/SignaturePad";
+import AssessoriaContractText from "../components/AssessoriaContractText";
 import { Loader2, CheckCircle2, FileText, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/contrato/$leadId")({
@@ -35,6 +36,13 @@ const formatCpf = (v: string) =>
 const formatBRL = (n: number) =>
   `R$ ${Number(n || 0).toFixed(2).replace(".", ",")}`;
 
+const maskCpf = (v?: string) => {
+  const d = String(v || "").replace(/\D/g, "");
+  if (d.length !== 11) return v || "—";
+  return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
+};
+
+
 function ContratoPublicoPage() {
   const { leadId } = Route.useParams();
 
@@ -48,6 +56,7 @@ function ContratoPublicoPage() {
   const [enviando, setEnviando] = useState(false);
   const [concluido, setConcluido] = useState(false);
   const [formErro, setFormErro] = useState<string | null>(null);
+  const [registro, setRegistro] = useState<any>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -106,6 +115,7 @@ function ContratoPublicoPage() {
       if (!r.ok) {
         setFormErro(json?.error || "Não foi possível registrar a assinatura.");
       } else {
+        setRegistro(json?.registro || null);
         setConcluido(true);
       }
     } catch {
@@ -166,7 +176,11 @@ function ContratoPublicoPage() {
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-4 space-y-3 text-sm text-slate-600 leading-relaxed max-h-80 overflow-y-auto">
+          <div
+            className={`border-t border-slate-100 pt-4 space-y-3 text-sm text-slate-600 leading-relaxed ${
+              isAvulso ? "max-h-80 overflow-y-auto" : ""
+            }`}
+          >
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
               <FileText className="w-4 h-4" /> Termos
             </p>
@@ -175,17 +189,18 @@ function ContratoPublicoPage() {
                 <p><strong>Objeto.</strong> Prestação pontual de serviços técnicos de diagnóstico de crédito e recomendação de soluções para a CONTRATANTE, sem vínculo de continuidade.</p>
                 <p><strong>Prazo.</strong> O presente contrato vigora até a entrega do serviço contratado, encerrando-se automaticamente após a conclusão.</p>
                 <p><strong>Investimento.</strong> O valor é definido conforme escopo apurado e informado previamente à CONTRATANTE, com pagamento à vista antes do início da execução.</p>
+                <p><strong>Confidencialidade e LGPD.</strong> As partes se obrigam a manter sigilo sobre as informações trocadas, em conformidade com a Lei nº 13.709/2018.</p>
+                <p><strong>Aceite eletrônico.</strong> A assinatura digital abaixo, acompanhada de data, hora, IP e dispositivo, comprova a manifestação de vontade da CONTRATANTE nos termos do art. 10, §2º, da MP 2.200-2/2001.</p>
               </>
             ) : (
-              <>
-                <p><strong>Objeto.</strong> Prestação continuada de serviços de assessoria empresarial no plano {contrato?.planoEscolhido}, conforme escopo apresentado comercialmente.</p>
-                <p><strong>Prazo.</strong> O presente contrato tem vigência de <strong>12 (doze) meses</strong>, contados da assinatura, renovável por acordo entre as partes.</p>
-                <p><strong>Investimento.</strong> Mensalidade de <strong>{formatBRL(contrato?.valorMensalidade)}</strong>, com vencimento mensal a partir da assinatura.</p>
-                <p><strong>Rescisão.</strong> A rescisão antecipada pela CONTRATANTE implica no pagamento das parcelas vencidas e multa contratual equivalente a 30% do saldo remanescente.</p>
-              </>
+              <AssessoriaContractText
+                razaoSocial={contrato?.nomeEmpresa}
+                cnpj={contrato?.cnpj}
+                endereco={contrato?.endereco}
+                planoEscolhido={contrato?.planoEscolhido}
+                valorMensalidade={contrato?.valorMensalidade}
+              />
             )}
-            <p><strong>Confidencialidade e LGPD.</strong> As partes se obrigam a manter sigilo sobre as informações trocadas, em conformidade com a Lei nº 13.709/2018.</p>
-            <p><strong>Aceite eletrônico.</strong> A assinatura digital abaixo, acompanhada de data, hora, IP e dispositivo, comprova a manifestação de vontade da CONTRATANTE nos termos do art. 10, §2º, da MP 2.200-2/2001.</p>
           </div>
         </section>
 
@@ -194,6 +209,32 @@ function ContratoPublicoPage() {
             <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
             <h2 className="text-lg font-extrabold text-slate-900">Contrato assinado com sucesso</h2>
             <p className="text-sm text-slate-500">Aguarde o contato da nossa equipe.</p>
+            {registro && (
+              <div className="mt-4 text-left bg-slate-50 border border-slate-200 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Signatário</p>
+                  <p className="text-sm font-medium text-slate-900">{registro.nome || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">CPF</p>
+                  <p className="text-sm font-medium text-slate-900 font-mono">{maskCpf(registro.cpf)}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data / Hora</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {registro.data ? new Date(registro.data).toLocaleString("pt-BR") : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">IP capturado</p>
+                  <p className="text-sm font-medium text-slate-900 font-mono">{registro.ip || "não capturado"}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Dispositivo</p>
+                  <p className="text-xs text-slate-600 break-all">{registro.dispositivo || "—"}</p>
+                </div>
+              </div>
+            )}
           </section>
         ) : (
           <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-5">

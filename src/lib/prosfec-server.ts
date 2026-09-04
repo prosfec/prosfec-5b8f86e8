@@ -3446,6 +3446,10 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           leadId,
           nomeEmpresa: lead.nomeEmpresa || lead.razaoSocial || "",
           cnpj: lead.cnpj || "",
+          endereco:
+            [(lead as any).endereco, lead.cidade, (lead as any).uf || (lead as any).estado]
+              .filter(Boolean)
+              .join(", ") || "",
           nomeContato: lead.nomeContato || lead.nome || "",
           modeloContratacao: lead.modeloContratacao,
           planoEscolhido: lead.planoEscolhido || "",
@@ -3534,7 +3538,10 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         console.error("Falha ao notificar contrato assinado:", notifErr?.message || notifErr);
       }
 
-      return res.json({ success: true });
+      return res.json({
+        success: true,
+        registro: { nome, cpf, data: nowIso, ip, dispositivo },
+      });
     } catch (err: any) {
       console.error("Erro ao assinar contrato público:", err?.message || err);
       return res.status(500).json({ error: "Erro ao registrar a assinatura." });
