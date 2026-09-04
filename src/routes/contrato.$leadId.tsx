@@ -9,6 +9,7 @@
 import React, { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import SignaturePad from "../components/SignaturePad";
+import AssessoriaContractText from "../components/AssessoriaContractText";
 import { Loader2, CheckCircle2, FileText, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/contrato/$leadId")({
@@ -34,6 +35,13 @@ const formatCpf = (v: string) =>
 
 const formatBRL = (n: number) =>
   `R$ ${Number(n || 0).toFixed(2).replace(".", ",")}`;
+
+const maskCpf = (v?: string) => {
+  const d = String(v || "").replace(/\D/g, "");
+  if (d.length !== 11) return v || "—";
+  return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
+};
+
 
 function ContratoPublicoPage() {
   const { leadId } = Route.useParams();
