@@ -1852,7 +1852,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
   // ---- Definição de contrato e link público de assinatura ----
   const PLANO_VALORES: Record<string, number> = {
     "Avulso": 0,
-    "Assessoria Essential": 597,
+    "Assessoria Essential": 497,
     "Assessoria Growth": 797,
     "Assessoria Corporate": 1497,
   };
