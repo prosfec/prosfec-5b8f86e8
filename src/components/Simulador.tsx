@@ -2464,6 +2464,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                 <PlanSelectionView
                   partnerWhatsapp={referredByPartnerWhatsapp}
                   partnerNome={referredByPartnerNome}
+                  porte={formData.porte}
                 />
 
                 {/* Final Call to conversation (Brazillian Premium conversion focused) */}

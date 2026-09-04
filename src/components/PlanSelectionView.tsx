@@ -5,6 +5,12 @@
  *
  * Vitrine comercial (Venda Consultiva): exibida após a simulação do lead.
  * Nenhum botão leva a checkout — todos abrem o WhatsApp do parceiro vinculado.
+ *
+ * Oferta inteligente: exibe SEMPRE apenas 2 cards — o Modelo Avulso + UM card
+ * de Assessoria escolhido dinamicamente pelo porte da empresa:
+ *   MEI           → Assessoria Essential (R$ 497,00/mês)
+ *   ME            → Assessoria Growth (R$ 797,00/mês)
+ *   EPP/superior  → Assessoria Corporate (R$ 1.497,00/mês)
  */
 
 import React from "react";
@@ -24,13 +30,13 @@ export const PLANOS_PROSFEC = [
   {
     id: "essential",
     nome: "Assessoria Essential",
-    valorLabel: "R$ 597,00/mês",
-    valorMensal: 597,
+    valorLabel: "R$ 497,00/mês",
+    valorMensal: 497,
     descricao: "Estruturação completa da empresa para o mercado de crédito.",
     itens: [
       "Diagnóstico Estratégico",
       "Estruturação Completa",
-      "Conta Digital / Gateway Carto",
+      "Gateway de pagamento com Sistema de Gestão Financeira integrado",
       "Monitoramento por 12 meses",
     ],
     destaque: false,
@@ -67,15 +73,26 @@ export const PLANOS_PROSFEC = [
   },
 ];
 
+/** Resolve o plano de assessoria recomendado conforme o porte da empresa. */
+export function planoParaPorte(porte?: string): (typeof PLANOS_PROSFEC)[number] {
+  const p = String(porte || "").toUpperCase().trim();
+  if (p === "MEI") return PLANOS_PROSFEC.find((x) => x.id === "essential")!;
+  if (p === "ME") return PLANOS_PROSFEC.find((x) => x.id === "growth")!;
+  // EPP, EMP, EGP, LTDA, S/A, superiores ou indefinido → Corporate
+  return PLANOS_PROSFEC.find((x) => x.id === "corporate")!;
+}
+
 const MENSAGEM_ESPECIALISTA =
   "Olá, acabei de fazer a simulação na PROSFEC e gostaria de agendar uma reunião para definirmos o formato de assessoria para minha empresa.";
 
 interface PlanSelectionViewProps {
   partnerWhatsapp?: string;
   partnerNome?: string;
+  /** Porte da empresa do lead (MEI, ME, EPP...) — define a assessoria exibida. */
+  porte?: string;
 }
 
-export default function PlanSelectionView({ partnerWhatsapp, partnerNome }: PlanSelectionViewProps) {
+export default function PlanSelectionView({ partnerWhatsapp, partnerNome, porte }: PlanSelectionViewProps) {
   const handleFalarComEspecialista = () => {
     const targetPhone = partnerWhatsapp
       ? String(partnerWhatsapp).replace(/\D/g, "")
@@ -88,6 +105,10 @@ export default function PlanSelectionView({ partnerWhatsapp, partnerNome }: Plan
       window.location.href = url;
     }
   };
+
+  const planoAvulso = PLANOS_PROSFEC.find((x) => x.id === "avulso")!;
+  const planoRecomendado = planoParaPorte(porte);
+  const planosVisiveis = [planoAvulso, planoRecomendado];
 
   return (
     <section className="mt-8 pt-8 border-t border-slate-200">
@@ -104,8 +125,8 @@ export default function PlanSelectionView({ partnerWhatsapp, partnerNome }: Plan
         </p>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 text-left">
-        {PLANOS_PROSFEC.map((plano) => {
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-6 text-left">
+        {planosVisiveis.map((plano) => {
           const base = plano.dark
             ? "bg-slate-900 border-slate-800 text-white"
             : "bg-white border-slate-200 text-slate-900";
@@ -114,29 +135,29 @@ export default function PlanSelectionView({ partnerWhatsapp, partnerNome }: Plan
           return (
             <div
               key={plano.id}
-              className={`relative flex flex-col rounded-xl border shadow-sm p-5 transition-all hover:shadow-md ${base} ${ring}`}
+              className={`relative flex flex-col rounded-xl border shadow-sm p-6 sm:p-8 transition-all hover:shadow-md ${base} ${ring}`}
             >
               {plano.destaque && (
-                <span className="absolute -top-2.5 left-5 text-[10px] font-bold uppercase tracking-wider bg-[#00A86B] text-white px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> Mais escolhido
+                <span className="absolute -top-2.5 left-6 text-[10px] font-bold uppercase tracking-wider bg-[#00A86B] text-white px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Recomendado para o seu porte
                 </span>
               )}
 
               <p className={`text-xs font-semibold uppercase tracking-wider ${plano.dark ? "text-slate-300" : "text-slate-500"}`}>
                 {plano.nome}
               </p>
-              <p className={`mt-2 text-lg font-extrabold font-display ${plano.dark ? "text-white" : "text-slate-900"}`}>
+              <p className={`mt-2 text-2xl font-extrabold font-display ${plano.dark ? "text-white" : "text-slate-900"}`}>
                 {plano.valorLabel}
               </p>
-              <p className={`mt-1 text-xs leading-relaxed ${plano.dark ? "text-slate-400" : "text-slate-500"}`}>
+              <p className={`mt-2 text-sm leading-relaxed ${plano.dark ? "text-slate-400" : "text-slate-500"}`}>
                 {plano.descricao}
               </p>
 
-              <ul className="mt-4 space-y-2 flex-1">
+              <ul className="mt-5 space-y-2.5 flex-1">
                 {plano.itens.map((item) => (
                   <li key={item} className="flex items-start gap-2">
                     <Check className={`w-4 h-4 shrink-0 mt-0.5 ${plano.dark ? "text-emerald-400" : "text-emerald-600"}`} />
-                    <span className={`text-xs font-medium ${plano.dark ? "text-slate-200" : "text-slate-700"}`}>
+                    <span className={`text-sm font-medium ${plano.dark ? "text-slate-200" : "text-slate-700"}`}>
                       {item}
                     </span>
                   </li>
@@ -146,7 +167,7 @@ export default function PlanSelectionView({ partnerWhatsapp, partnerNome }: Plan
               <button
                 type="button"
                 onClick={handleFalarComEspecialista}
-                className={`mt-5 w-full px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all hover:shadow-md cursor-pointer ${
+                className={`mt-6 w-full px-4 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all hover:shadow-md cursor-pointer ${
                   plano.dark
                     ? "bg-white text-slate-900 hover:bg-slate-100"
                     : plano.destaque
