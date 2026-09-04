@@ -5240,6 +5240,47 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           <RefreshCw className="w-3.5 h-3.5" />
                           Sincronizar Leads Existentes
                         </button>
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6">
+                    <div className="mb-4">
+                      <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-emerald-600" />
+                        Valores de Mensalidade (Assessoria)
+                      </h3>
+                      <p className="text-slate-500 text-[11px] mt-1">
+                        Valores mensais exibidos na vitrine de planos e na Etapa 4. Contratos já assinados mantêm o valor contratado.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {([
+                        { key: "essential" as const, label: "Preço Mensal — Essential" },
+                        { key: "growth" as const, label: "Preço Mensal — Growth" },
+                        { key: "corporate" as const, label: "Preço Mensal — Corporate" },
+                      ]).map((f) => (
+                        <div key={f.key}>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                            {f.label}
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold">R$</span>
+                            <input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              disabled={userRole === "contador"}
+                              value={editMensalidades[f.key]}
+                              onChange={(e) =>
+                                setEditMensalidades((prev) => ({
+                                  ...prev,
+                                  [f.key]: e.target.value === "" ? 0 : Number(e.target.value),
+                                }))
+                              }
+                              className="w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-hidden transition-all disabled:opacity-60"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                         <button
                           type="button"
                           onClick={handleSavePrices}
