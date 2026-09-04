@@ -336,27 +336,27 @@ export default function AssessoriaContractText({
         contratados, observadas as finalidades e bases legais aplicáveis.
       </p>
 
-      <H>Cláusula 10ª – Da Plataforma PROSFEC</H>
+      <H>Cláusula 12ª – Da Plataforma PROSFEC</H>
       <p>
-        10.1. Quando previsto no plano, a CONTRATANTE terá acesso à plataforma PROSFEC durante a
+        12.1. Quando previsto no plano, a CONTRATANTE terá acesso à plataforma PROSFEC durante a
         vigência do contrato.
       </p>
       <p>
-        10.2. A plataforma poderá disponibilizar informações, documentos, indicadores, tarefas,
+        12.2. A plataforma poderá disponibilizar informações, documentos, indicadores, tarefas,
         relatórios, comunicações e acompanhamento da evolução da Assessoria.
       </p>
-      <p>10.3. O acesso é pessoal e não poderá ser compartilhado indevidamente com terceiros.</p>
+      <p>12.3. O acesso é pessoal e não poderá ser compartilhado indevidamente com terceiros.</p>
       <p>
-        10.4. A plataforma, sua tecnologia, metodologia, marca, estrutura e demais recursos
+        12.4. A plataforma, sua tecnologia, metodologia, marca, estrutura e demais recursos
         permanecem de propriedade da PROSFEC ou de seus respectivos titulares.
       </p>
 
-      <H>Cláusula 11ª – Da Assinatura Eletrônica</H>
+      <H>Cláusula 13ª – Da Assinatura Eletrônica</H>
       <p>
-        11.1. As partes reconhecem como válida a assinatura e formalização eletrônica deste contrato
+        13.1. As partes reconhecem como válida a assinatura e formalização eletrônica deste contrato
         por meio da plataforma PROSFEC.
       </p>
-      <p>11.2. O sistema poderá registrar, para fins de comprovação da contratação:</p>
+      <p>13.2. O sistema poderá registrar, para fins de comprovação da contratação:</p>
       <ul className="list-disc pl-6 space-y-1">
         <li>nome do signatário;</li>
         <li>CPF/CNPJ;</li>
@@ -369,7 +369,7 @@ export default function AssessoriaContractText({
         <li>demais informações técnicas disponíveis.</li>
       </ul>
       <p>
-        11.3. Os registros eletrônicos poderão ser utilizados como elementos de comprovação da
+        13.3. Os registros eletrônicos poderão ser utilizados como elementos de comprovação da
         manifestação de vontade das partes, observada a legislação aplicável.
       </p>
       <p>
@@ -386,21 +386,21 @@ export default function AssessoriaContractText({
         <strong>Versão do Contrato:</strong> {VERSAO_CONTRATO}
       </p>
 
-      <H>Cláusula 12ª – Das Disposições Finais</H>
+      <H>Cláusula 14ª – Das Disposições Finais</H>
       <p>
-        12.1. A contratação da Assessoria não garante aprovação de crédito, concessão de
+        14.1. A contratação da Assessoria não garante aprovação de crédito, concessão de
         financiamento ou qualquer resultado específico dependente de terceiros.
       </p>
       <p>
-        12.2. A CONTRATANTE permanece responsável pelas decisões tomadas com base nas orientações
+        14.2. A CONTRATANTE permanece responsável pelas decisões tomadas com base nas orientações
         recebidas e pela veracidade das informações fornecidas.
       </p>
       <p>
-        12.3. Eventuais alterações deste contrato deverão ser formalizadas por meio eletrônico ou
+        14.3. Eventuais alterações deste contrato deverão ser formalizadas por meio eletrônico ou
         outro meio válido.
       </p>
       <p>
-        12.4. Fica eleito o foro de {FORO}, ressalvadas as hipóteses de competência legal
+        14.4. Fica eleito o foro de {FORO}, ressalvadas as hipóteses de competência legal
         obrigatória, para dirimir eventuais questões decorrentes deste contrato.
       </p>
       <p>E, estando de acordo, as partes manifestam seu aceite eletrônico.</p>
