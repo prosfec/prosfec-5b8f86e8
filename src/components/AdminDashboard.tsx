@@ -5239,6 +5239,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
                           Sincronizar Leads Existentes
+                        <button
+                          type="button"
+                          onClick={handleSavePrices}
+                          disabled={loading || userRole === "contador"}
+                          className="w-full sm:w-auto px-4 py-2 bg-[#00A86B] hover:bg-[#008f5b] disabled:opacity-50 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <Save className="w-4 h-4" />
+                          {loading ? "Salvando no Firestore..." : "Salvar Catálogo & Preços"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                         </button>
                   <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6">
                     <div className="mb-4">
@@ -5279,18 +5291,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                        <button
-                          type="button"
-                          onClick={handleSavePrices}
-                          disabled={loading || userRole === "contador"}
-                          className="w-full sm:w-auto px-4 py-2 bg-[#00A86B] hover:bg-[#008f5b] disabled:opacity-50 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                        >
-                          <Save className="w-4 h-4" />
-                          {loading ? "Salvando no Firestore..." : "Salvar Catálogo & Preços"}
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>
