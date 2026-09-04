@@ -10,6 +10,7 @@ import React, { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import SignaturePad from "../components/SignaturePad";
 import AssessoriaContractText from "../components/AssessoriaContractText";
+import AvulsoContractText from "../components/AvulsoContractText";
 import { Loader2, CheckCircle2, FileText, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/contrato/$leadId")({
@@ -176,29 +177,31 @@ function ContratoPublicoPage() {
             </div>
           </div>
 
-          <div
-            className={`border-t border-slate-100 pt-4 space-y-3 text-sm text-slate-600 leading-relaxed ${
-              isAvulso ? "max-h-80 overflow-y-auto" : ""
-            }`}
-          >
+          <div className="border-t border-slate-100 pt-4 space-y-3 text-sm text-slate-600 leading-relaxed">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
               <FileText className="w-4 h-4" /> Termos
             </p>
             {isAvulso ? (
-              <>
-                <p><strong>Objeto.</strong> Prestação pontual de serviços técnicos de diagnóstico de crédito e recomendação de soluções para a CONTRATANTE, sem vínculo de continuidade.</p>
-                <p><strong>Prazo.</strong> O presente contrato vigora até a entrega do serviço contratado, encerrando-se automaticamente após a conclusão.</p>
-                <p><strong>Investimento.</strong> O valor é definido conforme escopo apurado e informado previamente à CONTRATANTE, com pagamento à vista antes do início da execução.</p>
-                <p><strong>Confidencialidade e LGPD.</strong> As partes se obrigam a manter sigilo sobre as informações trocadas, em conformidade com a Lei nº 13.709/2018.</p>
-                <p><strong>Aceite eletrônico.</strong> A assinatura digital abaixo, acompanhada de data, hora, IP e dispositivo, comprova a manifestação de vontade da CONTRATANTE nos termos do art. 10, §2º, da MP 2.200-2/2001.</p>
-              </>
+              <AvulsoContractText
+                razaoSocial={contrato?.nomeEmpresa}
+                cnpj={contrato?.cnpj}
+                endereco={contrato?.endereco}
+                representante={nome}
+                representanteCpf={cpf}
+              />
             ) : (
               <AssessoriaContractText
+                leadId={leadId}
                 razaoSocial={contrato?.nomeEmpresa}
                 cnpj={contrato?.cnpj}
                 endereco={contrato?.endereco}
                 planoEscolhido={contrato?.planoEscolhido}
                 valorMensalidade={contrato?.valorMensalidade}
+                representante={nome}
+                representanteCpf={cpf}
+                assinado={concluido}
+                assinaturaData={registro?.data || contrato?.contratoAssinadoData}
+                assinaturaIp={registro?.ip}
               />
             )}
           </div>
