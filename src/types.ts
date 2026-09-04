@@ -184,6 +184,17 @@ export interface Lead {
     descricaoDivisao: string;
     dataCalculo: string;
   };
+  /** Faturamento recorrente do contrato de Assessoria (12 mensalidades) */
+  parcelasAssessoria?: Array<{
+    numero: number;
+    valor: number;
+    vencimento: string;
+    status: "pendente" | "pago";
+    dataPagamento?: string | null;
+    formaPagamento?: "PIX" | "CARTAO" | null;
+    dataLiberacaoSaque?: string | null;
+    origemConfirmacao?: string | null;
+  }>;
   parentPartnerId?: string;
   parentPartnerNome?: string;
   created_at?: string;

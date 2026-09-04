@@ -29,7 +29,10 @@ import {
   getPlanServiceLabel,
   getServiceCommissionRate,
   getMasterTeamServiceOverrideRate,
-  isFranquiaDigital
+  isFranquiaDigital,
+  isMensalidadeItem,
+  withoutMensalidades,
+  onlyMensalidades
 } from "../utils";
 import { motion } from "motion/react";
 import { 
@@ -195,7 +198,7 @@ interface LeadWorkspaceModalProps {
   onClose: () => void;
   onRefreshLeads?: () => void;
   onLeadUpdated?: (updated: any) => void;
-  initialTab?: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge";
+  initialTab?: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge" | "faturamento";
   isAdmin?: boolean;
 }
 
@@ -226,7 +229,7 @@ export default function LeadWorkspaceModal({
   );
   const stepStatus = calculateLeadStepStatus(lead);
   const normalizedInitialTab = initialTab === "rating_form" ? "simulador" : initialTab;
-  const [workspaceTab, setWorkspaceTab] = useState<"details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "concierge">(
+  const [workspaceTab, setWorkspaceTab] = useState<"details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "concierge" | "faturamento">(
     normalizedInitialTab === "concierge" || (normalizedInitialTab && ((normalizedInitialTab as any) === "rating_adm" ? isAdminUser : stepStatus.isTabUnlocked(normalizedInitialTab as any))) ? (normalizedInitialTab as any) : "details"
   );
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
@@ -253,7 +256,7 @@ export default function LeadWorkspaceModal({
 
   const [generatingPasso7, setGeneratingPasso7] = useState(false);
 
-  const handleTabClick = (rawTab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge") => {
+  const handleTabClick = (rawTab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge" | "faturamento") => {
     // A Ficha & Documentos agora vive dentro do Passo 6 (Estruturação)
     const tab = (rawTab === "rating_form" ? "simulador" : rawTab) as Exclude<typeof rawTab, "rating_form">;
     if (tab === "concierge") {
@@ -262,7 +265,7 @@ export default function LeadWorkspaceModal({
       setWorkspaceSuccess(null);
       return;
     }
-    if (tab === "rating_adm") {
+    if (tab === "rating_adm" || tab === "faturamento") {
       if (!isAdminUser) {
         setWorkspaceError("🔒 Acesso restrito apenas para a Mesa de Operações / Administrador.");
         return;
@@ -321,6 +324,162 @@ export default function LeadWorkspaceModal({
     loadCatalog();
   }, [lead]);
 
+  // Itens espelho das mensalidades da Assessoria (vivem dentro de subEtapasPasso6
+  // apenas para reaproveitar o motor de comissão; não aparecem no checklist do Passo 6)
+  const [mensalidadeItems, setMensalidadeItems] = useState<any[]>(() =>
+    onlyMensalidades((lead as any).subEtapasPasso6 || [])
+  );
+
+  // ===== Faturamento recorrente da Assessoria (12 mensalidades) =====
+  const TOTAL_PARCELAS_ASSESSORIA = 12;
+  const isAssessoriaContratada =
+    String((lead as any).modeloContratacao || "").toLowerCase() === "assessoria" &&
+    (lead as any).contratoAssinado === true;
+
+  const buildParcelasAssessoria = (leadRef: any) => {
+    const existentes = Array.isArray(leadRef?.parcelasAssessoria) ? leadRef.parcelasAssessoria : [];
+    const valor = Number(leadRef?.valorMensalidade || 0);
+    const baseData = leadRef?.contratoAssinadoData ? new Date(leadRef.contratoAssinadoData) : new Date();
+    const inicio = isNaN(baseData.getTime()) ? new Date() : baseData;
+
+    return Array.from({ length: TOTAL_PARCELAS_ASSESSORIA }, (_, i) => {
+      const numero = i + 1;
+      const existente = existentes.find((p: any) => Number(p?.numero) === numero) || {};
+      const vencimento = new Date(inicio.getTime());
+      vencimento.setMonth(vencimento.getMonth() + i);
+      return {
+        numero,
+        valor: Number(existente.valor ?? valor) || 0,
+        vencimento: existente.vencimento || vencimento.toISOString(),
+        status: existente.status === "pago" ? "pago" : "pendente",
+        dataPagamento: existente.dataPagamento || null,
+        formaPagamento: existente.formaPagamento || null,
+        dataLiberacaoSaque: existente.dataLiberacaoSaque || null,
+        origemConfirmacao: existente.origemConfirmacao || null,
+      };
+    });
+  };
+
+  const [parcelasAssessoria, setParcelasAssessoria] = useState<any[]>(() => buildParcelasAssessoria(lead));
+  const [savingParcela, setSavingParcela] = useState<number | null>(null);
+
+  const persistParcelas = async (novasParcelas: any[], novasMensalidades: any[], mensagem: string) => {
+    const commissionPayload = buildLeadMultilevelFirestorePayload(
+      lead,
+      [],
+      currentPartner,
+      [...withoutMensalidades(subEtapasPasso6), ...novasMensalidades]
+    );
+
+    const firestoreUpdate = cleanForFirestore({
+      parcelasAssessoria: novasParcelas,
+      subEtapasPasso6: commissionPayload.subEtapasPasso6,
+      comissaoMultinivel: commissionPayload.comissaoMultinivel,
+    });
+
+    await updateDoc(doc(db, "leads", lead.id), firestoreUpdate);
+
+    setParcelasAssessoria(novasParcelas);
+    setMensalidadeItems(onlyMensalidades(commissionPayload.subEtapasPasso6));
+    setSubEtapasPasso6(withoutMensalidades(commissionPayload.subEtapasPasso6));
+    setWorkspaceSuccess(mensagem);
+    safeRefreshLeads();
+    onLeadUpdated?.({
+      ...lead,
+      parcelasAssessoria: novasParcelas,
+      subEtapasPasso6: commissionPayload.subEtapasPasso6,
+      comissaoMultinivel: commissionPayload.comissaoMultinivel,
+    });
+  };
+
+  const handleConfirmarParcela = async (numero: number, metodo: "PIX" | "CARTAO") => {
+    if (!isAdminUser) return;
+    const parcela = parcelasAssessoria.find((p) => p.numero === numero);
+    if (!parcela) return;
+    if (!Number(parcela.valor)) {
+      setWorkspaceError("Defina o valor da mensalidade no contrato antes de confirmar o recebimento.");
+      return;
+    }
+    const ok = window.confirm(
+      "Tem certeza que deseja confirmar o recebimento desta mensalidade? Isso irá gerar as comissões automaticamente."
+    );
+    if (!ok) return;
+
+    setWorkspaceError(null);
+    setSavingParcela(numero);
+    try {
+      const now = new Date();
+      const dataPagamento = now.toISOString();
+      const dataLiberacaoSaque = new Date(
+        now.getTime() + (metodo === "CARTAO" ? 15 * 24 * 60 * 60 * 1000 : 48 * 60 * 60 * 1000)
+      ).toISOString();
+
+      const novasParcelas = parcelasAssessoria.map((p) =>
+        p.numero === numero
+          ? { ...p, status: "pago", dataPagamento, formaPagamento: metodo, dataLiberacaoSaque, origemConfirmacao: "manual_adm" }
+          : p
+      );
+
+      const espelho = {
+        id: `sub_custom_mensalidade_${numero}`,
+        tipo: "mensalidade",
+        parcelaNumero: numero,
+        titulo: `Comissão Assessoria - Parcela ${numero}/${TOTAL_PARCELAS_ASSESSORIA} - ${lead.razaoSocial || lead.nome || ""}`.trim(),
+        preco: Number(parcela.valor) || 0,
+        statusPagamento: "pago",
+        pago: true,
+        concluida: true,
+        formaPagamento: metodo,
+        dataPagamento,
+        dataLiberacaoSaque,
+        origemConfirmacao: "manual_adm",
+      };
+
+      const novasMensalidades = [
+        ...mensalidadeItems.filter((m: any) => m.id !== espelho.id),
+        espelho,
+      ].sort((a: any, b: any) => Number(a.parcelaNumero || 0) - Number(b.parcelaNumero || 0));
+
+      await persistParcelas(
+        novasParcelas,
+        novasMensalidades,
+        `Parcela ${numero}/${TOTAL_PARCELAS_ASSESSORIA} confirmada (${metodo === "CARTAO" ? "Cartão" : "Pix"}). Comissão liberada para saque em ${new Date(dataLiberacaoSaque).toLocaleDateString("pt-BR")}.`
+      );
+    } catch (err: any) {
+      console.error("Erro ao confirmar mensalidade:", err);
+      setWorkspaceError("Erro ao confirmar a mensalidade: " + (err?.message || ""));
+    } finally {
+      setSavingParcela(null);
+    }
+  };
+
+  const handleEstornarParcela = async (numero: number) => {
+    if (!isAdminUser) return;
+    const ok = window.confirm(
+      `Deseja estornar a Parcela ${numero}/${TOTAL_PARCELAS_ASSESSORIA}? A comissão gerada por ela será removida do saldo do parceiro.`
+    );
+    if (!ok) return;
+
+    setWorkspaceError(null);
+    setSavingParcela(numero);
+    try {
+      const novasParcelas = parcelasAssessoria.map((p) =>
+        p.numero === numero
+          ? { ...p, status: "pendente", dataPagamento: null, formaPagamento: null, dataLiberacaoSaque: null, origemConfirmacao: null }
+          : p
+      );
+      const novasMensalidades = mensalidadeItems.filter(
+        (m: any) => m.id !== `sub_custom_mensalidade_${numero}`
+      );
+      await persistParcelas(novasParcelas, novasMensalidades, `Parcela ${numero}/${TOTAL_PARCELAS_ASSESSORIA} estornada com sucesso.`);
+    } catch (err: any) {
+      console.error("Erro ao estornar mensalidade:", err);
+      setWorkspaceError("Erro ao estornar a mensalidade: " + (err?.message || ""));
+    } finally {
+      setSavingParcela(null);
+    }
+  };
+
   const handleSaveServicos = async (updatedServicos?: any[]) => {
     const listToSave = updatedServicos || servicosRecomendados;
     setSavingServicos(true);
@@ -348,7 +507,7 @@ export default function LeadWorkspaceModal({
         { ...lead, servicosRecomendados: listToSave },
         [],
         currentPartner,
-        syncedSubEtapas
+        [...syncedSubEtapas, ...mensalidadeItems]
       );
 
       const firestoreUpdate = cleanForFirestore({
@@ -361,7 +520,8 @@ export default function LeadWorkspaceModal({
       await updateDoc(docRef, firestoreUpdate);
 
       setServicosRecomendados(listToSave);
-      setSubEtapasPasso6(commissionPayload.subEtapasPasso6);
+      setSubEtapasPasso6(withoutMensalidades(commissionPayload.subEtapasPasso6));
+      setMensalidadeItems(onlyMensalidades(commissionPayload.subEtapasPasso6));
       setWorkspaceSuccess("Serviços recomendados e comissões multinível atualizados com sucesso!");
       safeRefreshLeads();
       onLeadUpdated?.({
@@ -402,11 +562,11 @@ export default function LeadWorkspaceModal({
         return item;
       });
       const extraCustom = existingList.filter((sub: any) => !servs.some((s: any) => s.id === sub.id || s.nome === sub.titulo));
-      return [...merged, ...extraCustom];
+      return withoutMensalidades([...merged, ...extraCustom]);
     }
 
     if (existingList.length > 0) {
-      return existingList;
+      return withoutMensalidades(existingList);
     }
     return [];
   };
@@ -422,11 +582,11 @@ export default function LeadWorkspaceModal({
         lead,
         [],
         currentPartner,
-        listToSave
+        [...withoutMensalidades(listToSave), ...mensalidadeItems]
       );
 
       // Keep servicosRecomendados in sync if subEtapas change
-      const syncedServicos = listToSave
+      const syncedServicos = withoutMensalidades(listToSave)
         .filter(sub => typeof sub.preco === "number" && sub.preco > 0)
         .map(sub => {
           const item: any = {
@@ -448,7 +608,8 @@ export default function LeadWorkspaceModal({
       const docRef = doc(db, "leads", lead.id);
       await updateDoc(docRef, firestoreUpdate);
 
-      setSubEtapasPasso6(commissionPayload.subEtapasPasso6);
+      setSubEtapasPasso6(withoutMensalidades(commissionPayload.subEtapasPasso6));
+      setMensalidadeItems(onlyMensalidades(commissionPayload.subEtapasPasso6));
       if (syncedServicos.length > 0) {
         setServicosRecomendados(syncedServicos);
       }
@@ -652,7 +813,7 @@ export default function LeadWorkspaceModal({
       }
       setDiagnosticoPROSFEC(data.diagnostico);
       if (data.subEtapasPasso6 && Array.isArray(data.subEtapasPasso6)) {
-        setSubEtapasPasso6(data.subEtapasPasso6);
+        setSubEtapasPasso6(withoutMensalidades(data.subEtapasPasso6));
       }
       setWorkspaceSuccess("Diagnóstico PROSFEC IA gerado e Checklist do Passo 6 (Estruturação) configurado automaticamente com sucesso!");
       safeRefreshLeads();
@@ -2390,6 +2551,23 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               {lead.fichaRatingCredito?.dadosPreenchidos && (
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               )}
+            </button>
+          )}
+
+          {/* Faturamento recorrente da Assessoria (Exclusivo ADM) */}
+          {isAdminUser && isAssessoriaContratada && (
+            <button
+              type="button"
+              onClick={() => handleTabClick("faturamento")}
+              className={`py-3 px-3 border-b-2 lg:border-b-0 lg:border-l-2 lg:w-full lg:rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 shrink-0 ${
+                workspaceTab === "faturamento"
+                  ? "border-emerald-400 text-emerald-300 bg-emerald-500/10 font-bold"
+                  : "border-transparent text-emerald-400/80 hover:text-emerald-300"
+              }`}
+              title="Faturamento recorrente do contrato de Assessoria (Exclusivo Administrador)"
+            >
+              <DollarSign className="w-4 h-4 text-emerald-400" />
+              <span>Faturamento (Mensalidades)</span>
             </button>
           )}
         </div>
@@ -4791,6 +4969,118 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 }
               }}
             />
+          )}
+
+          {/* TAB: Faturamento recorrente da Assessoria (Exclusivo Administrador) */}
+          {isAdminUser && workspaceTab === "faturamento" && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-emerald-600" />
+                  Faturamento Recorrente — Assessoria
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  Confirme manualmente o recebimento de cada mensalidade. A comissão do parceiro é gerada
+                  automaticamente e liberada para saque em 48h (Pix) ou 15 dias (Cartão).
+                </p>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Mensalidade</p>
+                    <p className="mt-1 text-sm font-medium text-slate-900">
+                      {formatCurrencyBRL(Number((lead as any).valorMensalidade || 0))}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Parcelas Pagas</p>
+                    <p className="mt-1 text-sm font-medium text-slate-900">
+                      {parcelasAssessoria.filter((p) => p.status === "pago").length} / {TOTAL_PARCELAS_ASSESSORIA}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Recebido</p>
+                    <p className="mt-1 text-sm font-medium text-emerald-700">
+                      {formatCurrencyBRL(
+                        parcelasAssessoria
+                          .filter((p) => p.status === "pago")
+                          .reduce((acc, p) => acc + (Number(p.valor) || 0), 0)
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {parcelasAssessoria.map((p) => {
+                  const pago = p.status === "pago";
+                  return (
+                    <div
+                      key={p.numero}
+                      className={`bg-white rounded-xl shadow-sm border p-5 ${pago ? "border-emerald-200" : "border-slate-200"}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          Parcela {p.numero}/{TOTAL_PARCELAS_ASSESSORIA}
+                        </p>
+                        <span
+                          className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                            pago ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                          }`}
+                        >
+                          {pago ? "Pago" : "Pendente"}
+                        </span>
+                      </div>
+
+                      <p className="mt-3 text-xl font-bold text-slate-900">{formatCurrencyBRL(Number(p.valor) || 0)}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Vencimento: {p.vencimento ? new Date(p.vencimento).toLocaleDateString("pt-BR") : "—"}
+                      </p>
+
+                      {pago ? (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-xs text-slate-600">
+                            {p.formaPagamento === "CARTAO" ? "Cartão" : "Pix"} em{" "}
+                            {p.dataPagamento ? new Date(p.dataPagamento).toLocaleDateString("pt-BR") : "—"}
+                          </p>
+                          <p className="text-xs text-slate-600">
+                            Comissão liberada em{" "}
+                            {p.dataLiberacaoSaque ? new Date(p.dataLiberacaoSaque).toLocaleDateString("pt-BR") : "—"}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleEstornarParcela(p.numero)}
+                            disabled={savingParcela === p.numero}
+                            className="w-full text-xs font-semibold px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-all disabled:opacity-50 cursor-pointer"
+                          >
+                            {savingParcela === p.numero ? "Processando..." : "Estornar"}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mt-4 grid grid-cols-1 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleConfirmarParcela(p.numero, "PIX")}
+                            disabled={savingParcela === p.numero}
+                            title="Libera a comissão em 48h"
+                            className="w-full text-xs font-bold px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-all disabled:opacity-50 cursor-pointer"
+                          >
+                            {savingParcela === p.numero ? "Processando..." : "Confirmar Pagamento no Pix"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleConfirmarParcela(p.numero, "CARTAO")}
+                            disabled={savingParcela === p.numero}
+                            title="Libera a comissão em 15 dias corridos"
+                            className="w-full text-xs font-bold px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all disabled:opacity-50 cursor-pointer"
+                          >
+                            {savingParcela === p.numero ? "Processando..." : "Confirmar Pagamento no Cartão"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
             </>
           )}

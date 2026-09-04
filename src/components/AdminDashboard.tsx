@@ -85,7 +85,10 @@ import {
   getServiceCommissionRate, 
   getMasterTeamServiceOverrideRate, 
   isFranquiaDigital, 
-  getPlanServiceLabel
+  getPlanServiceLabel,
+  isMensalidadeItem,
+  withoutMensalidades,
+  onlyMensalidades
 } from "../utils";
 import { FintechDiagnosisView } from "./FintechDiagnosisView";
 import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
@@ -499,10 +502,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               (sub.id?.startsWith("sub_custom_") || sub.id?.startsWith("sub_")) && 
               !currentServicos.some((s: any) => s.id === sub.id || s.nome === sub.titulo)
             );
-            setEditingSubEtapasPasso6([...merged, ...extraCustom]);
+            setEditingSubEtapasPasso6(withoutMensalidades([...merged, ...extraCustom]));
           } else {
             // Se não houver serviços diagnosticados no Passo 3, carrega apenas itens manuais válidos
-            const onlyManual = selectedLead.subEtapasPasso6.filter((sub: any) => sub.id?.startsWith("sub_custom_"));
+            const onlyManual = withoutMensalidades(selectedLead.subEtapasPasso6).filter((sub: any) => sub.id?.startsWith("sub_custom_"));
             setEditingSubEtapasPasso6(onlyManual);
           }
         } else if (currentServicos.length > 0) {
@@ -1751,7 +1754,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               }))
           );
 
-      const updatedSubEtapas = currentSubEtapas.map((sub: any) => ({
+      const updatedSubEtapas = currentSubEtapas.map((sub: any) => isMensalidadeItem(sub) ? sub : ({
         ...sub,
         statusPagamento: marcarComoPago ? "pago" : "pendente",
         dataPagamento: marcarComoPago ? (sub.dataPagamento || new Date().toISOString()) : null
@@ -1779,7 +1782,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         setSelectedLead(prev => prev ? { ...prev, ...updateData } : null);
       }
       if (updatedSubEtapas.length > 0) {
-        setEditingSubEtapasPasso6(commissionPayload.subEtapasPasso6);
+        setEditingSubEtapasPasso6(withoutMensalidades(commissionPayload.subEtapasPasso6));
       }
 
       // Notify partner
@@ -1849,6 +1852,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const isManual = sub.id?.startsWith("sub_custom_") || sub.id?.startsWith("sub_");
       return isDiagnosed || isManual;
     });
+    const mensalidadesPreservadas = onlyMensalidades(selectedLead?.subEtapasPasso6 || []);
 
     setSavingSubEtapas(true);
     try {
@@ -1856,7 +1860,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         selectedLead,
         partners,
         null,
-        validatedSubEtapas
+        [...withoutMensalidades(validatedSubEtapas), ...mensalidadesPreservadas]
       );
 
       const firestoreUpdate = cleanForFirestore({
@@ -1900,7 +1904,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         { ...selectedLead, servicosRecomendados: editingServicosRecomendados },
         partners,
         null,
-        syncedSubEtapas
+        [...syncedSubEtapas, ...onlyMensalidades(selectedLead?.subEtapasPasso6 || [])]
       );
 
       const firestoreUpdate = cleanForFirestore({
@@ -1911,7 +1915,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
       const docRef = doc(db, "leads", selectedLead.id);
       await updateDoc(docRef, firestoreUpdate);
-      setEditingSubEtapasPasso6(commissionPayload.subEtapasPasso6);
+      setEditingSubEtapasPasso6(withoutMensalidades(commissionPayload.subEtapasPasso6));
       setLeads(prev => prev.map(item => item.id === selectedLead.id ? { ...item, servicosRecomendados: editingServicosRecomendados, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : item));
       setSelectedLead(prev => prev ? { ...prev, servicosRecomendados: editingServicosRecomendados, subEtapasPasso6: commissionPayload.subEtapasPasso6, comissaoMultinivel: commissionPayload.comissaoMultinivel } : null);
       alert("Serviços recomendados, sub-etapas e comissões sincronizados com sucesso!");
@@ -1959,10 +1963,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       selectedLead,
       partners,
       null,
-      updated
+      [...withoutMensalidades(updated), ...onlyMensalidades(selectedLead?.subEtapasPasso6 || [])]
     );
 
-    setEditingSubEtapasPasso6(commissionPayload.subEtapasPasso6);
+    setEditingSubEtapasPasso6(withoutMensalidades(commissionPayload.subEtapasPasso6));
 
     try {
       const firestoreUpdate = cleanForFirestore({ 
