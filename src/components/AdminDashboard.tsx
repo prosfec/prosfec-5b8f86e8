@@ -5653,14 +5653,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </div>
 
                     {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (
-                      <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 flex items-center justify-between text-[10px]">
-                        <span className="text-slate-500 font-bold">Status do Pagamento do Serviço (Passo 6):</span>
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pagamento do Serviço (Passo 6)</span>
                         {selectedLead.servicoPago ? (
-                          <span className="font-black text-emerald-700 uppercase bg-emerald-100 px-2 py-0.5 rounded">
-                            Pago pelo Cliente (Liberado no Painel do Parceiro)
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
+                            Pago pelo Cliente
                           </span>
                         ) : (
-                          <span className="font-black text-amber-700 uppercase bg-amber-100 px-2 py-0.5 rounded">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                             Pendente de Pagamento
                           </span>
                         )}
@@ -5676,37 +5676,37 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     const directCommissionValue = (selectedLead.valorAprovado || selectedLead.limiteEstimado || 0) * commissionMultiplier;
 
                     return (
-                      <div className="bg-white p-3.5 border border-emerald-100 rounded-xl space-y-3 text-left">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <span className="text-[9px] uppercase font-black text-slate-400 block">Parceiro</span>
-                            <span className="text-xs font-bold text-slate-800">{partnerObj?.nome || selectedLead.parceiroNome || "Não identificado"}</span>
+                      <div className="bg-slate-50 p-4 border border-slate-200 rounded-lg space-y-3 text-left">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="min-w-0">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Parceiro</span>
+                            <span className="text-sm font-medium text-slate-900 truncate block">{partnerObj?.nome || selectedLead.parceiroNome || "Não identificado"}</span>
                           </div>
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 shrink-0">
                             Plano {partnerObj?.plano || "Starter"}
                           </span>
                         </div>
 
-                        <div className="flex justify-between items-center border-t border-slate-100 pt-2 text-xs">
-                          <span className="text-slate-500 font-medium">Repasse ({(commissionMultiplier * 100).toFixed(1)}%):</span>
-                          <span className="font-extrabold text-[#0A3D2E]">
+                        <div className="flex justify-between items-center border-t border-slate-200 pt-3">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Repasse ({(commissionMultiplier * 100).toFixed(1)}%)</span>
+                          <span className="text-sm font-bold text-[#0A3D2E] font-display">
                             {formatCurrencyBRL(directCommissionValue)}
                           </span>
                         </div>
 
-                        <div className="flex justify-between items-center border-t border-slate-100 pt-2">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">Status Repasse:</span>
+                        <div className="flex flex-wrap justify-between items-center gap-2 border-t border-slate-200 pt-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Status Repasse</span>
                             {selectedLead.comissaoPaga ? (
-                              <span className="text-[9px] font-black uppercase bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
                                 Pago
                               </span>
                             ) : isConcluidoOrAprovado ? (
-                              <span className="text-[9px] font-black uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                                 Pendente
                               </span>
                             ) : (
-                              <span className="text-[9px] font-black uppercase bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600">
                                 Aguardando
                               </span>
                             )}
@@ -5714,19 +5714,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                           <button
                             onClick={() => handleUpdateComissaoPaga(selectedLead.id, !selectedLead.comissaoPaga)}
-                            className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:shadow-md cursor-pointer ${
                               selectedLead.comissaoPaga
-                                ? "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
-                                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                                ? "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                                : "bg-[#0A3D2E] hover:bg-[#00A86B] text-white"
                             }`}
                           >
-                            {selectedLead.comissaoPaga ? "Marcar Pendente" : "Marcar Pago ✓"}
+                            {selectedLead.comissaoPaga ? "Marcar Pendente" : "Marcar Pago"}
                           </button>
                         </div>
                       </div>
                     );
                   })() : (
-                    <div className="bg-slate-100/50 p-4 border border-slate-200/60 rounded-xl flex items-center justify-center text-center text-xs text-slate-400">
+                    <div className="bg-slate-50 p-4 border border-slate-200 rounded-lg flex items-center justify-center text-center text-xs font-medium text-slate-400">
                       Este lead não possui parceiro indicado associado. Nenhuma comissão é gerada.
                     </div>
                   )}
@@ -5734,79 +5734,81 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </div>
 
               {/* 1. Informações Básicas da Empresa */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">1. Dados Básicos da Empresa</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-slate-100 p-4 rounded-xl bg-white shadow-xs">
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">Razão Social</span>
-                    <span className="text-sm text-slate-800 font-semibold">{selectedLead.razaoSocial || "-"}</span>
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">1. Dados Básicos da Empresa</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Razão Social</span>
+                    <span className="text-sm font-medium text-slate-900">{selectedLead.razaoSocial || "-"}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">CNPJ</span>
-                    <span className="text-sm text-slate-800 font-mono font-bold">{selectedLead.cnpj || "-"}</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">CNPJ</span>
+                    <span className="text-sm font-medium text-slate-900 font-mono">{selectedLead.cnpj || "-"}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">Porte da Empresa</span>
-                    <span className="text-sm text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded-sm inline-block mt-0.5">{selectedLead.porte || "-"}</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Porte da Empresa</span>
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 inline-block">{selectedLead.porte || "-"}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">Ramo de Atuação</span>
-                    <span className="text-sm text-slate-800 font-semibold">{selectedLead.ramo || "-"}</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Ramo de Atuação</span>
+                    <span className="text-sm font-medium text-slate-900">{selectedLead.ramo || "-"}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">Cidade / UF</span>
-                    <span className="text-sm text-slate-800 font-semibold flex items-center gap-1">
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Cidade / UF</span>
+                    <span className="text-sm font-medium text-slate-900 flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {selectedLead.cidade || "-"}
                     </span>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">Data de Abertura</span>
-                    <span className="text-sm text-slate-800 font-semibold">{selectedLead.dataAbertura || "-"}</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Data de Abertura</span>
+                    <span className="text-sm font-medium text-slate-900">{selectedLead.dataAbertura || "-"}</span>
                   </div>
                 </div>
               </div>
 
               {/* Parceiro Indicador / Directing Status */}
               {selectedLead.parceiroId ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                      <Handshake className="w-4.5 h-4.5 text-emerald-600 shrink-0" /> Origem do Lead: Indicação de Parceiro
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <Handshake className="w-4 h-4 text-emerald-600 shrink-0" /> Origem do Lead: Indicação de Parceiro
                     </h4>
                     <button
                       onClick={() => setAssigningLead(selectedLead)}
-                      className="text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-lg flex items-center gap-1 cursor-pointer transition-colors"
+                      className="text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-all hover:shadow-md"
                     >
                       <UserPlus className="w-3.5 h-3.5 text-amber-600" />
                       <span>Alterar Parceiro Master</span>
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-emerald-100 p-4 rounded-xl bg-emerald-50/30 shadow-xs">
-                    <div>
-                      <span className="text-xs text-slate-400 block font-bold">Nome do Parceiro</span>
-                      <span className="text-sm text-slate-800 font-extrabold text-[#0A3D2E]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                    <div className="space-y-1 min-w-0">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Nome do Parceiro</span>
+                      <span className="text-sm font-medium text-[#0A3D2E]">
                         {selectedLead.parceiroNome || partners.find(p => p.id === selectedLead.parceiroId)?.nome || "Parceiro PROSFEC"}
                       </span>
                     </div>
-                    <div>
-                      <span className="text-xs text-slate-400 block font-bold">ID de Afiliação</span>
-                      <span className="text-sm text-slate-600 font-mono text-xs">{selectedLead.parceiroId}</span>
+                    <div className="space-y-1 min-w-0">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">ID de Afiliação</span>
+                      <span className="text-sm font-medium text-slate-500 font-mono break-all">{selectedLead.parceiroId}</span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
-                  <div>
-                    <span className="text-xs font-extrabold text-amber-900 block flex items-center gap-1">
+                <div className="p-4 bg-white border border-amber-200 rounded-xl shadow-sm flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-amber-700 flex items-center gap-1.5">
                       <UserPlus className="w-4 h-4 text-amber-600" /> Lead Sem Parceiro Vinculado
                     </span>
-                    <span className="text-[11px] text-amber-700 block mt-0.5">
+                    <span className="text-sm font-medium text-slate-600 block mt-1">
                       Este lead entrou diretamente e ainda não possui nenhum parceiro responsável.
                     </span>
                   </div>
                   <button
                     onClick={() => setAssigningLead(selectedLead)}
-                    className="px-3.5 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-xs rounded-lg transition-all cursor-pointer shadow-xs shrink-0 flex items-center gap-1.5"
+                    className="px-4 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-semibold text-sm rounded-lg transition-all hover:shadow-md cursor-pointer shrink-0 flex items-center gap-1.5"
                   >
                     <UserPlus className="w-3.5 h-3.5" />
                     <span>Direcionar para Master</span>
@@ -5815,44 +5817,48 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               )}
 
               {/* 2. Informações de Contato */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">2. Contato do Responsável</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-slate-100 p-4 rounded-xl bg-white shadow-xs">
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">Nome do Solicitante</span>
-                    <span className="text-sm text-slate-800 font-semibold">{selectedLead.nome}</span>
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">2. Contato do Responsável</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Nome do Solicitante</span>
+                    <span className="text-sm font-medium text-slate-900">{selectedLead.nome}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">Cargo</span>
-                    <span className="text-sm text-slate-800 font-semibold">{selectedLead.cargo || "-"}</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Cargo</span>
+                    <span className="text-sm font-medium text-slate-900">{selectedLead.cargo || "-"}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">WhatsApp</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">WhatsApp</span>
                     <a 
                       href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-sm text-emerald-600 hover:text-[#25D366] font-bold flex items-center gap-1 inline-block mt-0.5"
+                      className="text-sm font-medium text-emerald-600 hover:text-[#25D366] flex items-center gap-1.5 transition-colors"
                     >
                       <Phone className="w-4 h-4 fill-current" /> {selectedLead.whatsapp} <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block font-bold">E-mail</span>
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">E-mail</span>
                     <a 
                       href={`mailto:${selectedLead.email}`}
-                      className="text-sm text-blue-600 hover:underline font-semibold flex items-center gap-1 inline-block mt-0.5"
+                      className="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1.5 break-all"
                     >
-                      <Mail className="w-4 h-4" /> {selectedLead.email}
+                      <Mail className="w-4 h-4 shrink-0" /> {selectedLead.email}
                     </a>
                   </div>
                 </div>
               </div>
 
               {/* Dados dos Sócios & Endereço Residencial */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">Dados dos Sócios e Residência</h4>
-                <div className="border border-slate-100 p-4 rounded-xl bg-white shadow-xs space-y-4">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Dados dos Sócios e Residência</h4>
+                </div>
+                <div className="p-4 space-y-4">
                   {selectedLead.socios && selectedLead.socios.length > 0 ? (
                     <div className="space-y-4">
                       {selectedLead.socios.map((socio, idx) => (
@@ -6710,10 +6716,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             </div>
 
              {/* Modal Actions Footer */}
-            <div className="border-t border-slate-100 p-4 bg-slate-50 flex flex-wrap gap-2.5 justify-end shrink-0">
+            <div className="border-t border-slate-200 p-4 bg-white flex flex-wrap gap-2.5 justify-end shrink-0">
               <button 
                 onClick={() => setSelectedLead(null)}
-                className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 bg-white hover:bg-slate-50 transition-all hover:shadow-md cursor-pointer"
               >
                 Fechar Detalhes
               </button>
@@ -6723,7 +6729,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(selectedLead.nome)}!%20Sou%20consultor%20da%20PROSFEC.%20Recebi%20seu%20cadastro%20no%20nosso%20Simulador%20Pronampe%20e%20gostaria%20de%20apresentar%20seu%20diagn%C3%B3stico%20de%20cr%C3%A9dito.`}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-extrabold text-sm rounded-lg flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
+                className="px-4 py-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-semibold text-sm rounded-lg flex items-center gap-1.5 transition-all hover:shadow-md"
               >
                 <Phone className="w-4 h-4 fill-current" />
                 Iniciar Atendimento WhatsApp
