@@ -20,6 +20,7 @@ import {
   fetchCNPJ
 } from "../utils";
 import { LeadData, SimulationResult } from "../types";
+import PlanSelectionView from "./PlanSelectionView";
 import { doc, updateDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../firebase";
 import {
