@@ -1846,6 +1846,55 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
     }
   };
 
+  // ---- Definição de contrato e link público de assinatura ----
+  const PLANO_VALORES: Record<string, number> = {
+    "Avulso": 0,
+    "Assessoria Essential": 597,
+    "Assessoria Growth": 797,
+    "Assessoria Corporate": 1497,
+  };
+
+  const [planoContratacao, setPlanoContratacao] = useState<string>(
+    lead.planoEscolhido || lead.modeloContratacao || ""
+  );
+  const [savingPlanoContratacao, setSavingPlanoContratacao] = useState(false);
+  const [planoContratacaoFeedback, setPlanoContratacaoFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [linkContratoCopiado, setLinkContratoCopiado] = useState(false);
+
+  const contratoPublicLink = typeof window !== "undefined"
+    ? `${window.location.origin}/contrato/${lead.id}`
+    : `/contrato/${lead.id}`;
+
+  const handleSalvarPlanoContratacao = async () => {
+    if (!planoContratacao) return;
+    setSavingPlanoContratacao(true);
+    setPlanoContratacaoFeedback(null);
+    try {
+      await updateDoc(doc(db, "leads", lead.id), {
+        modeloContratacao: planoContratacao === "Avulso" ? "Avulso" : "Assessoria",
+        planoEscolhido: planoContratacao,
+        valorMensalidade: PLANO_VALORES[planoContratacao] ?? 0,
+      });
+      setPlanoContratacaoFeedback({ type: "success", msg: "Definição salva. O link de assinatura já pode ser enviado ao cliente." });
+    } catch (err: any) {
+      setPlanoContratacaoFeedback({ type: "error", msg: `Erro ao salvar a definição${err?.code ? ` (${err.code})` : ""}.` });
+    } finally {
+      setSavingPlanoContratacao(false);
+    }
+  };
+
+  const handleCopiarLinkContrato = async () => {
+    try {
+      await navigator.clipboard.writeText(contratoPublicLink);
+      setLinkContratoCopiado(true);
+      setTimeout(() => setLinkContratoCopiado(false), 2000);
+    } catch {
+      setPlanoContratacaoFeedback({ type: "error", msg: "Não foi possível copiar. Copie o link manualmente." });
+    }
+  };
+
+
+
 
   const handleSaveCredenciais = async (e: React.FormEvent) => {
     e.preventDefault();
