@@ -2813,7 +2813,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     >
                       <option value="">Selecione...</option>
                       <option value="Avulso">Avulso</option>
-                      <option value="Assessoria Essential">Assessoria Essential — R$ 597,00/mês</option>
+                      <option value="Assessoria Essential">Assessoria Essential — R$ 497,00/mês</option>
                       <option value="Assessoria Growth">Assessoria Growth — R$ 797,00/mês</option>
                       <option value="Assessoria Corporate">Assessoria Corporate — R$ 1.497,00/mês</option>
                     </select>
@@ -2831,7 +2831,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   </div>
                 </div>
 
-                {lead.modeloContratacao && (
+                {planoContratacaoFeedback && (
+                  <p className={`text-[11px] font-bold ${planoContratacaoFeedback.type === "success" ? "text-emerald-700" : "text-red-600"}`}>
+                    {planoContratacaoFeedback.msg}
+                  </p>
+                )}
+
+                {(planoContratacaoFeedback?.type === "success" || lead.modeloContratacao) && (
                   <div className="space-y-2">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Link público de assinatura
@@ -2840,7 +2846,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       <input
                         readOnly
                         value={contratoPublicLink}
-                        className="flex-1 bg-slate-50/50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-mono text-slate-700 outline-none"
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-mono text-slate-700 outline-none"
                       />
                       <button
                         type="button"
@@ -2850,21 +2856,18 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         {linkContratoCopiado ? "Copiado!" : "Copiar Link"}
                       </button>
                     </div>
-                    <p className="text-[11px] text-slate-500">
-                      Plano definido: <strong className="text-slate-900">{lead.planoEscolhido || lead.modeloContratacao}</strong>
-                      {Number(lead.valorMensalidade || 0) > 0
-                        ? ` — R$ ${Number(lead.valorMensalidade).toFixed(2).replace(".", ",")}/mês`
-                        : ""}
-                    </p>
+                    {lead.modeloContratacao && (
+                      <p className="text-[11px] text-slate-500">
+                        Plano definido: <strong className="text-slate-900">{lead.planoEscolhido || lead.modeloContratacao}</strong>
+                        {Number(lead.valorMensalidade || 0) > 0
+                          ? ` — R$ ${Number(lead.valorMensalidade).toFixed(2).replace(".", ",")}/mês`
+                          : ""}
+                      </p>
+                    )}
                   </div>
                 )}
-
-                {planoContratacaoFeedback && (
-                  <p className={`text-[11px] font-bold ${planoContratacaoFeedback.type === "success" ? "text-emerald-700" : "text-red-600"}`}>
-                    {planoContratacaoFeedback.msg}
-                  </p>
-                )}
               </div>
+
 
 
               {lead.contratoAssinado ? (
