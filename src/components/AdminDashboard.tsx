@@ -6716,10 +6716,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             </div>
 
              {/* Modal Actions Footer */}
-            <div className="border-t border-slate-100 p-4 bg-slate-50 flex flex-wrap gap-2.5 justify-end shrink-0">
+            <div className="border-t border-slate-200 p-4 bg-white flex flex-wrap gap-2.5 justify-end shrink-0">
               <button 
                 onClick={() => setSelectedLead(null)}
-                className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 bg-white hover:bg-slate-50 transition-all hover:shadow-md cursor-pointer"
               >
                 Fechar Detalhes
               </button>
@@ -6729,7 +6729,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(selectedLead.nome)}!%20Sou%20consultor%20da%20PROSFEC.%20Recebi%20seu%20cadastro%20no%20nosso%20Simulador%20Pronampe%20e%20gostaria%20de%20apresentar%20seu%20diagn%C3%B3stico%20de%20cr%C3%A9dito.`}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-extrabold text-sm rounded-lg flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
+                className="px-4 py-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-semibold text-sm rounded-lg flex items-center gap-1.5 transition-all hover:shadow-md"
               >
                 <Phone className="w-4 h-4 fill-current" />
                 Iniciar Atendimento WhatsApp
