@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { formatCurrencyBRL, triggerWebhookSimulation, saveLocalLead } from "../utils";
 import { HelpingHand, Coins, Laptop, UserCheck, CheckCircle2, ArrowRight, Check, X, Sparkles } from "lucide-react";
