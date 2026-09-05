@@ -887,6 +887,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         precos: {},
         servicos: defaultSanitized,
         mensalidades: DEFAULT_MENSALIDADES,
+        assinaturaParceiro: DEFAULT_ASSINATURA_PARCEIRO,
         updatedAt: new Date().toISOString()
       });
 
@@ -898,6 +899,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setCustomBasePrices({});
       setEditPrices({});
       setCustomServices(defaultSanitized);
+      setEditMensalidades(DEFAULT_MENSALIDADES);
+      setEditAssinaturaParceiro(DEFAULT_ASSINATURA_PARCEIRO);
       alert(`Preços e catálogo de serviços restaurados para o padrão!${updatedLeadsCount > 0 ? `\n\n${updatedLeadsCount} lead(s) sincronizados com o padrão.` : ''}`);
       await fetchData();
     } catch (err) {
