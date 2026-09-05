@@ -1292,6 +1292,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           const data = configSnap.data();
           setCustomBasePrices(data.precos || {});
           setEditMensalidades(normalizeMensalidades(data.mensalidades));
+          setEditAssinaturaParceiro(normalizeAssinaturaParceiro(data.assinaturaParceiro));
           if (data.servicos && Array.isArray(data.servicos) && data.servicos.length > 0) {
             // Remove obsolete items: "Diagnóstico de Crédito — CPF ou CNPJ", "Recarga do Caça-Leads" e BACEN avulso legado
             const rawServs = data.servicos.filter((s: any) => 
