@@ -48,6 +48,6 @@ Em `src/components/Parceiros.tsx`:
 ## Validação
 
 1. Typecheck e build.
-2. Abrir a vitrine e conferir o valor mensal dinâmico, os botões de teste grátis e a ausência de botões de pagamento.
-3. Alterar o valor no Admin e conferir a atualização na tela inicial.
+2. Abrir a vitrine e conferir os três preços mensais dinâmicos (um por card), os botões de teste grátis e a ausência de botões de pagamento.
+3. Alterar os três valores no Admin e conferir a atualização em cada card da tela inicial.
 4. Abrir o dashboard do parceiro e conferir que nenhum preço antigo aparece antes do carregamento.
