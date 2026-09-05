@@ -316,14 +316,11 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                     {/* Box de preço com borda */}
                     <div className="border border-emerald-800/10 bg-emerald-50/20 rounded-xl p-4 text-center my-4">
                       <span className="text-3xl md:text-3xl font-extrabold text-[#1A7F5A] block">
-                        R$ 500,00<span className="text-sm font-semibold text-slate-500">/ano</span>
+                        {renderPrecoMensal(assinaturaParceiro?.starter)}
                       </span>
                       <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
                         <span className="inline-block bg-emerald-100 text-[#0A5438] font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                          PAGAMENTO ANUAL
-                        </span>
-                        <span className="inline-block bg-emerald-700 text-white font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
-                          Até 12x no Pix Parcelado
+                          ASSINATURA MENSAL
                         </span>
                       </div>
                     </div>
@@ -404,7 +401,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                     }}
                     className="w-full mt-8 bg-[#0A5438] hover:opacity-95 text-white font-extrabold text-xs py-3.5 px-4 rounded-xl transition-all shadow-md inline-flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
                   >
-                    Selecionar STARTER →
+                    Começar Teste Grátis de 3 Dias
                   </button>
                 </div>
 
@@ -433,14 +430,11 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                     {/* Box de preço com borda */}
                     <div className="border border-[#0A5438]/25 bg-emerald-500/5 rounded-xl p-4 text-center my-4">
                       <span className="text-3xl md:text-3xl font-extrabold text-[#1A7F5A] block">
-                        R$ 800,00<span className="text-sm font-semibold text-slate-500">/ano</span>
+                        {renderPrecoMensal(assinaturaParceiro?.executive)}
                       </span>
                       <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
                         <span className="inline-block bg-emerald-600 text-white font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
-                          PAGAMENTO ANUAL
-                        </span>
-                        <span className="inline-block bg-[#0A5438] text-white font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
-                          Até 12x no Pix Parcelado
+                          ASSINATURA MENSAL
                         </span>
                       </div>
                     </div>
@@ -527,7 +521,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                     }}
                     className="w-full mt-8 bg-[#0A5438] hover:bg-[#0A5438]/95 text-white font-extrabold text-xs py-3.5 px-4 rounded-xl transition-all shadow-md inline-flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01] ring-2 ring-[#0A5438]/20"
                   >
-                    Selecionar Executive Partner PROSFEC →
+                    Começar Teste Grátis de 3 Dias
                   </button>
                 </div>
 
@@ -551,14 +545,11 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                     {/* Box de preço */}
                     <div className="border border-emerald-800/10 bg-emerald-50/20 rounded-xl p-4 text-center my-4">
                       <span className="text-3xl md:text-3xl font-extrabold text-[#1A7F5A] block">
-                        R$ 1.500,00<span className="text-sm font-semibold text-slate-500">/ano</span>
+                        {renderPrecoMensal(assinaturaParceiro?.master)}
                       </span>
                       <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
                         <span className="inline-block bg-amber-500 text-white font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
-                          PAGAMENTO ANUAL
-                        </span>
-                        <span className="inline-block bg-emerald-700 text-white font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
-                          Até 12x no Pix Parcelado
+                          ASSINATURA MENSAL
                         </span>
                       </div>
                     </div>
@@ -645,7 +636,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                     }}
                     className="w-full mt-8 bg-[#E67E22] hover:bg-[#E67E22]/95 text-white font-extrabold text-xs py-3.5 px-4 rounded-xl transition-all shadow-md inline-flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
                   >
-                    Selecionar MASTER PARTNER →
+                    Começar Teste Grátis de 3 Dias
                   </button>
                 </div>
 
