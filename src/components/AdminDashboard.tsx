@@ -373,6 +373,9 @@ import {
   sanitizeServiceCatalogForFirestore,
   DEFAULT_MENSALIDADES,
   normalizeMensalidades,
+  DEFAULT_ASSINATURA_PARCEIRO,
+  normalizeAssinaturaParceiro,
+  type AssinaturaParceiro,
   type MensalidadesAssessoria
 } from "../utils/serviceUtils";
 export { DEFAULT_SERVICES_CATALOG };
