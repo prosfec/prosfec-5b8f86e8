@@ -34,6 +34,30 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [assinaturaParceiro, setAssinaturaParceiro] = useState<{ starter: number; executive: number; master: number } | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    fetch("/api/config/mensalidades")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (ativo && d?.assinaturaParceiro) setAssinaturaParceiro(d.assinaturaParceiro);
+      })
+      .catch(() => {});
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const renderPrecoMensal = (valor: number | undefined) =>
+    typeof valor === "number" ? (
+      <>
+        {formatCurrencyBRL(valor)}
+        <span className="text-sm font-semibold text-slate-500">/mês</span>
+      </>
+    ) : (
+      <span className="inline-block h-7 w-32 bg-slate-200 rounded animate-pulse align-middle" />
+    );
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
