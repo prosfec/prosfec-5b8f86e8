@@ -527,14 +527,20 @@ export function createExpressApp() {
     { code: "REDEBE_DIAGNOSTICO_360", name: "Rating de Crédito + Diagnóstico Finan. 360", price: 49.90 }
   ];
 
-  // 0. Valores das mensalidades da Assessoria (público — leitura apenas dos 3 preços)
+  // 0. Valores públicos: mensalidades da Assessoria + assinatura mensal do parceiro
   app.get("/api/config/mensalidades", async (_req, res) => {
     try {
       const configData: any = await getDocRest("configuracoes/precos_consultas");
-      return res.status(200).json(normalizeMensalidades(configData?.mensalidades));
+      return res.status(200).json({
+        ...normalizeMensalidades(configData?.mensalidades),
+        assinaturaParceiro: normalizeAssinaturaParceiro(configData?.assinaturaParceiro),
+      });
     } catch (err) {
       console.warn("Could not load mensalidades config:", err);
-      return res.status(200).json(DEFAULT_MENSALIDADES);
+      return res.status(200).json({
+        ...DEFAULT_MENSALIDADES,
+        assinaturaParceiro: DEFAULT_ASSINATURA_PARCEIRO,
+      });
     }
   });
 
