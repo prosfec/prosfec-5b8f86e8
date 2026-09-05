@@ -10,7 +10,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { getBankSpecificRules } from "../utils/creditLineRules";
 import { BankRulesManager } from "../utils/BankRulesManager";
 import { optionalEnv, requireEnv, firstEnv, maskEmail, maskDoc, redact } from "../utils/env";
-import { normalizeMensalidades, DEFAULT_MENSALIDADES } from "../utils/serviceUtils";
+import { normalizeMensalidades, DEFAULT_MENSALIDADES, normalizeAssinaturaParceiro, DEFAULT_ASSINATURA_PARCEIRO } from "../utils/serviceUtils";
 
 export function cleanForFirestore<T = any>(obj: T): T {
   if (obj === undefined) return null as any;
