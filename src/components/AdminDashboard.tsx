@@ -839,11 +839,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       }
 
       const sanitizedMensalidades = normalizeMensalidades(editMensalidades);
+      const sanitizedAssinaturaParceiro = normalizeAssinaturaParceiro(editAssinaturaParceiro);
 
       const payload = cleanForFirestore({
         precos: sanitizedPrices,
         servicos: sanitizedServices,
         mensalidades: sanitizedMensalidades,
+        assinaturaParceiro: sanitizedAssinaturaParceiro,
         updatedAt: new Date().toISOString()
       });
 
@@ -855,6 +857,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setCustomBasePrices(sanitizedPrices);
       setCustomServices(sanitizedServices);
       setEditMensalidades(sanitizedMensalidades);
+      setEditAssinaturaParceiro(sanitizedAssinaturaParceiro);
       alert(`Tabela de preços de consultas e catálogo de serviços atualizada com sucesso!${updatedLeadsCount > 0 ? `\n\n${updatedLeadsCount} lead(s) cadastrados no painel tiveram seus serviços e comissões atualizados automaticamente.` : ''}`);
       await fetchData();
     } catch (err) {
