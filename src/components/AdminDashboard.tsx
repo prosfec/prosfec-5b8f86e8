@@ -373,6 +373,9 @@ import {
   sanitizeServiceCatalogForFirestore,
   DEFAULT_MENSALIDADES,
   normalizeMensalidades,
+  DEFAULT_ASSINATURA_PARCEIRO,
+  normalizeAssinaturaParceiro,
+  type AssinaturaParceiro,
   type MensalidadesAssessoria
 } from "../utils/serviceUtils";
 export { DEFAULT_SERVICES_CATALOG };
@@ -413,6 +416,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [newServValor, setNewServValor] = useState<number | "">("");
   const [newServHublaLink, setNewServHublaLink] = useState("");
   const [editMensalidades, setEditMensalidades] = useState<MensalidadesAssessoria>(DEFAULT_MENSALIDADES);
+  const [editAssinaturaParceiro, setEditAssinaturaParceiro] = useState<AssinaturaParceiro>(DEFAULT_ASSINATURA_PARCEIRO);
 
   const CREDIT_PRODUCTS = [
     { code: "REDEBE_DIAGNOSTICO_360", name: "Rating de Crédito + Diagnóstico Finan. 360", defaultPrice: 49.90 }
@@ -835,11 +839,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       }
 
       const sanitizedMensalidades = normalizeMensalidades(editMensalidades);
+      const sanitizedAssinaturaParceiro = normalizeAssinaturaParceiro(editAssinaturaParceiro);
 
       const payload = cleanForFirestore({
         precos: sanitizedPrices,
         servicos: sanitizedServices,
         mensalidades: sanitizedMensalidades,
+        assinaturaParceiro: sanitizedAssinaturaParceiro,
         updatedAt: new Date().toISOString()
       });
 
@@ -851,6 +857,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setCustomBasePrices(sanitizedPrices);
       setCustomServices(sanitizedServices);
       setEditMensalidades(sanitizedMensalidades);
+      setEditAssinaturaParceiro(sanitizedAssinaturaParceiro);
       alert(`Tabela de preços de consultas e catálogo de serviços atualizada com sucesso!${updatedLeadsCount > 0 ? `\n\n${updatedLeadsCount} lead(s) cadastrados no painel tiveram seus serviços e comissões atualizados automaticamente.` : ''}`);
       await fetchData();
     } catch (err) {
@@ -880,6 +887,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         precos: {},
         servicos: defaultSanitized,
         mensalidades: DEFAULT_MENSALIDADES,
+        assinaturaParceiro: DEFAULT_ASSINATURA_PARCEIRO,
         updatedAt: new Date().toISOString()
       });
 
@@ -891,6 +899,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setCustomBasePrices({});
       setEditPrices({});
       setCustomServices(defaultSanitized);
+      setEditMensalidades(DEFAULT_MENSALIDADES);
+      setEditAssinaturaParceiro(DEFAULT_ASSINATURA_PARCEIRO);
       alert(`Preços e catálogo de serviços restaurados para o padrão!${updatedLeadsCount > 0 ? `\n\n${updatedLeadsCount} lead(s) sincronizados com o padrão.` : ''}`);
       await fetchData();
     } catch (err) {
@@ -1282,6 +1292,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           const data = configSnap.data();
           setCustomBasePrices(data.precos || {});
           setEditMensalidades(normalizeMensalidades(data.mensalidades));
+          setEditAssinaturaParceiro(normalizeAssinaturaParceiro(data.assinaturaParceiro));
           if (data.servicos && Array.isArray(data.servicos) && data.servicos.length > 0) {
             // Remove obsolete items: "Diagnóstico de Crédito — CPF ou CNPJ", "Recarga do Caça-Leads" e BACEN avulso legado
             const rawServs = data.servicos.filter((s: any) => 
@@ -5282,6 +5293,47 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               value={editMensalidades[f.key]}
                               onChange={(e) =>
                                 setEditMensalidades((prev) => ({
+                                  ...prev,
+                                  [f.key]: e.target.value === "" ? 0 : Number(e.target.value),
+                                }))
+                              }
+                              className="w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-hidden transition-all disabled:opacity-60"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6">
+                    <div className="mb-4">
+                      <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-emerald-600" />
+                        Assinatura do Parceiro
+                      </h3>
+                      <p className="text-slate-500 text-[11px] mt-1">
+                        Valor mensal de cada plano de parceiro, exibido nos cards da página inicial.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {([
+                        { key: "starter" as const, label: "Preço Mensal Starter" },
+                        { key: "executive" as const, label: "Preço Mensal Executive" },
+                        { key: "master" as const, label: "Preço Mensal Master" },
+                      ]).map((f) => (
+                        <div key={f.key}>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                            {f.label}
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold">R$</span>
+                            <input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              disabled={userRole === "contador"}
+                              value={editAssinaturaParceiro[f.key]}
+                              onChange={(e) =>
+                                setEditAssinaturaParceiro((prev) => ({
                                   ...prev,
                                   [f.key]: e.target.value === "" ? 0 : Number(e.target.value),
                                 }))
