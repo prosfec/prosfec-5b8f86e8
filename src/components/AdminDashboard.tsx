@@ -416,6 +416,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [newServValor, setNewServValor] = useState<number | "">("");
   const [newServHublaLink, setNewServHublaLink] = useState("");
   const [editMensalidades, setEditMensalidades] = useState<MensalidadesAssessoria>(DEFAULT_MENSALIDADES);
+  const [editAssinaturaParceiro, setEditAssinaturaParceiro] = useState<AssinaturaParceiro>(DEFAULT_ASSINATURA_PARCEIRO);
 
   const CREDIT_PRODUCTS = [
     { code: "REDEBE_DIAGNOSTICO_360", name: "Rating de Crédito + Diagnóstico Finan. 360", defaultPrice: 49.90 }
