@@ -475,3 +475,32 @@ export function buildPlanoValores(mensalidades: MensalidadesAssessoria): Record<
     "Assessoria Corporate": mensalidades.corporate,
   };
 }
+
+// ============================================================
+// ASSINATURA MENSAL DO PARCEIRO (configurável pelo Administrador)
+// ============================================================
+
+export interface AssinaturaParceiro {
+  starter: number;
+  executive: number;
+  master: number;
+}
+
+export const DEFAULT_ASSINATURA_PARCEIRO: AssinaturaParceiro = {
+  starter: 97,
+  executive: 97,
+  master: 97,
+};
+
+/** Normaliza os 3 valores mensais de assinatura de parceiro vindos do Firestore. */
+export function normalizeAssinaturaParceiro(raw: any): AssinaturaParceiro {
+  const pick = (v: any, fallback: number) => {
+    const n = typeof v === "number" ? v : parseFloat(String(v ?? "").replace(",", "."));
+    return Number.isFinite(n) && n >= 0 ? n : fallback;
+  };
+  return {
+    starter: pick(raw?.starter, DEFAULT_ASSINATURA_PARCEIRO.starter),
+    executive: pick(raw?.executive, DEFAULT_ASSINATURA_PARCEIRO.executive),
+    master: pick(raw?.master, DEFAULT_ASSINATURA_PARCEIRO.master),
+  };
+}
