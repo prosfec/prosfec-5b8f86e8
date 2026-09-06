@@ -271,6 +271,11 @@ export const getCommissionDetailText = (plano?: string) => {
   return "0,5% do crédito liberado"; // Default fallback
 };
 
+export const isParceiroDeRede = (partner: Partner): boolean =>
+  !!partner.parentPartnerId ||
+  partner.isTeamMember === true ||
+  !!(partner.plano && (partner.plano.toUpperCase().includes("CONSULTOR") || partner.plano.toUpperCase().includes("EQUIPE")));
+
 export const getSubscriptionStatus = (partner: Partner) => {
   const isTeamMember = partner.isTeamMember === true || (partner.plano && (partner.plano.toUpperCase().includes("CONSULTOR") || partner.plano.toUpperCase().includes("EQUIPE")));
   const isAfiliado = !!(partner.plano && partner.plano.toUpperCase().includes("AFILIADO"));
@@ -2226,10 +2231,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         dataAtualizacaoStatus: nowStr
       };
 
-      // Quando ativa/desbloqueia manualmente, garante a liberação da licença por 365 dias
+      // Quando ativa/desbloqueia manualmente: parceiro direto recebe 30 dias (mensal);
+      // parceiro de rede (abaixo de um Master) mantém a licença anual.
       if (newStatus === "ativo") {
         updates.dataUltimoPagamento = nowStr;
-        updates.duracaoDias = 365;
+        updates.duracaoDias = isParceiroDeRede(partner) ? 365 : 30;
       }
 
       await updateDoc(docRef, updates);
@@ -2251,23 +2257,26 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
-  const handleRenewSubscription = async (id: string) => {
+  const handleRenewSubscription = async (partner: Partner) => {
     try {
       const todayStr = new Date().toISOString();
-      const docRef = doc(db, "parceiros", id);
-      await updateDoc(docRef, { 
+      // Parceiro direto (Starter/Executive/Master sem superior): renovação mensal de 30 dias.
+      // Parceiro de rede (equipe abaixo de um Master): mantém a regra anual.
+      const duracaoDias = isParceiroDeRede(partner) ? 365 : 30;
+      const docRef = doc(db, "parceiros", partner.id);
+      await updateDoc(docRef, {
         dataUltimoPagamento: todayStr,
-        duracaoDias: 365
+        duracaoDias
       });
-      
+
       // Update local state
-      setPartners(prev => prev.map(item => item.id === id ? { ...item, dataUltimoPagamento: todayStr, duracaoDias: 365 } : item));
-      if (selectedPartner?.id === id) {
-        setSelectedPartner(prev => prev ? { ...prev, dataUltimoPagamento: todayStr, duracaoDias: 365 } : null);
+      setPartners(prev => prev.map(item => item.id === partner.id ? { ...item, dataUltimoPagamento: todayStr, duracaoDias } : item));
+      if (selectedPartner?.id === partner.id) {
+        setSelectedPartner(prev => prev ? { ...prev, dataUltimoPagamento: todayStr, duracaoDias } : null);
       }
     } catch (err) {
       console.error("Error renewing subscription in Firestore:", err);
-      alert("Falha ao renovar a anuidade no Firestore. Tente novamente.");
+      alert("Falha ao renovar o acesso no Firestore. Tente novamente.");
     }
   };
 
@@ -7223,16 +7232,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               className="w-full sm:flex-1 py-2.5 px-4 bg-[#00A86B] hover:bg-[#008f5a] text-white text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md active:scale-98"
                             >
                               <UserCheck className="w-4 h-4" />
-                              <span>Ativar / Liberar Acesso do Parceiro (1 Ano)</span>
+                              <span>{isParceiroDeRede(selectedPartner) ? "Ativar / Liberar Acesso (Rede — 1 Ano)" : "Ativar / Liberar Acesso (30 dias)"}</span>
                             </button>
                           ) : (
                             <>
                               <button
-                                onClick={() => handleRenewSubscription(selectedPartner.id)}
+                                onClick={() => handleRenewSubscription(selectedPartner)}
                                 className="w-full sm:flex-1 py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
                               >
                                 <Clock className="w-4 h-4 text-emerald-600" />
-                                <span>Renovar Licença (+1 Ano)</span>
+                                <span>{isParceiroDeRede(selectedPartner) ? "Renovar Acesso (Rede — 1 Ano)" : "Renovar Acesso (30 dias)"}</span>
                               </button>
                               <button
                                 onClick={() => handleTogglePartnerStatus(selectedPartner, "bloqueado")}
