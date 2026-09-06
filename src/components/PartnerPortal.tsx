@@ -25,7 +25,7 @@ import {
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
-import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain } from "../utils";
+import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl } from "../utils";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
@@ -7424,7 +7424,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               const lineName = lead.creditLineCode || lead.propostaNegociada?.creditLineCode || lead.result?.creditLineCode || "Pronampe";
                               const messageText = `Olá! Sou consultor credenciado PROSFEC fomento. Identifiquei que a ${lead.nomeEmpresa} possui excelente pontuação cadastral e pode ter direito de pleitear a linha de crédito ${lineName} com juros reduzidos para capital de giro este ano. Gostaria de realizar uma rápida simulação sem custo de forma 100% online? Acesse nosso portal oficial ou fale comigo para simular: ${getAppDomain()}?ref=${currentPartner?.id || ""}`;
                               const waUrl = hasPhone 
-                                ? `https://api.whatsapp.com/send?phone=${lead.telefone.replace(/\D/g, "")}&text=${encodeURIComponent(messageText)}`
+                                ? buildWhatsAppUrl(lead.telefone, messageText)
                                 : "#";
 
                               const leadPlaceObj = {
@@ -8155,7 +8155,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           // Standardized introductory message for WhatsApp pitch
                           const messageText = `Olá! Sou consultor credenciado PROSFEC fomento. Identifiquei que a ${place.nome} possui excelente pontuação empresarial cadastral e pode ter direito de pleitear a linha de crédito Pronampe com juros reduzidos para capital de giro este ano. Gostaria de realizar uma rápida simulação sem custo de forma 100% online? Acesse nosso portal oficial ou fale comigo para simular: ${getAppDomain()}?ref=${currentPartner?.id || ""}`;
                           const waUrl = hasPhone 
-                            ? `https://api.whatsapp.com/send?phone=${place.telefone.replace(/\D/g, "")}&text=${encodeURIComponent(messageText)}`
+                            ? buildWhatsAppUrl(place.telefone, messageText)
                             : "#";
 
                           return (
@@ -8943,7 +8943,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                               <div className="text-right min-w-0 pl-2">
                                                 <span className="block text-[10px] font-medium truncate max-w-[150px] text-slate-700">{member.email}</span>
                                                 <a
-                                                  href={`https://wa.me/55${member.whatsapp.replace(/\D/g, "")}`}
+                                                  href={buildWhatsAppUrl(member.whatsapp)}
                                                   target="_blank"
                                                   rel="noopener noreferrer"
                                                   className="text-[9px] font-bold text-emerald-700 hover:underline inline-flex items-center gap-1 mt-0.5"
@@ -9066,7 +9066,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                             </button>
 
                                             <a
-                                              href={`https://wa.me/55${member.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${member.nome}, sou a Franquia Master PROSFEC. Gostaria de acompanhar como estão suas abordagens aos leads que direcionamos no Caça-Leads.`)}`}
+                                              href={buildWhatsAppUrl(member.whatsapp, `Olá ${member.nome}, sou a Franquia Master PROSFEC. Gostaria de acompanhar como estão suas abordagens aos leads que direcionamos no Caça-Leads.`)}
                                               target="_blank"
                                               rel="noopener noreferrer"
                                               className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-xl text-[9.5px] font-bold flex items-center justify-center gap-1 transition-all shrink-0"
@@ -9615,7 +9615,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         <td className="py-3.5 px-4 text-right">
                                           {sub.whatsapp && (
                                             <a
-                                              href={`https://api.whatsapp.com/send?phone=${sub.whatsapp.replace(/\D/g, "")}`}
+                                              href={buildWhatsAppUrl(sub.whatsapp)}
                                               target="_blank"
                                               rel="noopener noreferrer"
                                               className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-extrabold bg-emerald-50 hover:bg-emerald-100 p-1.5 rounded-lg border border-emerald-100 transition-all text-[10px]"
@@ -11068,7 +11068,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <div className="flex items-center gap-1.5">
                                   {cleanPhone ? (
                                     <a
-                                      href={`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(`Olá, sou da equipe da PROSFEC. Entro em contato em relação ao atendimento para a empresa ${lead.nomeEmpresa}.`)}`}
+                                      href={buildWhatsAppUrl(cleanPhone, `Olá, sou da equipe da PROSFEC. Entro em contato em relação ao atendimento para a empresa ${lead.nomeEmpresa}.`)}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-xl flex items-center gap-1 transition-all"
