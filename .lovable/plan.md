@@ -15,7 +15,7 @@ Regra já existente no código (linhas ~275 e ~2500 do AdminDashboard):
 
 Será criada uma função auxiliar única `isParceiroDeRede(partner)` reutilizando exatamente essa condição, para não haver divergência entre os pontos de uso.
 
-## Alterações (somente src/components/AdminDashboard.tsx)
+## Alterações (src/components/AdminDashboard.tsx + src/components/UserRegistrationForm.tsx)
 
 ### 1. Helper de classificação
 - Nova função `isParceiroDeRede(partner: Partner): boolean` com a condição acima, definida junto das demais funções utilitárias do componente.
@@ -37,6 +37,16 @@ No modal de detalhes do parceiro selecionado:
 
 ### 5. Outros pontos de escrita de `duracaoDias`
 Varredura confirma que as únicas escritas de `duracaoDias` no Admin são as duas funções acima — nenhum outro caminho concede 365 dias manualmente.
+
+## AÇÃO 4 — Garantia do teste grátis de 3 dias no cadastro (src/components/UserRegistrationForm.tsx)
+
+**Problema confirmado por leitura do código:** o documento criado no cadastro (`newUserDoc`, ~linha 187) **não grava o campo `duracaoDias`** e ainda marca `status: "ativo"`. Na função `calculateSubscription`, a ausência de `duracaoDias` cai no fallback `hasPaid || isManualActive ? 365 : 3` — e como `status: "ativo"` torna `isManualActive` verdadeiro, todo parceiro recém-cadastrado recebe **365 dias** em vez dos 3 dias de teste grátis.
+
+**Correção:**
+
+1. No `newUserDoc` do `UserRegistrationForm.tsx`, adicionar explicitamente `duracaoDias: 3`, garantindo que a expiração seja `dataCriacao + 3 dias` para todo novo parceiro.
+2. Como `duracaoDias` passa a existir desde a criação, o fallback de 365 dias deixa de ser aplicado — sem necessidade de alterar `status` ou qualquer outra regra do cadastro (comissão, vínculo com Master, etc. permanecem intactos).
+3. Conferir se há outro caminho de criação de parceiro (ex: cadastro via Master no PartnerPortal) com o mesmo problema; se existir e estiver no mesmo padrão, aplicar o mesmo ajuste e reportar.
 
 ## AÇÃO 3 — Bloqueio automático (verificação, sem mudança prevista)
 
