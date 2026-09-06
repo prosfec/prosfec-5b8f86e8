@@ -15,7 +15,7 @@ Regra já existente no código (linhas ~275 e ~2500 do AdminDashboard):
 
 Será criada uma função auxiliar única `isParceiroDeRede(partner)` reutilizando exatamente essa condição, para não haver divergência entre os pontos de uso.
 
-## Alterações (somente src/components/AdminDashboard.tsx)
+## Alterações (src/components/AdminDashboard.tsx + src/components/UserRegistrationForm.tsx)
 
 ### 1. Helper de classificação
 - Nova função `isParceiroDeRede(partner: Partner): boolean` com a condição acima, definida junto das demais funções utilitárias do componente.
