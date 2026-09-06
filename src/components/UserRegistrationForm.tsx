@@ -199,6 +199,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
         parentPartnerId: masterId || "",
         parentPartnerNome: masterNome || "",
         aceitouTermos: true,
+        duracaoDias: 3,                              // Teste grátis de 3 dias a partir da criação
         dataCriacao: new Date().toISOString(),
         dataUltimoAcesso: new Date().toISOString(),
         interesse: "cadastro_usuario_direto"

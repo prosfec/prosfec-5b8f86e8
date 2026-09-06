@@ -7232,16 +7232,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               className="w-full sm:flex-1 py-2.5 px-4 bg-[#00A86B] hover:bg-[#008f5a] text-white text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md active:scale-98"
                             >
                               <UserCheck className="w-4 h-4" />
-                              <span>Ativar / Liberar Acesso do Parceiro (1 Ano)</span>
+                              <span>{isParceiroDeRede(selectedPartner) ? "Ativar / Liberar Acesso (Rede — 1 Ano)" : "Ativar / Liberar Acesso (30 dias)"}</span>
                             </button>
                           ) : (
                             <>
                               <button
-                                onClick={() => handleRenewSubscription(selectedPartner.id)}
+                                onClick={() => handleRenewSubscription(selectedPartner)}
                                 className="w-full sm:flex-1 py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
                               >
                                 <Clock className="w-4 h-4 text-emerald-600" />
-                                <span>Renovar Licença (+1 Ano)</span>
+                                <span>{isParceiroDeRede(selectedPartner) ? "Renovar Acesso (Rede — 1 Ano)" : "Renovar Acesso (30 dias)"}</span>
                               </button>
                               <button
                                 onClick={() => handleTogglePartnerStatus(selectedPartner, "bloqueado")}

@@ -164,6 +164,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
         plano: selectedPlan || "Não especificado",
         aceitouTermos: partnerAcceptedTerms,
         authUid: partnerAuthUid,
+        duracaoDias: 3, // Teste grátis de 3 dias a partir da criação
       };
 
       await addDoc(collection(db, "parceiros"), partnerDoc);

@@ -3461,6 +3461,7 @@ export default function PartnerPortal({
         status: isAfiliado ? "ativo" : "novo",
         interesse: "ser parceiro",
         isTeamMember: false,
+        duracaoDias: 3, // Teste grátis de 3 dias a partir da criação
         dataCriacao: new Date().toISOString(),
         parentPartnerId: savedRefId,
         parentPartnerNome: savedRefNome
