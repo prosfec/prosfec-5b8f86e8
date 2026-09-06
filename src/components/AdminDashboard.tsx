@@ -3336,7 +3336,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                                   <div className="mt-3 pt-2.5 border-t border-slate-100 flex gap-2 justify-end">
                                     <a
-                                      href={`https://api.whatsapp.com/send?phone=${lead.whatsapp.replace(/\D/g, "")}&text=${encodeURIComponent(`Olá! Referente ao lead ${lead.razaoSocial || lead.nome}, precisamos verificar a seguinte pendência: ${lead.pendencias?.mensagem || lead.pendenciaDescricao || ""}`)}`}
+                                      href={buildWhatsAppUrl(lead.whatsapp, `Olá! Referente ao lead ${lead.razaoSocial || lead.nome}, precisamos verificar a seguinte pendência: ${lead.pendencias?.mensagem || lead.pendenciaDescricao || ""}`)}
                                       target="_blank"
                                       rel="noreferrer"
                                       className="px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-[#00A86B] hover:text-white rounded-lg border border-emerald-200 transition-all flex items-center gap-1.5 cursor-pointer"
@@ -3594,7 +3594,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </button>
 
                               <a
-                                href={`https://api.whatsapp.com/send?phone=${lead.whatsapp.replace(/\D/g, "")}`}
+                                href={buildWhatsAppUrl(lead.whatsapp)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="p-1.5 bg-[#25D366]/10 hover:bg-[#25D366] text-[#20ba5a] hover:text-white rounded-lg transition-all shrink-0 border border-[#25D366]/20"
@@ -3757,7 +3757,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
 
                                 <a
-                                  href={`https://api.whatsapp.com/send?phone=${lead.whatsapp.replace(/\D/g, "")}`}
+                                  href={buildWhatsAppUrl(lead.whatsapp)}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="inline-flex items-center justify-center p-1.5 bg-[#25D366]/10 hover:bg-[#25D366] text-[#20ba5a] hover:text-white rounded-lg transition-all"
@@ -4057,7 +4057,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </button>
 
                               <a
-                                href={`https://api.whatsapp.com/send?phone=${partner.whatsapp.replace(/\D/g, "")}`}
+                                href={buildWhatsAppUrl(partner.whatsapp)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="p-1.5 bg-[#25D366]/10 hover:bg-[#25D366] text-[#20ba5a] hover:text-white rounded-lg transition-all shrink-0 border border-[#25D366]/20"
@@ -4252,7 +4252,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </button>
 
                               <a
-                                href={`https://api.whatsapp.com/send?phone=${partner.whatsapp.replace(/\D/g, "")}`}
+                                href={buildWhatsAppUrl(partner.whatsapp)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="inline-flex items-center justify-center p-1 bg-[#25D366]/10 hover:bg-[#25D366] text-[#20ba5a] hover:text-white rounded-md transition-all"
@@ -5949,7 +5949,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   <div className="space-y-1 min-w-0">
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">WhatsApp</span>
                     <a 
-                      href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}`}
+                      href={buildWhatsAppUrl(selectedLead.whatsapp)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-sm font-medium text-emerald-600 hover:text-[#25D366] flex items-center gap-1.5 transition-colors"
@@ -6842,7 +6842,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
 
               <a
-                href={`https://api.whatsapp.com/send?phone=${selectedLead.whatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(selectedLead.nome)}!%20Sou%20consultor%20da%20PROSFEC.%20Recebi%20seu%20cadastro%20no%20nosso%20Simulador%20Pronampe%20e%20gostaria%20de%20apresentar%20seu%20diagn%C3%B3stico%20de%20cr%C3%A9dito.`}
+                href={buildWhatsAppUrl(selectedLead.whatsapp, `Olá ${selectedLead.nome}! Sou consultor da PROSFEC. Recebi seu cadastro no nosso Simulador Pronampe e gostaria de apresentar seu diagnóstico de crédito.`)}
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-semibold text-sm rounded-lg flex items-center gap-1.5 transition-all hover:shadow-md"
@@ -6935,7 +6935,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   <div>
                     <span className="text-xs text-slate-400 block font-bold">WhatsApp</span>
                     <a 
-                      href={`https://api.whatsapp.com/send?phone=${selectedPartner.whatsapp.replace(/\D/g, "")}`}
+                      href={buildWhatsAppUrl(selectedPartner.whatsapp)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-sm text-emerald-600 hover:text-[#25D366] font-bold flex items-center gap-1 inline-block mt-0.5"
@@ -7254,7 +7254,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           )}
 
                           <a
-                            href={`https://api.whatsapp.com/send?phone=${selectedPartner.whatsapp.replace(/\D/g, "")}&text=${encodeURIComponent(`Olá ${selectedPartner.nome}! Tudo bem? Gostaria de conversar referente ao seu acesso e parceria na PROSFEC.`)}`}
+                            href={buildWhatsAppUrl(selectedPartner.whatsapp, `Olá ${selectedPartner.nome}! Tudo bem? Gostaria de conversar referente ao seu acesso e parceria na PROSFEC.`)}
                             target="_blank"
                             rel="noreferrer"
                             className="w-full sm:w-auto py-2.5 px-4 border border-slate-200 hover:border-[#25D366] text-slate-700 hover:text-[#20ba5a] text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5"
@@ -7414,7 +7414,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   </button>
 
                                   <a
-                                    href={`https://api.whatsapp.com/send?phone=${lead.whatsapp?.replace(/\D/g, "")}`}
+                                    href={buildWhatsAppUrl(lead.whatsapp || "")}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="py-1 px-2.5 bg-[#25D366]/10 hover:bg-[#25D366] text-[#20ba5a] hover:text-white rounded-lg font-bold text-[10px] flex items-center gap-1 transition-all border border-[#25D366]/20"
@@ -7445,7 +7445,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </button>
               
               <a
-                href={`https://api.whatsapp.com/send?phone=${selectedPartner.whatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(selectedPartner.nome)}!%20Sou%20respons%C3%A1vel%20pelo%20Programa%20de%20Parceiros%20da%20PROSFEC.%20Gostaria%20de%20dar%20as%20boas%20vindas%20e%20explicar%20os%20pr%C3%B3ximos%20passos%20do%20seu%20cadastro.`}
+                href={buildWhatsAppUrl(selectedPartner.whatsapp, `Olá ${selectedPartner.nome}! Sou responsável pelo Programa de Parceiros da PROSFEC. Gostaria de dar as boas vindas e explicar os próximos passos do seu cadastro.`)}
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-extrabold text-sm rounded-lg flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"

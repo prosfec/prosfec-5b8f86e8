@@ -115,6 +115,20 @@ export function formatCPF(value: string): string {
   return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9, 11)}`;
 }
 
+// Normalize Brazilian phone for WhatsApp: digits only, with country code 55 guaranteed
+export function formatWhatsAppPhone(phone: string): string {
+  const clean = (phone || "").replace(/\D/g, "");
+  if (!clean) return "";
+  return clean.startsWith("55") ? clean : `55${clean}`;
+}
+
+// Build official wa.me URL with optional pre-filled message (encoded)
+export function buildWhatsAppUrl(phone: string, message?: string): string {
+  const num = formatWhatsAppPhone(phone);
+  if (!num) return "#";
+  return `https://wa.me/${num}${message ? `?text=${encodeURIComponent(message)}` : ""}`;
+}
+
 // Format CEP: 99999-999
 export function formatCEP(value: string): string {
   const clean = value.replace(/\D/g, "");
