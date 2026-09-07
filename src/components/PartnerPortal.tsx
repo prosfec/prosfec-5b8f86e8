@@ -78,6 +78,7 @@ import {
   Send,
   Megaphone,
   Bell,
+  Menu,
   AlertTriangle,
   Link,
   Save,
