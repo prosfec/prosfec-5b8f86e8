@@ -4240,7 +4240,29 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col">
-        {!isAuthenticated ? (
+        {isAuthenticated && !currentPartner ? (
+          /* Sessão reconhecida, mas o cadastro ainda não carregou */
+          <div className="flex-1 flex items-center justify-center py-20">
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-xl p-10 max-w-md w-full text-center space-y-5">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                <RefreshCw className="w-5 h-5 text-emerald-600 animate-spin" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-display font-extrabold text-slate-800 text-lg">Carregando seu cadastro…</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Estamos finalizando a preparação do seu acesso. Se demorar, entre novamente com o seu e-mail e senha.
+                </p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold rounded-2xl transition-all cursor-pointer"
+              >
+                Voltar para o Login
+              </button>
+            </div>
+          </div>
+        ) : !isAuthenticated ? (
+
           /* ========================================================================= */
           /*                       UNAUTHENTICATED: LOGIN / REGISTER                   */
           /* ========================================================================= */
