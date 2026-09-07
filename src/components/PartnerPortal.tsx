@@ -776,6 +776,7 @@ export default function PartnerPortal({
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
   const [showLeadRegisterForm, setShowLeadRegisterForm] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Helper function to check if consultant/partner profile is completely filled out
   const isProfileComplete = (partner: Partner | null): boolean => {
