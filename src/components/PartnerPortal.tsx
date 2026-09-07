@@ -2288,6 +2288,24 @@ export default function PartnerPortal({
     }
   };
 
+  // Re-fetch only the data that feeds the Passo 6 financial section
+  const handleSyncStep6 = async () => {
+    if (isSyncingStep6) return;
+    setIsSyncingStep6(true);
+    try {
+      await fetchPriceCatalog();
+      if (currentPartner?.id) {
+        await fetchPartnerLeads(currentPartner.id);
+      }
+      toast.success("Dados do Passo 6 sincronizados");
+    } catch (err) {
+      console.warn("Erro ao sincronizar Passo 6:", err);
+      toast.error("Não foi possível sincronizar os dados do Passo 6");
+    } finally {
+      setIsSyncingStep6(false);
+    }
+  };
+
   // Fetch active announcements for the partner portal
   const fetchActiveAnnouncements = async (partnerPlan?: string) => {
     try {
