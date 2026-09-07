@@ -376,7 +376,9 @@ const getSubscriptionStatus = (partner: Partner) => {
     expiryDate,
     formattedExpiry: expiryDate.toLocaleDateString("pt-BR"),
     isTrial: !hasPaid && !isManualActive,
+    isExempt: false,
     isManualBlocked: false
+
   };
 };
 
