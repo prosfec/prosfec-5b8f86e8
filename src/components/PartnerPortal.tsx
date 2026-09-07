@@ -5835,6 +5835,16 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={handleSyncStep6}
+                              disabled={isSyncingStep6}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              title="Sincronizar preços e leads do Passo 6"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingStep6 ? "animate-spin" : ""}`} />
+                              <span>Sincronizar</span>
+                            </button>
                             <span className="text-[11px] font-bold uppercase font-mono tracking-wider px-3 py-1.5 rounded-md bg-emerald-50 text-[#00A86B] border border-emerald-200">
                               Margem: {getPlanServiceLabel(partnerPlan)}
                             </span>
