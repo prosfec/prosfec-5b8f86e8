@@ -36,7 +36,7 @@ import LeadStepTimeline from "./LeadStepTimeline";
 import { calculateLeadStepStatus } from "../utils/stepValidation";
 import { TeamPerformanceChart } from "./TeamPerformanceChart";
 import PartnerServicosContabilidadeTab from "./PartnerServicosContabilidadeTab";
-import { sanitizeAndSyncServicosList, ServiceCatalogItem, DEFAULT_SERVICES_CATALOG } from "../utils/serviceUtils";
+import { sanitizeAndSyncServicosList, ServiceCatalogItem } from "../utils/serviceUtils";
 import { 
   Handshake, 
   Copy, 
@@ -690,37 +690,41 @@ export default function PartnerPortal({
   }, [initialPlan]);
 
   // Dynamic Price Catalog loaded from ADM Settings (configuracoes/precos_consultas)
-  // Optimized with sessionStorage cache to prevent repeated real-time reads on static prices
-  const [catalogServices, setCatalogServices] = useState<ServiceCatalogItem[]>(() => {
-    try {
-      const cached = sessionStorage.getItem("cached_precos_consultas");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return DEFAULT_SERVICES_CATALOG;
-  });
+  // FINANCEIRO: nunca usar catálogo padrão (hardcoded) nem cache de sessão para calcular dinheiro.
+  const [catalogServices, setCatalogServices] = useState<ServiceCatalogItem[]>([]);
+  const [precosCarregados, setPrecosCarregados] = useState(false);
+  const [precosErro, setPrecosErro] = useState(false);
 
   useEffect(() => {
-    // Check if we have valid fresh cache in this session
-    const cachedTime = sessionStorage.getItem("cached_precos_consultas_time");
-    const now = Date.now();
-    if (cachedTime && now - parseInt(cachedTime, 10) < 1000 * 60 * 30) {
-      // Use cached for 30 minutes without reading Firestore
-      return;
-    }
+    let cancelled = false;
+    setPrecosCarregados(false);
+    setPrecosErro(false);
 
     getDoc(doc(db, "configuracoes", "precos_consultas")).then((snap) => {
+      if (cancelled) return;
       if (snap.exists() && snap.data().servicos && Array.isArray(snap.data().servicos)) {
         setCatalogServices(snap.data().servicos);
-        sessionStorage.setItem("cached_precos_consultas", JSON.stringify(snap.data().servicos));
-        sessionStorage.setItem("cached_precos_consultas_time", String(Date.now()));
+        setPrecosCarregados(true);
+      } else {
+        // Sem tabela oficial no banco: não exibir valores possivelmente desatualizados
+        console.warn("Tabela de preços ausente em configuracoes/precos_consultas");
+        setPrecosErro(true);
       }
+
     }).catch((err) => {
+      if (cancelled) return;
       console.warn("Could not load price catalog in PartnerPortal:", err);
+      setPrecosErro(true);
     });
+
+    return () => { cancelled = true; };
   }, []);
+
+  // Skeleton financeiro (exibido enquanto os preços reais não chegam do banco)
+  const FinanceSkeleton = ({ className = "h-6 w-28" }: { className?: string }) => (
+    <div className={`animate-pulse rounded-md bg-slate-200/80 ${className}`} aria-hidden="true" />
+  );
+
 
   // Dashboard Data
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -5445,6 +5449,39 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                   {/* DESEMPENHO & CONTROLE FINANCEIRO DE SERVIÇOS (PASSO 6) - COMISSÃO TIERED */}
                   {(() => {
+                    if (!precosCarregados) {
+                      return (
+                        <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
+                          <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                            <div className="p-2.5 bg-emerald-50 text-[#00A86B] rounded-xl border border-emerald-100 shrink-0">
+                              <Receipt className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-1.5">
+                              <h3 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight">
+                                Desempenho & Controle Financeiro de Serviços (Passo 6)
+                              </h3>
+                              <p className="text-xs text-slate-500">
+                                {precosErro
+                                  ? "Não foi possível carregar a tabela de preços oficial. Os valores não serão exibidos para evitar informação desatualizada."
+                                  : "Calculando comissões com a tabela de preços atualizada..."}
+                              </p>
+                            </div>
+                          </div>
+                          {!precosErro && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                              {[0, 1, 2, 3].map((i) => (
+                                <div key={i} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3">
+                                  <FinanceSkeleton className="h-3 w-24" />
+                                  <FinanceSkeleton className="h-6 w-32" />
+                                  <FinanceSkeleton className="h-3 w-20" />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
                     interface ServiceItem {
                       id: string;
                       titulo: string;
@@ -11584,8 +11621,21 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   </button>
                 </div>
               </div>
+            ) : !precosCarregados ? (
+              <div className="space-y-3">
+                <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-2xl space-y-2">
+                  <FinanceSkeleton className="h-3 w-40" />
+                  <FinanceSkeleton className="h-7 w-36" />
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  {precosErro
+                    ? "Não foi possível carregar a tabela de preços oficial. Tente novamente em instantes — nenhum valor será exibido até a confirmação do banco de dados."
+                    : "Calculando seu saldo com a tabela de preços atualizada..."}
+                </p>
+              </div>
             ) : (() => {
               // Calculate dynamically for modal based on partner level and team hierarchy
+
               let totalLiberada = 0;
               let totalPaga = 0;
               let totalCompensando = 0;
