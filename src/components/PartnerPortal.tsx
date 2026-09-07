@@ -10440,7 +10440,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               )}
             </AnimatePresence>
             </div>
+            </div>
           </div>
+        </div>
         </div>
         )}
       </main>
