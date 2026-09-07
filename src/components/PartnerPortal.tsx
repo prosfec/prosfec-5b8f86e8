@@ -4048,7 +4048,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-slate-50 text-slate-900">
+    <div className="soft-ui min-h-screen flex flex-col font-sans bg-slate-50 text-slate-900">
       {/* Dynamic Header */}
       <header className="bg-[#0A3D2E] text-slate-100 py-3.5 px-4 sm:px-6 border-b border-emerald-800/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center justify-between w-full sm:w-auto gap-3">
@@ -4708,9 +4708,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           /* ========================================================================= */
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start w-full">
             {/* Sidebar Left Column */}
-            <div className="contents lg:flex lg:flex-col lg:w-80 shrink-0 lg:space-y-6 lg:sticky lg:top-6">
+            <div className="contents lg:flex lg:flex-col lg:w-80 shrink-0 lg:space-y-6 lg:sticky lg:top-6 lg:self-start">
               {/* Profile Card & Commission Info */}
-              <div className="order-1 lg:order-none bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-sm flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
+              <div className="order-1 lg:order-none bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-3xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
+
                 <div className="absolute right-[-30px] top-[-30px] w-32 h-32 rounded-full bg-emerald-500/10 pointer-events-none" />
                 <div className="space-y-4 relative z-10">
                   <div className="flex items-start justify-between">
@@ -4754,58 +4755,59 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               </div>
 
               {/* Vertical Navigation Tabs */}
-              <div className="order-3 lg:order-none panel-deep p-3 flex flex-col gap-1 text-left">
-                <span className="text-[10px] font-bold text-emerald-300/60 uppercase tracking-[0.14em] px-3 py-1.5 mb-0.5 block">Navegação do Portal</span>
+              <div className="order-3 lg:order-none soft-card p-3 flex flex-col gap-1 text-left">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.14em] px-4 py-1.5 mb-0.5 block">Navegação do Portal</span>
+
                 
                 <button
                   onClick={() => handleTabClick("dashboard")}
-                  className={`sidebar-item justify-between text-left group ${
+                  className={`soft-nav-item justify-between text-left group ${
                     activeTab === "dashboard"
-                      ? "sidebar-item-active"
+                      ? "soft-nav-item-active"
                       : ""
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <LayoutDashboard className={`w-5 h-5 ${activeTab === "dashboard" ? "text-[#00A86B]" : "text-slate-400"}`} strokeWidth={2} />
+                    <LayoutDashboard className={`w-5 h-5 ${activeTab === "dashboard" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
                     Dashboard
                   </span>
                   {!isProfileComplete(currentPartner) ? (
                     <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                   ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "dashboard" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "dashboard" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                   )}
                 </button>
 
                 <button
                   onClick={() => handleTabClick("leads")}
-                  className={`sidebar-item justify-between text-left group ${
+                  className={`soft-nav-item justify-between text-left group ${
                     activeTab === "leads"
-                      ? "sidebar-item-active"
+                      ? "soft-nav-item-active"
                       : ""
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <ClipboardList className={`w-5 h-5 ${activeTab === "leads" ? "text-[#00A86B]" : "text-slate-400"}`} strokeWidth={2} />
+                    <ClipboardList className={`w-5 h-5 ${activeTab === "leads" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
                     Meus Leads ({leads.length})
                   </span>
                   {!isProfileComplete(currentPartner) ? (
                     <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                   ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                   )}
                 </button>
 
                 {!currentPartner?.plano?.toUpperCase().includes("AFILIADO") && (
                   <button
                     onClick={() => handleTabClick("caca-leads")}
-                    className={`sidebar-item justify-between text-left group ${
+                    className={`soft-nav-item justify-between text-left group ${
                       activeTab === "caca-leads"
-                        ? "sidebar-item-active"
+                        ? "soft-nav-item-active"
                         : ""
                     }`}
                   >
                     <span className="flex items-center gap-2.5">
-                      <Search className={`w-5 h-5 ${activeTab === "caca-leads" ? "text-[#00A86B] animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
+                      <Search className={`w-5 h-5 ${activeTab === "caca-leads" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
                       <span className="flex items-center gap-1">
                         Caça Leads
                         <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
@@ -4814,7 +4816,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     {!isProfileComplete(currentPartner) ? (
                       <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                     ) : (
-                      <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "caca-leads" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+                      <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "caca-leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                     )}
                   </button>
                 )}
@@ -4822,34 +4824,34 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 {isFranquiaDigital(currentPartner?.plano) && (
                   <button
                     onClick={() => handleTabClick("equipe")}
-                    className={`sidebar-item justify-between text-left group ${
+                    className={`soft-nav-item justify-between text-left group ${
                       activeTab === "equipe"
-                        ? "sidebar-item-active"
+                        ? "soft-nav-item-active"
                         : ""
                     }`}
                   >
                     <span className="flex items-center gap-2.5">
-                      <Users className={`w-5 h-5 ${activeTab === "equipe" ? "text-[#00A86B] animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
+                      <Users className={`w-5 h-5 ${activeTab === "equipe" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
                       Minha Equipe ({teamMembers.length})
                     </span>
                     {!isProfileComplete(currentPartner) ? (
                       <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                     ) : (
-                      <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "equipe" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+                      <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "equipe" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                     )}
                   </button>
                 )}
 
                 <button
                   onClick={() => handleTabClick("servicos-contabilidade")}
-                  className={`sidebar-item justify-between text-left group ${
+                  className={`soft-nav-item justify-between text-left group ${
                     activeTab === "servicos-contabilidade"
-                      ? "sidebar-item-active"
+                      ? "soft-nav-item-active"
                       : ""
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <Calculator className={`w-5 h-5 ${activeTab === "servicos-contabilidade" ? "text-[#00A86B] animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
+                    <Calculator className={`w-5 h-5 ${activeTab === "servicos-contabilidade" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
                     <span className="flex items-center gap-1">
                       Serviços Contábeis
                       <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
@@ -4858,44 +4860,44 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   {!isProfileComplete(currentPartner) ? (
                     <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                   ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "servicos-contabilidade" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "servicos-contabilidade" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                   )}
                 </button>
 
                 <button
                   onClick={() => handleTabClick("perfil")}
-                  className={`sidebar-item justify-between text-left group ${
+                  className={`soft-nav-item justify-between text-left group ${
                     activeTab === "perfil"
-                      ? "sidebar-item-active"
+                      ? "soft-nav-item-active"
                       : ""
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <User className={`w-5 h-5 ${activeTab === "perfil" ? "text-[#00A86B]" : "text-slate-400"}`} strokeWidth={2} />
+                    <User className={`w-5 h-5 ${activeTab === "perfil" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
                     Meu Perfil
                     {!isProfileComplete(currentPartner) && (
                       <span className="bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase ml-1 animate-pulse">Obrigatório</span>
                     )}
                   </span>
-                  <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "perfil" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+                  <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "perfil" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                 </button>
 
                 <button
                   onClick={() => handleTabClick("terms")}
-                  className={`sidebar-item justify-between text-left group ${
+                  className={`soft-nav-item justify-between text-left group ${
                     activeTab === "terms"
-                      ? "sidebar-item-active"
+                      ? "soft-nav-item-active"
                       : ""
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <FileText className={`w-5 h-5 ${activeTab === "terms" ? "text-[#00A86B]" : "text-slate-400"}`} strokeWidth={2} />
+                    <FileText className={`w-5 h-5 ${activeTab === "terms" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
                     Contrato de Parceria
                   </span>
                   {!isProfileComplete(currentPartner) ? (
                     <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
                   ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "terms" ? "translate-x-0.5 text-[#00A86B]" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "terms" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
                   )}
                 </button>
               </div>
