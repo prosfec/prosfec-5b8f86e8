@@ -4564,20 +4564,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           }}
                           className="w-full bg-[#00A86B] hover:bg-[#0A3D2E] text-white font-extrabold py-3.5 px-6 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01]"
                         >
-                          Acessar Meu Painel Agora {registeredPartnerPlan !== "AFILIADO" && "(Iniciar Teste de 3 Dias)"}
+                          Acessar Meu Painel Agora (Iniciar Teste de 3 Dias)
                         </button>
 
-                        {registeredPartnerPlan !== "AFILIADO" && (
-                          <a
-                            href={getPaymentLinkForPlan(registeredPartnerPlan)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3 px-6 rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-slate-200/60"
-                          >
-                            <Coins className="w-4 h-4 text-emerald-600" />
-                            Garantir Plano Definitivo na Hubla
-                          </a>
-                        )}
                       </div>
                       
                       <button
@@ -5977,15 +5966,16 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
                         </div>
 
-                        {/* Banner Informativo de Liquidação Hubla no Painel do Parceiro */}
+                        {/* Banner Informativo de Liquidação no Painel do Parceiro */}
                         <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-emerald-950">
                           <div className="flex items-start gap-2.5">
                             <Clock className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                             <div>
                               <span className="font-bold text-emerald-900 block">Regra de Liquidação Financeira & Liberação de Saque:</span>
                               <p className="text-xs text-emerald-800 leading-relaxed mt-0.5">
-                                A liberação da comissão de serviços ocorre após a compensação bancária na Hubla: <strong>48h para PIX</strong> e <strong>15 dias corridos para Cartão de Crédito</strong>.
+                                A liberação da comissão de serviços ocorre após a compensação bancária: <strong>48h para PIX</strong> e <strong>15 dias corridos para Cartão de Crédito</strong>.
                               </p>
+
                             </div>
                           </div>
                         </div>
@@ -6295,7 +6285,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <Coins className="w-6 h-6 text-slate-300 mx-auto mb-2" />
                               <p className="text-xs font-bold text-slate-700">Nenhum saque solicitado até o momento.</p>
                               <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                                À medida que seus clientes quitarem os serviços e passarem pelo prazo de liquidação Hubla, você poderá solicitar o repasse via PIX diretamente para sua conta.
+                                À medida que seus clientes quitarem os serviços e passarem pelo prazo de compensação bancária, você poderá solicitar o repasse via PIX diretamente para sua conta.
                               </p>
                             </div>
                           ) : (
