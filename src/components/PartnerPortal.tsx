@@ -4728,12 +4728,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             onChange={(e) => setRegPlan(e.target.value)}
                             className="w-full bg-slate-50 border border-slate-200 focus:border-brand-primary rounded-xl p-2 text-xs outline-none text-slate-800 font-semibold"
                           >
-                            <option value="STARTER">STARTER (0,5% repasse - R$ 500,00 — Pagamento Único)</option>
-                            <option value="Executive Partner PROSFEC">Executive Partner PROSFEC (1,5% repasse - R$ 800,00 — Pagamento Único)</option>
-                            <option value="MASTER PARTNER">MASTER PARTNER (3,0% repasse - R$ 1.500,00 — Pagamento Único)</option>
-                            {!localStorage.getItem("lca_referred_by") && (
-                              <option value="AFILIADO">AFILIADO (Apenas Divulgação e Afiliados - R$ 0,00/mês)</option>
-                            )}
+                            <option value="STARTER">STARTER (0,5% repasse)</option>
+                            <option value="Executive Partner PROSFEC">Executive Partner PROSFEC (1,5% repasse)</option>
+                            <option value="MASTER PARTNER">MASTER PARTNER (3,0% repasse)</option>
+
                           </select>
                         </div>
 
