@@ -4884,21 +4884,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       <div>
                         <p className="font-bold">Como funciona a liberação?</p>
                         <p className="mt-1 text-amber-700/90 leading-relaxed">
-                          Você pode efetuar o pagamento diretamente via Hubla usando o botão abaixo. Assim que aprovado, seu painel será liberado de forma totalmente automática!
+                          Fale com a equipe PROSFEC pelo botão abaixo para regularizar o seu plano. Assim que o pagamento for confirmado, o seu painel é liberado pela nossa equipe.
                         </p>
                       </div>
                     </div>
 
                     <div className="pt-2 space-y-3">
-                      <a
-                        href={getPaymentLinkForPlan(currentPartner.plano || "STARTER")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold py-3.5 px-6 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <Coins className="w-4 h-4" />
-                        Efetuar Pagamento na Hubla
-                      </a>
+
 
                       <a
                         href={`https://api.whatsapp.com/send?phone=5598987353253&text=${encodeURIComponent(
@@ -7367,16 +7359,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                       <div className="pt-2 space-y-3">
                         <a
-                          href={getPaymentLinkForPlan(currentPartner?.plano || "STARTER")}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold py-3 px-6 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                          <Coins className="w-4 h-4" />
-                          Ativar Meu Plano na Hubla
-                        </a>
 
-                        <a
                           href={`https://api.whatsapp.com/send?phone=5598987353253&text=${encodeURIComponent(
                             `Olá! Sou o parceiro ${currentPartner?.nome} (ID: ${currentPartner?.id}) e gostaria de regularizar ou ativar meu plano para liberar a ferramenta Caça Leads.`
                           )}`}
