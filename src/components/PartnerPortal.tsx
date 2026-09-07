@@ -26,6 +26,7 @@ import {
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
 import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl } from "../utils";
+import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
@@ -694,14 +695,13 @@ export default function PartnerPortal({
   const [catalogServices, setCatalogServices] = useState<ServiceCatalogItem[]>([]);
   const [precosCarregados, setPrecosCarregados] = useState(false);
   const [precosErro, setPrecosErro] = useState(false);
+  const [isSyncingStep6, setIsSyncingStep6] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
+  const fetchPriceCatalog = async () => {
     setPrecosCarregados(false);
     setPrecosErro(false);
-
-    getDoc(doc(db, "configuracoes", "precos_consultas")).then((snap) => {
-      if (cancelled) return;
+    try {
+      const snap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
       if (snap.exists() && snap.data().servicos && Array.isArray(snap.data().servicos)) {
         setCatalogServices(snap.data().servicos);
         setPrecosCarregados(true);
@@ -710,14 +710,14 @@ export default function PartnerPortal({
         console.warn("Tabela de preços ausente em configuracoes/precos_consultas");
         setPrecosErro(true);
       }
-
-    }).catch((err) => {
-      if (cancelled) return;
+    } catch (err) {
       console.warn("Could not load price catalog in PartnerPortal:", err);
       setPrecosErro(true);
-    });
+    }
+  };
 
-    return () => { cancelled = true; };
+  useEffect(() => {
+    fetchPriceCatalog();
   }, []);
 
   // Skeleton financeiro (exibido enquanto os preços reais não chegam do banco)
@@ -2285,6 +2285,24 @@ export default function PartnerPortal({
       console.error("Error fetching partner leads:", err);
     } finally {
       setFetchLoading(false);
+    }
+  };
+
+  // Re-fetch only the data that feeds the Passo 6 financial section
+  const handleSyncStep6 = async () => {
+    if (isSyncingStep6) return;
+    setIsSyncingStep6(true);
+    try {
+      await fetchPriceCatalog();
+      if (currentPartner?.id) {
+        await fetchPartnerLeads(currentPartner.id);
+      }
+      toast.success("Dados do Passo 6 sincronizados");
+    } catch (err) {
+      console.warn("Erro ao sincronizar Passo 6:", err);
+      toast.error("Não foi possível sincronizar os dados do Passo 6");
+    } finally {
+      setIsSyncingStep6(false);
     }
   };
 
@@ -5817,6 +5835,16 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={handleSyncStep6}
+                              disabled={isSyncingStep6}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              title="Sincronizar preços e leads do Passo 6"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingStep6 ? "animate-spin" : ""}`} />
+                              <span>Sincronizar</span>
+                            </button>
                             <span className="text-[11px] font-bold uppercase font-mono tracking-wider px-3 py-1.5 rounded-md bg-emerald-50 text-[#00A86B] border border-emerald-200">
                               Margem: {getPlanServiceLabel(partnerPlan)}
                             </span>
