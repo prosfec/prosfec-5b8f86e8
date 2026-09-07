@@ -17,7 +17,8 @@ import {
   brazilianUFs,
   validateCPF,
   validatePhone,
-  fetchCNPJ
+  fetchCNPJ,
+  buildWhatsAppUrl
 } from "../utils";
 import { LeadData, SimulationResult } from "../types";
 import PlanSelectionView from "./PlanSelectionView";
@@ -949,14 +950,11 @@ export default function Simulador({
 
 Gostaria de falar com você para dar andamento ao atendimento e agilizar a liberação do recurso.`;
     
-    const encodedText = encodeURIComponent(text);
-    const cleanPhone = formData.whatsapp.replace(/\D/g, "");
-    
     // Choose partner whatsapp if available, else fallback to platform default
-    const targetPhone = referredByPartnerWhatsapp ? referredByPartnerWhatsapp.replace(/\D/g, "") : "5598987353253";
-    
+    const targetPhone = referredByPartnerWhatsapp || "5598987353253";
+
     // Open WhatsApp link gracefully supporting iframe restrictions
-    const url = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodedText}`;
+    const url = buildWhatsAppUrl(targetPhone, text);
     try {
       const opened = window.open(url, "_blank");
       if (!opened) {
@@ -969,7 +967,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
   };
 
   const handleExitIntentWhatsApp = () => {
-    const targetPhone = referredByPartnerWhatsapp ? referredByPartnerWhatsapp.replace(/\D/g, "") : "5598987353253";
+    const targetPhone = referredByPartnerWhatsapp || "5598987353253";
     
     let text = `Olá! Estava preenchendo o Simulador de Elegibilidade do Pronampe 2026 e gostaria de salvar meu progresso para garantir meu lugar na análise.`;
     if (formData.cnpj) {
@@ -984,8 +982,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
     text += `\n*Progresso atual:* Etapa ${step} de 5`;
     text += `\n\nPoderia me ajudar a reservar minha vaga e prosseguir de onde parei?`;
 
-    const encodedText = encodeURIComponent(text);
-    const url = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodedText}`;
+    const url = buildWhatsAppUrl(targetPhone, text);
 
     try {
       const opened = window.open(url, "_blank");
