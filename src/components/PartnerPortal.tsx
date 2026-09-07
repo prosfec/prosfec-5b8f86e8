@@ -4754,8 +4754,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               </div>
 
               {/* Vertical Navigation Tabs */}
-              <div className="order-3 lg:order-none panel-deep p-3 flex flex-col gap-1 text-left">
-                <span className="text-[10px] font-bold text-emerald-300/60 uppercase tracking-[0.14em] px-3 py-1.5 mb-0.5 block">Navegação do Portal</span>
+              <div className="order-3 lg:order-none soft-card p-3 flex flex-col gap-1 text-left">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.14em] px-4 py-1.5 mb-0.5 block">Navegação do Portal</span>
+
                 
                 <button
                   onClick={() => handleTabClick("dashboard")}
