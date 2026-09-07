@@ -5449,6 +5449,39 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                   {/* DESEMPENHO & CONTROLE FINANCEIRO DE SERVIÇOS (PASSO 6) - COMISSÃO TIERED */}
                   {(() => {
+                    if (!precosCarregados) {
+                      return (
+                        <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
+                          <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                            <div className="p-2.5 bg-emerald-50 text-[#00A86B] rounded-xl border border-emerald-100 shrink-0">
+                              <Receipt className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-1.5">
+                              <h3 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight">
+                                Desempenho & Controle Financeiro de Serviços (Passo 6)
+                              </h3>
+                              <p className="text-xs text-slate-500">
+                                {precosErro
+                                  ? "Não foi possível carregar a tabela de preços oficial. Os valores não serão exibidos para evitar informação desatualizada."
+                                  : "Calculando comissões com a tabela de preços atualizada..."}
+                              </p>
+                            </div>
+                          </div>
+                          {!precosErro && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                              {[0, 1, 2, 3].map((i) => (
+                                <div key={i} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3">
+                                  <FinanceSkeleton className="h-3 w-24" />
+                                  <FinanceSkeleton className="h-6 w-32" />
+                                  <FinanceSkeleton className="h-3 w-20" />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
                     interface ServiceItem {
                       id: string;
                       titulo: string;
