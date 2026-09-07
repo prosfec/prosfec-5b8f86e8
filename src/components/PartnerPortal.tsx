@@ -6260,18 +6260,18 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                   {/* Franquia Digital Franchise Summary Overview (Quinta linha: Desempenho Master Partner) */}
                   {isFranquiaDigital(currentPartner?.plano) && (
-                    <div className="bg-gradient-to-r from-emerald-900 to-teal-950 p-6 rounded-3xl border border-emerald-500/20 text-white shadow-md space-y-4 text-left">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-emerald-800/60 pb-3">
+<div className="bg-white p-6 rounded-3xl border border-slate-200 text-slate-800 shadow-sm space-y-4 text-left">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                         <div className="flex items-center gap-2">
-                          <Users className="w-5 h-5 text-emerald-400" />
+                          <Users className="w-5 h-5 text-emerald-600" />
                           <div>
-                            <h3 className="font-display font-extrabold text-sm uppercase tracking-wider text-emerald-300">Desempenho Master Partner</h3>
-                            <p className="text-[10px] text-emerald-200">Visão consolidada da sua equipe de consultores autônomos</p>
+                            <h3 className="font-display font-extrabold text-sm uppercase tracking-wider text-[#00A86B]">Desempenho Master Partner</h3>
+                            <p className="text-[10px] text-slate-500">Visão consolidada da sua equipe de consultores autônomos</p>
                           </div>
                         </div>
                         <button
                           onClick={() => setActiveTab("equipe")}
-                          className="px-3 py-1.5 bg-emerald-700/50 hover:bg-emerald-600/50 border border-emerald-500/30 rounded-lg text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1"
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1 text-slate-700"
                         >
                           Gerenciar Consultores
                           <ChevronRight className="w-3 h-3" />
@@ -6290,34 +6290,34 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         return (
                           <>
                             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-1">
-                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Membros na Equipe</span>
-                                <span className="text-xl font-black text-white block mt-0.5">{teamMembers.length}</span>
+                              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Membros na Equipe</span>
+                                <span className="text-xl font-black text-slate-900 block mt-0.5">{teamMembers.length}</span>
                               </div>
-                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Leads da Equipe</span>
-                                <span className="text-xl font-black text-white block mt-0.5">{teamLeads.length}</span>
+                              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Leads da Equipe</span>
+                                <span className="text-xl font-black text-slate-900 block mt-0.5">{teamLeads.length}</span>
                               </div>
-                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Faturamento Equipe Concluído</span>
-                                <span className="text-sm font-black text-white block mt-1">
+                              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Faturamento Equipe Concluído</span>
+                                <span className="text-sm font-black text-slate-900 block mt-1">
                                   {formatCurrencyBRL(teamLeads.filter(l => l.status === "concluido").reduce((acc, l) => acc + (l.limiteEstimado || 0), 0))}
                                 </span>
                               </div>
-                              <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-amber-300 block tracking-wider font-mono">Override Equipe Dinâmico</span>
-                                <span className="text-sm font-black text-amber-300 block mt-1">
+                              <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-amber-600 block tracking-wider font-mono">Override Equipe Dinâmico</span>
+                                <span className="text-sm font-black text-amber-600 block mt-1">
                                   {formatCurrencyBRL(totalConcludedTeamOverride)}
                                 </span>
                               </div>
                             </div>
 
-                            <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between text-xs text-emerald-100 gap-2">
+                            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between text-xs text-slate-600 gap-2">
                               <div className="flex items-center gap-1.5">
-                                <Coins className="w-4 h-4 text-emerald-400 shrink-0" />
+                                <Coins className="w-4 h-4 text-emerald-600 shrink-0" />
                                 <span>Seus Ganhos Diretos Concluídos ({(getDirectCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%): <strong>{formatCurrencyBRL(totalDirectConcludedComm)}</strong></span>
                               </div>
-                              <div className="font-extrabold text-emerald-300 text-sm sm:text-right">
+                              <div className="font-extrabold text-emerald-700 text-sm sm:text-right">
                                 Total Geral Acumulado: {formatCurrencyBRL(totalDirectConcludedComm + totalConcludedTeamOverride)}
                               </div>
                             </div>
@@ -6330,22 +6330,22 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   {/* Calculator and CRM Highlights Grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     {/* Embedded Commission Calculator (Solid #0A3D2E, rounded-2xl) */}
-                    <div className="lg:col-span-5 bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl border border-emerald-500/20 shadow-xs space-y-4">
+<div className="lg:col-span-5 bg-white text-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-950/70 border border-emerald-700/40 flex items-center justify-center text-emerald-300 shrink-0">
-                          <Calculator className="w-4.5 h-4.5 text-emerald-300" />
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                          <Calculator className="w-4.5 h-4.5 text-emerald-600" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm text-white uppercase tracking-wider">Simulador do Repassador</h4>
-                          <p className="text-[11px] text-emerald-300/80">Simule ganhos com base no seu plano atual.</p>
+                          <h4 className="font-bold text-sm text-slate-800 uppercase tracking-wider">Simulador do Repassador</h4>
+                          <p className="text-[11px] text-slate-400">Simule ganhos com base no seu plano atual.</p>
                         </div>
                       </div>
 
                       <div className="space-y-4 pt-2">
                         <div className="space-y-1.5">
-                          <div className="flex justify-between text-xs text-emerald-200">
+                          <div className="flex justify-between text-xs text-slate-500">
                             <span>Créditos liberados p/ mês</span>
-                            <span className="font-mono font-bold text-emerald-300">{calcLeadsCount} empresas</span>
+                            <span className="font-mono font-bold text-emerald-700">{calcLeadsCount} empresas</span>
                           </div>
                           <input
                             type="range"
@@ -6358,9 +6358,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
 
                         <div className="space-y-1.5">
-                          <div className="flex justify-between text-xs text-emerald-200">
+                          <div className="flex justify-between text-xs text-slate-500">
                             <span>Valor médio do contrato</span>
-                            <span className="font-mono font-bold text-emerald-300">{formatCurrencyBRL(calcAvgValue)}</span>
+                            <span className="font-mono font-bold text-emerald-700">{formatCurrencyBRL(calcAvgValue)}</span>
                           </div>
                           <input
                             type="range"
@@ -6374,14 +6374,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
                       </div>
 
-                      <div className="bg-emerald-950/80 p-4 border border-emerald-800/80 rounded-xl mt-4">
-                        <span className="text-[10px] uppercase font-bold text-emerald-300 block tracking-wider">
+                      <div className="bg-emerald-50 p-4 border border-emerald-200 rounded-xl mt-4">
+                        <span className="text-[10px] uppercase font-bold text-emerald-700 block tracking-wider">
                           Sua Comissão Mensal Estimada
                         </span>
-                        <span className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-300 block mt-1">
+                        <span className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-700 block mt-1">
                           {formatCurrencyBRL(calculatedCommission)}
                         </span>
-                        <span className="text-[10px] text-emerald-400/90 leading-normal block mt-2">
+                        <span className="text-[10px] text-slate-400 leading-normal block mt-2">
                           *A simulação utiliza o percentual de repasse vinculado ao seu plano atual ({(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%).
                         </span>
                       </div>
