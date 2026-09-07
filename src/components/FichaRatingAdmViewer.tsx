@@ -17,7 +17,7 @@ import { motion } from "motion/react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import type { ConclusaoRatingPosServico, FichaRatingCredito, Lead } from "../types";
-import { sanitizeFirestoreData } from "../utils";
+import { sanitizeFirestoreData, buildWhatsAppUrl } from "../utils";
 
 interface FichaRatingAdmViewerProps {
   lead: Lead;
@@ -243,7 +243,7 @@ export default function FichaRatingAdmViewer({
     message += "\nQualquer dúvida, estamos à disposição para auxiliar.";
 
     window.open(
-      `https://api.whatsapp.com/send?phone=${clientPhone}&text=${encodeURIComponent(message)}`,
+      buildWhatsAppUrl(clientPhone, message),
       "_blank",
       "noopener,noreferrer",
     );

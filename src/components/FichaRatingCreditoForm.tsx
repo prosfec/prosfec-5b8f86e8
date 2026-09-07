@@ -36,7 +36,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPessoal, AnaliseRTB } from "../types";
-import { formatCurrencyBRL, sanitizeFirestoreData, validateUploadedFile } from "../utils";
+import { formatCurrencyBRL, sanitizeFirestoreData, validateUploadedFile, buildWhatsAppUrl } from "../utils";
 import RTBAuditoriaViewerModal from "./RTBAuditoriaViewerModal";
 
 /**
@@ -558,7 +558,7 @@ export default function FichaRatingCreditoForm({
           <a
             href={
               partnerWhatsapp 
-                ? `https://wa.me/55${partnerWhatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Gostaria de confirmar o pagamento dos serviços de melhoria de crédito da empresa ${lead.razaoSocial || lead.nome} (CNPJ: ${lead.cnpj || ""}) para liberação da Ficha de Rating.`)}`
+                ? buildWhatsAppUrl(partnerWhatsapp, `Olá! Gostaria de confirmar o pagamento dos serviços de melhoria de crédito da empresa ${lead.razaoSocial || lead.nome} (CNPJ: ${lead.cnpj || ""}) para liberação da Ficha de Rating.`)
                 : "https://wa.me/5511999999999"
             }
             target="_blank"
