@@ -401,6 +401,41 @@ body {
   white-space: nowrap;
 }
 
+/* Soft UI scope: aplica-se somente ao Painel do Parceiro (.soft-ui) */
+.soft-ui [class*="rounded-2xl"] {
+  border-radius: 1.5rem;
+}
+
+.soft-ui [class*="border-slate-200"],
+.soft-ui [class*="border-slate-300"] {
+  border-color: rgba(15, 23, 42, 0.07);
+}
+
+.soft-ui [class*="shadow-2xs"],
+.soft-ui [class*="shadow-xs"],
+.soft-ui [class*="shadow-sm"],
+.soft-ui [class*="shadow-md"] {
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
+}
+
+.soft-ui button[class*="rounded-md"],
+.soft-ui button[class*="rounded-lg"],
+.soft-ui button[class*="rounded-xl"],
+.soft-ui a[class*="rounded-md"],
+.soft-ui a[class*="rounded-lg"],
+.soft-ui a[class*="rounded-xl"] {
+  border-radius: 9999px;
+}
+
+.soft-ui input:not([type="checkbox"]):not([type="radio"]),
+.soft-ui select {
+  border-radius: 9999px;
+}
+
+.soft-ui textarea {
+  border-radius: 1.25rem;
+}
+
 
 
 
