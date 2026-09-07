@@ -78,6 +78,7 @@ import {
   Send,
   Megaphone,
   Bell,
+  Menu,
   AlertTriangle,
   Link,
   Save,
@@ -775,6 +776,7 @@ export default function PartnerPortal({
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
   const [showLeadRegisterForm, setShowLeadRegisterForm] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Helper function to check if consultant/partner profile is completely filled out
   const isProfileComplete = (partner: Partner | null): boolean => {
@@ -4047,9 +4049,348 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
     setTimeout(() => setCopiedProposalReport(false), 2000);
   };
 
+  // =========================================================================
+  // JSX reutilizavel do layout autenticado (sidebar real + header interno)
+  // =========================================================================
+  const renderNotificationsBell = (wrapperClassName: string) => (
+    <div className={wrapperClassName}>
+      <button
+        onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
+        className="relative p-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer flex items-center justify-center min-h-[40px] min-w-[40px]"
+        title="Notificações"
+      >
+        <Bell className="w-5 h-5" />
+        {notifications.filter(n => !n.lida).length > 0 && (
+          <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold font-mono rounded-full flex items-center justify-center animate-pulse">
+            {notifications.filter(n => !n.lida).length}
+          </span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {showNotificationsDropdown && (
+          <>
+            {/* Invisible backdrop to close the dropdown when clicking outside */}
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setShowNotificationsDropdown(false)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="absolute right-0 mt-2 w-80 sm:w-96 bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden z-50 text-slate-800"
+            >
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
+                  <Bell className="w-4 h-4 text-[#00A86B]" />
+                  Notificações Internas
+                </h3>
+                {notifications.length > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkAllNotificationsRead();
+                    }}
+                    className="text-[11px] font-bold text-[#00A86B] hover:text-[#0A3D2E] transition-colors cursor-pointer"
+                    title="Limpar e excluir todas as notificações"
+                  >
+                    Limpar todas
+                  </button>
+                )}
+              </div>
+
+              {notificationsError && (
+                <div className="px-4 py-2 bg-rose-50 border-b border-rose-100 text-[11px] font-bold text-rose-700">
+                  {notificationsError}
+                </div>
+              )}
+
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400">
+                    <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    <p className="text-xs font-semibold">Nenhuma notificação por enquanto.</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => {
+                    // Type-specific styles
+                    let iconBg = "bg-blue-50 text-blue-700";
+                    let borderLeft = "border-l-4 border-l-blue-600";
+                    if (notif.tipo === "success") {
+                      iconBg = "bg-emerald-50 text-[#00A86B]";
+                      borderLeft = "border-l-4 border-l-[#00A86B]";
+                    } else if (notif.tipo === "warning") {
+                      iconBg = "bg-amber-50 text-amber-700";
+                      borderLeft = "border-l-4 border-l-amber-500";
+                    } else if (notif.tipo === "error") {
+                      iconBg = "bg-rose-50 text-rose-700";
+                      borderLeft = "border-l-4 border-l-rose-600";
+                    }
+
+                    return (
+                      <div
+                        key={notif.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMarkNotificationRead(notif.id);
+                        }}
+                        className={`p-3.5 flex gap-3 hover:bg-slate-50 transition-colors cursor-pointer ${borderLeft} ${!notif.lida ? "bg-emerald-50/30" : "bg-white"}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${iconBg}`}>
+                          <Bell className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-1 mb-0.5">
+                            <p className={`text-xs font-bold truncate ${!notif.lida ? "text-slate-950" : "text-slate-700"}`}>
+                              {notif.titulo}
+                            </p>
+                            {!notif.lida && (
+                              <span className="w-2 h-2 rounded-full bg-[#00A86B] shrink-0 mt-1 animate-pulse" />
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-600 leading-relaxed mb-1">
+                            {notif.mensagem}
+                          </p>
+                          <span className="text-[10px] text-slate-400 font-semibold font-mono">
+                            {new Date(notif.dataCriacao).toLocaleString("pt-BR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
+  const renderProfileCard = (
+    <div className="bg-[#0A3D2E] text-white p-5 rounded-3xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
+
+      <div className="absolute right-[-30px] top-[-30px] w-32 h-32 rounded-full bg-emerald-500/10 pointer-events-none" />
+      <div className="space-y-4 relative z-10">
+        <div className="flex items-start justify-between">
+          <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md border border-emerald-500/30">
+            Área do Parceiro
+          </span>
+          <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300">
+            <Handshake className="w-5 h-5 text-emerald-300" />
+          </div>
+        </div>
+        <div>
+          <h2 className="font-extrabold text-lg leading-tight text-white">{currentPartner?.nome}</h2>
+          <p className="text-xs text-emerald-200/90 mt-1 truncate">E-mail: {currentPartner?.email}</p>
+          <p className="text-[11px] text-emerald-300/80 font-mono mt-0.5">ID: {currentPartner?.id}</p>
+        </div>
+      </div>
+
+      <div className="mt-5 border-t border-emerald-800/60 pt-4 grid grid-cols-2 gap-3 relative z-10">
+        <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
+          <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Sua Comissão</span>
+          {isFranquiaDigital(currentPartner?.plano) ? (
+            <div className="space-y-0.5 mt-1">
+              <span className="text-base font-extrabold text-emerald-100 font-mono block">3,0% Direto</span>
+              <span className="text-[9px] text-emerald-300 font-medium block leading-tight">
+                Equipe: 1,5% Exec / 2,5% Start
+              </span>
+            </div>
+          ) : (
+            <span className="text-base font-extrabold text-emerald-100 font-mono block mt-1">
+              {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%
+            </span>
+          )}
+        </div>
+        <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
+          <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Chave Pix</span>
+          <span className="text-xs font-mono font-bold text-emerald-200 truncate block mt-1" title={currentPartner?.chavePix}>
+            {currentPartner?.chavePix || "Não informada"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderNavItems = (
+    <div className="soft-card p-3 flex flex-col gap-1 text-left">
+      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.14em] px-4 py-1.5 mb-0.5 block">Navegação do Portal</span>
+
+      <button
+        onClick={() => { handleTabClick("dashboard"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "dashboard"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <LayoutDashboard className={`w-5 h-5 ${activeTab === "dashboard" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
+          Dashboard
+        </span>
+        {!isProfileComplete(currentPartner) ? (
+          <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+        ) : (
+          <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "dashboard" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+        )}
+      </button>
+
+      <button
+        onClick={() => { handleTabClick("leads"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "leads"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <ClipboardList className={`w-5 h-5 ${activeTab === "leads" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
+          Meus Leads ({leads.length})
+        </span>
+        {!isProfileComplete(currentPartner) ? (
+          <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+        ) : (
+          <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+        )}
+      </button>
+
+      {!currentPartner?.plano?.toUpperCase().includes("AFILIADO") && (
+        <button
+          onClick={() => { handleTabClick("caca-leads"); setMobileMenuOpen(false); }}
+          className={`soft-nav-item justify-between text-left group ${
+            activeTab === "caca-leads"
+              ? "soft-nav-item-active"
+              : ""
+          }`}
+        >
+          <span className="flex items-center gap-2.5">
+            <Search className={`w-5 h-5 ${activeTab === "caca-leads" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
+            <span className="flex items-center gap-1">
+              Caça Leads
+              <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
+            </span>
+          </span>
+          {!isProfileComplete(currentPartner) ? (
+            <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+          ) : (
+            <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "caca-leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+          )}
+        </button>
+      )}
+
+      {isFranquiaDigital(currentPartner?.plano) && (
+        <button
+          onClick={() => { handleTabClick("equipe"); setMobileMenuOpen(false); }}
+          className={`soft-nav-item justify-between text-left group ${
+            activeTab === "equipe"
+              ? "soft-nav-item-active"
+              : ""
+          }`}
+        >
+          <span className="flex items-center gap-2.5">
+            <Users className={`w-5 h-5 ${activeTab === "equipe" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
+            Minha Equipe ({teamMembers.length})
+          </span>
+          {!isProfileComplete(currentPartner) ? (
+            <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+          ) : (
+            <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "equipe" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+          )}
+        </button>
+      )}
+
+      <button
+        onClick={() => { handleTabClick("servicos-contabilidade"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "servicos-contabilidade"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <Calculator className={`w-5 h-5 ${activeTab === "servicos-contabilidade" ? "text-white" : "text-emerald-600"}`} strokeWidth={2} />
+          <span className="flex items-center gap-1">
+            Serviços Contábeis
+            <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
+          </span>
+        </span>
+        {!isProfileComplete(currentPartner) ? (
+          <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+        ) : (
+          <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "servicos-contabilidade" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+        )}
+      </button>
+
+      <button
+        onClick={() => { handleTabClick("perfil"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "perfil"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <User className={`w-5 h-5 ${activeTab === "perfil" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
+          Meu Perfil
+          {!isProfileComplete(currentPartner) && (
+            <span className="bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase ml-1 animate-pulse">Obrigatório</span>
+          )}
+        </span>
+        <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "perfil" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+      </button>
+
+      <button
+        onClick={() => { handleTabClick("terms"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "terms"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <FileText className={`w-5 h-5 ${activeTab === "terms" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
+          Contrato de Parceria
+        </span>
+        {!isProfileComplete(currentPartner) ? (
+          <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+        ) : (
+          <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "terms" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+        )}
+      </button>
+    </div>
+  );
+
+  const renderSidebarFooterButtons = (
+    <>
+      <button
+        onClick={handleLogout}
+        className="w-full bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-700 hover:text-rose-600 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px]"
+        title="Sair do Portal"
+      >
+        <LogOut className="w-3.5 h-3.5" />
+        <span>Sair do Portal</span>
+      </button>
+      <button
+        onClick={onBackToHome}
+        className="w-full bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[40px]"
+      >
+        Voltar ao Site
+      </button>
+    </>
+  );
+
   return (
-    <div className="soft-ui min-h-screen flex flex-col font-sans bg-slate-50 text-slate-900">
-      {/* Dynamic Header */}
+    <div className={`soft-ui font-sans bg-slate-50 text-slate-900 ${isAuthenticated && currentPartner ? "h-screen overflow-hidden flex flex-col" : "min-h-screen flex flex-col"}`}>
+      {/* Dynamic Header (somente telas públicas/login) */}
+      {!(isAuthenticated && currentPartner) && (
       <header className="bg-[#0A3D2E] text-slate-100 py-3.5 px-4 sm:px-6 border-b border-emerald-800/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center justify-between w-full sm:w-auto gap-3">
           <div className="flex items-center gap-3">
@@ -4099,125 +4440,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               </div>
               
               {/* Notification Bell Dropdown (Desktop) */}
-              <div className="relative hidden sm:block">
-                <button
-                  onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
-                  className="relative p-2.5 rounded-xl text-emerald-100 hover:text-white hover:bg-emerald-900/40 transition-all cursor-pointer flex items-center justify-center min-h-[40px] min-w-[40px]"
-                  title="Notificações"
-                >
-                  <Bell className="w-5 h-5" />
-                  {notifications.filter(n => !n.lida).length > 0 && (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold font-mono rounded-full flex items-center justify-center animate-pulse">
-                      {notifications.filter(n => !n.lida).length}
-                    </span>
-                  )}
-                </button>
-
-                <AnimatePresence>
-                  {showNotificationsDropdown && (
-                    <>
-                      {/* Invisible backdrop to close the dropdown when clicking outside */}
-                      <div 
-                        className="fixed inset-0 z-40" 
-                        onClick={() => setShowNotificationsDropdown(false)}
-                      />
-                      
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden z-50 text-slate-800"
-                      >
-                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                          <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
-                            <Bell className="w-4 h-4 text-[#00A86B]" />
-                            Notificações Internas
-                          </h3>
-                          {notifications.length > 0 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleMarkAllNotificationsRead();
-                              }}
-                              className="text-[11px] font-bold text-[#00A86B] hover:text-[#0A3D2E] transition-colors cursor-pointer"
-                              title="Limpar e excluir todas as notificações"
-                            >
-                              Limpar todas
-                            </button>
-                          )}
-                        </div>
-
-                        {notificationsError && (
-                          <div className="px-4 py-2 bg-rose-50 border-b border-rose-100 text-[11px] font-bold text-rose-700">
-                            {notificationsError}
-                          </div>
-                        )}
-
-                        <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
-                          {notifications.length === 0 ? (
-                            <div className="p-8 text-center text-slate-400">
-                              <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                              <p className="text-xs font-semibold">Nenhuma notificação por enquanto.</p>
-                            </div>
-                          ) : (
-                            notifications.map((notif) => {
-                              // Type-specific styles
-                              let iconBg = "bg-blue-50 text-blue-700";
-                              let borderLeft = "border-l-4 border-l-blue-600";
-                              if (notif.tipo === "success") {
-                                iconBg = "bg-emerald-50 text-[#00A86B]";
-                                borderLeft = "border-l-4 border-l-[#00A86B]";
-                              } else if (notif.tipo === "warning") {
-                                iconBg = "bg-amber-50 text-amber-700";
-                                borderLeft = "border-l-4 border-l-amber-500";
-                              } else if (notif.tipo === "error") {
-                                iconBg = "bg-rose-50 text-rose-700";
-                                borderLeft = "border-l-4 border-l-rose-600";
-                              }
-
-                              return (
-                                <div
-                                  key={notif.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMarkNotificationRead(notif.id);
-                                  }}
-                                  className={`p-3.5 flex gap-3 hover:bg-slate-50 transition-colors cursor-pointer ${borderLeft} ${!notif.lida ? "bg-emerald-50/30" : "bg-white"}`}
-                                >
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${iconBg}`}>
-                                    <Bell className="w-4 h-4" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-1 mb-0.5">
-                                      <p className={`text-xs font-bold truncate ${!notif.lida ? "text-slate-950" : "text-slate-700"}`}>
-                                        {notif.titulo}
-                                      </p>
-                                      {!notif.lida && (
-                                        <span className="w-2 h-2 rounded-full bg-[#00A86B] shrink-0 mt-1 animate-pulse" />
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-slate-600 leading-relaxed mb-1">
-                                      {notif.mensagem}
-                                    </p>
-                                    <span className="text-[10px] text-slate-400 font-semibold font-mono">
-                                      {new Date(notif.dataCriacao).toLocaleString("pt-BR", {
-                                        day: "2-digit",
-                                        month: "2-digit",
-                                        hour: "2-digit",
-                                        minute: "2-digit"
-                                      })}
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </div>
+              {renderNotificationsBell("relative hidden sm:block")}
 
               <button
                 onClick={handleLogout}
@@ -4237,9 +4460,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           </button>
         </div>
       </header>
+      )}
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col">
+      <main className={isAuthenticated && currentPartner ? "flex-1 min-h-0 w-full flex flex-col" : "flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col"}>
         {isAuthenticated && !currentPartner ? (
           /* Sessão reconhecida, mas o cadastro ainda não carregou */
           <div className="flex-1 flex items-center justify-center py-20">
@@ -4706,271 +4930,135 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           /* ========================================================================= */
           /*                        AUTHENTICATED: DASHBOARD VIEW                      */
           /* ========================================================================= */
-          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start w-full">
-            {/* Sidebar Left Column */}
-            <div className="contents lg:flex lg:flex-col lg:w-80 shrink-0 lg:space-y-6 lg:sticky lg:top-6 lg:self-start">
-              {/* Profile Card & Commission Info */}
-              <div className="order-1 lg:order-none bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-3xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
-
-                <div className="absolute right-[-30px] top-[-30px] w-32 h-32 rounded-full bg-emerald-500/10 pointer-events-none" />
-                <div className="space-y-4 relative z-10">
-                  <div className="flex items-start justify-between">
-                    <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md border border-emerald-500/30">
-                      Área do Parceiro
-                    </span>
-                    <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300">
-                      <Handshake className="w-5 h-5 text-emerald-300" />
-                    </div>
+          <div className="flex flex-1 min-h-0 w-full">
+            {/* Mobile Drawer */}
+            {mobileMenuOpen && (
+              <div className="fixed inset-0 z-50 lg:hidden">
+                <div className="absolute inset-0 bg-slate-900/50" onClick={() => setMobileMenuOpen(false)} />
+                <aside className="relative w-72 max-w-[85vw] h-full bg-white border-r border-gray-200 flex flex-col animate-in slide-in-from-left duration-200">
+                  <div className="p-4 border-b border-slate-100 shrink-0">
+                    {renderProfileCard}
                   </div>
-                  <div>
-                    <h2 className="font-extrabold text-lg leading-tight text-white">{currentPartner?.nome}</h2>
-                    <p className="text-xs text-emerald-200/90 mt-1 truncate">E-mail: {currentPartner?.email}</p>
-                    <p className="text-[11px] text-emerald-300/80 font-mono mt-0.5">ID: {currentPartner?.id}</p>
+                  <nav className="flex-1 overflow-y-auto p-3">
+                    {renderNavItems}
+                  </nav>
+                  <div className="p-4 border-t border-slate-100 space-y-2 shrink-0">
+                    {renderSidebarFooterButtons}
+                  </div>
+                </aside>
+              </div>
+            )}
+
+            {/* Desktop Sidebar */}
+            <aside className="hidden lg:flex w-72 h-full bg-white border-r border-gray-200 flex-col shrink-0">
+              <div className="p-5 border-b border-slate-100 flex items-center gap-3 shrink-0">
+                <div className="bg-[#0A3D2E] p-2.5 rounded-xl text-emerald-300 shrink-0">
+                  <Handshake className="w-5 h-5" />
+                </div>
+                <div>
+                  <h1 className="font-extrabold text-base tracking-tight text-slate-900">PROSFEC</h1>
+                  <p className="text-[10px] uppercase font-bold tracking-wider text-[#00A86B]">Portal do Parceiro</p>
+                </div>
+              </div>
+              <div className="p-4 shrink-0">
+                {renderProfileCard}
+              </div>
+              <nav className="flex-1 overflow-y-auto p-3">
+                {renderNavItems}
+              </nav>
+              <div className="p-4 border-t border-slate-100 space-y-2 shrink-0">
+                {renderSidebarFooterButtons}
+              </div>
+            </aside>
+
+            {/* Right Column */}
+            <div className="flex-1 flex flex-col min-w-0 h-full">
+              <header className="shrink-0 bg-white/85 backdrop-blur-xl border-b border-slate-200 px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    onClick={() => setMobileMenuOpen(true)}
+                    className="lg:hidden p-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
+                    title="Abrir menu"
+                  >
+                    <Menu className="w-5 h-5" />
+                  </button>
+                  <div className="min-w-0">
+                    <h2 className="font-extrabold text-sm text-slate-900 truncate">Olá, {currentPartner?.nome?.split(" ")[0]}</h2>
+                    <p className="text-[11px] text-slate-500 font-medium truncate">Painel do Parceiro PROSFEC</p>
                   </div>
                 </div>
+                {renderNotificationsBell("relative")}
+              </header>
 
-                <div className="mt-5 border-t border-emerald-800/60 pt-4 grid grid-cols-2 gap-3 relative z-10">
-                  <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
-                    <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Sua Comissão</span>
-                    {isFranquiaDigital(currentPartner?.plano) ? (
-                      <div className="space-y-0.5 mt-1">
-                        <span className="text-base font-extrabold text-emerald-100 font-mono block">3,0% Direto</span>
-                        <span className="text-[9px] text-emerald-300 font-medium block leading-tight">
-                          Equipe: 1,5% Exec / 2,5% Start
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-8">
+                <div className="max-w-6xl mx-auto space-y-6">
+                {/* Unique Indicator Link Card */}
+                <div className="bg-white text-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                  <div className="space-y-4 relative z-10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="bg-emerald-50 p-2.5 rounded-xl text-emerald-600 border border-emerald-100 shrink-0">
+                          <TrendingUp className="w-5 h-5 text-emerald-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-base text-slate-800">Seu Link Exclusivo de Indicação</h3>
+                          <p className="text-[11px] text-slate-400 font-medium">Divulgação com rastreamento persistente</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] bg-emerald-50 text-[#00A86B] font-mono font-bold px-2.5 py-1 rounded-md border border-emerald-100 uppercase tracking-wider">
+                        Rastreamento Ativo
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Divulgue seu link para sua carteira de clientes, contatos de WhatsApp, contadores e redes sociais. Todo faturamento e simulação gerados por meio desse link serão vinculados automaticamente a você na nossa base de dados.
+                    </p>
+
+                    <div className="bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">URL do seu Link</span>
+                        <span className="text-xs font-mono font-bold text-slate-700 select-all break-all block mt-0.5" title={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref=${currentPartner?.id}`}>
+                          {window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref={currentPartner?.id}
                         </span>
                       </div>
-                    ) : (
-                      <span className="text-base font-extrabold text-emerald-100 font-mono block mt-1">
-                        {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%
-                      </span>
-                    )}
-                  </div>
-                  <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
-                    <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Chave Pix</span>
-                    <span className="text-xs font-mono font-bold text-emerald-200 truncate block mt-1" title={currentPartner?.chavePix}>
-                      {currentPartner?.chavePix || "Não informada"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Vertical Navigation Tabs */}
-              <div className="order-3 lg:order-none soft-card p-3 flex flex-col gap-1 text-left">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.14em] px-4 py-1.5 mb-0.5 block">Navegação do Portal</span>
-
-                
-                <button
-                  onClick={() => handleTabClick("dashboard")}
-                  className={`soft-nav-item justify-between text-left group ${
-                    activeTab === "dashboard"
-                      ? "soft-nav-item-active"
-                      : ""
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <LayoutDashboard className={`w-5 h-5 ${activeTab === "dashboard" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
-                    Dashboard
-                  </span>
-                  {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                  ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "dashboard" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                  )}
-                </button>
-
-                <button
-                  onClick={() => handleTabClick("leads")}
-                  className={`soft-nav-item justify-between text-left group ${
-                    activeTab === "leads"
-                      ? "soft-nav-item-active"
-                      : ""
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <ClipboardList className={`w-5 h-5 ${activeTab === "leads" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
-                    Meus Leads ({leads.length})
-                  </span>
-                  {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                  ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                  )}
-                </button>
-
-                {!currentPartner?.plano?.toUpperCase().includes("AFILIADO") && (
-                  <button
-                    onClick={() => handleTabClick("caca-leads")}
-                    className={`soft-nav-item justify-between text-left group ${
-                      activeTab === "caca-leads"
-                        ? "soft-nav-item-active"
-                        : ""
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Search className={`w-5 h-5 ${activeTab === "caca-leads" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
-                      <span className="flex items-center gap-1">
-                        Caça Leads
-                        <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
-                      </span>
-                    </span>
-                    {!isProfileComplete(currentPartner) ? (
-                      <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                    ) : (
-                      <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "caca-leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                    )}
-                  </button>
-                )}
-
-                {isFranquiaDigital(currentPartner?.plano) && (
-                  <button
-                    onClick={() => handleTabClick("equipe")}
-                    className={`soft-nav-item justify-between text-left group ${
-                      activeTab === "equipe"
-                        ? "soft-nav-item-active"
-                        : ""
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Users className={`w-5 h-5 ${activeTab === "equipe" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
-                      Minha Equipe ({teamMembers.length})
-                    </span>
-                    {!isProfileComplete(currentPartner) ? (
-                      <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                    ) : (
-                      <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "equipe" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                    )}
-                  </button>
-                )}
-
-                <button
-                  onClick={() => handleTabClick("servicos-contabilidade")}
-                  className={`soft-nav-item justify-between text-left group ${
-                    activeTab === "servicos-contabilidade"
-                      ? "soft-nav-item-active"
-                      : ""
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Calculator className={`w-5 h-5 ${activeTab === "servicos-contabilidade" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
-                    <span className="flex items-center gap-1">
-                      Serviços Contábeis
-                      <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
-                    </span>
-                  </span>
-                  {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                  ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "servicos-contabilidade" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                  )}
-                </button>
-
-                <button
-                  onClick={() => handleTabClick("perfil")}
-                  className={`soft-nav-item justify-between text-left group ${
-                    activeTab === "perfil"
-                      ? "soft-nav-item-active"
-                      : ""
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <User className={`w-5 h-5 ${activeTab === "perfil" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
-                    Meu Perfil
-                    {!isProfileComplete(currentPartner) && (
-                      <span className="bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase ml-1 animate-pulse">Obrigatório</span>
-                    )}
-                  </span>
-                  <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "perfil" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                </button>
-
-                <button
-                  onClick={() => handleTabClick("terms")}
-                  className={`soft-nav-item justify-between text-left group ${
-                    activeTab === "terms"
-                      ? "soft-nav-item-active"
-                      : ""
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <FileText className={`w-5 h-5 ${activeTab === "terms" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
-                    Contrato de Parceria
-                  </span>
-                  {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                  ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "terms" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Content Right Column */}
-            <div className="contents lg:flex lg:flex-col lg:flex-grow lg:w-full lg:space-y-6 lg:min-w-0">
-              {/* Unique Indicator Link Card */}
-              <div className="order-2 lg:order-none bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl border border-emerald-500/20 shadow-sm flex flex-col justify-between relative overflow-hidden">
-                <div className="space-y-4 relative z-10">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="bg-emerald-950/70 p-2.5 rounded-xl text-emerald-300 border border-emerald-700/40 shrink-0">
-                        <TrendingUp className="w-5 h-5 text-emerald-300" />
-                      </div>
-                      <div>
-                        <h3 className="font-extrabold text-base text-white">Seu Link Exclusivo de Indicação</h3>
-                        <p className="text-[11px] text-emerald-300/80 font-medium">Divulgação com rastreamento persistente</p>
-                      </div>
+                      <button
+                        onClick={copyReferralLink}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-2 shrink-0 min-h-[44px] ${
+                          copiedLink
+                            ? "bg-emerald-400 text-slate-950 font-bold font-mono"
+                            : "bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold shadow-sm"
+                        }`}
+                      >
+                        {copiedLink ? (
+                          <>
+                            <Check className="w-4 h-4 text-slate-950" />
+                            <span>Link Copiado!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4 text-slate-950" />
+                            <span>Copiar Link</span>
+                          </>
+                        )}
+                      </button>
                     </div>
-                    <span className="text-[10px] bg-emerald-500/20 text-[#00A86B] font-mono font-bold px-2.5 py-1 rounded-md border border-emerald-500/30 uppercase tracking-wider">
-                      Rastreamento Ativo
-                    </span>
                   </div>
-                  
-                  <p className="text-xs text-emerald-100/90 leading-relaxed">
-                    Divulgue seu link para sua carteira de clientes, contatos de WhatsApp, contadores e redes sociais. Todo faturamento e simulação gerados por meio desse link serão vinculados automaticamente a você na nossa base de dados.
-                  </p>
 
-                  <div className="bg-emerald-950/60 p-3.5 sm:p-4 rounded-xl border border-emerald-800/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">URL do seu Link</span>
-                      <span className="text-xs font-mono font-bold text-emerald-200 select-all break-all block mt-0.5" title={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref=${currentPartner?.id}`}>
-                        {window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref={currentPartner?.id}
-                      </span>
+                  <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-wrap gap-4 text-xs relative z-10 font-mono">
+                    <div className="flex items-center gap-2 text-emerald-700 text-[11px]">
+                      <div className="w-2 h-2 rounded-full bg-[#00A86B] animate-pulse" />
+                      <span>Afiliação Ativa &bull; ID: {currentPartner?.id}</span>
                     </div>
-                    <button
-                      onClick={copyReferralLink}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-2 shrink-0 min-h-[44px] ${
-                        copiedLink 
-                          ? "bg-emerald-400 text-slate-950 font-bold font-mono" 
-                          : "bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold shadow-sm"
-                      }`}
-                    >
-                      {copiedLink ? (
-                        <>
-                          <Check className="w-4 h-4 text-slate-950" />
-                          <span>Link Copiado!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4 text-slate-950" />
-                          <span>Copiar Link</span>
-                        </>
-                      )}
-                    </button>
+                    <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+                      <div className="w-2 h-2 rounded-full bg-[#00A86B]" />
+                      <span>Rastreamento persistente via navegador</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3.5 border-t border-emerald-800/60 flex flex-wrap gap-4 text-xs relative z-10 font-mono">
-                  <div className="flex items-center gap-2 text-emerald-300 text-[11px]">
-                    <div className="w-2 h-2 rounded-full bg-[#00A86B] animate-pulse" />
-                    <span>Afiliação Ativa &bull; ID: {currentPartner?.id}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-emerald-200/80 text-[11px]">
-                    <div className="w-2 h-2 rounded-full bg-[#00A86B]" />
-                    <span>Rastreamento persistente via navegador</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* TAB CONTENTS */}
-              <div className="order-4 lg:order-none w-full space-y-6">
+                {/* TAB CONTENTS */}
+                <div className="w-full">
               <AnimatePresence mode="wait">
               {activeTab === "dashboard" && (
                 <motion.div
@@ -5297,43 +5385,43 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
 
                         {/* LINHA 3: Saldo e Comissões Hero Card (Suas Comissões & Repasses) */}
-                        <div className="bg-gradient-to-br from-[#0A3D2E] via-[#064E3B] to-[#047857] text-white p-5 sm:p-6 rounded-2xl border border-emerald-400/30 shadow-md relative overflow-hidden">
+                        <div className="bg-white text-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
                           <div className="absolute right-0 top-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
                           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
                             <div className="space-y-2 min-w-0">
                               <div className="flex items-center gap-2">
-                                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-emerald-300 shrink-0">
-                                  <Coins className="w-5 h-5 text-emerald-300" />
+<div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                                   <Coins className="w-5 h-5 text-emerald-600" />
                                 </div>
                                 <div>
-                                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-emerald-300 block">
-                                    Suas Comissões & Repasses
-                                  </span>
-                                  <span className="text-xs text-emerald-100/90 font-medium">Saldo total liberado e pendente de liquidação</span>
+                                   <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#00A86B] block">
+                                     Suas Comissões & Repasses
+                                   </span>
+                                   <span className="text-xs text-slate-500 font-medium">Saldo total liberado e pendente de liquidação</span>
                                 </div>
                               </div>
 
                               <div className="pt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                                <div className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight" title={formatCurrencyBRL(totalPaidCommissions)}>
+                                <div className="text-3xl sm:text-4xl font-extrabold font-mono text-slate-900 tracking-tight" title={formatCurrencyBRL(totalPaidCommissions)}>
                                   {formatCurrencyBRL(totalPaidCommissions)}
                                 </div>
-                                <span className="text-xs font-bold font-mono text-emerald-300 bg-emerald-950/60 px-2.5 py-0.5 rounded-md border border-emerald-500/30">
-                                  Pagas e Liberadas
-                                </span>
+<span className="text-xs font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                                   Pagas e Liberadas
+                                 </span>
                               </div>
                             </div>
 
                             {/* Secondary sub-metrics and CTA */}
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                              <div className="bg-emerald-950/70 border border-emerald-500/30 p-3 rounded-xl min-w-[170px]">
-                                <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider block">
-                                  Comissões Pendentes
-                                </span>
-                                <span className="text-lg font-extrabold font-mono text-amber-300 block mt-0.5" title={formatCurrencyBRL(totalPendingCommissions)}>
-                                  {formatCurrencyBRL(totalPendingCommissions)}
-                                </span>
-                                <span className="text-[10px] text-emerald-200/80 font-medium block">Aguardando liquidação</span>
-                              </div>
+<div className="bg-amber-50 border border-amber-200 p-3 rounded-xl min-w-[170px]">
+                                 <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider block">
+                                   Comissões Pendentes
+                                 </span>
+                                 <span className="text-lg font-extrabold font-mono text-amber-600 block mt-0.5" title={formatCurrencyBRL(totalPendingCommissions)}>
+                                   {formatCurrencyBRL(totalPendingCommissions)}
+                                 </span>
+                                 <span className="text-[10px] text-slate-400 font-medium block">Aguardando liquidação</span>
+                               </div>
 
                               <button
                                 onClick={() => {
@@ -6258,18 +6346,18 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                   {/* Franquia Digital Franchise Summary Overview (Quinta linha: Desempenho Master Partner) */}
                   {isFranquiaDigital(currentPartner?.plano) && (
-                    <div className="bg-gradient-to-r from-emerald-900 to-teal-950 p-6 rounded-3xl border border-emerald-500/20 text-white shadow-md space-y-4 text-left">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-emerald-800/60 pb-3">
+<div className="bg-white p-6 rounded-3xl border border-slate-200 text-slate-800 shadow-sm space-y-4 text-left">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                         <div className="flex items-center gap-2">
-                          <Users className="w-5 h-5 text-emerald-400" />
+                          <Users className="w-5 h-5 text-emerald-600" />
                           <div>
-                            <h3 className="font-display font-extrabold text-sm uppercase tracking-wider text-emerald-300">Desempenho Master Partner</h3>
-                            <p className="text-[10px] text-emerald-200">Visão consolidada da sua equipe de consultores autônomos</p>
+                            <h3 className="font-display font-extrabold text-sm uppercase tracking-wider text-[#00A86B]">Desempenho Master Partner</h3>
+                            <p className="text-[10px] text-slate-500">Visão consolidada da sua equipe de consultores autônomos</p>
                           </div>
                         </div>
                         <button
                           onClick={() => setActiveTab("equipe")}
-                          className="px-3 py-1.5 bg-emerald-700/50 hover:bg-emerald-600/50 border border-emerald-500/30 rounded-lg text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1"
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1 text-slate-700"
                         >
                           Gerenciar Consultores
                           <ChevronRight className="w-3 h-3" />
@@ -6288,34 +6376,34 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         return (
                           <>
                             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-1">
-                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Membros na Equipe</span>
-                                <span className="text-xl font-black text-white block mt-0.5">{teamMembers.length}</span>
+                              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Membros na Equipe</span>
+                                <span className="text-xl font-black text-slate-900 block mt-0.5">{teamMembers.length}</span>
                               </div>
-                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Leads da Equipe</span>
-                                <span className="text-xl font-black text-white block mt-0.5">{teamLeads.length}</span>
+                              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Leads da Equipe</span>
+                                <span className="text-xl font-black text-slate-900 block mt-0.5">{teamLeads.length}</span>
                               </div>
-                              <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-emerald-300 block tracking-wider">Faturamento Equipe Concluído</span>
-                                <span className="text-sm font-black text-white block mt-1">
+                              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Faturamento Equipe Concluído</span>
+                                <span className="text-sm font-black text-slate-900 block mt-1">
                                   {formatCurrencyBRL(teamLeads.filter(l => l.status === "concluido").reduce((acc, l) => acc + (l.limiteEstimado || 0), 0))}
                                 </span>
                               </div>
-                              <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl">
-                                <span className="text-[9px] uppercase font-bold text-amber-300 block tracking-wider font-mono">Override Equipe Dinâmico</span>
-                                <span className="text-sm font-black text-amber-300 block mt-1">
+                              <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl">
+                                <span className="text-[9px] uppercase font-bold text-amber-600 block tracking-wider font-mono">Override Equipe Dinâmico</span>
+                                <span className="text-sm font-black text-amber-600 block mt-1">
                                   {formatCurrencyBRL(totalConcludedTeamOverride)}
                                 </span>
                               </div>
                             </div>
 
-                            <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between text-xs text-emerald-100 gap-2">
+                            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between text-xs text-slate-600 gap-2">
                               <div className="flex items-center gap-1.5">
-                                <Coins className="w-4 h-4 text-emerald-400 shrink-0" />
+                                <Coins className="w-4 h-4 text-emerald-600 shrink-0" />
                                 <span>Seus Ganhos Diretos Concluídos ({(getDirectCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%): <strong>{formatCurrencyBRL(totalDirectConcludedComm)}</strong></span>
                               </div>
-                              <div className="font-extrabold text-emerald-300 text-sm sm:text-right">
+                              <div className="font-extrabold text-emerald-700 text-sm sm:text-right">
                                 Total Geral Acumulado: {formatCurrencyBRL(totalDirectConcludedComm + totalConcludedTeamOverride)}
                               </div>
                             </div>
@@ -6328,22 +6416,22 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   {/* Calculator and CRM Highlights Grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     {/* Embedded Commission Calculator (Solid #0A3D2E, rounded-2xl) */}
-                    <div className="lg:col-span-5 bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl border border-emerald-500/20 shadow-xs space-y-4">
+<div className="lg:col-span-5 bg-white text-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-950/70 border border-emerald-700/40 flex items-center justify-center text-emerald-300 shrink-0">
-                          <Calculator className="w-4.5 h-4.5 text-emerald-300" />
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                          <Calculator className="w-4.5 h-4.5 text-emerald-600" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm text-white uppercase tracking-wider">Simulador do Repassador</h4>
-                          <p className="text-[11px] text-emerald-300/80">Simule ganhos com base no seu plano atual.</p>
+                          <h4 className="font-bold text-sm text-slate-800 uppercase tracking-wider">Simulador do Repassador</h4>
+                          <p className="text-[11px] text-slate-400">Simule ganhos com base no seu plano atual.</p>
                         </div>
                       </div>
 
                       <div className="space-y-4 pt-2">
                         <div className="space-y-1.5">
-                          <div className="flex justify-between text-xs text-emerald-200">
+                          <div className="flex justify-between text-xs text-slate-500">
                             <span>Créditos liberados p/ mês</span>
-                            <span className="font-mono font-bold text-emerald-300">{calcLeadsCount} empresas</span>
+                            <span className="font-mono font-bold text-emerald-700">{calcLeadsCount} empresas</span>
                           </div>
                           <input
                             type="range"
@@ -6356,9 +6444,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
 
                         <div className="space-y-1.5">
-                          <div className="flex justify-between text-xs text-emerald-200">
+                          <div className="flex justify-between text-xs text-slate-500">
                             <span>Valor médio do contrato</span>
-                            <span className="font-mono font-bold text-emerald-300">{formatCurrencyBRL(calcAvgValue)}</span>
+                            <span className="font-mono font-bold text-emerald-700">{formatCurrencyBRL(calcAvgValue)}</span>
                           </div>
                           <input
                             type="range"
@@ -6372,14 +6460,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
                       </div>
 
-                      <div className="bg-emerald-950/80 p-4 border border-emerald-800/80 rounded-xl mt-4">
-                        <span className="text-[10px] uppercase font-bold text-emerald-300 block tracking-wider">
+                      <div className="bg-emerald-50 p-4 border border-emerald-200 rounded-xl mt-4">
+                        <span className="text-[10px] uppercase font-bold text-emerald-700 block tracking-wider">
                           Sua Comissão Mensal Estimada
                         </span>
-                        <span className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-300 block mt-1">
+                        <span className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-700 block mt-1">
                           {formatCurrencyBRL(calculatedCommission)}
                         </span>
-                        <span className="text-[10px] text-emerald-400/90 leading-normal block mt-2">
+                        <span className="text-[10px] text-slate-400 leading-normal block mt-2">
                           *A simulação utiliza o percentual de repasse vinculado ao seu plano atual ({(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%).
                         </span>
                       </div>
@@ -7278,20 +7366,20 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   ) : isSubMember ? (
                     <div className="space-y-6">
                       {/* Sub-member Header banner */}
-                      <div className="bg-gradient-to-br from-[#0A3D2E] to-[#124E3D] p-6 rounded-3xl border border-emerald-800 text-white relative overflow-hidden">
-                        <div className="absolute top-0 right-0 transform translate-x-12 -translate-y-12 opacity-10 pointer-events-none">
-                          <Users className="w-96 h-96 text-emerald-400" />
-                        </div>
-                        <div className="space-y-2 relative z-10">
-                          <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                            <Users className="w-3.5 h-3.5 text-emerald-400" />
-                            Portal do Consultor
-                          </div>
-                          <h2 className="font-display font-black text-xl md:text-2xl tracking-tight">
-                            Banco de Leads Master Partner
-                          </h2>
-                          <p className="text-xs text-emerald-200/90 max-w-xl leading-relaxed">
-                            Olá, <strong className="text-white">{currentPartner?.nome}</strong>. Esta é a sua fila de prospecção ativa. 
+<div className="bg-white p-6 rounded-3xl border border-slate-200 text-slate-800 shadow-sm relative overflow-hidden">
+                         <div className="absolute top-0 right-0 transform translate-x-12 -translate-y-12 opacity-5 pointer-events-none">
+                           <Users className="w-96 h-96 text-emerald-600" />
+                         </div>
+                         <div className="space-y-2 relative z-10">
+                           <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-[#00A86B] border border-emerald-100 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                             <Users className="w-3.5 h-3.5 text-emerald-600" />
+                             Portal do Consultor
+                           </div>
+                           <h2 className="font-display font-black text-xl md:text-2xl tracking-tight text-slate-900">
+                             Banco de Leads Master Partner
+                           </h2>
+                           <p className="text-xs text-slate-500 max-w-xl leading-relaxed">
+                             Olá, <strong className="text-slate-800">{currentPartner?.nome}</strong>. Esta é a sua fila de prospecção ativa.
                             Aqui você encontra empresas qualificadas direcionadas pelo seu Franqueado. Faça contato via WhatsApp e inicie o atendimento.
                           </p>
                         </div>
@@ -9904,25 +9992,25 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     {/* Stats & Dashboard Column */}
                     <div className="lg:col-span-7 space-y-6">
                       {/* Commission Highlight Card */}
-                      <div className="bg-gradient-to-r from-emerald-900 to-teal-950 p-6 rounded-3xl text-white shadow-md relative overflow-hidden">
-                        <div className="absolute right-[-20px] top-[-20px] w-24 h-24 rounded-full bg-emerald-500/10" />
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <span className="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">
-                              Sua Comissão de Parceiro ({getPlanDisplayName(currentPartner?.plano)})
-                            </span>
-                            <h4 className="text-2xl md:text-3xl font-display font-black text-emerald-100 mt-1">
-                              {formatCurrencyBRL(calculateSchedule().comissaoEstimada)}
-                            </h4>
-                            <p className="text-[10px] text-emerald-200 leading-normal mt-1">
-                              *Estimativa calculada sobre o valor financiado de {formatCurrencyBRL(advValor)} com taxa de repasse de {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%.
-                            </p>
-                          </div>
-                          <div className="bg-emerald-800/40 p-2 rounded-xl text-emerald-300">
-                            <Coins className="w-6 h-6" />
-                          </div>
-                        </div>
-                      </div>
+<div className="bg-white p-6 rounded-3xl border border-slate-200 text-slate-800 shadow-sm relative overflow-hidden">
+                         <div className="absolute right-[-20px] top-[-20px] w-24 h-24 rounded-full bg-emerald-50" />
+                         <div className="flex items-start justify-between relative z-10">
+                           <div>
+                             <span className="text-[10px] uppercase font-bold text-[#00A86B] tracking-wider">
+                               Sua Comissão de Parceiro ({getPlanDisplayName(currentPartner?.plano)})
+                             </span>
+                             <h4 className="text-2xl md:text-3xl font-display font-black text-slate-900 mt-1">
+                               {formatCurrencyBRL(calculateSchedule().comissaoEstimada)}
+                             </h4>
+                             <p className="text-[10px] text-slate-500 leading-normal mt-1">
+                               *Estimativa calculada sobre o valor financiado de {formatCurrencyBRL(advValor)} com taxa de repasse de {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%.
+                             </p>
+                           </div>
+                           <div className="bg-emerald-50 border border-emerald-100 p-2 rounded-xl text-emerald-600">
+                             <Coins className="w-6 h-6" />
+                           </div>
+                         </div>
+                       </div>
 
                       {/* Stat Metrics Grid */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -10438,7 +10526,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               )}
             </AnimatePresence>
             </div>
+            </div>
           </div>
+        </div>
         </div>
         )}
       </main>
