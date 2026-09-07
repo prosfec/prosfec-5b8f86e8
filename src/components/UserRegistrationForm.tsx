@@ -89,13 +89,20 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
     // Check URL search parameters or localStorage for referrer/Master
     const params = new URLSearchParams(window.location.search);
     const refParam = params.get("ref") || params.get("master") || params.get("indicador") || params.get("parceiro");
-    
+
     const rawRefId = refParam || localStorage.getItem("lca_referred_by");
     const savedRefId = rawRefId ? rawRefId.replace(/[\u200B-\u200D\uFEFF\u00A0\u2060]/g, "").trim() : "";
     const savedRefNome = localStorage.getItem("lca_referred_by_nome");
     const savedRefWhatsapp = localStorage.getItem("lca_referred_by_whatsapp");
 
     if (savedRefId) {
+      // Persiste o vínculo do convite para não se perder em recarregamentos da página
+      try {
+        localStorage.setItem("lca_referred_by", savedRefId);
+      } catch (storageErr) {
+        console.warn("Não foi possível persistir o vínculo do convite:", storageErr);
+      }
+
       setMasterId(savedRefId);
       if (savedRefNome) setMasterNome(savedRefNome);
       if (savedRefWhatsapp) setMasterWhatsapp(savedRefWhatsapp);
@@ -106,8 +113,22 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
           const docSnap = await getDoc(doc(db, "parceiros", savedRefId));
           if (docSnap.exists()) {
             const data = docSnap.data();
-            if (data?.nome) setMasterNome(data.nome);
+            if (data?.nome) {
+              setMasterNome(data.nome);
+              try { localStorage.setItem("lca_referred_by_nome", data.nome); } catch {}
+            }
             if (data?.whatsapp) setMasterWhatsapp(data.whatsapp);
+          } else {
+            // Convite aponta para um gestor que não existe mais
+            setMasterId(null);
+            setMasterNome(null);
+            setMasterWhatsapp(null);
+            try {
+              localStorage.removeItem("lca_referred_by");
+              localStorage.removeItem("lca_referred_by_nome");
+              localStorage.removeItem("lca_referred_by_whatsapp");
+            } catch {}
+            setErrorMsg("O link de convite utilizado é inválido ou o gestor não está mais ativo. Você pode concluir o cadastro normalmente, sem vínculo de equipe.");
           }
         } catch (err) {
           console.warn("Error loading master details for registration form:", err);
@@ -120,6 +141,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
       setLoadingMaster(false);
     }
   }, []);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,6 +204,14 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
         return;
       }
 
+      // Vínculo de convite: garantido a partir do estado + cópia local (à prova de re-render)
+      let vinculoMasterId = masterId || "";
+      if (!vinculoMasterId) {
+        const stored = localStorage.getItem("lca_referred_by");
+        vinculoMasterId = stored ? stored.replace(/[\u200B-\u200D\uFEFF\u00A0\u2060]/g, "").trim() : "";
+      }
+      const veioDeConvite = !!vinculoMasterId;
+
       // Prepare user document (independent registration linked to Master, with no paid subscription requirement)
       const isExecutive = plano === "Consultor Executive";
       const newUserDoc = {
@@ -195,8 +225,8 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
         plano: plano,                                  // Selected category: "Consultor Starter" or "Consultor Executive"
         comissao: isExecutive ? 1.5 : 0.5,             // Commission percentage: 0.5% or 1.5%
         status: "ativo",                               // Immediately active, no subscription required!
-        isTeamMember: !!masterId,
-        parentPartnerId: masterId || "",
+        isTeamMember: veioDeConvite,
+        parentPartnerId: vinculoMasterId,
         parentPartnerNome: masterNome || "",
         aceitouTermos: true,
         duracaoDias: 3,                              // Teste grátis de 3 dias a partir da criação
@@ -205,9 +235,22 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
         interesse: "cadastro_usuario_direto"
       };
 
-      await addDoc(collection(db, "parceiros"), newUserDoc);
+      // Aguarda a gravação concluir de verdade antes de liberar o acesso ao painel
+      const createdRef = await addDoc(collection(db, "parceiros"), newUserDoc);
+
+      if (veioDeConvite) {
+        // Confirma que o vínculo de equipe realmente ficou gravado
+        const confirmSnap = await getDoc(doc(db, "parceiros", createdRef.id));
+        const confirmData = confirmSnap.exists() ? confirmSnap.data() : null;
+        if (!confirmData || confirmData.parentPartnerId !== vinculoMasterId || confirmData.isTeamMember !== true) {
+          setErrorMsg("Seu cadastro foi criado, mas o vínculo com o gestor não foi confirmado. Entre em contato com o seu gestor antes de acessar o painel.");
+          setLoading(false);
+          return;
+        }
+      }
 
       setSuccess(true);
+
     } catch (err) {
       console.error("Error creating user registration:", err);
       try {
