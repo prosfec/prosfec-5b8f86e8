@@ -4708,9 +4708,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           /* ========================================================================= */
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start w-full">
             {/* Sidebar Left Column */}
-            <div className="contents lg:flex lg:flex-col lg:w-80 shrink-0 lg:space-y-6 lg:sticky lg:top-6">
+            <div className="contents lg:flex lg:flex-col lg:w-80 shrink-0 lg:space-y-6 lg:sticky lg:top-6 lg:self-start">
               {/* Profile Card & Commission Info */}
-              <div className="order-1 lg:order-none bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-sm flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
+              <div className="order-1 lg:order-none bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-3xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
+
                 <div className="absolute right-[-30px] top-[-30px] w-32 h-32 rounded-full bg-emerald-500/10 pointer-events-none" />
                 <div className="space-y-4 relative z-10">
                   <div className="flex items-start justify-between">
