@@ -4708,271 +4708,135 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           /* ========================================================================= */
           /*                        AUTHENTICATED: DASHBOARD VIEW                      */
           /* ========================================================================= */
-          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start w-full">
-            {/* Sidebar Left Column */}
-            <div className="contents lg:flex lg:flex-col lg:w-80 shrink-0 lg:space-y-6 lg:sticky lg:top-6 lg:self-start">
-              {/* Profile Card & Commission Info */}
-              <div className="order-1 lg:order-none bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-3xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
-
-                <div className="absolute right-[-30px] top-[-30px] w-32 h-32 rounded-full bg-emerald-500/10 pointer-events-none" />
-                <div className="space-y-4 relative z-10">
-                  <div className="flex items-start justify-between">
-                    <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md border border-emerald-500/30">
-                      Área do Parceiro
-                    </span>
-                    <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300">
-                      <Handshake className="w-5 h-5 text-emerald-300" />
-                    </div>
+          <div className="flex flex-1 min-h-0 w-full">
+            {/* Mobile Drawer */}
+            {mobileMenuOpen && (
+              <div className="fixed inset-0 z-50 lg:hidden">
+                <div className="absolute inset-0 bg-slate-900/50" onClick={() => setMobileMenuOpen(false)} />
+                <aside className="relative w-72 max-w-[85vw] h-full bg-white border-r border-gray-200 flex flex-col animate-in slide-in-from-left duration-200">
+                  <div className="p-4 border-b border-slate-100 shrink-0">
+                    {renderProfileCard}
                   </div>
-                  <div>
-                    <h2 className="font-extrabold text-lg leading-tight text-white">{currentPartner?.nome}</h2>
-                    <p className="text-xs text-emerald-200/90 mt-1 truncate">E-mail: {currentPartner?.email}</p>
-                    <p className="text-[11px] text-emerald-300/80 font-mono mt-0.5">ID: {currentPartner?.id}</p>
+                  <nav className="flex-1 overflow-y-auto p-3">
+                    {renderNavItems}
+                  </nav>
+                  <div className="p-4 border-t border-slate-100 space-y-2 shrink-0">
+                    {renderSidebarFooterButtons}
+                  </div>
+                </aside>
+              </div>
+            )}
+
+            {/* Desktop Sidebar */}
+            <aside className="hidden lg:flex w-72 h-full bg-white border-r border-gray-200 flex-col shrink-0">
+              <div className="p-5 border-b border-slate-100 flex items-center gap-3 shrink-0">
+                <div className="bg-[#0A3D2E] p-2.5 rounded-xl text-emerald-300 shrink-0">
+                  <Handshake className="w-5 h-5" />
+                </div>
+                <div>
+                  <h1 className="font-extrabold text-base tracking-tight text-slate-900">PROSFEC</h1>
+                  <p className="text-[10px] uppercase font-bold tracking-wider text-[#00A86B]">Portal do Parceiro</p>
+                </div>
+              </div>
+              <div className="p-4 shrink-0">
+                {renderProfileCard}
+              </div>
+              <nav className="flex-1 overflow-y-auto p-3">
+                {renderNavItems}
+              </nav>
+              <div className="p-4 border-t border-slate-100 space-y-2 shrink-0">
+                {renderSidebarFooterButtons}
+              </div>
+            </aside>
+
+            {/* Right Column */}
+            <div className="flex-1 flex flex-col min-w-0 h-full">
+              <header className="shrink-0 bg-white/85 backdrop-blur-xl border-b border-slate-200 px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    onClick={() => setMobileMenuOpen(true)}
+                    className="lg:hidden p-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
+                    title="Abrir menu"
+                  >
+                    <Menu className="w-5 h-5" />
+                  </button>
+                  <div className="min-w-0">
+                    <h2 className="font-extrabold text-sm text-slate-900 truncate">Olá, {currentPartner?.nome?.split(" ")[0]}</h2>
+                    <p className="text-[11px] text-slate-500 font-medium truncate">Painel do Parceiro PROSFEC</p>
                   </div>
                 </div>
+                {renderNotificationsBell("relative")}
+              </header>
 
-                <div className="mt-5 border-t border-emerald-800/60 pt-4 grid grid-cols-2 gap-3 relative z-10">
-                  <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
-                    <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Sua Comissão</span>
-                    {isFranquiaDigital(currentPartner?.plano) ? (
-                      <div className="space-y-0.5 mt-1">
-                        <span className="text-base font-extrabold text-emerald-100 font-mono block">3,0% Direto</span>
-                        <span className="text-[9px] text-emerald-300 font-medium block leading-tight">
-                          Equipe: 1,5% Exec / 2,5% Start
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-8">
+                <div className="max-w-6xl mx-auto space-y-6">
+                {/* Unique Indicator Link Card */}
+                <div className="bg-white text-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                  <div className="space-y-4 relative z-10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="bg-emerald-50 p-2.5 rounded-xl text-emerald-600 border border-emerald-100 shrink-0">
+                          <TrendingUp className="w-5 h-5 text-emerald-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-base text-slate-800">Seu Link Exclusivo de Indicação</h3>
+                          <p className="text-[11px] text-slate-400 font-medium">Divulgação com rastreamento persistente</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] bg-emerald-50 text-[#00A86B] font-mono font-bold px-2.5 py-1 rounded-md border border-emerald-100 uppercase tracking-wider">
+                        Rastreamento Ativo
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Divulgue seu link para sua carteira de clientes, contatos de WhatsApp, contadores e redes sociais. Todo faturamento e simulação gerados por meio desse link serão vinculados automaticamente a você na nossa base de dados.
+                    </p>
+
+                    <div className="bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">URL do seu Link</span>
+                        <span className="text-xs font-mono font-bold text-slate-700 select-all break-all block mt-0.5" title={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref=${currentPartner?.id}`}>
+                          {window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref={currentPartner?.id}
                         </span>
                       </div>
-                    ) : (
-                      <span className="text-base font-extrabold text-emerald-100 font-mono block mt-1">
-                        {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%
-                      </span>
-                    )}
-                  </div>
-                  <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
-                    <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Chave Pix</span>
-                    <span className="text-xs font-mono font-bold text-emerald-200 truncate block mt-1" title={currentPartner?.chavePix}>
-                      {currentPartner?.chavePix || "Não informada"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Vertical Navigation Tabs */}
-              <div className="order-3 lg:order-none soft-card p-3 flex flex-col gap-1 text-left">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.14em] px-4 py-1.5 mb-0.5 block">Navegação do Portal</span>
-
-                
-                <button
-                  onClick={() => handleTabClick("dashboard")}
-                  className={`soft-nav-item justify-between text-left group ${
-                    activeTab === "dashboard"
-                      ? "soft-nav-item-active"
-                      : ""
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <LayoutDashboard className={`w-5 h-5 ${activeTab === "dashboard" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
-                    Dashboard
-                  </span>
-                  {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                  ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "dashboard" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                  )}
-                </button>
-
-                <button
-                  onClick={() => handleTabClick("leads")}
-                  className={`soft-nav-item justify-between text-left group ${
-                    activeTab === "leads"
-                      ? "soft-nav-item-active"
-                      : ""
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <ClipboardList className={`w-5 h-5 ${activeTab === "leads" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
-                    Meus Leads ({leads.length})
-                  </span>
-                  {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                  ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                  )}
-                </button>
-
-                {!currentPartner?.plano?.toUpperCase().includes("AFILIADO") && (
-                  <button
-                    onClick={() => handleTabClick("caca-leads")}
-                    className={`soft-nav-item justify-between text-left group ${
-                      activeTab === "caca-leads"
-                        ? "soft-nav-item-active"
-                        : ""
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Search className={`w-5 h-5 ${activeTab === "caca-leads" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
-                      <span className="flex items-center gap-1">
-                        Caça Leads
-                        <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
-                      </span>
-                    </span>
-                    {!isProfileComplete(currentPartner) ? (
-                      <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                    ) : (
-                      <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "caca-leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                    )}
-                  </button>
-                )}
-
-                {isFranquiaDigital(currentPartner?.plano) && (
-                  <button
-                    onClick={() => handleTabClick("equipe")}
-                    className={`soft-nav-item justify-between text-left group ${
-                      activeTab === "equipe"
-                        ? "soft-nav-item-active"
-                        : ""
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Users className={`w-5 h-5 ${activeTab === "equipe" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
-                      Minha Equipe ({teamMembers.length})
-                    </span>
-                    {!isProfileComplete(currentPartner) ? (
-                      <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                    ) : (
-                      <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "equipe" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                    )}
-                  </button>
-                )}
-
-                <button
-                  onClick={() => handleTabClick("servicos-contabilidade")}
-                  className={`soft-nav-item justify-between text-left group ${
-                    activeTab === "servicos-contabilidade"
-                      ? "soft-nav-item-active"
-                      : ""
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Calculator className={`w-5 h-5 ${activeTab === "servicos-contabilidade" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
-                    <span className="flex items-center gap-1">
-                      Serviços Contábeis
-                      <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
-                    </span>
-                  </span>
-                  {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                  ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "servicos-contabilidade" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                  )}
-                </button>
-
-                <button
-                  onClick={() => handleTabClick("perfil")}
-                  className={`soft-nav-item justify-between text-left group ${
-                    activeTab === "perfil"
-                      ? "soft-nav-item-active"
-                      : ""
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <User className={`w-5 h-5 ${activeTab === "perfil" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
-                    Meu Perfil
-                    {!isProfileComplete(currentPartner) && (
-                      <span className="bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase ml-1 animate-pulse">Obrigatório</span>
-                    )}
-                  </span>
-                  <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "perfil" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                </button>
-
-                <button
-                  onClick={() => handleTabClick("terms")}
-                  className={`soft-nav-item justify-between text-left group ${
-                    activeTab === "terms"
-                      ? "soft-nav-item-active"
-                      : ""
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <FileText className={`w-5 h-5 ${activeTab === "terms" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
-                    Contrato de Parceria
-                  </span>
-                  {!isProfileComplete(currentPartner) ? (
-                    <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                  ) : (
-                    <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "terms" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Content Right Column */}
-            <div className="contents lg:flex lg:flex-col lg:flex-grow lg:w-full lg:space-y-6 lg:min-w-0">
-              {/* Unique Indicator Link Card */}
-              <div className="order-2 lg:order-none bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl border border-emerald-500/20 shadow-sm flex flex-col justify-between relative overflow-hidden">
-                <div className="space-y-4 relative z-10">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="bg-emerald-950/70 p-2.5 rounded-xl text-emerald-300 border border-emerald-700/40 shrink-0">
-                        <TrendingUp className="w-5 h-5 text-emerald-300" />
-                      </div>
-                      <div>
-                        <h3 className="font-extrabold text-base text-white">Seu Link Exclusivo de Indicação</h3>
-                        <p className="text-[11px] text-emerald-300/80 font-medium">Divulgação com rastreamento persistente</p>
-                      </div>
+                      <button
+                        onClick={copyReferralLink}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-2 shrink-0 min-h-[44px] ${
+                          copiedLink
+                            ? "bg-emerald-400 text-slate-950 font-bold font-mono"
+                            : "bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold shadow-sm"
+                        }`}
+                      >
+                        {copiedLink ? (
+                          <>
+                            <Check className="w-4 h-4 text-slate-950" />
+                            <span>Link Copiado!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4 text-slate-950" />
+                            <span>Copiar Link</span>
+                          </>
+                        )}
+                      </button>
                     </div>
-                    <span className="text-[10px] bg-emerald-500/20 text-[#00A86B] font-mono font-bold px-2.5 py-1 rounded-md border border-emerald-500/30 uppercase tracking-wider">
-                      Rastreamento Ativo
-                    </span>
                   </div>
-                  
-                  <p className="text-xs text-emerald-100/90 leading-relaxed">
-                    Divulgue seu link para sua carteira de clientes, contatos de WhatsApp, contadores e redes sociais. Todo faturamento e simulação gerados por meio desse link serão vinculados automaticamente a você na nossa base de dados.
-                  </p>
 
-                  <div className="bg-emerald-950/60 p-3.5 sm:p-4 rounded-xl border border-emerald-800/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">URL do seu Link</span>
-                      <span className="text-xs font-mono font-bold text-emerald-200 select-all break-all block mt-0.5" title={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref=${currentPartner?.id}`}>
-                        {window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref={currentPartner?.id}
-                      </span>
+                  <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-wrap gap-4 text-xs relative z-10 font-mono">
+                    <div className="flex items-center gap-2 text-emerald-700 text-[11px]">
+                      <div className="w-2 h-2 rounded-full bg-[#00A86B] animate-pulse" />
+                      <span>Afiliação Ativa &bull; ID: {currentPartner?.id}</span>
                     </div>
-                    <button
-                      onClick={copyReferralLink}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-2 shrink-0 min-h-[44px] ${
-                        copiedLink 
-                          ? "bg-emerald-400 text-slate-950 font-bold font-mono" 
-                          : "bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold shadow-sm"
-                      }`}
-                    >
-                      {copiedLink ? (
-                        <>
-                          <Check className="w-4 h-4 text-slate-950" />
-                          <span>Link Copiado!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4 text-slate-950" />
-                          <span>Copiar Link</span>
-                        </>
-                      )}
-                    </button>
+                    <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+                      <div className="w-2 h-2 rounded-full bg-[#00A86B]" />
+                      <span>Rastreamento persistente via navegador</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3.5 border-t border-emerald-800/60 flex flex-wrap gap-4 text-xs relative z-10 font-mono">
-                  <div className="flex items-center gap-2 text-emerald-300 text-[11px]">
-                    <div className="w-2 h-2 rounded-full bg-[#00A86B] animate-pulse" />
-                    <span>Afiliação Ativa &bull; ID: {currentPartner?.id}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-emerald-200/80 text-[11px]">
-                    <div className="w-2 h-2 rounded-full bg-[#00A86B]" />
-                    <span>Rastreamento persistente via navegador</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* TAB CONTENTS */}
-              <div className="order-4 lg:order-none w-full space-y-6">
+                {/* TAB CONTENTS */}
+                <div className="w-full">
               <AnimatePresence mode="wait">
               {activeTab === "dashboard" && (
                 <motion.div
