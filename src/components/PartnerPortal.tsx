@@ -7280,20 +7280,20 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   ) : isSubMember ? (
                     <div className="space-y-6">
                       {/* Sub-member Header banner */}
-                      <div className="bg-gradient-to-br from-[#0A3D2E] to-[#124E3D] p-6 rounded-3xl border border-emerald-800 text-white relative overflow-hidden">
-                        <div className="absolute top-0 right-0 transform translate-x-12 -translate-y-12 opacity-10 pointer-events-none">
-                          <Users className="w-96 h-96 text-emerald-400" />
-                        </div>
-                        <div className="space-y-2 relative z-10">
-                          <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                            <Users className="w-3.5 h-3.5 text-emerald-400" />
-                            Portal do Consultor
-                          </div>
-                          <h2 className="font-display font-black text-xl md:text-2xl tracking-tight">
-                            Banco de Leads Master Partner
-                          </h2>
-                          <p className="text-xs text-emerald-200/90 max-w-xl leading-relaxed">
-                            Olá, <strong className="text-white">{currentPartner?.nome}</strong>. Esta é a sua fila de prospecção ativa. 
+<div className="bg-white p-6 rounded-3xl border border-slate-200 text-slate-800 shadow-sm relative overflow-hidden">
+                         <div className="absolute top-0 right-0 transform translate-x-12 -translate-y-12 opacity-5 pointer-events-none">
+                           <Users className="w-96 h-96 text-emerald-600" />
+                         </div>
+                         <div className="space-y-2 relative z-10">
+                           <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-[#00A86B] border border-emerald-100 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                             <Users className="w-3.5 h-3.5 text-emerald-600" />
+                             Portal do Consultor
+                           </div>
+                           <h2 className="font-display font-black text-xl md:text-2xl tracking-tight text-slate-900">
+                             Banco de Leads Master Partner
+                           </h2>
+                           <p className="text-xs text-slate-500 max-w-xl leading-relaxed">
+                             Olá, <strong className="text-slate-800">{currentPartner?.nome}</strong>. Esta é a sua fila de prospecção ativa.
                             Aqui você encontra empresas qualificadas direcionadas pelo seu Franqueado. Faça contato via WhatsApp e inicie o atendimento.
                           </p>
                         </div>
@@ -9906,25 +9906,25 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     {/* Stats & Dashboard Column */}
                     <div className="lg:col-span-7 space-y-6">
                       {/* Commission Highlight Card */}
-                      <div className="bg-gradient-to-r from-emerald-900 to-teal-950 p-6 rounded-3xl text-white shadow-md relative overflow-hidden">
-                        <div className="absolute right-[-20px] top-[-20px] w-24 h-24 rounded-full bg-emerald-500/10" />
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <span className="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">
-                              Sua Comissão de Parceiro ({getPlanDisplayName(currentPartner?.plano)})
-                            </span>
-                            <h4 className="text-2xl md:text-3xl font-display font-black text-emerald-100 mt-1">
-                              {formatCurrencyBRL(calculateSchedule().comissaoEstimada)}
-                            </h4>
-                            <p className="text-[10px] text-emerald-200 leading-normal mt-1">
-                              *Estimativa calculada sobre o valor financiado de {formatCurrencyBRL(advValor)} com taxa de repasse de {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%.
-                            </p>
-                          </div>
-                          <div className="bg-emerald-800/40 p-2 rounded-xl text-emerald-300">
-                            <Coins className="w-6 h-6" />
-                          </div>
-                        </div>
-                      </div>
+<div className="bg-white p-6 rounded-3xl border border-slate-200 text-slate-800 shadow-sm relative overflow-hidden">
+                         <div className="absolute right-[-20px] top-[-20px] w-24 h-24 rounded-full bg-emerald-50" />
+                         <div className="flex items-start justify-between relative z-10">
+                           <div>
+                             <span className="text-[10px] uppercase font-bold text-[#00A86B] tracking-wider">
+                               Sua Comissão de Parceiro ({getPlanDisplayName(currentPartner?.plano)})
+                             </span>
+                             <h4 className="text-2xl md:text-3xl font-display font-black text-slate-900 mt-1">
+                               {formatCurrencyBRL(calculateSchedule().comissaoEstimada)}
+                             </h4>
+                             <p className="text-[10px] text-slate-500 leading-normal mt-1">
+                               *Estimativa calculada sobre o valor financiado de {formatCurrencyBRL(advValor)} com taxa de repasse de {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%.
+                             </p>
+                           </div>
+                           <div className="bg-emerald-50 border border-emerald-100 p-2 rounded-xl text-emerald-600">
+                             <Coins className="w-6 h-6" />
+                           </div>
+                         </div>
+                       </div>
 
                       {/* Stat Metrics Grid */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
