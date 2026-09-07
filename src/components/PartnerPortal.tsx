@@ -4050,8 +4050,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   };
 
   return (
-    <div className="soft-ui min-h-screen flex flex-col font-sans bg-slate-50 text-slate-900">
-      {/* Dynamic Header */}
+    <div className={`soft-ui font-sans bg-slate-50 text-slate-900 ${isAuthenticated && currentPartner ? "h-screen overflow-hidden flex flex-col" : "min-h-screen flex flex-col"}`}>
+      {/* Dynamic Header (somente telas públicas/login) */}
+      {!(isAuthenticated && currentPartner) && (
       <header className="bg-[#0A3D2E] text-slate-100 py-3.5 px-4 sm:px-6 border-b border-emerald-800/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center justify-between w-full sm:w-auto gap-3">
           <div className="flex items-center gap-3">
@@ -4121,9 +4122,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           </button>
         </div>
       </header>
+      )}
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col">
+      <main className={isAuthenticated && currentPartner ? "flex-1 min-h-0 w-full flex flex-col" : "flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col"}>
         {isAuthenticated && !currentPartner ? (
           /* Sessão reconhecida, mas o cadastro ainda não carregou */
           <div className="flex-1 flex items-center justify-center py-20">
