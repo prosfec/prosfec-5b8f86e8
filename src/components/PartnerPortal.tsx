@@ -5299,43 +5299,43 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
 
                         {/* LINHA 3: Saldo e Comissões Hero Card (Suas Comissões & Repasses) */}
-                        <div className="bg-gradient-to-br from-[#0A3D2E] via-[#064E3B] to-[#047857] text-white p-5 sm:p-6 rounded-2xl border border-emerald-400/30 shadow-md relative overflow-hidden">
+                        <div className="bg-white text-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
                           <div className="absolute right-0 top-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
                           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
                             <div className="space-y-2 min-w-0">
                               <div className="flex items-center gap-2">
-                                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-emerald-300 shrink-0">
-                                  <Coins className="w-5 h-5 text-emerald-300" />
+<div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                                   <Coins className="w-5 h-5 text-emerald-600" />
                                 </div>
                                 <div>
-                                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-emerald-300 block">
-                                    Suas Comissões & Repasses
-                                  </span>
-                                  <span className="text-xs text-emerald-100/90 font-medium">Saldo total liberado e pendente de liquidação</span>
+                                   <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#00A86B] block">
+                                     Suas Comissões & Repasses
+                                   </span>
+                                   <span className="text-xs text-slate-500 font-medium">Saldo total liberado e pendente de liquidação</span>
                                 </div>
                               </div>
 
                               <div className="pt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                                <div className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight" title={formatCurrencyBRL(totalPaidCommissions)}>
+                                <div className="text-3xl sm:text-4xl font-extrabold font-mono text-slate-900 tracking-tight" title={formatCurrencyBRL(totalPaidCommissions)}>
                                   {formatCurrencyBRL(totalPaidCommissions)}
                                 </div>
-                                <span className="text-xs font-bold font-mono text-emerald-300 bg-emerald-950/60 px-2.5 py-0.5 rounded-md border border-emerald-500/30">
-                                  Pagas e Liberadas
-                                </span>
+<span className="text-xs font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                                   Pagas e Liberadas
+                                 </span>
                               </div>
                             </div>
 
                             {/* Secondary sub-metrics and CTA */}
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                              <div className="bg-emerald-950/70 border border-emerald-500/30 p-3 rounded-xl min-w-[170px]">
-                                <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider block">
-                                  Comissões Pendentes
-                                </span>
-                                <span className="text-lg font-extrabold font-mono text-amber-300 block mt-0.5" title={formatCurrencyBRL(totalPendingCommissions)}>
-                                  {formatCurrencyBRL(totalPendingCommissions)}
-                                </span>
-                                <span className="text-[10px] text-emerald-200/80 font-medium block">Aguardando liquidação</span>
-                              </div>
+<div className="bg-amber-50 border border-amber-200 p-3 rounded-xl min-w-[170px]">
+                                 <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider block">
+                                   Comissões Pendentes
+                                 </span>
+                                 <span className="text-lg font-extrabold font-mono text-amber-600 block mt-0.5" title={formatCurrencyBRL(totalPendingCommissions)}>
+                                   {formatCurrencyBRL(totalPendingCommissions)}
+                                 </span>
+                                 <span className="text-[10px] text-slate-400 font-medium block">Aguardando liquidação</span>
+                               </div>
 
                               <button
                                 onClick={() => {
