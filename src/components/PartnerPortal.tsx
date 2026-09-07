@@ -4408,7 +4408,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   Parceiros
                 </span>
               </div>
-              <p className="text-[11px] uppercase font-bold tracking-wider text-emerald-400/90 mt-0.5">Portal de Afiliados e Consultores</p>
+              <p className="text-[11px] uppercase font-bold tracking-wider text-emerald-400/90 mt-0.5">Portal de Parceiros e Consultores</p>
             </div>
           </div>
 
@@ -6560,7 +6560,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
                       <h3 className="font-extrabold text-base sm:text-lg text-slate-900">Painel Geral de Indicações</h3>
-                      <p className="text-xs text-slate-500">Acompanhe todos os leads originados pelo seu link de afiliado em tempo real.</p>
+                      <p className="text-xs text-slate-500">Acompanhe todos os leads originados pelo seu link de indicação em tempo real.</p>
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-2.5">
@@ -11437,7 +11437,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         </div>
       )}
 
-      {/* MODAL SOLICITAR COMISSÃO (SINCRONIZADO COM AS REGRAS DE SAQUE HUBLA) */}
+      {/* MODAL SOLICITAR COMISSÃO */}
       {showCommissionPayoutModal && (
         <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in text-left">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
@@ -11452,7 +11452,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   </h4>
                   <p className="text-[11px] text-slate-500">
                     {payoutModalOrigin === "vendas"
-                      ? "Comissões de planos e vendas liberadas (Lastlink / Hubla)"
+                      ? "Comissões de planos e vendas liberadas"
                       : "Comissão sobre serviços quitados do Passo 6"}
                   </p>
                 </div>
@@ -11469,10 +11469,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 </button>
             </div>
 
-            {/* Informative Hubla clearance notice */}
+            {/* Informative clearance notice */}
             <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl space-y-2 text-xs">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 font-mono block">
-                Regras de Liquidação da Plataforma de Pagamento (Hubla)
+                Regras de Liquidação e Compensação Bancária
               </span>
               <div className="grid grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
                 <div className="bg-emerald-50 border border-emerald-200/70 p-2.5 rounded-xl">
