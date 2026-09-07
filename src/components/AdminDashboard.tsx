@@ -88,7 +88,8 @@ import {
   getPlanServiceLabel,
   isMensalidadeItem,
   withoutMensalidades,
-  onlyMensalidades
+  onlyMensalidades,
+  buildWhatsAppUrl
 } from "../utils";
 import { FintechDiagnosisView } from "./FintechDiagnosisView";
 import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";

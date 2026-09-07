@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { buildWhatsAppUrl } from "./utils";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Seguranca from "./components/Seguranca";
@@ -501,7 +502,7 @@ export default function App() {
             <span className="hidden sm:inline">
               {" "}· Fale direto:{" "}
               <a 
-                href={`https://api.whatsapp.com/send?phone=${referredByPartnerWhatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(referredByPartnerNome)}!%20Estou%20no%20seu%20link%20de%20parceiro%20da%20PROSFEC%20e%20gostaria%20de%20tirar%20uma%20d%C3%BAvida.`}
+                href={buildWhatsAppUrl(referredByPartnerWhatsapp, `Olá ${referredByPartnerNome}! Estou no seu link de parceiro da PROSFEC e gostaria de tirar uma dúvida.`)}
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="underline text-emerald-400 hover:text-emerald-300 transition-colors font-bold"
@@ -557,7 +558,7 @@ export default function App() {
       {/* FLOATING WHATSAPP BUTTON */}
       <a
         href={referredByPartnerWhatsapp 
-          ? `https://api.whatsapp.com/send?phone=${referredByPartnerWhatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(referredByPartnerNome || "")}!%20Gostaria%20de%20falar%20sobre%20a%20minha%20empresa%20no%20Pronampe%202026.`
+          ? buildWhatsAppUrl(referredByPartnerWhatsapp, `Olá ${referredByPartnerNome || ""}! Gostaria de falar sobre a minha empresa no Pronampe 2026.`)
           : "https://api.whatsapp.com/send?phone=5598987353253&text=Ol%C3%A1%20PROSFEC!%20Gostaria%20de%20falar%20com%20um%20consultor%20especialista%20do%20Pronampe%202026."
         }
         target="_blank"
@@ -592,7 +593,7 @@ export default function App() {
 
         <a
           href={referredByPartnerWhatsapp 
-            ? `https://api.whatsapp.com/send?phone=${referredByPartnerWhatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(referredByPartnerNome || "")}!%20Gostaria%20de%20falar%20sobre%20a%20minha%20empresa%20no%20Pronampe%202026.`
+            ? buildWhatsAppUrl(referredByPartnerWhatsapp, `Olá ${referredByPartnerNome || ""}! Gostaria de falar sobre a minha empresa no Pronampe 2026.`)
             : "https://api.whatsapp.com/send?phone=5598987353253&text=Ol%C3%A1%20PROSFEC!%20Gostaria%20de%20falar%20com%20um%20consultor%20especialista%20do%20Pronampe%202026."
           }
           target="_blank"

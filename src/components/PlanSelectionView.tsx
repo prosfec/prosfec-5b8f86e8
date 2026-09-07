@@ -16,6 +16,7 @@
 import React, { useEffect, useState } from "react";
 import { Check, MessageCircle, Sparkles } from "lucide-react";
 import { DEFAULT_MENSALIDADES, normalizeMensalidades } from "../utils/serviceUtils";
+import { buildWhatsAppUrl } from "../utils";
 
 const formatBRL = (v: number) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
@@ -104,10 +105,7 @@ interface PlanSelectionViewProps {
 
 export default function PlanSelectionView({ partnerWhatsapp, partnerNome, porte }: PlanSelectionViewProps) {
   const handleFalarComEspecialista = () => {
-    const targetPhone = partnerWhatsapp
-      ? String(partnerWhatsapp).replace(/\D/g, "")
-      : "5598987353253";
-    const url = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(MENSAGEM_ESPECIALISTA)}`;
+    const url = buildWhatsAppUrl(partnerWhatsapp ? String(partnerWhatsapp) : "5598987353253", MENSAGEM_ESPECIALISTA);
     try {
       const opened = window.open(url, "_blank");
       if (!opened) window.location.href = url;

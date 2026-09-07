@@ -8,6 +8,7 @@ import React, { useState } from "react";
 import { Landmark, ArrowRight, ShieldCheck, Mail, Phone, X, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
+import { buildWhatsAppUrl } from "../utils";
 
 interface FooterProps {
   onSimulateClick: () => void;
@@ -130,7 +131,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
                 <Phone className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2} />
                 {referredByPartnerWhatsapp ? (
                   <a
-                    href={`https://api.whatsapp.com/send?phone=${referredByPartnerWhatsapp.replace(/\D/g, "")}&text=Ol%C3%A1%20${encodeURIComponent(referredByPartnerNome || "")}!%20Gostaria%20de%20falar%20com%20voc%C3%AA%20sobre%20o%20Pronampe%202026.`}
+                    href={buildWhatsAppUrl(referredByPartnerWhatsapp, `Olá ${referredByPartnerNome || ""}! Gostaria de falar com você sobre o Pronampe 2026.`)}
                     target="_blank"
                     rel="noreferrer"
                     className="hover:text-white transition-colors inline-block"
