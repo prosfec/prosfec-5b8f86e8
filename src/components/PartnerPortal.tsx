@@ -4408,7 +4408,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   Parceiros
                 </span>
               </div>
-              <p className="text-[11px] uppercase font-bold tracking-wider text-emerald-400/90 mt-0.5">Portal de Afiliados e Consultores</p>
+              <p className="text-[11px] uppercase font-bold tracking-wider text-emerald-400/90 mt-0.5">Portal de Parceiros e Consultores</p>
             </div>
           </div>
 
@@ -4564,20 +4564,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           }}
                           className="w-full bg-[#00A86B] hover:bg-[#0A3D2E] text-white font-extrabold py-3.5 px-6 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01]"
                         >
-                          Acessar Meu Painel Agora {registeredPartnerPlan !== "AFILIADO" && "(Iniciar Teste de 3 Dias)"}
+                          Acessar Meu Painel Agora (Iniciar Teste de 3 Dias)
                         </button>
 
-                        {registeredPartnerPlan !== "AFILIADO" && (
-                          <a
-                            href={getPaymentLinkForPlan(registeredPartnerPlan)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3 px-6 rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-slate-200/60"
-                          >
-                            <Coins className="w-4 h-4 text-emerald-600" />
-                            Garantir Plano Definitivo na Hubla
-                          </a>
-                        )}
                       </div>
                       
                       <button
@@ -4739,12 +4728,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             onChange={(e) => setRegPlan(e.target.value)}
                             className="w-full bg-slate-50 border border-slate-200 focus:border-brand-primary rounded-xl p-2 text-xs outline-none text-slate-800 font-semibold"
                           >
-                            <option value="STARTER">STARTER (0,5% repasse - R$ 500,00 — Pagamento Único)</option>
-                            <option value="Executive Partner PROSFEC">Executive Partner PROSFEC (1,5% repasse - R$ 800,00 — Pagamento Único)</option>
-                            <option value="MASTER PARTNER">MASTER PARTNER (3,0% repasse - R$ 1.500,00 — Pagamento Único)</option>
-                            {!localStorage.getItem("lca_referred_by") && (
-                              <option value="AFILIADO">AFILIADO (Apenas Divulgação e Afiliados - R$ 0,00/mês)</option>
-                            )}
+                            <option value="STARTER">STARTER (0,5% repasse)</option>
+                            <option value="Executive Partner PROSFEC">Executive Partner PROSFEC (1,5% repasse)</option>
+                            <option value="MASTER PARTNER">MASTER PARTNER (3,0% repasse)</option>
+
                           </select>
                         </div>
 
@@ -4897,21 +4884,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       <div>
                         <p className="font-bold">Como funciona a liberação?</p>
                         <p className="mt-1 text-amber-700/90 leading-relaxed">
-                          Você pode efetuar o pagamento diretamente via Hubla usando o botão abaixo. Assim que aprovado, seu painel será liberado de forma totalmente automática!
+                          Fale com a equipe PROSFEC pelo botão abaixo para regularizar o seu plano. Assim que o pagamento for confirmado, o seu painel é liberado pela nossa equipe.
                         </p>
                       </div>
                     </div>
 
                     <div className="pt-2 space-y-3">
-                      <a
-                        href={getPaymentLinkForPlan(currentPartner.plano || "STARTER")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold py-3.5 px-6 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <Coins className="w-4 h-4" />
-                        Efetuar Pagamento na Hubla
-                      </a>
+
 
                       <a
                         href={`https://api.whatsapp.com/send?phone=5598987353253&text=${encodeURIComponent(
@@ -5977,15 +5956,16 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
                         </div>
 
-                        {/* Banner Informativo de Liquidação Hubla no Painel do Parceiro */}
+                        {/* Banner Informativo de Liquidação no Painel do Parceiro */}
                         <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-emerald-950">
                           <div className="flex items-start gap-2.5">
                             <Clock className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                             <div>
                               <span className="font-bold text-emerald-900 block">Regra de Liquidação Financeira & Liberação de Saque:</span>
                               <p className="text-xs text-emerald-800 leading-relaxed mt-0.5">
-                                A liberação da comissão de serviços ocorre após a compensação bancária na Hubla: <strong>48h para PIX</strong> e <strong>15 dias corridos para Cartão de Crédito</strong>.
+                                A liberação da comissão de serviços ocorre após a compensação bancária: <strong>48h para PIX</strong> e <strong>15 dias corridos para Cartão de Crédito</strong>.
                               </p>
+
                             </div>
                           </div>
                         </div>
@@ -6295,7 +6275,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <Coins className="w-6 h-6 text-slate-300 mx-auto mb-2" />
                               <p className="text-xs font-bold text-slate-700">Nenhum saque solicitado até o momento.</p>
                               <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                                À medida que seus clientes quitarem os serviços e passarem pelo prazo de liquidação Hubla, você poderá solicitar o repasse via PIX diretamente para sua conta.
+                                À medida que seus clientes quitarem os serviços e passarem pelo prazo de compensação bancária, você poderá solicitar o repasse via PIX diretamente para sua conta.
                               </p>
                             </div>
                           ) : (
@@ -6580,7 +6560,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
                       <h3 className="font-extrabold text-base sm:text-lg text-slate-900">Painel Geral de Indicações</h3>
-                      <p className="text-xs text-slate-500">Acompanhe todos os leads originados pelo seu link de afiliado em tempo real.</p>
+                      <p className="text-xs text-slate-500">Acompanhe todos os leads originados pelo seu link de indicação em tempo real.</p>
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-2.5">
@@ -7379,16 +7359,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                       <div className="pt-2 space-y-3">
                         <a
-                          href={getPaymentLinkForPlan(currentPartner?.plano || "STARTER")}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold py-3 px-6 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                          <Coins className="w-4 h-4" />
-                          Ativar Meu Plano na Hubla
-                        </a>
 
-                        <a
                           href={`https://api.whatsapp.com/send?phone=5598987353253&text=${encodeURIComponent(
                             `Olá! Sou o parceiro ${currentPartner?.nome} (ID: ${currentPartner?.id}) e gostaria de regularizar ou ativar meu plano para liberar a ferramenta Caça Leads.`
                           )}`}
@@ -9546,92 +9517,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </button>
                   </div>
 
-                  {/* CONFIGURAÇÃO DE CÓDIGOS DE AFILIADO HUBLA (OPÇÃO B) */}
-                  <div className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-5">
-                    <div>
-                      <h4 className="font-display font-extrabold text-sm text-slate-800 flex items-center gap-2">
-                        <Link className="w-4 h-4 text-emerald-700" />
-                        Configurar Seus Links de Checkout Hubla (Opção Direct Link)
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Cada afiliado possui links/IDs de checkout exclusivos gerados diretamente na Hubla para os planos da PROSFEC. Cole abaixo o seu código de afiliado (ex: <code>sSn9gIMlvXPt1ESeJJ4A</code>) ou o link de checkout completo correspondente a cada plano (ex: <code>https://pay.hub.la/sSn9gIMlvXPt1ESeJJ4A</code>). O sistema extrairá o ID automaticamente e gerará os links corretos de redirecionamento, mantendo o controle total das suas comissões de 30% recorrentes.
-                      </p>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider flex items-center justify-between">
-                          <span>Plano Starter</span>
-                          <span className="text-[9px] text-slate-400 font-normal normal-case">Padrão: sSn9gIMlvXPt1ESeJJ4A</span>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Código ou link Hubla"
-                          value={hublaCodeStarter}
-                          onChange={(e) => setHublaCodeStarter(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl text-xs outline-none text-slate-800 font-medium"
-                        />
-                      </div>
 
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider flex items-center justify-between">
-                          <span>Plano Executive</span>
-                          <span className="text-[9px] text-slate-400 font-normal normal-case">Padrão: UQLcJNaQrlNRsBl1bc2Y</span>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Código ou link Hubla"
-                          value={hublaCodeExecutive}
-                          onChange={(e) => setHublaCodeExecutive(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl text-xs outline-none text-slate-800 font-medium"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider flex items-center justify-between">
-                          <span>Plano Master</span>
-                          <span className="text-[9px] text-slate-400 font-normal normal-case">Padrão: UZOZ2DtEyahRALjFN3ra</span>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Código ou link Hubla"
-                          value={hublaCodeMaster}
-                          onChange={(e) => setHublaCodeMaster(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl text-xs outline-none text-slate-800 font-medium"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                      {saveLinksSuccess ? (
-                        <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                          <Check className="w-4 h-4" /> Configurações salvas com sucesso!
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-slate-400">
-                          Se deixados em branco, o sistema usará automaticamente os links de checkout padrão da PROSFEC.
-                        </span>
-                      )}
-
-                      <button
-                        onClick={handleSaveAffiliateLinks}
-                        disabled={savingLinks}
-                        className="px-5 py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
-                      >
-                        {savingLinks ? (
-                          <>
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            Salvando...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="w-3.5 h-3.5" />
-                            Salvar Checkouts Hubla
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
 
                   {/* Stats Cards */}
                   {(() => {
@@ -11550,7 +11437,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         </div>
       )}
 
-      {/* MODAL SOLICITAR COMISSÃO (SINCRONIZADO COM AS REGRAS DE SAQUE HUBLA) */}
+      {/* MODAL SOLICITAR COMISSÃO */}
       {showCommissionPayoutModal && (
         <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in text-left">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
@@ -11565,7 +11452,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   </h4>
                   <p className="text-[11px] text-slate-500">
                     {payoutModalOrigin === "vendas"
-                      ? "Comissões de planos e vendas liberadas (Lastlink / Hubla)"
+                      ? "Comissões de planos e vendas liberadas"
                       : "Comissão sobre serviços quitados do Passo 6"}
                   </p>
                 </div>
@@ -11582,10 +11469,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 </button>
             </div>
 
-            {/* Informative Hubla clearance notice */}
+            {/* Informative clearance notice */}
             <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl space-y-2 text-xs">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 font-mono block">
-                Regras de Liquidação da Plataforma de Pagamento (Hubla)
+                Regras de Liquidação e Compensação Bancária
               </span>
               <div className="grid grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
                 <div className="bg-emerald-50 border border-emerald-200/70 p-2.5 rounded-xl">
