@@ -36,7 +36,7 @@ import LeadStepTimeline from "./LeadStepTimeline";
 import { calculateLeadStepStatus } from "../utils/stepValidation";
 import { TeamPerformanceChart } from "./TeamPerformanceChart";
 import PartnerServicosContabilidadeTab from "./PartnerServicosContabilidadeTab";
-import { sanitizeAndSyncServicosList, ServiceCatalogItem, DEFAULT_SERVICES_CATALOG } from "../utils/serviceUtils";
+import { sanitizeAndSyncServicosList, ServiceCatalogItem } from "../utils/serviceUtils";
 import { 
   Handshake, 
   Copy, 
