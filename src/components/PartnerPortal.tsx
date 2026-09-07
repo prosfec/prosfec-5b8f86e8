@@ -11621,8 +11621,21 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   </button>
                 </div>
               </div>
+            ) : !precosCarregados ? (
+              <div className="space-y-3">
+                <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-2xl space-y-2">
+                  <FinanceSkeleton className="h-3 w-40" />
+                  <FinanceSkeleton className="h-7 w-36" />
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  {precosErro
+                    ? "Não foi possível carregar a tabela de preços oficial. Tente novamente em instantes — nenhum valor será exibido até a confirmação do banco de dados."
+                    : "Calculando seu saldo com a tabela de preços atualizada..."}
+                </p>
+              </div>
             ) : (() => {
               // Calculate dynamically for modal based on partner level and team hierarchy
+
               let totalLiberada = 0;
               let totalPaga = 0;
               let totalCompensando = 0;
