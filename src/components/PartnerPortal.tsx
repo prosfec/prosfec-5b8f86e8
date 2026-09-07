@@ -695,14 +695,13 @@ export default function PartnerPortal({
   const [catalogServices, setCatalogServices] = useState<ServiceCatalogItem[]>([]);
   const [precosCarregados, setPrecosCarregados] = useState(false);
   const [precosErro, setPrecosErro] = useState(false);
+  const [isSyncingStep6, setIsSyncingStep6] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
+  const fetchPriceCatalog = async () => {
     setPrecosCarregados(false);
     setPrecosErro(false);
-
-    getDoc(doc(db, "configuracoes", "precos_consultas")).then((snap) => {
-      if (cancelled) return;
+    try {
+      const snap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
       if (snap.exists() && snap.data().servicos && Array.isArray(snap.data().servicos)) {
         setCatalogServices(snap.data().servicos);
         setPrecosCarregados(true);
@@ -711,14 +710,14 @@ export default function PartnerPortal({
         console.warn("Tabela de preços ausente em configuracoes/precos_consultas");
         setPrecosErro(true);
       }
-
-    }).catch((err) => {
-      if (cancelled) return;
+    } catch (err) {
       console.warn("Could not load price catalog in PartnerPortal:", err);
       setPrecosErro(true);
-    });
+    }
+  };
 
-    return () => { cancelled = true; };
+  useEffect(() => {
+    fetchPriceCatalog();
   }, []);
 
   // Skeleton financeiro (exibido enquanto os preços reais não chegam do banco)
