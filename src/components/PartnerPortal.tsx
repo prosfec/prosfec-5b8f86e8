@@ -706,10 +706,11 @@ export default function PartnerPortal({
         setCatalogServices(snap.data().servicos);
         setPrecosCarregados(true);
       } else {
-        // Documento inexistente: catálogo padrão vale apenas como referência, não como valor confirmado
-        setCatalogServices(DEFAULT_SERVICES_CATALOG);
-        setPrecosCarregados(true);
+        // Sem tabela oficial no banco: não exibir valores possivelmente desatualizados
+        console.warn("Tabela de preços ausente em configuracoes/precos_consultas");
+        setPrecosErro(true);
       }
+
     }).catch((err) => {
       if (cancelled) return;
       console.warn("Could not load price catalog in PartnerPortal:", err);
