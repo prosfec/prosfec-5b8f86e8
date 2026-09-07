@@ -4048,7 +4048,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-slate-50 text-slate-900">
+    <div className="soft-ui min-h-screen flex flex-col font-sans bg-slate-50 text-slate-900">
       {/* Dynamic Header */}
       <header className="bg-[#0A3D2E] text-slate-100 py-3.5 px-4 sm:px-6 border-b border-emerald-800/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center justify-between w-full sm:w-auto gap-3">
