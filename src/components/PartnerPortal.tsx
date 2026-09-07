@@ -690,37 +690,40 @@ export default function PartnerPortal({
   }, [initialPlan]);
 
   // Dynamic Price Catalog loaded from ADM Settings (configuracoes/precos_consultas)
-  // Optimized with sessionStorage cache to prevent repeated real-time reads on static prices
-  const [catalogServices, setCatalogServices] = useState<ServiceCatalogItem[]>(() => {
-    try {
-      const cached = sessionStorage.getItem("cached_precos_consultas");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return DEFAULT_SERVICES_CATALOG;
-  });
+  // FINANCEIRO: nunca usar catálogo padrão (hardcoded) nem cache de sessão para calcular dinheiro.
+  const [catalogServices, setCatalogServices] = useState<ServiceCatalogItem[]>([]);
+  const [precosCarregados, setPrecosCarregados] = useState(false);
+  const [precosErro, setPrecosErro] = useState(false);
 
   useEffect(() => {
-    // Check if we have valid fresh cache in this session
-    const cachedTime = sessionStorage.getItem("cached_precos_consultas_time");
-    const now = Date.now();
-    if (cachedTime && now - parseInt(cachedTime, 10) < 1000 * 60 * 30) {
-      // Use cached for 30 minutes without reading Firestore
-      return;
-    }
+    let cancelled = false;
+    setPrecosCarregados(false);
+    setPrecosErro(false);
 
     getDoc(doc(db, "configuracoes", "precos_consultas")).then((snap) => {
+      if (cancelled) return;
       if (snap.exists() && snap.data().servicos && Array.isArray(snap.data().servicos)) {
         setCatalogServices(snap.data().servicos);
-        sessionStorage.setItem("cached_precos_consultas", JSON.stringify(snap.data().servicos));
-        sessionStorage.setItem("cached_precos_consultas_time", String(Date.now()));
+        setPrecosCarregados(true);
+      } else {
+        // Documento inexistente: catálogo padrão vale apenas como referência, não como valor confirmado
+        setCatalogServices(DEFAULT_SERVICES_CATALOG);
+        setPrecosCarregados(true);
       }
     }).catch((err) => {
+      if (cancelled) return;
       console.warn("Could not load price catalog in PartnerPortal:", err);
+      setPrecosErro(true);
     });
+
+    return () => { cancelled = true; };
   }, []);
+
+  // Skeleton financeiro (exibido enquanto os preços reais não chegam do banco)
+  const FinanceSkeleton = ({ className = "h-6 w-28" }: { className?: string }) => (
+    <div className={`animate-pulse rounded-md bg-slate-200/80 ${className}`} aria-hidden="true" />
+  );
+
 
   // Dashboard Data
   const [leads, setLeads] = useState<Lead[]>([]);
