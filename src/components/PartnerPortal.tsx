@@ -496,13 +496,23 @@ export default function PartnerPortal({
   initialIsRegistering?: boolean;
 }) {
   // Authentication & View states
+  const readStoredPartner = (): Partner | null => {
+    try {
+      const saved = sessionStorage.getItem("partner_data");
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed && typeof parsed === "object" && parsed.id ? (parsed as Partner) : null;
+    } catch {
+      sessionStorage.removeItem("partner_data");
+      sessionStorage.removeItem("partner_authenticated");
+      return null;
+    }
+  };
+
+  const [currentPartner, setCurrentPartner] = useState<Partner | null>(() => readStoredPartner());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem("partner_authenticated") === "true";
+    return sessionStorage.getItem("partner_authenticated") === "true" && !!readStoredPartner();
   });
-  const [currentPartner, setCurrentPartner] = useState<Partner | null>(() => {
-    const saved = sessionStorage.getItem("partner_data");
-    return saved ? JSON.parse(saved) : null;
-  });
+
 
   const isSubMember = !!(
     currentPartner?.parentPartnerId || 
