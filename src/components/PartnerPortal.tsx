@@ -337,11 +337,14 @@ const getSubscriptionStatus = (partner: Partner) => {
     return {
       status: "ativa" as const,
       daysLeft: 3,
+      expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       formattedExpiry: "-",
       isTrial: !isManualActive,
+      isExempt: false,
       isManualBlocked: false
     };
   }
+
   
   const baseDate = new Date(baseDateStr);
   const duration = partner.duracaoDias !== undefined ? partner.duracaoDias : (hasPaid || isManualActive ? 365 : 3);
