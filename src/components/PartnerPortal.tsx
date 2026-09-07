@@ -4049,6 +4049,344 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
     setTimeout(() => setCopiedProposalReport(false), 2000);
   };
 
+  // =========================================================================
+  // JSX reutilizavel do layout autenticado (sidebar real + header interno)
+  // =========================================================================
+  const renderNotificationsBell = (wrapperClassName: string) => (
+    <div className={wrapperClassName}>
+      <button
+        onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
+        className="relative p-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer flex items-center justify-center min-h-[40px] min-w-[40px]"
+        title="Notificações"
+      >
+        <Bell className="w-5 h-5" />
+        {notifications.filter(n => !n.lida).length > 0 && (
+          <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold font-mono rounded-full flex items-center justify-center animate-pulse">
+            {notifications.filter(n => !n.lida).length}
+          </span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {showNotificationsDropdown && (
+          <>
+            {/* Invisible backdrop to close the dropdown when clicking outside */}
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setShowNotificationsDropdown(false)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="absolute right-0 mt-2 w-80 sm:w-96 bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden z-50 text-slate-800"
+            >
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
+                  <Bell className="w-4 h-4 text-[#00A86B]" />
+                  Notificações Internas
+                </h3>
+                {notifications.length > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkAllNotificationsRead();
+                    }}
+                    className="text-[11px] font-bold text-[#00A86B] hover:text-[#0A3D2E] transition-colors cursor-pointer"
+                    title="Limpar e excluir todas as notificações"
+                  >
+                    Limpar todas
+                  </button>
+                )}
+              </div>
+
+              {notificationsError && (
+                <div className="px-4 py-2 bg-rose-50 border-b border-rose-100 text-[11px] font-bold text-rose-700">
+                  {notificationsError}
+                </div>
+              )}
+
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400">
+                    <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    <p className="text-xs font-semibold">Nenhuma notificação por enquanto.</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => {
+                    // Type-specific styles
+                    let iconBg = "bg-blue-50 text-blue-700";
+                    let borderLeft = "border-l-4 border-l-blue-600";
+                    if (notif.tipo === "success") {
+                      iconBg = "bg-emerald-50 text-[#00A86B]";
+                      borderLeft = "border-l-4 border-l-[#00A86B]";
+                    } else if (notif.tipo === "warning") {
+                      iconBg = "bg-amber-50 text-amber-700";
+                      borderLeft = "border-l-4 border-l-amber-500";
+                    } else if (notif.tipo === "error") {
+                      iconBg = "bg-rose-50 text-rose-700";
+                      borderLeft = "border-l-4 border-l-rose-600";
+                    }
+
+                    return (
+                      <div
+                        key={notif.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMarkNotificationRead(notif.id);
+                        }}
+                        className={`p-3.5 flex gap-3 hover:bg-slate-50 transition-colors cursor-pointer ${borderLeft} ${!notif.lida ? "bg-emerald-50/30" : "bg-white"}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${iconBg}`}>
+                          <Bell className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-1 mb-0.5">
+                            <p className={`text-xs font-bold truncate ${!notif.lida ? "text-slate-950" : "text-slate-700"}`}>
+                              {notif.titulo}
+                            </p>
+                            {!notif.lida && (
+                              <span className="w-2 h-2 rounded-full bg-[#00A86B] shrink-0 mt-1 animate-pulse" />
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-600 leading-relaxed mb-1">
+                            {notif.mensagem}
+                          </p>
+                          <span className="text-[10px] text-slate-400 font-semibold font-mono">
+                            {new Date(notif.dataCriacao).toLocaleString("pt-BR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
+  const renderProfileCard = (
+    <div className="bg-[#0A3D2E] text-white p-5 rounded-3xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
+
+      <div className="absolute right-[-30px] top-[-30px] w-32 h-32 rounded-full bg-emerald-500/10 pointer-events-none" />
+      <div className="space-y-4 relative z-10">
+        <div className="flex items-start justify-between">
+          <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md border border-emerald-500/30">
+            Área do Parceiro
+          </span>
+          <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300">
+            <Handshake className="w-5 h-5 text-emerald-300" />
+          </div>
+        </div>
+        <div>
+          <h2 className="font-extrabold text-lg leading-tight text-white">{currentPartner?.nome}</h2>
+          <p className="text-xs text-emerald-200/90 mt-1 truncate">E-mail: {currentPartner?.email}</p>
+          <p className="text-[11px] text-emerald-300/80 font-mono mt-0.5">ID: {currentPartner?.id}</p>
+        </div>
+      </div>
+
+      <div className="mt-5 border-t border-emerald-800/60 pt-4 grid grid-cols-2 gap-3 relative z-10">
+        <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
+          <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Sua Comissão</span>
+          {isFranquiaDigital(currentPartner?.plano) ? (
+            <div className="space-y-0.5 mt-1">
+              <span className="text-base font-extrabold text-emerald-100 font-mono block">3,0% Direto</span>
+              <span className="text-[9px] text-emerald-300 font-medium block leading-tight">
+                Equipe: 1,5% Exec / 2,5% Start
+              </span>
+            </div>
+          ) : (
+            <span className="text-base font-extrabold text-emerald-100 font-mono block mt-1">
+              {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%
+            </span>
+          )}
+        </div>
+        <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
+          <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Chave Pix</span>
+          <span className="text-xs font-mono font-bold text-emerald-200 truncate block mt-1" title={currentPartner?.chavePix}>
+            {currentPartner?.chavePix || "Não informada"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderNavItems = (
+    <div className="soft-card p-3 flex flex-col gap-1 text-left">
+      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.14em] px-4 py-1.5 mb-0.5 block">Navegação do Portal</span>
+
+      <button
+        onClick={() => { handleTabClick("dashboard"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "dashboard"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <LayoutDashboard className={`w-5 h-5 ${activeTab === "dashboard" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
+          Dashboard
+        </span>
+        {!isProfileComplete(currentPartner) ? (
+          <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+        ) : (
+          <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "dashboard" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+        )}
+      </button>
+
+      <button
+        onClick={() => { handleTabClick("leads"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "leads"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <ClipboardList className={`w-5 h-5 ${activeTab === "leads" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
+          Meus Leads ({leads.length})
+        </span>
+        {!isProfileComplete(currentPartner) ? (
+          <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+        ) : (
+          <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+        )}
+      </button>
+
+      {!currentPartner?.plano?.toUpperCase().includes("AFILIADO") && (
+        <button
+          onClick={() => { handleTabClick("caca-leads"); setMobileMenuOpen(false); }}
+          className={`soft-nav-item justify-between text-left group ${
+            activeTab === "caca-leads"
+              ? "soft-nav-item-active"
+              : ""
+          }`}
+        >
+          <span className="flex items-center gap-2.5">
+            <Search className={`w-5 h-5 ${activeTab === "caca-leads" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
+            <span className="flex items-center gap-1">
+              Caça Leads
+              <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
+            </span>
+          </span>
+          {!isProfileComplete(currentPartner) ? (
+            <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+          ) : (
+            <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "caca-leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+          )}
+        </button>
+      )}
+
+      {isFranquiaDigital(currentPartner?.plano) && (
+        <button
+          onClick={() => { handleTabClick("equipe"); setMobileMenuOpen(false); }}
+          className={`soft-nav-item justify-between text-left group ${
+            activeTab === "equipe"
+              ? "soft-nav-item-active"
+              : ""
+          }`}
+        >
+          <span className="flex items-center gap-2.5">
+            <Users className={`w-5 h-5 ${activeTab === "equipe" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
+            Minha Equipe ({teamMembers.length})
+          </span>
+          {!isProfileComplete(currentPartner) ? (
+            <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+          ) : (
+            <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "equipe" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+          )}
+        </button>
+      )}
+
+      <button
+        onClick={() => { handleTabClick("servicos-contabilidade"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "servicos-contabilidade"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <Calculator className={`w-5 h-5 ${activeTab === "servicos-contabilidade" ? "text-white" : "text-emerald-600"}`} strokeWidth={2} />
+          <span className="flex items-center gap-1">
+            Serviços Contábeis
+            <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
+          </span>
+        </span>
+        {!isProfileComplete(currentPartner) ? (
+          <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+        ) : (
+          <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "servicos-contabilidade" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+        )}
+      </button>
+
+      <button
+        onClick={() => { handleTabClick("perfil"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "perfil"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <User className={`w-5 h-5 ${activeTab === "perfil" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
+          Meu Perfil
+          {!isProfileComplete(currentPartner) && (
+            <span className="bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase ml-1 animate-pulse">Obrigatório</span>
+          )}
+        </span>
+        <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "perfil" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+      </button>
+
+      <button
+        onClick={() => { handleTabClick("terms"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "terms"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <FileText className={`w-5 h-5 ${activeTab === "terms" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
+          Contrato de Parceria
+        </span>
+        {!isProfileComplete(currentPartner) ? (
+          <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+        ) : (
+          <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "terms" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+        )}
+      </button>
+    </div>
+  );
+
+  const renderSidebarFooterButtons = (
+    <>
+      <button
+        onClick={handleLogout}
+        className="w-full bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-700 hover:text-rose-600 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px]"
+        title="Sair do Portal"
+      >
+        <LogOut className="w-3.5 h-3.5" />
+        <span>Sair do Portal</span>
+      </button>
+      <button
+        onClick={onBackToHome}
+        className="w-full bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[40px]"
+      >
+        Voltar ao Site
+      </button>
+    </>
+  );
+
   return (
     <div className={`soft-ui font-sans bg-slate-50 text-slate-900 ${isAuthenticated && currentPartner ? "h-screen overflow-hidden flex flex-col" : "min-h-screen flex flex-col"}`}>
       {/* Dynamic Header (somente telas públicas/login) */}
