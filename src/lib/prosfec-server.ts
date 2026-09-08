@@ -551,10 +551,8 @@ export function createExpressApp() {
       
       let customBasePrices: Record<string, number> = {};
       try {
-        const configSnap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
-        if (configSnap.exists()) {
-          customBasePrices = configSnap.data().precos || {};
-        }
+        const configData: any = await getDocRest("configuracoes/precos_consultas");
+        customBasePrices = configData?.precos || {};
       } catch (err) {
         console.warn("Could not load custom base prices from config:", err);
       }
@@ -1085,9 +1083,9 @@ export function createExpressApp() {
       ];
 
       try {
-        const configSnap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
-        if (configSnap.exists() && configSnap.data().servicos && Array.isArray(configSnap.data().servicos) && configSnap.data().servicos.length > 0) {
-          activeServicesCatalog = configSnap.data().servicos.filter((s: any) =>
+        const configData: any = await getDocRest("configuracoes/precos_consultas");
+        if (configData?.servicos && Array.isArray(configData.servicos) && configData.servicos.length > 0) {
+          activeServicesCatalog = configData.servicos.filter((s: any) =>
             s.id !== "serv_diagnostico" &&
             s.id !== "serv_caca_leads" &&
             s.id !== "serv_bacen" &&

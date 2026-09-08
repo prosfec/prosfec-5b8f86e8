@@ -697,7 +697,7 @@ export default function PartnerPortal({
   const [precosErro, setPrecosErro] = useState(false);
   const [isSyncingStep6, setIsSyncingStep6] = useState(false);
 
-  const fetchPriceCatalog = async () => {
+  const fetchPriceCatalog = async (): Promise<boolean> => {
     setPrecosCarregados(false);
     setPrecosErro(false);
     try {
@@ -705,20 +705,30 @@ export default function PartnerPortal({
       if (snap.exists() && snap.data().servicos && Array.isArray(snap.data().servicos)) {
         setCatalogServices(snap.data().servicos);
         setPrecosCarregados(true);
-      } else {
-        // Sem tabela oficial no banco: não exibir valores possivelmente desatualizados
-        console.warn("Tabela de preços ausente em configuracoes/precos_consultas");
-        setPrecosErro(true);
+        return true;
       }
+      // Sem tabela oficial no banco: não exibir valores possivelmente desatualizados
+      console.warn("Tabela de preços ausente em configuracoes/precos_consultas");
+      setPrecosErro(true);
+      return false;
     } catch (err) {
       console.warn("Could not load price catalog in PartnerPortal:", err);
       setPrecosErro(true);
+      return false;
     }
   };
 
   useEffect(() => {
     fetchPriceCatalog();
   }, []);
+
+  // A leitura de configuracoes/* exige usuário autenticado; recarrega após o login
+  // para que os valores apareçam sem precisar de F5.
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPriceCatalog();
+    }
+  }, [isAuthenticated]);
 
   // Skeleton financeiro (exibido enquanto os preços reais não chegam do banco)
   const FinanceSkeleton = ({ className = "h-6 w-28" }: { className?: string }) => (
@@ -2293,11 +2303,15 @@ export default function PartnerPortal({
     if (isSyncingStep6) return;
     setIsSyncingStep6(true);
     try {
-      await fetchPriceCatalog();
+      const precosOk = await fetchPriceCatalog();
       if (currentPartner?.id) {
         await fetchPartnerLeads(currentPartner.id);
       }
-      toast.success("Dados do Passo 6 sincronizados");
+      if (precosOk) {
+        toast.success("Dados do Passo 6 sincronizados");
+      } else {
+        toast.error("Não foi possível carregar a tabela de preços oficial");
+      }
     } catch (err) {
       console.warn("Erro ao sincronizar Passo 6:", err);
       toast.error("Não foi possível sincronizar os dados do Passo 6");
@@ -5464,6 +5478,17 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </p>
                             </div>
                           </div>
+                          {precosErro && (
+                            <button
+                              type="button"
+                              onClick={handleSyncStep6}
+                              disabled={isSyncingStep6}
+                              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-bold rounded-xl border border-emerald-200 bg-emerald-50 text-[#00A86B] hover:bg-emerald-100 transition-colors disabled:opacity-60 cursor-pointer"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingStep6 ? "animate-spin" : ""}`} />
+                              Tentar novamente
+                            </button>
+                          )}
                           {!precosErro && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                               {[0, 1, 2, 3].map((i) => (
@@ -11544,9 +11569,19 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 </div>
                 <p className="text-[11px] text-slate-500">
                   {precosErro
-                    ? "Não foi possível carregar a tabela de preços oficial. Tente novamente em instantes — nenhum valor será exibido até a confirmação do banco de dados."
+                    ? "Não foi possível carregar a tabela de preços oficial. Tente novamente — nenhum valor será exibido até a confirmação do banco de dados."
                     : "Calculando seu saldo com a tabela de preços atualizada..."}
                 </p>
+                {precosErro && (
+                  <button
+                    type="button"
+                    onClick={() => fetchPriceCatalog()}
+                    className="inline-flex items-center gap-2 px-3 py-2 text-xs font-bold rounded-xl border border-emerald-200 bg-emerald-50 text-[#00A86B] hover:bg-emerald-100 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Tentar novamente
+                  </button>
+                )}
               </div>
             ) : (() => {
               // Calculate dynamically for modal based on partner level and team hierarchy
