@@ -2303,11 +2303,15 @@ export default function PartnerPortal({
     if (isSyncingStep6) return;
     setIsSyncingStep6(true);
     try {
-      await fetchPriceCatalog();
+      const precosOk = await fetchPriceCatalog();
       if (currentPartner?.id) {
         await fetchPartnerLeads(currentPartner.id);
       }
-      toast.success("Dados do Passo 6 sincronizados");
+      if (precosOk) {
+        toast.success("Dados do Passo 6 sincronizados");
+      } else {
+        toast.error("Não foi possível carregar a tabela de preços oficial");
+      }
     } catch (err) {
       console.warn("Erro ao sincronizar Passo 6:", err);
       toast.error("Não foi possível sincronizar os dados do Passo 6");
