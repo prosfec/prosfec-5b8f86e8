@@ -5478,6 +5478,17 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </p>
                             </div>
                           </div>
+                          {precosErro && (
+                            <button
+                              type="button"
+                              onClick={handleSyncStep6}
+                              disabled={isSyncingStep6}
+                              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-bold rounded-xl border border-emerald-200 bg-emerald-50 text-[#00A86B] hover:bg-emerald-100 transition-colors disabled:opacity-60 cursor-pointer"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingStep6 ? "animate-spin" : ""}`} />
+                              Tentar novamente
+                            </button>
+                          )}
                           {!precosErro && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                               {[0, 1, 2, 3].map((i) => (
