@@ -697,7 +697,7 @@ export default function PartnerPortal({
   const [precosErro, setPrecosErro] = useState(false);
   const [isSyncingStep6, setIsSyncingStep6] = useState(false);
 
-  const fetchPriceCatalog = async () => {
+  const fetchPriceCatalog = async (): Promise<boolean> => {
     setPrecosCarregados(false);
     setPrecosErro(false);
     try {
@@ -705,20 +705,30 @@ export default function PartnerPortal({
       if (snap.exists() && snap.data().servicos && Array.isArray(snap.data().servicos)) {
         setCatalogServices(snap.data().servicos);
         setPrecosCarregados(true);
-      } else {
-        // Sem tabela oficial no banco: não exibir valores possivelmente desatualizados
-        console.warn("Tabela de preços ausente em configuracoes/precos_consultas");
-        setPrecosErro(true);
+        return true;
       }
+      // Sem tabela oficial no banco: não exibir valores possivelmente desatualizados
+      console.warn("Tabela de preços ausente em configuracoes/precos_consultas");
+      setPrecosErro(true);
+      return false;
     } catch (err) {
       console.warn("Could not load price catalog in PartnerPortal:", err);
       setPrecosErro(true);
+      return false;
     }
   };
 
   useEffect(() => {
     fetchPriceCatalog();
   }, []);
+
+  // A leitura de configuracoes/* exige usuário autenticado; recarrega após o login
+  // para que os valores apareçam sem precisar de F5.
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPriceCatalog();
+    }
+  }, [isAuthenticated]);
 
   // Skeleton financeiro (exibido enquanto os preços reais não chegam do banco)
   const FinanceSkeleton = ({ className = "h-6 w-28" }: { className?: string }) => (
