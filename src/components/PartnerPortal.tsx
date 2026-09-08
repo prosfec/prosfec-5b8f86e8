@@ -11569,9 +11569,19 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 </div>
                 <p className="text-[11px] text-slate-500">
                   {precosErro
-                    ? "Não foi possível carregar a tabela de preços oficial. Tente novamente em instantes — nenhum valor será exibido até a confirmação do banco de dados."
+                    ? "Não foi possível carregar a tabela de preços oficial. Tente novamente — nenhum valor será exibido até a confirmação do banco de dados."
                     : "Calculando seu saldo com a tabela de preços atualizada..."}
                 </p>
+                {precosErro && (
+                  <button
+                    type="button"
+                    onClick={() => fetchPriceCatalog()}
+                    className="inline-flex items-center gap-2 px-3 py-2 text-xs font-bold rounded-xl border border-emerald-200 bg-emerald-50 text-[#00A86B] hover:bg-emerald-100 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Tentar novamente
+                  </button>
+                )}
               </div>
             ) : (() => {
               // Calculate dynamically for modal based on partner level and team hierarchy
