@@ -202,6 +202,7 @@ interface LeadWorkspaceModalProps {
   onClose: () => void;
   onRefreshLeads?: () => void;
   onLeadUpdated?: (updated: any) => void;
+  onPartnerBalanceUpdated?: (newBalance: number) => void;
   initialTab?: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge" | "faturamento";
   isAdmin?: boolean;
 }
@@ -222,6 +223,7 @@ export default function LeadWorkspaceModal({
   onClose, 
   onRefreshLeads,
   onLeadUpdated,
+  onPartnerBalanceUpdated,
   initialTab,
   isAdmin = false
 }: LeadWorkspaceModalProps) {
