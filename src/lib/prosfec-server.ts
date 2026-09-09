@@ -802,6 +802,8 @@ export function createExpressApp() {
         consulta_id: consultaRef.id,
 
         newBalance: newBalance,
+        debited,
+        debitWarning,
         produto_nome: produtoNome,
         data: apiResult,
         meta: {
