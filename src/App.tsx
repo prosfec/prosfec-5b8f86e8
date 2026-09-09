@@ -412,6 +412,14 @@ export default function App() {
     }
   };
 
+  // WhatsApp oficial da Home (reutiliza o parceiro indicador quando houver)
+  const homeWhatsappUrl = referredByPartnerWhatsapp
+    ? buildWhatsAppUrl(
+        referredByPartnerWhatsapp,
+        `Olá ${referredByPartnerNome || ""}! Gostaria de falar sobre a situação financeira e creditícia da minha empresa.`,
+      )
+    : "https://api.whatsapp.com/send?phone=5598987353253&text=Ol%C3%A1%20PROSFEC!%20Gostaria%20de%20falar%20sobre%20a%20situa%C3%A7%C3%A3o%20financeira%20e%20credit%C3%ADcia%20da%20minha%20empresa.";
+
   // Scroll to simulator action
   const handleScrollToSimulador = () => {
     const element = document.getElementById("simulador");
