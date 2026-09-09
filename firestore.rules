@@ -204,7 +204,10 @@ service cloud.firestore {
                       )
                     && request.resource.data.keys().size() < 80;
 
+      // isServico(): identidade de serviço do backend (débito de saldo da
+      // consulta RedeBE, histórico operacional etc.).
       allow update: if isStaff()
+                    || isServico()
                     || (isOwnPartnerDoc(partnerId) && partnerSafeUpdate())
                     || (isOwnPartnerDoc(partnerId) && partnerAuthMigration())
                     || (isMyDirectConsultant() && masterConsultantUpdate());
@@ -212,7 +215,7 @@ service cloud.firestore {
 
       match /{sub=**} {
         allow read: if isSignedIn();
-        allow write: if isStaff() || isOwnPartnerDoc(partnerId);
+        allow write: if isStaff() || isServico() || isOwnPartnerDoc(partnerId);
       }
     }
 
