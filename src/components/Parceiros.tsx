@@ -214,7 +214,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
             </span>
 
             <h2 className="font-display font-extrabold text-3xl md:text-4xl text-white leading-tight">
-              É contador, consultor ou correspondente bancário?
+              Você atende empresas e quer oferecer uma estrutura financeira mais completa?
             </h2>
 
             <p className="text-gray-200 text-sm md:text-base leading-relaxed max-w-3xl">
