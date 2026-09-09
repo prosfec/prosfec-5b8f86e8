@@ -74,11 +74,11 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
             <ul className="space-y-2 text-xs">
               <li>
                 <a
-                  href="#novidades"
-                  onClick={(e) => handleLinkClick(e, "novidades")}
+                  href="#solucoes"
+                  onClick={(e) => handleLinkClick(e, "solucoes")}
                   className="hover:text-white transition-colors"
                 >
-                  Crédito Governamental 2026
+                  Nossas soluções
                 </a>
               </li>
               <li>
@@ -87,16 +87,16 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
                   onClick={(e) => handleLinkClick(e, "como-funciona")}
                   className="hover:text-white transition-colors"
                 >
-                  Etapas da liberação
+                  Como a PROSFEC atua
                 </a>
               </li>
               <li>
                 <a
-                  href="#elegibilidade"
-                  onClick={(e) => handleLinkClick(e, "elegibilidade")}
+                  href="#diagnostico"
+                  onClick={(e) => handleLinkClick(e, "diagnostico")}
                   className="hover:text-white transition-colors"
                 >
-                  Critérios de elegibilidade
+                  Diagnóstico PROSFEC
                 </a>
               </li>
               <li>
