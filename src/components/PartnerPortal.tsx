@@ -10517,6 +10517,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           currentPartner={currentPartner}
           initialTab={workspaceTab}
           onClose={() => setSelectedLeadForWorkspace(null)}
+          onPartnerBalanceUpdated={(newBalance) => {
+            setCurrentPartner((prev) => (prev ? { ...prev, saldoGeral: newBalance } : prev));
+          }}
           onRefreshLeads={async () => {
             await fetchPartnerLeads(currentPartner.id);
             // Re-fetch or update the active selected lead so the modal UI updates in real time

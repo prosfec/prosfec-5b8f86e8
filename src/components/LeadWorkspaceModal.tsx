@@ -202,6 +202,7 @@ interface LeadWorkspaceModalProps {
   onClose: () => void;
   onRefreshLeads?: () => void;
   onLeadUpdated?: (updated: any) => void;
+  onPartnerBalanceUpdated?: (newBalance: number) => void;
   initialTab?: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge" | "faturamento";
   isAdmin?: boolean;
 }
@@ -222,6 +223,7 @@ export default function LeadWorkspaceModal({
   onClose, 
   onRefreshLeads,
   onLeadUpdated,
+  onPartnerBalanceUpdated,
   initialTab,
   isAdmin = false
 }: LeadWorkspaceModalProps) {
@@ -733,7 +735,7 @@ export default function LeadWorkspaceModal({
     try {
       const effectivePartnerId = (currentPartner?.id && currentPartner.id !== "admin")
         ? currentPartner.id
-        : ((lead as any).parceiroId || (lead as any).partnerId || (lead as any).parceiro_id || currentPartner?.id || "admin");
+        : ((lead as any).parceiroId || (lead as any).partnerId || (lead as any).parceiro_id || (lead as any).parentPartnerId || currentPartner?.id || "admin");
 
       const res = await fetch("/api/credit/consultas", {
         method: "POST",
@@ -755,7 +757,14 @@ export default function LeadWorkspaceModal({
       if (!res.ok || !data.success) {
         throw new Error(data?.error || "Erro ao executar consulta.");
       }
-      setLocalQuerySuccess(`Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}`);
+      setLocalQuerySuccess(
+        `Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}` +
+        (data.debitWarning ? ` — ${data.debitWarning}` : "")
+      );
+      // Atualiza o saldo visível imediatamente, sem F5
+      if (data.debited && typeof data.newBalance === "number") {
+        onPartnerBalanceUpdated?.(Number(data.newBalance));
+      }
       // Reload matching queries & refresh parent leads so partner credits update
       loadLeadConsultas();
       safeRefreshLeads();

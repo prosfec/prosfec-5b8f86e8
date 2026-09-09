@@ -711,15 +711,21 @@ export function createExpressApp() {
 
       // 3.5 Deduct balance in Firestore via REST (relê o saldo antes de debitar)
       let newBalance = currentBalance;
+      let debited = false;
+      let debitWarning: string | null = null;
       if (partnerExists && !isAdminUser) {
         try {
           const freshData: any = await getDocRest(`parceiros/${partnerId}`);
           if (!freshData) {
             throw new Error("Parceiro não encontrado durante o débito do saldo.");
           }
-          const freshBalance = freshData.saldoGeral !== undefined && freshData.saldoGeral !== null
-            ? Number(freshData.saldoGeral)
-            : 0.00;
+          const rawFresh = freshData.saldoGeral;
+          const parsedFresh = Number(
+            typeof rawFresh === "string"
+              ? rawFresh.replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".")
+              : rawFresh
+          );
+          const freshBalance = Number.isFinite(parsedFresh) ? parsedFresh : 0.00;
 
           if (freshBalance < partnerPrice) {
             const err: any = new Error(`Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${freshBalance.toFixed(2).replace(".", ",")}. Realize uma recarga via Pix para prosseguir.`);
@@ -729,6 +735,24 @@ export function createExpressApp() {
 
           newBalance = Number((freshBalance - partnerPrice).toFixed(2));
           await patchDocRest(`parceiros/${partnerId}`, { saldoGeral: newBalance });
+
+          // Confirma a gravação: relê o documento e, se o saldo não mudou, tenta 1x mais.
+          const checkData: any = await getDocRest(`parceiros/${partnerId}`);
+          const written = Number(checkData?.saldoGeral);
+          if (!Number.isFinite(written) || Math.abs(written - newBalance) > 0.011) {
+            console.warn(`Balance debit not confirmed for partner ${partnerId}. Expected ${newBalance}, got ${written}. Retrying...`);
+            await patchDocRest(`parceiros/${partnerId}`, { saldoGeral: newBalance });
+            const recheck: any = await getDocRest(`parceiros/${partnerId}`);
+            const written2 = Number(recheck?.saldoGeral);
+            if (!Number.isFinite(written2) || Math.abs(written2 - newBalance) > 0.011) {
+              debitWarning = "A consulta foi realizada, mas não foi possível confirmar o débito do saldo. Verifique seu saldo ou contate o suporte.";
+              console.error(`Failed to confirm balance debit for partner ${partnerId}.`);
+            } else {
+              debited = true;
+            }
+          } else {
+            debited = true;
+          }
         } catch (transErr: any) {
           if (transErr.isInsufficientBalance) {
             return res.status(400).json({ error: transErr.message });
@@ -778,6 +802,8 @@ export function createExpressApp() {
         consulta_id: consultaRef.id,
 
         newBalance: newBalance,
+        debited,
+        debitWarning,
         produto_nome: produtoNome,
         data: apiResult,
         meta: {
