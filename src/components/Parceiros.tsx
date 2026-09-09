@@ -254,7 +254,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                 onClick={() => setIsPlansModalOpen(true)}
                 className="bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95 inline-flex items-center gap-2 cursor-pointer"
               >
-                Quero ser parceiro
+                Conhecer o Programa de Parceiros
                 <ArrowRight className="w-4 h-4" strokeWidth={2} />
               </button>
             </div>
