@@ -196,14 +196,6 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
             >
               Política de Privacidade
             </a>
-            <span>·</span>
-            <a
-              id="footer-admin-link"
-              href="/admin"
-              className="hover:text-white transition-colors cursor-pointer opacity-70"
-            >
-              Área Administrativa
-            </a>
           </div>
 
         </div>
