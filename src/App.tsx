@@ -9,11 +9,14 @@ import { buildWhatsAppUrl } from "./utils";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Seguranca from "./components/Seguranca";
-import Novidades from "./components/Novidades";
 import ComoFunciona from "./components/ComoFunciona";
 import Simulador from "./components/Simulador";
-import Elegibilidade from "./components/Elegibilidade";
-import Consultoria from "./components/Consultoria";
+import Pilares from "./components/Pilares";
+import MomentoEmpresa from "./components/MomentoEmpresa";
+import DiagnosticoSection from "./components/DiagnosticoSection";
+import Beneficios from "./components/Beneficios";
+import SolucoesEspecificas from "./components/SolucoesEspecificas";
+import CTAFinal from "./components/CTAFinal";
 import Parceiros from "./components/Parceiros";
 import FAQ from "./components/FAQ";
 import Footer from "./components/Footer";
@@ -409,6 +412,14 @@ export default function App() {
     }
   };
 
+  // WhatsApp oficial da Home (reutiliza o parceiro indicador quando houver)
+  const homeWhatsappUrl = referredByPartnerWhatsapp
+    ? buildWhatsAppUrl(
+        referredByPartnerWhatsapp,
+        `Olá ${referredByPartnerNome || ""}! Gostaria de falar sobre a situação financeira e creditícia da minha empresa.`,
+      )
+    : "https://api.whatsapp.com/send?phone=5598987353253&text=Ol%C3%A1%20PROSFEC!%20Gostaria%20de%20falar%20sobre%20a%20situa%C3%A7%C3%A3o%20financeira%20e%20credit%C3%ADcia%20da%20minha%20empresa.";
+
   // Scroll to simulator action
   const handleScrollToSimulador = () => {
     const element = document.getElementById("simulador");
@@ -519,33 +530,59 @@ export default function App() {
         {/* 1. HERO */}
         <Hero onSimulateClick={handleScrollToSimulador} />
 
-        {/* SEGURANÇA E CONFIABILIDADE */}
+        {/* 2. CONFIANÇA E AUTORIDADE */}
         <Seguranca />
 
-        {/* 2. NOVIDADES 2026 */}
-        <Novidades />
+        {/* 3. COMO PODEMOS AJUDAR (4 PILARES) */}
+        <Pilares />
 
-        {/* 3. COMO FUNCIONA */}
+        {/* 4. QUAL É O MOMENTO DA SUA EMPRESA */}
+        <MomentoEmpresa
+          onSimulateClick={handleScrollToSimulador}
+          whatsappUrl={homeWhatsappUrl}
+        />
+
+        {/* 5. DIAGNÓSTICO PROSFEC */}
+        <DiagnosticoSection onSimulateClick={handleScrollToSimulador} />
+
+        {/* 6. COMO A PROSFEC ATUA */}
         <ComoFunciona />
 
-        {/* 4. SIMULADOR (FORMULÁRIO MULTI-STEP) */}
+        {/* 7. BENEFÍCIOS */}
+        <Beneficios />
+
+        {/* 8. SOLUÇÕES ESPECÍFICAS */}
+        <SolucoesEspecificas />
+
+        {/* 9. SIMULADOR / PRIMEIRA ANÁLISE */}
+        <div className="bg-brand-bg-light pt-16 md:pt-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left space-y-3">
+            <h2 className="font-display font-extrabold text-3xl md:text-4xl text-brand-primary leading-tight">
+              Comece entendendo o potencial da sua empresa
+            </h2>
+            <p className="text-gray-600 text-base leading-relaxed max-w-2xl">
+              Faça uma primeira análise e descubra quais caminhos de crédito podem fazer sentido para
+              o seu negócio.
+            </p>
+          </div>
+        </div>
         <Simulador 
           onLeadCaptured={handleLeadCaptured} 
           referredByPartnerWhatsapp={referredByPartnerWhatsapp}
           referredByPartnerNome={referredByPartnerNome}
         />
 
-        {/* 5. ELEGIBILIDADE */}
-        <Elegibilidade />
-
-        {/* 6. CONSULTORIA */}
-        <Consultoria onSimulateClick={handleScrollToSimulador} />
-
-        {/* 7. PROGRAMA DE PARCEIROS */}
+        {/* 10. PROGRAMA DE PARCEIROS */}
         <Parceiros onSelectPlan={handleSelectPlanForPartner} />
 
-        {/* 8. FAQ */}
+        {/* 11. FAQ */}
         <FAQ />
+
+        {/* 12. CTA FINAL */}
+        <CTAFinal
+          onSimulateClick={handleScrollToSimulador}
+          whatsappUrl={homeWhatsappUrl}
+        />
       </main>
 
       {/* 9. RODAPÉ */}

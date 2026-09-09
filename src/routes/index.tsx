@@ -9,21 +9,21 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       {
-        title: "PROSFEC - Estruturação de Crédito Corporativo | Pronampe 2026",
+        title: "PROSFEC | Inteligência Financeira e Creditícia para Empresas",
       },
       {
         name: "description",
         content:
-          "PROSFEC - Simulador de Crédito Pronampe 2026. Diagnóstico em tempo real e liberação de crédito corporativo para MEI, ME e EPP.",
+          "Diagnóstico financeiro e creditício, estruturação de crédito, reabilitação de rating/score e gestão financeira estratégica para empresas.",
       },
       {
         property: "og:title",
-        content: "PROSFEC - Pronampe 2026 & Estruturação de Crédito",
+        content: "PROSFEC | Inteligência Financeira e Creditícia para Empresas",
       },
       {
         property: "og:description",
         content:
-          "Simule o limite de crédito Pronampe da sua empresa em segundos e receba suporte consultivo para fomento.",
+          "Entenda a posição financeira da sua empresa, identifique oportunidades de crédito e estruture o próximo passo com a PROSFEC.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://prosfec.lovable.app/" },

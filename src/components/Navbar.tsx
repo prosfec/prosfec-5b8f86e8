@@ -78,32 +78,25 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-7">
             <a
-              href="#novidades"
-              onClick={(e) => handleLinkClick(e, "novidades")}
+              href="#solucoes"
+              onClick={(e) => handleLinkClick(e, "solucoes")}
               className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
             >
-              Novidades
+              Soluções
+            </a>
+            <a
+              href="#diagnostico"
+              onClick={(e) => handleLinkClick(e, "diagnostico")}
+              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
+            >
+              Diagnóstico
             </a>
             <a
               href="#como-funciona"
               onClick={(e) => handleLinkClick(e, "como-funciona")}
               className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
             >
-              Como Funciona
-            </a>
-            <a
-              href="#elegibilidade"
-              onClick={(e) => handleLinkClick(e, "elegibilidade")}
-              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
-            >
-              Requisitos
-            </a>
-            <a
-              href="#consultoria"
-              onClick={(e) => handleLinkClick(e, "consultoria")}
-              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
-            >
-              Consultoria
+              Como Atuamos
             </a>
             <a
               href="#parceiros"
@@ -158,39 +151,32 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
         <div className="lg:hidden absolute bg-white left-0 right-0 top-full border-b border-gray-200 shadow-xl py-4 h-[100vh] sm:h-auto overflow-y-auto">
           <div className="px-4 space-y-3 pb-8">
             <a
-              href="#novidades"
-              onClick={(e) => handleLinkClick(e, "novidades")}
+              href="#solucoes"
+              onClick={(e) => handleLinkClick(e, "solucoes")}
               className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
             >
-              Novidades do Pronampe
+              Nossas Soluções
+            </a>
+            <a
+              href="#diagnostico"
+              onClick={(e) => handleLinkClick(e, "diagnostico")}
+              className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
+            >
+              Diagnóstico PROSFEC
             </a>
             <a
               href="#como-funciona"
               onClick={(e) => handleLinkClick(e, "como-funciona")}
               className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
             >
-              Como Funciona
+              Como Atuamos
             </a>
             <a
               href="#simulador"
               onClick={(e) => handleLinkClick(e, "simulador")}
               className="block px-4 py-3 text-base font-semibold text-brand-primary bg-green-50 rounded-lg border-l-4 border-brand-accent transition-all"
             >
-              Simulador Gratuito
-            </a>
-            <a
-              href="#elegibilidade"
-              onClick={(e) => handleLinkClick(e, "elegibilidade")}
-              className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
-            >
-              Quem tem Direito?
-            </a>
-            <a
-              href="#consultoria"
-              onClick={(e) => handleLinkClick(e, "consultoria")}
-              className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
-            >
-              Nossa Consultoria
+              Analisar minha empresa
             </a>
             <a
               href="#parceiros"
