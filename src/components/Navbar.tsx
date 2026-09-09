@@ -78,32 +78,25 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-7">
             <a
-              href="#novidades"
-              onClick={(e) => handleLinkClick(e, "novidades")}
+              href="#solucoes"
+              onClick={(e) => handleLinkClick(e, "solucoes")}
               className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
             >
-              Novidades
+              Soluções
+            </a>
+            <a
+              href="#diagnostico"
+              onClick={(e) => handleLinkClick(e, "diagnostico")}
+              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
+            >
+              Diagnóstico
             </a>
             <a
               href="#como-funciona"
               onClick={(e) => handleLinkClick(e, "como-funciona")}
               className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
             >
-              Como Funciona
-            </a>
-            <a
-              href="#elegibilidade"
-              onClick={(e) => handleLinkClick(e, "elegibilidade")}
-              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
-            >
-              Requisitos
-            </a>
-            <a
-              href="#consultoria"
-              onClick={(e) => handleLinkClick(e, "consultoria")}
-              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
-            >
-              Consultoria
+              Como Atuamos
             </a>
             <a
               href="#parceiros"
