@@ -12,24 +12,40 @@ export default function FAQ() {
 
   const faqs = [
     {
-      q: "Quais linhas de crédito governamental a PROSFEC analisa?",
-      a: "Analisamos o perfil da sua empresa para identificar o enquadramento em programas de fomento como Pronampe, FAMP (Sebrae), Proger, FINEP, FNE/FCO/FNO, Cartão BNDES e Capital de Giro Bancário Conveniado, direcionando seu projeto para a opção com melhor taxa e facilidade de aprovação."
+      q: "O que é a PROSFEC?",
+      a: "A PROSFEC é uma empresa de inteligência financeira e creditícia para negócios. Atuamos na análise da estrutura financeira da empresa, na estruturação e reabilitação de crédito, na identificação de oportunidades de capital e no acompanhamento financeiro estratégico."
     },
     {
-      q: "Como funciona a garantia do FAMP (Sebrae) e FGO?",
-      a: "As linhas de crédito governamentais e de fomento utilizam fundos garantidores federais (como o FGO no Pronampe ou o FAMP no Sebrae) para avalizar até 80% do valor contratado, dispensando a necessidade de bens imóveis ou veículos como garantia real."
+      q: "A PROSFEC é um banco?",
+      a: "Não. A PROSFEC não é banco, financeira nem instituição autorizada a conceder crédito. Somos uma assessoria consultiva que analisa, estrutura e orienta a empresa no relacionamento com instituições financeiras e programas de fomento."
     },
     {
-      q: "Quanto a minha empresa pode obter de limite de crédito?",
-      a: "Os limites variam conforme a linha ideal para o perfil da sua empresa: no Pronampe, o teto regulamentar é de R$ 500 mil (até 50% do faturamento anual). No Proger e FAMP (Sebrae), os limites variam de R$ 300 mil a R$ 1 milhão. Em linhas corporativas como FINEP, BNDES e FNE/FCO/FNO, os limites podem alcançar de R$ 1 milhão a mais de R$ 5 milhões, dimensionados à capacidade de pagamento e faturamento da empresa."
+      q: "A PROSFEC garante aprovação de crédito?",
+      a: "Não. Nenhuma aprovação é garantida, pois a decisão é exclusiva da instituição financeira. O nosso trabalho é melhorar a qualidade e a consistência da apresentação da empresa, corrigir pontos que atrapalham a análise e indicar os caminhos mais adequados ao perfil."
     },
     {
-      q: "Posso solicitar crédito se tiver pequenas pendências no CNPJ?",
-      a: "Muitos travamentos bancários acontecem por detalhes simples, como falta de compartilhamento no e-CAC ou CNDs vencidas. A PROSFEC faz um diagnóstico prévio completo e orienta o saneamento das pendências antes de enviar a proposta ao banco."
+      q: "Que tipos de crédito podem ser analisados?",
+      a: "Analisamos linhas governamentais e de fomento, como Pronampe, Proger, FINEP, BNDES e FNE/FCO/FNO, além de linhas bancárias tradicionais, capital de giro, investimento e expansão, conforme o perfil e a capacidade de pagamento da empresa."
     },
     {
-      q: "A análise de viabilidade com a PROSFEC tem algum custo?",
-      a: "Não. A simulação e a análise de viabilidade prestadas pela assessoria da PROSFEC são 100% gratuitas e sem qualquer cobrança de taxa inicial."
+      q: "O que é o Diagnóstico PROSFEC?",
+      a: "É a análise que transforma informações financeiras e creditícias em uma visão estratégica: potencial de crédito, perfil financeiro, rating e score, restrições e pendências, capacidade de pagamento, oportunidades e os próximos passos recomendados."
+    },
+    {
+      q: "Minha empresa está negativada. A PROSFEC pode ajudar?",
+      a: "Sim. Empresas com restrições, recusas anteriores ou score/rating baixo são atendidas pela frente de reabilitação financeira e creditícia, que mapeia as pendências e define uma estratégia de regularização e adequação do perfil."
+    },
+    {
+      q: "A PROSFEC trabalha com Pronampe?",
+      a: "Sim. O Pronampe é uma das linhas analisadas, mas não é o único caminho. A recomendação depende do momento da empresa, do faturamento, da regularidade e do objetivo do recurso."
+    },
+    {
+      q: "A PROSFEC oferece acompanhamento financeiro?",
+      a: "Sim. Além do trabalho pontual de crédito, oferecemos gestão financeira estratégica com acompanhamento de indicadores, fluxo de caixa, planejamento e preparação para novos ciclos de captação."
+    },
+    {
+      q: "Como funciona a contratação?",
+      a: "Começa pela análise inicial da empresa. A partir do diagnóstico, apresentamos o escopo adequado ao caso e as condições do serviço, com contrato formal e escopo definido antes de qualquer execução."
     }
   ];
 
@@ -43,10 +59,10 @@ export default function FAQ() {
             FAQ • Dúvidas Frequentes
           </div>
           <h2 className="font-display font-extrabold text-3xl text-brand-primary">
-            Perguntas Frequentes sobre Crédito Governamental
+            Perguntas frequentes sobre a PROSFEC
           </h2>
           <p className="text-gray-500 text-sm md:text-base">
-            Tire suas dúvidas sobre as regras de fomento público, fundos garantidores (FGO/FAMP) e prazos de liberação para 2026.
+            Entenda como atuamos, o que o diagnóstico revela e como funciona a contratação.
           </p>
         </div>
 
