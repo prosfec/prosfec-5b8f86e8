@@ -3703,6 +3703,15 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       <p className="text-[10px] text-slate-500">
                         Diagnóstico automático focado exclusivamente nos serviços de reestruturação administrativa, elevação de rating e score da PROSFEC.
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => loadLeadConsultas()}
+                        disabled={loadingConsultas}
+                        className="mt-2 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-extrabold text-slate-600 hover:bg-slate-50 disabled:opacity-60 transition-all cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <RefreshCw className={`w-3 h-3 text-slate-400 ${loadingConsultas ? "animate-spin" : ""}`} />
+                        {loadingConsultas ? "Atualizando histórico..." : "Atualizar histórico"}
+                      </button>
                     </div>
 
                     {diagnosticoPROSFEC ? (
