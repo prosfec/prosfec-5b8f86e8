@@ -642,6 +642,7 @@ export default function LeadWorkspaceModal({
   // Credit Query Integration states
   const [localCatalog, setLocalCatalog] = useState<any[]>([]);
   const [localCatalogError, setLocalCatalogError] = useState<string | null>(null);
+  const [loadingLocalCatalog, setLoadingLocalCatalog] = useState(true);
   const [selectedProductCode, setSelectedProductCode] = useState("");
   const [executingLocalQuery, setExecutingLocalQuery] = useState(false);
   const [localQueryError, setLocalQueryError] = useState<string | null>(null);
@@ -659,35 +660,42 @@ export default function LeadWorkspaceModal({
     };
   };
 
-  // Fetch local credit query catalog
-  useEffect(() => {
-    const fetchCatalog = async () => {
-      setLocalCatalogError(null);
-      try {
-        const res = await fetch("/api/credit/catalogo");
-        const payload = await res.json().catch(() => null);
-        if (res.ok && payload?.success && payload?.catalog) {
-          setLocalCatalog(payload.catalog);
-          if (payload.catalog.length > 0) {
-            setSelectedProductCode(payload.catalog[0].code);
-          }
-          return;
-        }
-        setLocalCatalog([]);
-        setSelectedProductCode("");
-        setLocalCatalogError(payload?.error || "Tabela oficial de preços indisponível.");
-      } catch (err) {
-        console.error("Error fetching credit catalog in modal:", err);
-        setLocalCatalog([]);
-        setSelectedProductCode("");
-        setLocalCatalogError("Não foi possível carregar a tabela oficial de preços.");
+  // Fetch local credit query catalog (reutilizável para o botão "Tentar novamente")
+  const fetchLocalCatalog = async (): Promise<boolean> => {
+    setLoadingLocalCatalog(true);
+    setLocalCatalogError(null);
+    try {
+      const res = await fetch("/api/credit/catalogo");
+      const payload = await res.json().catch(() => null);
+      const catalog = Array.isArray(payload?.catalog) ? payload.catalog : [];
+      if (res.ok && payload?.success && catalog.length > 0) {
+        setLocalCatalog(catalog);
+        setSelectedProductCode((prev) =>
+          prev && catalog.some((item: any) => item.code === prev) ? prev : catalog[0].code
+        );
+        return true;
       }
-    };
-    fetchCatalog();
+      setLocalCatalog([]);
+      setSelectedProductCode("");
+      setLocalCatalogError(payload?.error || "Tabela oficial de preços indisponível.");
+      return false;
+    } catch (err) {
+      console.error("Error fetching credit catalog in modal:", err);
+      setLocalCatalog([]);
+      setSelectedProductCode("");
+      setLocalCatalogError("Não foi possível carregar a tabela oficial de preços.");
+      return false;
+    } finally {
+      setLoadingLocalCatalog(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLocalCatalog();
   }, []);
 
   // Fetch matching consultations from Firestore
-  const loadLeadConsultas = async () => {
+  const loadLeadConsultas = async (attempt = 0) => {
     if (!lead.id) return;
     setLoadingConsultas(true);
     try {
@@ -724,6 +732,11 @@ export default function LeadWorkspaceModal({
       setLeadConsultas(list);
     } catch (err) {
       console.error("Error loading lead queries:", err);
+      // Bloqueio momentâneo (sessão ainda resolvendo): tenta novamente uma vez.
+      if (attempt < 1) {
+        setTimeout(() => loadLeadConsultas(attempt + 1), 1200);
+        return;
+      }
     } finally {
       setLoadingConsultas(false);
     }
@@ -3530,8 +3543,17 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                             </span>
                           </div>
                         ) : (
-                          <div className="w-full text-xs px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 font-semibold">
-                            {localCatalogError || "Carregando tabela oficial de preços..."}
+                          <div className="w-full text-xs px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 font-semibold flex items-center justify-between gap-2">
+                            <span>{loadingLocalCatalog ? "Carregando tabela oficial de preços..." : (localCatalogError || "Tabela oficial de preços indisponível.")}</span>
+                            {!loadingLocalCatalog && (
+                              <button
+                                type="button"
+                                onClick={() => fetchLocalCatalog()}
+                                className="shrink-0 px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-[10px] font-extrabold text-amber-900 hover:bg-amber-100 transition-all cursor-pointer"
+                              >
+                                Tentar novamente
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -3686,6 +3708,15 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       <p className="text-[10px] text-slate-500">
                         Diagnóstico automático focado exclusivamente nos serviços de reestruturação administrativa, elevação de rating e score da PROSFEC.
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => loadLeadConsultas()}
+                        disabled={loadingConsultas}
+                        className="mt-2 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-extrabold text-slate-600 hover:bg-slate-50 disabled:opacity-60 transition-all cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <RefreshCw className={`w-3 h-3 text-slate-400 ${loadingConsultas ? "animate-spin" : ""}`} />
+                        {loadingConsultas ? "Atualizando histórico..." : "Atualizar histórico"}
+                      </button>
                     </div>
 
                     {diagnosticoPROSFEC ? (
