@@ -22,6 +22,7 @@ import {
 } from "../utils";
 import { LeadData, SimulationResult } from "../types";
 import PlanSelectionView from "./PlanSelectionView";
+import SimulationResultBoundary from "./SimulationResultBoundary";
 import { doc, updateDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../firebase";
 import {
@@ -946,7 +947,7 @@ export default function Simulador({
 *CNPJ:* ${formData.cnpj}
 *Razão Social:* ${formData.razaoSocial}
 *Limite Potencial Estimado:* ${limitFormatted}
-*Nível de Preparidade:* ${simulationResult.nivelPreparacao.toUpperCase()}
+*Nível de Preparidade:* ${String(simulationResult?.nivelPreparacao || "").toUpperCase()}
 
 Gostaria de falar com você para dar andamento ao atendimento e agilizar a liberação do recurso.`;
     
@@ -1849,6 +1850,13 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                 animate={{ opacity: 1, scale: 1 }}
                 className="p-6 md:p-10 text-left animate-in fade-in zoom-in-95 duration-500"
               >
+                <SimulationResultBoundary
+                  whatsappUrl={buildWhatsAppUrl(
+                    referredByPartnerWhatsapp || "5598987353253",
+                    "Olá! Fiz a simulação na PROSFEC e gostaria de receber o meu resultado.",
+                  )}
+                  onReset={resetAll}
+                >
                 {/* Result Hero Badge */}
                 <div className="bg-brand-primary text-white p-6 rounded-2xl relative overflow-hidden mb-6 shadow-inner">
                   <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
@@ -2481,6 +2489,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                     {referredByPartnerNome ? `Falar com ${referredByPartnerNome} no WhatsApp` : "Falar com Consultor no WhatsApp"}
                   </button>
                 </div>
+                </SimulationResultBoundary>
               </motion.div>
             )}
           </AnimatePresence>
