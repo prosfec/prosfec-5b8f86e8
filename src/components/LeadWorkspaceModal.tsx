@@ -660,6 +660,28 @@ export default function LeadWorkspaceModal({
     };
   };
 
+  // Leitura segura de respostas: nunca chama res.json() direto, para que uma
+  // página HTML de erro do provedor não quebre a tela.
+  const parseJsonResponse = async (res: Response): Promise<any> => {
+    const raw = await res.text();
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      console.error(
+        `[PROSFEC] Resposta não-JSON (${res.status}) em ${res.url}:`,
+        raw.slice(0, 500),
+      );
+      throw new Error(
+        "Falha na comunicação com o servidor. Tente novamente em instantes.",
+      );
+    }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      console.error(`[PROSFEC] JSON inválido (${res.status}) em ${res.url}:`, raw.slice(0, 500));
+      throw new Error("Falha na comunicação com o servidor. Tente novamente em instantes.");
+    }
+  };
+
   // Fetch local credit query catalog (reutilizável para o botão "Tentar novamente")
   const fetchLocalCatalog = async (): Promise<boolean> => {
     setLoadingLocalCatalog(true);
