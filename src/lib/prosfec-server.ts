@@ -1209,7 +1209,7 @@ DADOS CADASTRAIS DA EMPRESA:
 - Sócios: ${leadData.socios ? leadData.socios.map((s: any) => `${s.nome} (CPF: ${s.cpf || "não informado"})`).join(", ") : "Nenhum sócio informado"}
 
 RELATÓRIOS BRUTOS DE CONSULTAS DE CRÉDITO REALIZADAS:
-${consultationsSummary.length > 0 ? JSON.stringify(consultationsSummary, null, 2) : "Nenhuma consulta de crédito realizada no sistema até o momento."}
+${consultationsBlock}
 
 CATÁLOGO OFICIAL DE SERVIÇOS TÉCNICOS DISPONÍVEIS:
 ${catalogPromptText}
