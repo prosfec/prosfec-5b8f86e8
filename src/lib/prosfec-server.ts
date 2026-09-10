@@ -1233,46 +1233,79 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
 }`;
 
       let auditResult: any = null;
+      let stage1Failure: any = null;
+      let invalidJson = false;
 
-      try {
-        const stage1Response = await generateContentWithFallback(ai, {
-          contents: stage1AuditPrompt,
-          config: {
-            responseMimeType: "application/json",
-            temperature: 0.1,
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                totalDividasNegativadas: { type: Type.NUMBER }, quantidadeNegativacoes: { type: Type.NUMBER },
-                totalProtestos: { type: Type.NUMBER }, quantidadeProtestos: { type: Type.NUMBER },
-                totalAcoesJudiciaisOuCheques: { type: Type.NUMBER }, temApontamentosSCRBacen: { type: Type.BOOLEAN },
-                resumoBacen: { type: Type.STRING }, situacaoFiscalCadastral: { type: Type.STRING },
-                capacidadeTomadaPronampe: { type: Type.NUMBER }, capacidadeTomadaGeral: { type: Type.NUMBER },
-                fatoresCriticosBloqueio: { type: Type.ARRAY, items: { type: Type.STRING } },
-                servicosNecessariosIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                classificacaoElegibilidade: { type: Type.STRING }, scoreEstimado: { type: Type.STRING },
+      // Tentativa 1: payload completo (limitado). Tentativa 2: payload reduzido.
+      const stage1Attempts: Array<{ maxItems: number; maxChars: number }> = [
+        { maxItems: 5, maxChars: 60_000 },
+        { maxItems: 2, maxChars: 15_000 },
+      ];
+
+      for (const attempt of stage1Attempts) {
+        try {
+          const stage1Response = await generateContentWithFallback(ai, {
+            contents: buildStage1Prompt(buildConsultationsBlock(attempt.maxItems, attempt.maxChars)),
+            config: {
+              responseMimeType: "application/json",
+              temperature: 0.1,
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  totalDividasNegativadas: { type: Type.NUMBER }, quantidadeNegativacoes: { type: Type.NUMBER },
+                  totalProtestos: { type: Type.NUMBER }, quantidadeProtestos: { type: Type.NUMBER },
+                  totalAcoesJudiciaisOuCheques: { type: Type.NUMBER }, temApontamentosSCRBacen: { type: Type.BOOLEAN },
+                  resumoBacen: { type: Type.STRING }, situacaoFiscalCadastral: { type: Type.STRING },
+                  capacidadeTomadaPronampe: { type: Type.NUMBER }, capacidadeTomadaGeral: { type: Type.NUMBER },
+                  fatoresCriticosBloqueio: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  servicosNecessariosIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  classificacaoElegibilidade: { type: Type.STRING }, scoreEstimado: { type: Type.STRING },
+                },
+                required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado"],
               },
-              required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado"],
-            },
-          }
-        });
+            }
+          }, 60_000);
 
-        if (stage1Response && stage1Response.text) {
-          const rawStage1 = stage1Response.text.replace(/```json/g, "").replace(/```/g, "").trim();
-          auditResult = JSON.parse(rawStage1);
-          console.log(`[PROSFEC IA] Etapa 1 concluída com sucesso:`, {
-            elegibilidade: auditResult.classificacaoElegibilidade,
-            dividas: auditResult.totalDividasNegativadas,
-            protestos: auditResult.totalProtestos,
-            servicos: auditResult.servicosNecessariosIds
-          });
+          if (stage1Response && stage1Response.text) {
+            const rawStage1 = stage1Response.text.replace(/```json/g, "").replace(/```/g, "").trim();
+            try {
+              auditResult = JSON.parse(rawStage1);
+            } catch (parseErr) {
+              invalidJson = true;
+              stage1Failure = parseErr;
+              console.error("[PROSFEC IA] Etapa 1 retornou JSON inválido.");
+              continue;
+            }
+            invalidJson = false;
+            stage1Failure = null;
+            console.log(`[PROSFEC IA] Etapa 1 concluída com sucesso:`, {
+              elegibilidade: auditResult.classificacaoElegibilidade,
+              dividas: auditResult.totalDividasNegativadas,
+              protestos: auditResult.totalProtestos,
+              servicos: auditResult.servicosNecessariosIds
+            });
+            break;
+          }
+        } catch (stage1Err: any) {
+          stage1Failure = stage1Err;
+          const detail = describeGeminiFailure(stage1Err);
+          console.error(
+            `[PROSFEC IA] Etapa 1 (Auditoria) falhou [${detail.code}] para o lead ${leadId}: ${String(stage1Err?.message || stage1Err).slice(0, 500)}`,
+          );
+          // Só vale a pena repetir com payload reduzido quando o problema é tamanho.
+          if (detail.code !== "GEMINI_PAYLOAD") break;
         }
-      } catch (stage1Err) {
-        console.warn("[PROSFEC IA] Etapa 1 (Auditoria) falhou ou retornou formato inválido. Prosseguindo com fallback de triagem:", stage1Err);
       }
 
       if (!auditResult) {
-        throw Object.assign(new Error("A auditoria da IA não pôde validar os dados da consulta. Tente novamente; nenhum laudo estimado foi salvo."), { statusCode: 503 });
+        if (invalidJson || !stage1Failure) {
+          throw Object.assign(
+            new Error("A auditoria da IA não pôde validar os dados da consulta. Tente novamente; nenhum laudo estimado foi salvo."),
+            { statusCode: 503 },
+          );
+        }
+        const detail = describeGeminiFailure(stage1Failure);
+        throw Object.assign(new Error(detail.message), { statusCode: detail.statusCode, code: detail.code });
       }
 
       // =========================================================================
