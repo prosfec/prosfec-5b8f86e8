@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { doc, updateDoc, collection, query, where, getDocs, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../firebase";
@@ -646,6 +646,17 @@ export default function LeadWorkspaceModal({
   const [localQueryError, setLocalQueryError] = useState<string | null>(null);
   const [localQuerySuccess, setLocalQuerySuccess] = useState<string | null>(null);
   const [selectedQueryDocument, setSelectedQueryDocument] = useState(lead.cnpj || "");
+  const queryRequestIdRef = useRef<string | null>(null);
+
+  const authenticatedHeaders = async (requestId?: string) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Sua sessão expirou. Entre novamente para continuar.");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${await user.getIdToken()}`,
+      ...(requestId ? { "X-Idempotency-Key": requestId } : {}),
+    };
+  };
 
   // Fetch local credit query catalog
   useEffect(() => {
@@ -733,13 +744,18 @@ export default function LeadWorkspaceModal({
     setLocalQueryError(null);
     setLocalQuerySuccess(null);
     try {
+      if (!localCatalog.length || !selectedProductCode) {
+        throw new Error("A tabela oficial de consultas ainda não foi carregada. Tente novamente.");
+      }
+      const requestId = queryRequestIdRef.current || crypto.randomUUID();
+      queryRequestIdRef.current = requestId;
       const effectivePartnerId = (currentPartner?.id && currentPartner.id !== "admin")
         ? currentPartner.id
         : ((lead as any).parceiroId || (lead as any).partnerId || (lead as any).parceiro_id || (lead as any).parentPartnerId || currentPartner?.id || "admin");
 
       const res = await fetch("/api/credit/consultas", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await authenticatedHeaders(requestId),
         body: JSON.stringify({
           partnerId: effectivePartnerId,
           partnerNome: currentPartner?.nome || "Parceiro",
@@ -755,8 +771,10 @@ export default function LeadWorkspaceModal({
         throw new Error(`A API do servidor retornou uma resposta inválida (Status ${res.status}).`);
       }
       if (!res.ok || !data.success) {
+        if (res.status < 500 && res.status !== 409) queryRequestIdRef.current = null;
         throw new Error(data?.error || "Erro ao executar consulta.");
       }
+      queryRequestIdRef.current = null;
       setLocalQuerySuccess(
         `Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}` +
         (data.debitWarning ? ` — ${data.debitWarning}` : "")
@@ -818,7 +836,7 @@ export default function LeadWorkspaceModal({
     try {
       const res = await fetch("/api/credit/diagnostico-prosfec", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await authenticatedHeaders(),
         body: JSON.stringify({
           leadId: lead.id,
           partnerId: currentPartner?.id || "admin"
