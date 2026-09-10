@@ -1392,23 +1392,26 @@ REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_se
    - **4. Matriz de Intervenção Técnica PROSFEC**: Justificativa objetiva de cada serviço técnico necessário.
    - **5. Cronograma Recomendado para o Passo 6 (Plano de Ação)**.
 
-4. ESTRUTURAÇÃO DE DADOS EM JSON OBRIGATÓRIOS AO FINAL:
-   Inclua dois blocos JSON delimitados estritamente ao final do relatório:
+4. COMPORTAMENTO PARA PERFIS SAUDÁVEIS (APTOS) — OBRIGATÓRIO:
+   - Se os relatórios auditados indicarem 0 restrições (0 dívidas, 0 protestos, 0 pendências, sem prejuízo SCR), o bloco json_subetapas NÃO PODE conter nenhum passo de reabilitação, renegociação, limpa nome ou saneamento. Ele deve conter apenas 1 ou 2 passos focados em: "Empresa Apta para Captação" e/ou "Estruturação de Linhas de Crédito".
+   - Se não houver protestos, a quantidade de protestos em qualquer JSON DEVE ser estritamente 0 (nunca 1 com valor 0). O mesmo vale para dívidas e pendências: quantidade 0 e valor 0.
+   - O bloco json_servicos DEVE OMITIR o "Programa de Reabilitação Financeira e Creditícia" e qualquer serviço corretivo (Limpa Nome, Baixa de Protesto, Saneamento SCR) quando o cliente não possuir a restrição correspondente. Para empresa 100% limpa, json_servicos deve ser [] ou conter APENAS serviços preventivos/estruturantes do CATÁLOGO ATIVO.
+
+5. ESTRUTURAÇÃO DE DADOS EM JSON OBRIGATÓRIOS AO FINAL:
+   Inclua dois blocos JSON delimitados estritamente ao final do relatório.
+   ATENÇÃO: os esqueletos abaixo são apenas moldes de formato. Os textos entre colchetes são placeholders — é PROIBIDO copiá-los ou inventar valores; preencha EXCLUSIVAMENTE com dados reais do CATÁLOGO ATIVO e da auditoria da Etapa 1.
 
    A) Bloco \`\`\`json_servicos com a lista de serviços RECOMENDADOS (somente os estritamente necessários presentes no CATÁLOGO ATIVO, ou [] se o perfil estiver 100% livre de restrições):
    \`\`\`json_servicos
    [
-     { "id": "serv_reabilitacao", "nome": "Programa de Reabilitação Financeira e Creditícia", "valor": 0, "justificativa": "Motivo técnico baseado nos apontamentos auditados" }
+     { "id": "[id exato de um serviço do CATÁLOGO ATIVO]", "nome": "[nome exato do serviço no catálogo]", "valor": "[valor exato do serviço no catálogo]", "justificativa": "[motivo técnico baseado APENAS nos apontamentos auditados]" }
    ]
    \`\`\`
 
    B) Bloco \`\`\`json_subetapas contendo as sub-etapas acionáveis da Etapa 6 (Estruturação) em ordem cronológica de execução:
    \`\`\`json_subetapas
    [
-     { "titulo": "Renegociação e Repactuação de Dívidas dos Credores", "preco": 0 },
-     { "titulo": "Procedimento Liminar Limpa Nome nos Órgãos de Proteção", "preco": 0 },
-     { "titulo": "Regularização, Atualização e Saneamento SCR/BACEN", "preco": 0 },
-     { "titulo": "Melhoria e Adequação unificada do Rating de Crédito e Score", "preco": 1100 }
+     { "titulo": "[etapa baseada APENAS nos dados auditados]", "preco": "[valor exato do catálogo ou 0]" }
    ]
    \`\`\``;
 
