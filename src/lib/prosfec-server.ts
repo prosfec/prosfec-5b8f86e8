@@ -553,15 +553,11 @@ export function createExpressApp() {
         console.warn("Could not load custom base prices from config:", err);
       }
 
-      if (!Object.keys(customBasePrices).length) {
-        return res.status(503).json({ success: false, error: "Tabela oficial de preços indisponível." });
-      }
-
-      const partnerCatalog = FALLBACK_CATALOG.filter((item: any) => customBasePrices[item.code] !== undefined).map((item: any) => {
-        let origPrice = item.price;
-        if (customBasePrices[item.code] !== undefined) {
-          origPrice = Number(customBasePrices[item.code]);
-        }
+      // Base oficial do sistema + override de preço personalizado do Admin (quando existir).
+      const partnerCatalog = FALLBACK_CATALOG.map((item: any) => {
+        const override = Number(customBasePrices[item.code]);
+        const origPrice = Number.isFinite(override) && override >= 0 ? override : Number(item.price);
+        if (!Number.isFinite(origPrice) || origPrice < 0) return null;
 
         // Apply 40% margin markup for partner selling price (e.g. 49.90 * 1.40 = 69.86)
         const partnerPrice = Number((origPrice * 1.40).toFixed(2));
@@ -571,7 +567,11 @@ export function createExpressApp() {
           originalPrice: origPrice,
           price: partnerPrice
         };
-      });
+      }).filter(Boolean);
+
+      if (!partnerCatalog.length) {
+        return res.status(503).json({ success: false, error: "Tabela oficial de preços indisponível." });
+      }
 
       return res.json({ success: true, catalog: partnerCatalog });
     } catch (err: any) {
@@ -635,14 +635,17 @@ export function createExpressApp() {
       const isAdminUser = caller.isAdmin;
       if (!isAdminUser && !partnerData) return res.status(404).json({ error: "Parceiro não encontrado no sistema." });
 
-      const configData: any = await getDocRest("configuracoes/precos_consultas");
-      if (!configData?.precos || configData.precos[codeToUse] === undefined) {
-        return res.status(503).json({ error: "Tabela oficial de preços indisponível. Tente novamente em instantes." });
+      let configData: any = null;
+      try {
+        configData = await getDocRest("configuracoes/precos_consultas");
+      } catch (cfgErr: any) {
+        console.warn("Could not load official prices config:", cfgErr?.message || "erro");
       }
       const catalogItem = FALLBACK_CATALOG.find((item: any) => item.code === codeToUse);
       if (!catalogItem) return res.status(400).json({ error: "Produto de consulta inválido." });
-      const origPrice = Number(configData.precos[codeToUse]);
-      if (!Number.isFinite(origPrice) || origPrice < 0) return res.status(503).json({ error: "Preço oficial inválido." });
+      const overridePrice = Number(configData?.precos?.[codeToUse]);
+      const origPrice = Number.isFinite(overridePrice) && overridePrice >= 0 ? overridePrice : Number(catalogItem.price);
+      if (!Number.isFinite(origPrice) || origPrice < 0) return res.status(503).json({ error: "Preço oficial indisponível para este produto." });
       const partnerPrice = Number((origPrice * 1.4).toFixed(2));
       const produtoNome = catalogItem.name;
 
