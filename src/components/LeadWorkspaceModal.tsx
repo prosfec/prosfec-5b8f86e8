@@ -683,34 +683,53 @@ export default function LeadWorkspaceModal({
   };
 
   // Fetch local credit query catalog (reutilizável para o botão "Tentar novamente")
+  const CREDIT_CATALOG_FALLBACK = [
+    {
+      code: "REDEBE_DIAGNOSTICO_360",
+      name: "Rating de Crédito + Diagnóstico Finan. 360",
+      originalPrice: 49.9,
+      price: 69.86,
+    },
+  ];
+
+  const applyFallbackCatalog = (message: string) => {
+    setLocalCatalog(CREDIT_CATALOG_FALLBACK);
+    setSelectedProductCode(CREDIT_CATALOG_FALLBACK[0].code);
+    setUsingFallbackCatalog(true);
+    setLocalCatalogError(message);
+  };
+
   const fetchLocalCatalog = async (): Promise<boolean> => {
     setLoadingLocalCatalog(true);
     setLocalCatalogError(null);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     try {
-      const res = await fetch("/api/credit/catalogo");
+      const res = await fetch("/api/credit/catalogo", { signal: controller.signal });
       const payload = await res.json().catch(() => null);
       const catalog = Array.isArray(payload?.catalog) ? payload.catalog : [];
       if (res.ok && payload?.success && catalog.length > 0) {
         setLocalCatalog(catalog);
+        setUsingFallbackCatalog(false);
+        setLocalCatalogError(null);
         setSelectedProductCode((prev) =>
           prev && catalog.some((item: any) => item.code === prev) ? prev : catalog[0].code
         );
         return true;
       }
-      setLocalCatalog([]);
-      setSelectedProductCode("");
-      setLocalCatalogError(payload?.error || "Tabela oficial de preços indisponível.");
+      console.error("[PROSFEC] Catálogo de consultas indisponível:", payload?.error || res.status);
+      applyFallbackCatalog("Valor de referência (tabela oficial indisponível no momento).");
       return false;
     } catch (err) {
       console.error("Error fetching credit catalog in modal:", err);
-      setLocalCatalog([]);
-      setSelectedProductCode("");
-      setLocalCatalogError("Não foi possível carregar a tabela oficial de preços.");
+      applyFallbackCatalog("Valor de referência (falha ao carregar a tabela oficial).");
       return false;
     } finally {
+      clearTimeout(timeoutId);
       setLoadingLocalCatalog(false);
     }
   };
+
 
   useEffect(() => {
     fetchLocalCatalog();
