@@ -708,7 +708,10 @@ export default function LeadWorkspaceModal({
       }
 
       const constraints: any[] = [where("documento", "in", docsToMatch)];
-      if (!isAdmin && currentPartner?.id) constraints.push(where("partnerId", "==", currentPartner.id));
+      // O filtro precisa usar o MESMO identificador aceito pelas regras do
+      // Firestore, senão a listagem é negada por permissão.
+      const ownerId = currentPartner?.id || auth.currentUser?.uid || "";
+      if (!isAdmin && ownerId) constraints.push(where("partnerId", "==", ownerId));
       const q = query(collection(db, "consultas_realizadas"), ...constraints);
       
       const querySnap = await getDocs(q);
