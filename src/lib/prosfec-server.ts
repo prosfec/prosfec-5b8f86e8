@@ -934,8 +934,8 @@ export function createExpressApp() {
       try {
         const fastConfig = {
           ...(requestOptions?.config || {}),
-          // Desliga o raciocínio interno (principal causa de lentidão).
-          thinkingConfig: { thinkingBudget: 0 },
+          // Desliga o raciocínio interno (principal causa de lentidão) — só na família 2.5.
+          ...(modelName.startsWith("gemini-2.5") ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
         };
         const response = await Promise.race([
           ai.models.generateContent({ ...requestOptions, config: fastConfig, model: modelName }),
