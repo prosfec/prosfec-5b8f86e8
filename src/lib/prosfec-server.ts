@@ -1266,10 +1266,10 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num√
       let stage1Failure: any = null;
       let invalidJson = false;
 
-      // Tentativa 1: payload completo (limitado). Tentativa 2: payload reduzido.
+      // Tentativa 1: payload j√° enxuto. Tentativa 2 (s√≥ por tamanho): payload m√≠nimo.
       const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number }> = [
-        { maxItems: 5, maxChars: 60_000, timeoutMs: 45_000 },
-        { maxItems: 2, maxChars: 15_000, timeoutMs: 20_000 },
+        { maxItems: 1, maxChars: 12_000, timeoutMs: 8_000 },
+        { maxItems: 1, maxChars: 5_000, timeoutMs: 6_000 },
       ];
 
       for (const attempt of stage1Attempts) {
@@ -1279,6 +1279,7 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num√
             config: {
               responseMimeType: "application/json",
               temperature: 0.1,
+              maxOutputTokens: 800,
               responseSchema: {
                 type: Type.OBJECT,
                 properties: {
