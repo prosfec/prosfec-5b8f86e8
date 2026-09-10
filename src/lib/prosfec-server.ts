@@ -509,13 +509,9 @@ export function createExpressApp() {
   });
 
   // --- CREDIT QUERY API INTEGRATION (REDEBE API) ---
-  let REDEBE_TOKEN = optionalEnv("REDEBE_TOKEN");
   const REDEBE_API_URL = "https://consultas.redebe.com.br/api/v1/credito/diagnostico-inteligente";
 
-  let INTEGRADOR_API_KEY = optionalEnv("INTEGRADOR_API_KEY");
-  if (INTEGRADOR_API_KEY === "Tony@3419") {
-    INTEGRADOR_API_KEY = "intg_Rx5O65qGdNeY6vR1RFjSiKYH0AmXqE0GYFitRYiqf-c";
-  }
+  const INTEGRADOR_API_KEY = optionalEnv("INTEGRADOR_API_KEY");
 
   let INTEGRADOR_BASE_URL = optionalEnv("INTEGRADOR_API_BASE_URL");
   if (!INTEGRADOR_BASE_URL || !INTEGRADOR_BASE_URL.startsWith("http")) {
@@ -2167,7 +2163,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
     } catch (err: any) {
       console.error("[RTB] Error in /api/credit/analise-rtb-ccb:", err);
-      return res.status(500).json({ error: err.message || "Erro interno ao processar a auditoria de CCB (RTB)." });
+      return res.status(err?.statusCode || 500).json({ error: err.message || "Erro interno ao processar a auditoria de CCB (RTB)." });
     }
   });
 
