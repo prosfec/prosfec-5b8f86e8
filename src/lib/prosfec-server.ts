@@ -998,13 +998,14 @@ export function createExpressApp() {
 
 
       // Check generation count limit (Initial generation = 1, Refazer = 2 max)
+      // Administradores/staff internos são isentos do limite de reanálises.
       const previousGeracoesCount = Number(
         leadData.diagnosticoPROSFEC?.geracoesCount ||
         leadData.diagnosticoGeracoesCount ||
         (leadData.diagnosticoPROSFEC ? 1 : 0)
       );
 
-      if (previousGeracoesCount >= 2) {
+      if (!caller.isAdmin && previousGeracoesCount >= 2) {
         return res.status(400).json({
           success: false,
           error: "O diagnóstico de IA já foi refeito 1 vez. O limite máximo de reanálises foi atingido para este lead."

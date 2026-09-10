@@ -861,7 +861,7 @@ export default function LeadWorkspaceModal({
   // Generate PROSFEC IA Diagnosis via Backend Route
   const handleGeneratePROSFECDiagnostico = async () => {
     const currentCount = diagnosticoPROSFEC?.geracoesCount || lead?.diagnosticoGeracoesCount || (diagnosticoPROSFEC ? 1 : 0);
-    if (diagnosticoPROSFEC && currentCount >= 2) {
+    if (!isAdminUser && diagnosticoPROSFEC && currentCount >= 2) {
       setWorkspaceError("O diagnóstico de IA já foi refeito 1 vez. O limite máximo de reanálises foi atingido para este lead.");
       return;
     }
