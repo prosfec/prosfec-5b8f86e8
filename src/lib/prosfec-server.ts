@@ -1544,7 +1544,11 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
     } catch (err: any) {
       if (diagnosisLockPath) await patchDocRest(diagnosisLockPath, { status: "falha", dataConclusao: new Date().toISOString() }).catch(() => undefined);
       console.error("Error generating PROSFEC IA Diagnosis:", err);
-      return res.status(err?.statusCode || 500).json({ error: err.message || "Erro interno ao gerar o diagnóstico PROSFEC IA." });
+      return res.status(err?.statusCode || 500).json({
+        success: false,
+        code: err?.code,
+        error: err.message || "Erro interno ao gerar o diagnóstico PROSFEC IA.",
+      });
     }
   });
 
