@@ -323,7 +323,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
     : "text-[#C53030]";
 
   // Serviços Recomendados
-  const rawServices = lead?.servicosRecomendados || diagnostico?.servicosRecomendados || [];
+  const rawServices = diagnostico?.servicosRecomendados ?? lead?.servicosRecomendados ?? [];
   const displayServices = Array.isArray(rawServices) ? rawServices : [];
   const actionSteps = Array.isArray(diagnostico?.subEtapasPasso6)
     ? diagnostico.subEtapasPasso6

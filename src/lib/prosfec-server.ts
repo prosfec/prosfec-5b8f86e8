@@ -1458,11 +1458,31 @@ REGRA 4: CLASSIFICAÇÃO LITERAL. A chave valor_negativacoes deve ser preenchida
         return JSON.parse(normalized);
       };
 
+      const extractStructuredBlock = (source: string, key: "json_servicos" | "json_subetapas"): unknown => {
+        const taggedMatch = source.match(new RegExp(`\\`\\`\\`\\s*${key}\\s*([\\s\\S]*?)\\s*\\`\\`\\``, "i"));
+        if (taggedMatch?.[1]) return parseMarkdownJson(taggedMatch[1]);
+
+        const genericBlocks = source.matchAll(/```\s*json\s*([\s\S]*?)\s*```/gi);
+        for (const block of genericBlocks) {
+          if (!block[1]) continue;
+          try {
+            const parsed = parseMarkdownJson(block[1]);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && key in parsed) {
+              return (parsed as Record<string, unknown>)[key];
+            }
+          } catch {
+            // Outro bloco JSON pode pertencer a uma seção diferente do laudo.
+          }
+        }
+        return undefined;
+      };
+
       // Extract json_servicos
       const matchServicos = responseText.match(/```\s*json_servicos\s*([\s\S]*?)\s*```/i);
-      if (matchServicos && matchServicos[1]) {
+      const servicosBlock = extractStructuredBlock(responseText, "json_servicos");
+      if (servicosBlock !== undefined) {
         try {
-          const parsedServ = parseMarkdownJson(matchServicos[1]);
+          const parsedServ = servicosBlock;
           if (Array.isArray(parsedServ)) {
             const rawServs: any[] = parsedServ
               .filter((item: any) => item && typeof item === "object" && typeof (item.nome || item.servico) === "string")
@@ -1534,9 +1554,10 @@ REGRA 4: CLASSIFICAÇÃO LITERAL. A chave valor_negativacoes deve ser preenchida
 
       // Extract custom sub-etapas for Step 6 from json_subetapas block
       const matchSubEtapas = cleanText.match(/```\s*json_subetapas\s*([\s\S]*?)\s*```/i);
-      if (matchSubEtapas && matchSubEtapas[1]) {
+      const subEtapasBlock = extractStructuredBlock(cleanText, "json_subetapas");
+      if (subEtapasBlock !== undefined) {
         try {
-          const parsedArray = parseMarkdownJson(matchSubEtapas[1]);
+          const parsedArray = subEtapasBlock;
           if (Array.isArray(parsedArray) && parsedArray.length > 0) {
             customSubEtapas = parsedArray.filter((item: any) =>
               (typeof item === "string" && item.trim().length > 0) ||
