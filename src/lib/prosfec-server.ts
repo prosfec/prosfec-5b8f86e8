@@ -540,7 +540,7 @@ export function createExpressApp() {
     }
   });
 
-  // 1. List Credit Catalog (RedeBe 360 product at R$ 49.90 + 40% Prosfec profit = R$ 69.86)
+  // 1. List Credit Catalog from the official Firestore configuration.
   app.get("/api/credit/catalogo", async (req, res) => {
     try {
       console.log("Loading credit catalog for RedeBe and custom base prices...");
@@ -553,7 +553,11 @@ export function createExpressApp() {
         console.warn("Could not load custom base prices from config:", err);
       }
 
-      const partnerCatalog = FALLBACK_CATALOG.map((item: any) => {
+      if (!Object.keys(customBasePrices).length) {
+        return res.status(503).json({ success: false, error: "Tabela oficial de preços indisponível." });
+      }
+
+      const partnerCatalog = FALLBACK_CATALOG.filter((item: any) => customBasePrices[item.code] !== undefined).map((item: any) => {
         let origPrice = item.price;
         if (customBasePrices[item.code] !== undefined) {
           origPrice = Number(customBasePrices[item.code]);
@@ -572,13 +576,7 @@ export function createExpressApp() {
       return res.json({ success: true, catalog: partnerCatalog });
     } catch (err: any) {
       console.error("Error in /api/credit/catalogo:", err);
-      const partnerCatalog = FALLBACK_CATALOG.map((item: any) => ({
-        code: item.code,
-        name: item.name,
-        originalPrice: item.price,
-        price: Number((item.price * 1.40).toFixed(2))
-      }));
-      return res.json({ success: true, catalog: partnerCatalog, isFallback: true });
+      return res.status(503).json({ success: false, error: "Tabela oficial de preços indisponível." });
     }
   });
 
@@ -2610,7 +2608,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   const authenticateApiCaller = async (req: any): Promise<{ uid: string; email: string; isAdmin: boolean; partnerId: string }> => {
     const token = extractToken(req, "authorization");
     if (!token) throw Object.assign(new Error("Autenticação obrigatória."), { statusCode: 401 });
-    const apiKey = requireEnv("FIREBASE_API_KEY");
+    const apiKey = firstEnv("FIREBASE_API_KEY", "GOOGLE_API_KEY") || (firebaseConfig as any).apiKey;
+    if (!apiKey) throw Object.assign(new Error("Firebase Auth não configurado no servidor."), { statusCode: 503 });
     const response = await fetchWithTimeout(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(apiKey)}`, {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: token }),
     }, 10_000);

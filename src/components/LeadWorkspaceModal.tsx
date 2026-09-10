@@ -759,6 +759,7 @@ export default function LeadWorkspaceModal({
         body: JSON.stringify({
           partnerId: effectivePartnerId,
           partnerNome: currentPartner?.nome || "Parceiro",
+          leadId: lead.id,
           produtoCode: selectedProductCode,
           documento: selectedQueryDocument.replace(/\D/g, "")
         })
