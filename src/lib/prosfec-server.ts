@@ -925,14 +925,20 @@ export function createExpressApp() {
     };
   }
 
-  async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 30_000) {
-    const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
+  async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 8_000) {
+    // Modelos mais rápidos primeiro; nunca usar modelos "pro" nesta rota.
+    const candidateModels = ["gemini-2.5-flash-lite", "gemini-2.0-flash"];
     let lastError: any = null;
 
     for (const modelName of candidateModels) {
       try {
+        const fastConfig = {
+          ...(requestOptions?.config || {}),
+          // Desliga o raciocínio interno (principal causa de lentidão) — só na família 2.5.
+          ...(modelName.startsWith("gemini-2.5") ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+        };
         const response = await Promise.race([
-          ai.models.generateContent({ ...requestOptions, model: modelName }),
+          ai.models.generateContent({ ...requestOptions, config: fastConfig, model: modelName }),
           new Promise((_, reject) => setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), timeoutMs)),
         ]);
         if (response && response.text) {
@@ -959,6 +965,9 @@ export function createExpressApp() {
 
   app.post("/api/credit/diagnostico-prosfec", async (req, res) => {
     let diagnosisLockPath = "";
+    const routeStartedAt = Date.now();
+    // Orçamento total das chamadas de IA nesta rota (mantém a resposta dentro do limite do servidor).
+    const TOTAL_AI_BUDGET_MS = 22_000;
     try {
       const caller = await authenticateApiCaller(req);
       const { leadId } = req.body;
@@ -1082,27 +1091,51 @@ export function createExpressApp() {
       }
 
 
-      // Compile summaries of consultations (mais recentes primeiro, sem campos pesados)
-      const HEAVY_RESULT_FIELDS = [
-        "html_report", "pdf_report", "raw_response", "html", "pdf", "pdf_base64",
-        "base64", "arquivo", "arquivo_base64", "conteudo_html", "xml", "rawXml",
-      ];
+      // Whitelist: só os blocos vitais do relatório vão para a IA.
+      const VITAL_KEY_PATTERN =
+        /(score|rating|divida|dívida|negativa|protesto|pendencia|pendência|restric|restriç|acao_judicial|ação|cheque|situacao|situação|cadastral|fiscal|scr|bacen|serasa|spc|resumo|total|quantidade|valor)/i;
+
+      // Extrai recursivamente apenas o que interessa, podando nulos, vazios e listas longas.
+      const extractVitalReport = (input: any, depth = 0): any => {
+        if (input == null || depth > 4) return undefined;
+        if (Array.isArray(input)) {
+          const items = input
+            .slice(0, 15)
+            .map((i) => (typeof i === "object" ? extractVitalReport(i, depth + 1) : i))
+            .filter((i) => i !== undefined && i !== null && i !== "");
+          return items.length ? items : undefined;
+        }
+        if (typeof input !== "object") {
+          const v = typeof input === "string" ? input.slice(0, 600) : input;
+          return v === "" ? undefined : v;
+        }
+        const out: any = {};
+        for (const key of Object.keys(input)) {
+          const val = (input as any)[key];
+          if (val == null || val === "" || val === "0" || val === false) continue;
+          const isVital = VITAL_KEY_PATTERN.test(key);
+          if (typeof val === "object") {
+            // Desce em containers mesmo sem nome vital (o dado vital pode estar aninhado).
+            const nested = extractVitalReport(val, depth + 1);
+            if (nested !== undefined) out[key] = nested;
+          } else if (isVital) {
+            const leaf = extractVitalReport(val, depth + 1);
+            if (leaf !== undefined) out[key] = leaf;
+          }
+        }
+        return Object.keys(out).length ? out : undefined;
+      };
 
       const consultationsSummary = [...matchingConsultas]
         .sort((a, b) => (Date.parse(String(b.dataConsulta || "")) || 0) - (Date.parse(String(a.dataConsulta || "")) || 0))
-        .slice(0, 5)
-        .map(c => {
-          const cleanResult: any = { ...(c.resultado || {}) };
-          for (const field of HEAVY_RESULT_FIELDS) delete cleanResult[field];
-
-          return {
-            id: c.id,
-            produto: c.produto_nome,
-            codigo: c.produto_code,
-            data: c.dataConsulta,
-            resumo_resultado: cleanResult
-          };
-        });
+        .slice(0, 3)
+        .map(c => ({
+          id: c.id,
+          produto: c.produto_nome,
+          codigo: c.produto_code,
+          data: c.dataConsulta,
+          resumo_resultado: extractVitalReport(c.resultado) || {},
+        }));
 
       // Serializa os relatórios com corte por tamanho para não estourar o limite da IA.
       const buildConsultationsBlock = (maxItems: number, maxChars: number): string => {
@@ -1236,10 +1269,10 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
       let stage1Failure: any = null;
       let invalidJson = false;
 
-      // Tentativa 1: payload completo (limitado). Tentativa 2: payload reduzido.
+      // Tentativa 1: payload já enxuto. Tentativa 2 (só por tamanho): payload mínimo.
       const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number }> = [
-        { maxItems: 5, maxChars: 60_000, timeoutMs: 45_000 },
-        { maxItems: 2, maxChars: 15_000, timeoutMs: 20_000 },
+        { maxItems: 1, maxChars: 12_000, timeoutMs: 8_000 },
+        { maxItems: 1, maxChars: 5_000, timeoutMs: 6_000 },
       ];
 
       for (const attempt of stage1Attempts) {
@@ -1249,6 +1282,7 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
             config: {
               responseMimeType: "application/json",
               temperature: 0.1,
+              maxOutputTokens: 800,
               responseSchema: {
                 type: Type.OBJECT,
                 properties: {
@@ -1370,12 +1404,23 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
    ]
    \`\`\``;
 
+      // Guarda de tempo total: se a Etapa 1 já consumiu o orçamento, não inicia a Etapa 2.
+      const elapsedMs = Date.now() - routeStartedAt;
+      const remainingMs = TOTAL_AI_BUDGET_MS - elapsedMs;
+      if (remainingMs < 4_000) {
+        throw Object.assign(
+          new Error("A IA demorou demais para responder. Tente gerar o diagnóstico novamente."),
+          { statusCode: 504, code: "GEMINI_TIMEOUT" },
+        );
+      }
+
       const response = await generateContentWithFallback(ai, {
         contents: stage2SystemPrompt,
         config: {
-          temperature: 0.2
+          temperature: 0.2,
+          maxOutputTokens: 2200,
         }
-      });
+      }, Math.min(12_000, remainingMs));
 
       const responseText = response.text || "";
 
