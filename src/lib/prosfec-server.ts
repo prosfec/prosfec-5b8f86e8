@@ -873,14 +873,59 @@ export function createExpressApp() {
     if (!aiClient) {
       const key = optionalEnv("GEMINI_API_KEY");
       if (!key) {
-        throw new Error("A chave GEMINI_API_KEY não foi encontrada no arquivo .env ou no painel de controle.");
+        throw Object.assign(
+          new Error("Configuração ausente: a chave GEMINI_API_KEY não está definida no ambiente do servidor."),
+          { statusCode: 500, code: "GEMINI_KEY_MISSING" },
+        );
       }
       aiClient = new GoogleGenAI({ apiKey: key });
     }
     return aiClient;
   }
 
-  async function generateContentWithFallback(ai: any, requestOptions: any) {
+  // Classifica o erro bruto do provedor de IA em algo acionável para o cliente.
+  function describeGeminiFailure(err: any): { statusCode: number; message: string; code: string } {
+    const rawStatus = Number(err?.status ?? err?.statusCode ?? err?.code);
+    const text = String(err?.message || "");
+    if (err?.code === "GEMINI_KEY_MISSING") {
+      return { statusCode: 500, code: "GEMINI_KEY_MISSING", message: err.message };
+    }
+    if (text.includes("GEMINI_TIMEOUT")) {
+      return {
+        statusCode: 504,
+        code: "GEMINI_TIMEOUT",
+        message: "A IA demorou demais para responder. Tente gerar o diagnóstico novamente.",
+      };
+    }
+    if (rawStatus === 429 || /RESOURCE_EXHAUSTED|quota/i.test(text)) {
+      return {
+        statusCode: 429,
+        code: "GEMINI_QUOTA",
+        message: "O limite de uso da IA foi atingido no momento. Aguarde alguns instantes e tente novamente.",
+      };
+    }
+    if (rawStatus === 401 || rawStatus === 403 || /API key|PERMISSION_DENIED|UNAUTHENTICATED/i.test(text)) {
+      return {
+        statusCode: 500,
+        code: "GEMINI_AUTH",
+        message: "A chave de acesso da IA foi recusada pelo provedor. Verifique a configuração GEMINI_API_KEY.",
+      };
+    }
+    if (/token|too large|exceeds|INVALID_ARGUMENT/i.test(text)) {
+      return {
+        statusCode: 502,
+        code: "GEMINI_PAYLOAD",
+        message: "O relatório da consulta é grande demais para a análise da IA. Tente novamente; o conteúdo será reduzido.",
+      };
+    }
+    return {
+      statusCode: 502,
+      code: "GEMINI_UPSTREAM",
+      message: "A IA não conseguiu responder no momento. Tente novamente em instantes.",
+    };
+  }
+
+  async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 30_000) {
     const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastError: any = null;
 
@@ -888,15 +933,21 @@ export function createExpressApp() {
       try {
         const response = await Promise.race([
           ai.models.generateContent({ ...requestOptions, model: modelName }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), 30_000)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), timeoutMs)),
         ]);
         if (response && response.text) {
           return response;
         }
+        lastError = Object.assign(new Error(`O modelo ${modelName} retornou resposta vazia.`), {
+          code: "GEMINI_EMPTY",
+        });
       } catch (err: any) {
         lastError = err;
-        // If resource exhausted (429) or invalid model (404), skip to next candidate immediately
         const status = err?.status || err?.code;
+        console.error(
+          `[PROSFEC IA] Falha no modelo ${modelName} (status: ${status ?? "n/d"}): ${String(err?.message || err).slice(0, 500)}`,
+        );
+        // If resource exhausted (429) or invalid model (404), skip to next candidate immediately
         if (status === 429 || status === 404 || err?.message?.includes("RESOURCE_EXHAUSTED")) {
           continue;
         }
@@ -914,6 +965,16 @@ export function createExpressApp() {
 
       if (!leadId) {
         return res.status(400).json({ error: "O parâmetro leadId é obrigatório." });
+      }
+
+      // Falha rápida de configuração: evita criar trava e consumir leitura à toa.
+      if (!optionalEnv("GEMINI_API_KEY")) {
+        console.error("[PROSFEC IA] GEMINI_API_KEY não configurada no ambiente do servidor.");
+        return res.status(500).json({
+          success: false,
+          code: "GEMINI_KEY_MISSING",
+          error: "A chave de acesso da IA (GEMINI_API_KEY) não está configurada no servidor. Cadastre-a para gerar o diagnóstico.",
+        });
       }
 
       console.log(`Generating PROSFEC IA Diagnosis for lead: ${leadId}...`);
@@ -1021,21 +1082,38 @@ export function createExpressApp() {
       }
 
 
-      // Compile summaries of consultations
-      const consultationsSummary = matchingConsultas.map(c => {
-        const cleanResult = { ...c.resultado };
-        if (cleanResult.html_report) delete cleanResult.html_report;
-        if (cleanResult.pdf_report) delete cleanResult.pdf_report;
-        if (cleanResult.raw_response) delete cleanResult.raw_response;
+      // Compile summaries of consultations (mais recentes primeiro, sem campos pesados)
+      const HEAVY_RESULT_FIELDS = [
+        "html_report", "pdf_report", "raw_response", "html", "pdf", "pdf_base64",
+        "base64", "arquivo", "arquivo_base64", "conteudo_html", "xml", "rawXml",
+      ];
 
-        return {
-          id: c.id,
-          produto: c.produto_nome,
-          codigo: c.produto_code,
-          data: c.dataConsulta,
-          resumo_resultado: cleanResult
-        };
-      });
+      const consultationsSummary = [...matchingConsultas]
+        .sort((a, b) => (Date.parse(String(b.dataConsulta || "")) || 0) - (Date.parse(String(a.dataConsulta || "")) || 0))
+        .slice(0, 5)
+        .map(c => {
+          const cleanResult: any = { ...(c.resultado || {}) };
+          for (const field of HEAVY_RESULT_FIELDS) delete cleanResult[field];
+
+          return {
+            id: c.id,
+            produto: c.produto_nome,
+            codigo: c.produto_code,
+            data: c.dataConsulta,
+            resumo_resultado: cleanResult
+          };
+        });
+
+      // Serializa os relatórios com corte por tamanho para não estourar o limite da IA.
+      const buildConsultationsBlock = (maxItems: number, maxChars: number): string => {
+        if (!consultationsSummary.length) return "Nenhuma consulta de crédito realizada no sistema até o momento.";
+        const slice = consultationsSummary.slice(0, maxItems);
+        let text = JSON.stringify(slice, null, 2);
+        if (text.length > maxChars) {
+          text = `${text.slice(0, maxChars)}\n... [conteúdo truncado por tamanho — analise apenas os dados acima]`;
+        }
+        return text;
+      };
 
       // 3. Load dynamic service price catalog from Firestore
       let activeServicesCatalog: Array<{ id: string; nome: string; valor: number; hublaLink?: string; [key: string]: any }> = [
@@ -1119,7 +1197,7 @@ export function createExpressApp() {
       // =========================================================================
       console.log(`[PROSFEC IA] Iniciando Etapa 1: Auditoria Quantitativa para o Lead ${leadId}`);
 
-      const stage1AuditPrompt = `Você é o Engenheiro Chefe de Risco e Auditor Pericial de Crédito da PROSFEC IA.
+      const buildStage1Prompt = (consultationsBlock: string) => `Você é o Engenheiro Chefe de Risco e Auditor Pericial de Crédito da PROSFEC IA.
 Sua única e estrita função nesta Etapa 1 é realizar a AUDITORIA QUANTITATIVA fria, matemática e pericial dos dados cadastrais e dos relatórios de consultas de crédito (Serasa, SPC, SCR/BACEN, CNDs, etc).
 
 DADOS CADASTRAIS DA EMPRESA:
@@ -1131,7 +1209,7 @@ DADOS CADASTRAIS DA EMPRESA:
 - Sócios: ${leadData.socios ? leadData.socios.map((s: any) => `${s.nome} (CPF: ${s.cpf || "não informado"})`).join(", ") : "Nenhum sócio informado"}
 
 RELATÓRIOS BRUTOS DE CONSULTAS DE CRÉDITO REALIZADAS:
-${consultationsSummary.length > 0 ? JSON.stringify(consultationsSummary, null, 2) : "Nenhuma consulta de crédito realizada no sistema até o momento."}
+${consultationsBlock}
 
 CATÁLOGO OFICIAL DE SERVIÇOS TÉCNICOS DISPONÍVEIS:
 ${catalogPromptText}
@@ -1155,46 +1233,79 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
 }`;
 
       let auditResult: any = null;
+      let stage1Failure: any = null;
+      let invalidJson = false;
 
-      try {
-        const stage1Response = await generateContentWithFallback(ai, {
-          contents: stage1AuditPrompt,
-          config: {
-            responseMimeType: "application/json",
-            temperature: 0.1,
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                totalDividasNegativadas: { type: Type.NUMBER }, quantidadeNegativacoes: { type: Type.NUMBER },
-                totalProtestos: { type: Type.NUMBER }, quantidadeProtestos: { type: Type.NUMBER },
-                totalAcoesJudiciaisOuCheques: { type: Type.NUMBER }, temApontamentosSCRBacen: { type: Type.BOOLEAN },
-                resumoBacen: { type: Type.STRING }, situacaoFiscalCadastral: { type: Type.STRING },
-                capacidadeTomadaPronampe: { type: Type.NUMBER }, capacidadeTomadaGeral: { type: Type.NUMBER },
-                fatoresCriticosBloqueio: { type: Type.ARRAY, items: { type: Type.STRING } },
-                servicosNecessariosIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                classificacaoElegibilidade: { type: Type.STRING }, scoreEstimado: { type: Type.STRING },
+      // Tentativa 1: payload completo (limitado). Tentativa 2: payload reduzido.
+      const stage1Attempts: Array<{ maxItems: number; maxChars: number }> = [
+        { maxItems: 5, maxChars: 60_000 },
+        { maxItems: 2, maxChars: 15_000 },
+      ];
+
+      for (const attempt of stage1Attempts) {
+        try {
+          const stage1Response = await generateContentWithFallback(ai, {
+            contents: buildStage1Prompt(buildConsultationsBlock(attempt.maxItems, attempt.maxChars)),
+            config: {
+              responseMimeType: "application/json",
+              temperature: 0.1,
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  totalDividasNegativadas: { type: Type.NUMBER }, quantidadeNegativacoes: { type: Type.NUMBER },
+                  totalProtestos: { type: Type.NUMBER }, quantidadeProtestos: { type: Type.NUMBER },
+                  totalAcoesJudiciaisOuCheques: { type: Type.NUMBER }, temApontamentosSCRBacen: { type: Type.BOOLEAN },
+                  resumoBacen: { type: Type.STRING }, situacaoFiscalCadastral: { type: Type.STRING },
+                  capacidadeTomadaPronampe: { type: Type.NUMBER }, capacidadeTomadaGeral: { type: Type.NUMBER },
+                  fatoresCriticosBloqueio: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  servicosNecessariosIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  classificacaoElegibilidade: { type: Type.STRING }, scoreEstimado: { type: Type.STRING },
+                },
+                required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado"],
               },
-              required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado"],
-            },
-          }
-        });
+            }
+          }, 60_000);
 
-        if (stage1Response && stage1Response.text) {
-          const rawStage1 = stage1Response.text.replace(/```json/g, "").replace(/```/g, "").trim();
-          auditResult = JSON.parse(rawStage1);
-          console.log(`[PROSFEC IA] Etapa 1 concluída com sucesso:`, {
-            elegibilidade: auditResult.classificacaoElegibilidade,
-            dividas: auditResult.totalDividasNegativadas,
-            protestos: auditResult.totalProtestos,
-            servicos: auditResult.servicosNecessariosIds
-          });
+          if (stage1Response && stage1Response.text) {
+            const rawStage1 = stage1Response.text.replace(/```json/g, "").replace(/```/g, "").trim();
+            try {
+              auditResult = JSON.parse(rawStage1);
+            } catch (parseErr) {
+              invalidJson = true;
+              stage1Failure = parseErr;
+              console.error("[PROSFEC IA] Etapa 1 retornou JSON inválido.");
+              continue;
+            }
+            invalidJson = false;
+            stage1Failure = null;
+            console.log(`[PROSFEC IA] Etapa 1 concluída com sucesso:`, {
+              elegibilidade: auditResult.classificacaoElegibilidade,
+              dividas: auditResult.totalDividasNegativadas,
+              protestos: auditResult.totalProtestos,
+              servicos: auditResult.servicosNecessariosIds
+            });
+            break;
+          }
+        } catch (stage1Err: any) {
+          stage1Failure = stage1Err;
+          const detail = describeGeminiFailure(stage1Err);
+          console.error(
+            `[PROSFEC IA] Etapa 1 (Auditoria) falhou [${detail.code}] para o lead ${leadId}: ${String(stage1Err?.message || stage1Err).slice(0, 500)}`,
+          );
+          // Só vale a pena repetir com payload reduzido quando o problema é tamanho.
+          if (detail.code !== "GEMINI_PAYLOAD") break;
         }
-      } catch (stage1Err) {
-        console.warn("[PROSFEC IA] Etapa 1 (Auditoria) falhou ou retornou formato inválido. Prosseguindo com fallback de triagem:", stage1Err);
       }
 
       if (!auditResult) {
-        throw Object.assign(new Error("A auditoria da IA não pôde validar os dados da consulta. Tente novamente; nenhum laudo estimado foi salvo."), { statusCode: 503 });
+        if (invalidJson || !stage1Failure) {
+          throw Object.assign(
+            new Error("A auditoria da IA não pôde validar os dados da consulta. Tente novamente; nenhum laudo estimado foi salvo."),
+            { statusCode: 503 },
+          );
+        }
+        const detail = describeGeminiFailure(stage1Failure);
+        throw Object.assign(new Error(detail.message), { statusCode: detail.statusCode, code: detail.code });
       }
 
       // =========================================================================
@@ -1433,7 +1544,11 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
     } catch (err: any) {
       if (diagnosisLockPath) await patchDocRest(diagnosisLockPath, { status: "falha", dataConclusao: new Date().toISOString() }).catch(() => undefined);
       console.error("Error generating PROSFEC IA Diagnosis:", err);
-      return res.status(err?.statusCode || 500).json({ error: err.message || "Erro interno ao gerar o diagnóstico PROSFEC IA." });
+      return res.status(err?.statusCode || 500).json({
+        success: false,
+        code: err?.code,
+        error: err.message || "Erro interno ao gerar o diagnóstico PROSFEC IA.",
+      });
     }
   });
 
