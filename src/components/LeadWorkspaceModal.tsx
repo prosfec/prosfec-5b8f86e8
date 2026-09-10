@@ -3538,8 +3538,17 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                             </span>
                           </div>
                         ) : (
-                          <div className="w-full text-xs px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 font-semibold">
-                            {localCatalogError || "Carregando tabela oficial de preços..."}
+                          <div className="w-full text-xs px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 font-semibold flex items-center justify-between gap-2">
+                            <span>{loadingLocalCatalog ? "Carregando tabela oficial de preços..." : (localCatalogError || "Tabela oficial de preços indisponível.")}</span>
+                            {!loadingLocalCatalog && (
+                              <button
+                                type="button"
+                                onClick={() => fetchLocalCatalog()}
+                                className="shrink-0 px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-[10px] font-extrabold text-amber-900 hover:bg-amber-100 transition-all cursor-pointer"
+                              >
+                                Tentar novamente
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
