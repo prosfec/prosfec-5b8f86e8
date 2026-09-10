@@ -608,213 +608,103 @@ export function createExpressApp() {
 
   // 3. Execute Credit Query (RedeBe API)
   app.post("/api/credit/consultas", async (req, res) => {
+    let operationPath = "";
+    let chargedPartnerId = "";
+    let chargedAmount = 0;
     try {
-      const { partnerId, partnerNome, produto_code, produtoCode, input_data, documento: directDoc, isAdminBypass } = req.body;
+      const caller = await authenticateApiCaller(req);
+      const { partnerId: requestedPartnerId, partnerNome, produto_code, produtoCode, input_data, documento: directDoc, leadId } = req.body || {};
       const codeToUse = produto_code || produtoCode || "REDEBE_DIAGNOSTICO_360";
-      const rawDoc = input_data?.documento || directDoc;
+      const cleanDoc = String(input_data?.documento || directDoc || "").replace(/\D/g, "");
+      const requestId = sanitizeIdempotencyKey(req.headers?.["x-idempotency-key"]);
 
-      if (!partnerId || !rawDoc) {
-        return res.status(400).json({ error: "Parâmetros partnerId e documento são obrigatórios." });
+      if (!requestId || !cleanDoc || ![11, 14].includes(cleanDoc.length)) {
+        return res.status(400).json({ error: "Documento e identificador da tentativa são obrigatórios." });
       }
 
-      const cleanDoc = String(rawDoc).replace(/\D/g, "");
-      if (!cleanDoc || (cleanDoc.length !== 11 && cleanDoc.length !== 14)) {
-        return res.status(400).json({ error: "Documento inválido. Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido." });
+      const partnerId = caller.isAdmin ? String(requestedPartnerId || "admin") : caller.partnerId;
+      if (!partnerId) return res.status(403).json({ error: "Usuário sem vínculo de parceiro." });
+      if (leadId) await assertLeadAccess(String(leadId), caller, partnerId);
+
+      operationPath = `consultas_realizadas/${requestId}`;
+      const prior: any = await getDocRest(operationPath);
+      if (prior?.status === "sucesso") {
+        return res.json({ success: true, consulta_id: requestId, newBalance: prior.saldoApos, debited: prior.debitado === true, produto_nome: prior.produto_nome, data: prior.resultado, idempotentReplay: true });
       }
+      if (prior) return res.status(409).json({ error: "Esta consulta já está sendo processada ou foi encerrada." });
 
-      console.log(`Executing RedeBe credit query for partner ${partnerId} on document ${maskDoc(cleanDoc)} (isAdminBypass=${!!isAdminBypass})...`);
+      const partnerData: any = partnerId === "admin" ? null : await getDocRest(`parceiros/${partnerId}`);
+      const isAdminUser = caller.isAdmin;
+      if (!isAdminUser && !partnerData) return res.status(404).json({ error: "Parceiro não encontrado no sistema." });
 
-      // 3.1 Retrieve partner from Firestore to check balance (via REST/fetch)
-      const partnerData: any = await getDocRest(`parceiros/${partnerId}`);
-      const partnerExists = !!partnerData;
-
-      let currentBalance = 0;
-      const isAdminUser = partnerId === "admin" || partnerId === "mesa_operacoes" || !!isAdminBypass;
-
-      if (partnerExists) {
-        currentBalance = partnerData?.saldoGeral !== undefined && partnerData?.saldoGeral !== null
-          ? Number(partnerData.saldoGeral)
-          : 0.00;
-      } else if (isAdminUser) {
-        currentBalance = 999999;
-      } else {
-        return res.status(404).json({ error: "Parceiro não encontrado no sistema." });
+      const configData: any = await getDocRest("configuracoes/precos_consultas");
+      if (!configData?.precos || configData.precos[codeToUse] === undefined) {
+        return res.status(503).json({ error: "Tabela oficial de preços indisponível. Tente novamente em instantes." });
       }
-
-      // 3.2 Determine price (Base R$ 49.90 + 40% Lucro Prosfec = R$ 69.86)
-      let customBasePrices: Record<string, number> = {};
-      try {
-        const configData: any = await getDocRest("configuracoes/precos_consultas");
-        if (configData) {
-          customBasePrices = configData.precos || {};
-        }
-      } catch (err) {
-        console.warn("Could not load custom base prices from config:", err);
-      }
-
-
-      const catalogItem = FALLBACK_CATALOG.find((item: any) => item.code === codeToUse) || FALLBACK_CATALOG[0];
-      let origPrice = catalogItem.price;
-      if (customBasePrices[codeToUse] !== undefined) {
-        origPrice = Number(customBasePrices[codeToUse]);
-      }
-
-      const partnerPrice = Number((origPrice * 1.40).toFixed(2)); // R$ 69.86 for 49.90 base
+      const catalogItem = FALLBACK_CATALOG.find((item: any) => item.code === codeToUse);
+      if (!catalogItem) return res.status(400).json({ error: "Produto de consulta inválido." });
+      const origPrice = Number(configData.precos[codeToUse]);
+      if (!Number.isFinite(origPrice) || origPrice < 0) return res.status(503).json({ error: "Preço oficial inválido." });
+      const partnerPrice = Number((origPrice * 1.4).toFixed(2));
       const produtoNome = catalogItem.name;
 
-      // 3.3 Validate balance (pre-check before API call)
-      if (!isAdminUser && currentBalance < partnerPrice) {
-        return res.status(400).json({ 
-          error: `Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${currentBalance.toFixed(2).replace(".", ",")}. Realize uma recarga via Pix para prosseguir.`
-        });
-      }
-
-      // 3.4 Call RedeBe API
-      console.log(`Calling RedeBe API endpoint for document ${maskDoc(cleanDoc)}...`);
-      const HARDCODED_TOKEN = "ctk_6626261e8e3c6a7ecae118fa6415975852cc6d3b73dabca9fc7f3748eb216851";
-      const envToken = optionalEnv("REDEBE_TOKEN");
-      const tokenToUse = (envToken.startsWith("ctk_") || envToken.length > 20)
-        ? envToken.replace(/^Bearer\s+/i, "").trim()
-        : HARDCODED_TOKEN;
-
-      let apiResult: any = null;
-      let isSuccess = false;
-
-      try {
-        const redebeRes = await fetch(REDEBE_API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${tokenToUse}`,
-            "X-Api-Token": tokenToUse
-          },
-          body: JSON.stringify({ documento: cleanDoc })
-        });
-
-        if (!redebeRes.ok) {
-          const errText = await redebeRes.text();
-          console.error(`RedeBe API returned status ${redebeRes.status}:`, errText);
-          return res.status(502).json({
-            error: `A API da RedeBe retornou um erro (${redebeRes.status}). Verifique o token ou tente novamente em instantes.`
-          });
-        }
-
-        apiResult = await redebeRes.json();
-        console.log("RedeBe API response successfully received for document:", maskDoc(cleanDoc));
-        isSuccess = true;
-      } catch (fetchErr: any) {
-        console.error("Fetch exception while calling RedeBe API:", fetchErr);
-        return res.status(502).json({
-          error: `Falha na conexão com a API da RedeBe: ${fetchErr.message || "Timeout de conexão."}`
-        });
-      }
-
-      // 3.5 Deduct balance in Firestore via REST (relê o saldo antes de debitar)
-      let newBalance = currentBalance;
-      let debited = false;
-      let debitWarning: string | null = null;
-      if (partnerExists && !isAdminUser) {
-        try {
-          const freshData: any = await getDocRest(`parceiros/${partnerId}`);
-          if (!freshData) {
-            throw new Error("Parceiro não encontrado durante o débito do saldo.");
-          }
-          const rawFresh = freshData.saldoGeral;
-          const parsedFresh = Number(
-            typeof rawFresh === "string"
-              ? rawFresh.replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".")
-              : rawFresh
-          );
-          const freshBalance = Number.isFinite(parsedFresh) ? parsedFresh : 0.00;
-
-          if (freshBalance < partnerPrice) {
-            const err: any = new Error(`Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${freshBalance.toFixed(2).replace(".", ",")}. Realize uma recarga via Pix para prosseguir.`);
-            err.isInsufficientBalance = true;
-            throw err;
-          }
-
-          newBalance = Number((freshBalance - partnerPrice).toFixed(2));
-          await patchDocRest(`parceiros/${partnerId}`, { saldoGeral: newBalance });
-
-          // Confirma a gravação: relê o documento e, se o saldo não mudou, tenta 1x mais.
-          const checkData: any = await getDocRest(`parceiros/${partnerId}`);
-          const written = Number(checkData?.saldoGeral);
-          if (!Number.isFinite(written) || Math.abs(written - newBalance) > 0.011) {
-            console.warn(`Balance debit not confirmed for partner ${partnerId}. Expected ${newBalance}, got ${written}. Retrying...`);
-            await patchDocRest(`parceiros/${partnerId}`, { saldoGeral: newBalance });
-            const recheck: any = await getDocRest(`parceiros/${partnerId}`);
-            const written2 = Number(recheck?.saldoGeral);
-            if (!Number.isFinite(written2) || Math.abs(written2 - newBalance) > 0.011) {
-              debitWarning = "A consulta foi realizada, mas não foi possível confirmar o débito do saldo. Verifique seu saldo ou contate o suporte.";
-              console.error(`Failed to confirm balance debit for partner ${partnerId}.`);
-            } else {
-              debited = true;
-            }
-          } else {
-            debited = true;
-          }
-        } catch (transErr: any) {
-          if (transErr.isInsufficientBalance) {
-            return res.status(400).json({ error: transErr.message });
-          }
-          throw transErr;
-        }
-      }
-
-      // 3.6 Register the consultation in Firestore
-      const consultaDoc = {
-        partnerId,
-        partnerNome: partnerNome || partnerData?.nome || (isAdminUser ? "Administrador / Mesa de Operações" : "Parceiro"),
-        produto_code: codeToUse,
-        produto_nome: produtoNome,
-        documento: cleanDoc,
-        preco_original: origPrice,
+      await createDocAtPathRest(operationPath, {
+        requestId, leadId: String(leadId || ""), partnerId,
+        partnerNome: partnerNome || partnerData?.nome || "Mesa de Operações",
+        produto_code: codeToUse, produto_nome: produtoNome,
+        documento: cleanDoc, preco_original: origPrice,
         preco_parceiro: isAdminUser ? 0 : partnerPrice,
-        isAdminBypass: !!isAdminUser,
-        dataConsulta: new Date().toISOString(),
-        status: "sucesso",
-        request_id: `redebe_${Date.now()}`,
-        consulta_id: `redebe_${Date.now()}`,
-        resultado: apiResult
-      };
-
-      const consultaRef = await createDocRest("consultas_realizadas", consultaDoc);
-
-      // Create local notification for the partner if not admin bypass
-      if (!isAdminUser) {
-        try {
-          await createDocRest("notificacoes", {
-            recipientId: partnerId,
-            recipientType: "parceiro",
-            titulo: "Consulta Realizada (RedeBe 360)",
-            mensagem: `Consulta de crédito (${cleanDoc.length === 11 ? "CPF" : "CNPJ"}: ${cleanDoc}) realizada com sucesso. Valor de R$ ${partnerPrice.toFixed(2).replace(".", ",")} debitado do seu saldo geral.`,
-            tipo: "success",
-            lida: false,
-            dataCriacao: new Date().toISOString()
-          });
-        } catch (notifErr) {
-          console.error("Failed to create notification for query:", notifErr);
-        }
-      }
-
-      return res.json({
-        success: true,
-        consulta_id: consultaRef.id,
-
-        newBalance: newBalance,
-        debited,
-        debitWarning,
-        produto_nome: produtoNome,
-        data: apiResult,
-        meta: {
-          price: isAdminUser ? 0 : partnerPrice,
-          isAdminBypass: !!isAdminUser
-        }
+        status: "processando", dataCriacao: new Date().toISOString(),
       });
 
+      let newBalance = Number(partnerData?.saldoGeral || 0);
+      let debited = false;
+      if (!isAdminUser) {
+        newBalance = await changePartnerBalanceAtomic(partnerId, -partnerPrice);
+        chargedPartnerId = partnerId;
+        chargedAmount = partnerPrice;
+        debited = true;
+        await patchDocRest(operationPath, { debitado: true, saldoApos: newBalance });
+      }
+
+      const tokenToUse = requireEnv("REDEBE_TOKEN").replace(/^Bearer\s+/i, "").trim();
+      const redebeRes = await fetchWithTimeout(REDEBE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenToUse}`, "X-Api-Token": tokenToUse },
+        body: JSON.stringify({ documento: cleanDoc }),
+      }, 30_000);
+      if (!redebeRes.ok) throw new UpstreamError(`REDEBE_${redebeRes.status}`, redebeRes.status);
+      const apiResult = await redebeRes.json();
+
+      const consultaDoc = {
+        partnerId, partnerNome: partnerNome || partnerData?.nome || "Mesa de Operações",
+        leadId: String(leadId || ""), produto_code: codeToUse, produto_nome: produtoNome,
+        documento: cleanDoc, preco_original: origPrice, preco_parceiro: isAdminUser ? 0 : partnerPrice,
+        isAdminBypass: isAdminUser, dataConsulta: new Date().toISOString(), status: "sucesso",
+        request_id: requestId, consulta_id: requestId, resultado: apiResult,
+        debitado: debited, saldoApos: newBalance,
+      };
+      await patchDocRest(operationPath, consultaDoc);
+
+      if (!isAdminUser) {
+        createDocRest("notificacoes", {
+          recipientId: partnerId, recipientType: "parceiro", titulo: "Consulta Realizada (RedeBe 360)",
+          mensagem: `Consulta de crédito realizada com sucesso. Valor de R$ ${partnerPrice.toFixed(2).replace(".", ",")} debitado.`,
+          tipo: "success", lida: false, dataCriacao: new Date().toISOString(),
+        }).catch((error) => console.warn("Notification write failed:", error?.message || "erro"));
+      }
+
+      return res.json({ success: true, consulta_id: requestId, newBalance, debited, produto_nome: produtoNome, data: apiResult, meta: { price: isAdminUser ? 0 : partnerPrice, isAdminBypass: isAdminUser } });
     } catch (err: any) {
-      console.error("Error executing RedeBe credit query:", err);
-      return res.status(500).json({ error: err.message || "Erro interno ao executar a consulta de crédito." });
+      if (chargedPartnerId && chargedAmount > 0) {
+        try { await changePartnerBalanceAtomic(chargedPartnerId, chargedAmount); } catch { /* reconciliação manual pelo status */ }
+      }
+      if (operationPath) {
+        await patchDocRest(operationPath, { status: chargedPartnerId ? "estornado" : "falha", erroCodigo: err?.code || "QUERY_FAILED" }).catch(() => undefined);
+      }
+      const status = err?.statusCode || (String(err?.message || "").includes("Saldo insuficiente") ? 400 : 500);
+      console.error("RedeBe query failed:", err?.code || err?.message || "erro");
+      return res.status(status).json({ error: status === 502 ? "A RedeBE está temporariamente indisponível. Nenhum valor foi cobrado." : (err.message || "Erro interno ao executar a consulta.") });
     }
   });
 
