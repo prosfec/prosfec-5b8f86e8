@@ -1237,9 +1237,9 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num√
       let invalidJson = false;
 
       // Tentativa 1: payload completo (limitado). Tentativa 2: payload reduzido.
-      const stage1Attempts: Array<{ maxItems: number; maxChars: number }> = [
-        { maxItems: 5, maxChars: 60_000 },
-        { maxItems: 2, maxChars: 15_000 },
+      const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number }> = [
+        { maxItems: 5, maxChars: 60_000, timeoutMs: 45_000 },
+        { maxItems: 2, maxChars: 15_000, timeoutMs: 20_000 },
       ];
 
       for (const attempt of stage1Attempts) {
