@@ -264,7 +264,11 @@ service cloud.firestore {
     // 7. NOTIFICACOES
     // ---------------------------------------------------------------------
     match /notificacoes/{notificacaoId} {
-      allow read:   if isSignedIn();
+      allow read:   if isStaff() || isServico()
+                    || (isSignedIn() && (
+                         resource.data.recipientId == request.auth.uid
+                         || partnerDocBelongsToMe(resource.data.recipientId)
+                       ));
       allow create: if isStaff() || isServico();
       allow update: if isStaff() || isServico()
                     || (isSignedIn() && resource.data.recipientId == request.auth.uid
@@ -276,13 +280,8 @@ service cloud.firestore {
     // 8. CONSULTAS REALIZADAS (RedeBE / Integrador)
     // ---------------------------------------------------------------------
     match /consultas_realizadas/{consultaId} {
-      allow read:   if isSignedIn();
-      allow create, update: if isStaff() || isServico();
-      allow delete: if isAdmin();
-    }
-
-    match /operacoes_ia/{operacaoId} {
-      allow read: if isStaff();
+      allow read:   if isStaff() || isServico()
+                    || (isSignedIn() && partnerDocBelongsToMe(resource.data.partnerId));
       allow create, update: if isStaff() || isServico();
       allow delete: if isAdmin();
     }

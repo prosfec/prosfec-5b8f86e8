@@ -935,7 +935,7 @@ export function createExpressApp() {
       }
 
       const newGeracoesCount = previousGeracoesCount + 1;
-      diagnosisLockPath = `operacoes_ia/diagnostico_${String(leadId).replace(/[^A-Za-z0-9_-]/g, "")}_${newGeracoesCount}`;
+      diagnosisLockPath = `consultas_realizadas/ia_diagnostico_${String(leadId).replace(/[^A-Za-z0-9_-]/g, "")}_${newGeracoesCount}`;
       await createDocAtPathRest(diagnosisLockPath, {
         leadId: String(leadId), partnerId: caller.partnerId, status: "processando", dataCriacao: new Date().toISOString(),
       });

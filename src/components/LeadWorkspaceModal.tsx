@@ -710,10 +710,9 @@ export default function LeadWorkspaceModal({
         return;
       }
 
-      const q = query(
-        collection(db, "consultas_realizadas"),
-        where("documento", "in", docsToMatch)
-      );
+      const constraints: any[] = [where("documento", "in", docsToMatch)];
+      if (!isAdmin && currentPartner?.id) constraints.push(where("partnerId", "==", currentPartner.id));
+      const q = query(collection(db, "consultas_realizadas"), ...constraints);
       
       const querySnap = await getDocs(q);
       const list = querySnap.docs.map(docSnap => ({
