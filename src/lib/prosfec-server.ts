@@ -3067,6 +3067,120 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // =====================================================================
+  // Simulador público da Home — upsert de lead por CNPJ
+  // =====================================================================
+
+  const onlyDigits = (raw: any) => String(raw || "").replace(/\D/g, "");
+
+  /** Busca o lead existente por CNPJ (formatado ou somente números). */
+  const findLeadByCnpj = async (cnpjRaw: any): Promise<{ id: string; data: any } | null> => {
+    const digits = onlyDigits(cnpjRaw);
+    if (digits.length !== 14) return null;
+    const formatted = String(cnpjRaw || "").trim();
+    const candidates = Array.from(new Set([formatted, digits].filter(Boolean)));
+    for (const value of candidates) {
+      const rows = await runQueryRest(
+        "leads",
+        { fieldFilter: { field: { fieldPath: "cnpj" }, op: "EQUAL", value: { stringValue: value } } },
+        1,
+      );
+      if (rows.length) return { id: rows[0].id, data: rows[0].data || {} };
+    }
+    return null;
+  };
+
+  app.get("/api/public/leads/existe", async (req, res) => {
+    try {
+      const cnpj = String(req.query?.cnpj || "");
+      if (onlyDigits(cnpj).length !== 14) return res.json({ existe: false });
+      const found = await findLeadByCnpj(cnpj);
+      if (!found) return res.json({ existe: false });
+      return res.json({
+        existe: true,
+        id: found.id,
+        razaoSocial: found.data?.razaoSocial || found.data?.nome || "Empresa cadastrada",
+        dataCriacao: found.data?.dataCriacao || "",
+        status: found.data?.status || "em análise",
+      });
+    } catch (err: any) {
+      console.warn("Falha ao verificar CNPJ existente:", err?.message || err);
+      return res.json({ existe: false });
+    }
+  });
+
+  app.post("/api/public/leads/simulacao", async (req, res) => {
+    try {
+      const body = req.body || {};
+      const leadId = sanitizeLeadId(body.leadId);
+      const payload = body.lead && typeof body.lead === "object" ? body.lead : null;
+      if (!payload) return res.status(400).json({ success: false, error: "Dados da simulação ausentes." });
+
+      const digits = onlyDigits(payload.cnpj);
+      if (digits.length !== 14) return res.status(400).json({ success: false, error: "CNPJ inválido." });
+      if (!String(payload.nome || "").trim()) {
+        return res.status(400).json({ success: false, error: "Nome do contato obrigatório." });
+      }
+
+      const nowIso = new Date().toISOString();
+      const simulacaoEntry = {
+        data: nowIso,
+        limiteEstimado: Number(payload.limiteEstimado || 0),
+        nivelPreparacao: String(payload.nivelPreparacao || ""),
+        faturamentoAnual: Number(payload.faturamentoAnual || 0),
+        origem: "simulador_home",
+      };
+
+      // Campos operacionais nunca sobrescritos num lead já existente
+      const PROTECTED_FIELDS = [
+        "status", "etapa", "valorAprovado", "comissaoPaga", "pendencias", "pendente",
+        "documentos", "socios", "dataCriacao", "clienteSenha", "fichaRatingCredito",
+        "comissaoMultinivel", "parcelasAssessoria", "diagnosticoPROSFEC",
+      ];
+
+      const existing = await findLeadByCnpj(payload.cnpj);
+
+      if (existing) {
+        const update: any = { ...payload };
+        for (const field of PROTECTED_FIELDS) delete update[field];
+
+        // Indicação só é gravada quando o lead ainda não tem consultor vinculado
+        const jaTemConsultor = !!(existing.data?.parceiroId || existing.data?.partnerId || existing.data?.parentPartnerId);
+        if (jaTemConsultor || !payload.parceiroId) {
+          delete update.parceiroId;
+          delete update.parceiroNome;
+        }
+
+        const historicoAtual = Array.isArray(existing.data?.historicoSimulacoes) ? existing.data.historicoSimulacoes : [];
+        update.historicoSimulacoes = [...historicoAtual, simulacaoEntry].slice(-10);
+        update.dataUltimaSimulacao = nowIso;
+        update.updated_at = nowIso;
+
+        await patchDocRest(`leads/${existing.id}`, cleanForFirestore(update));
+        return res.json({ success: true, leadId: existing.id, atualizado: true });
+      }
+
+      const novoLead = {
+        ...payload,
+        cnpj: String(payload.cnpj || "").trim(),
+        dataCriacao: payload.dataCriacao || nowIso,
+        dataUltimaSimulacao: nowIso,
+        historicoSimulacoes: [simulacaoEntry],
+      };
+
+      if (leadId) {
+        await patchDocRest(`leads/${leadId}`, cleanForFirestore(novoLead));
+        return res.json({ success: true, leadId, atualizado: false });
+      }
+
+      const created = await createDocRest("leads", novoLead);
+      return res.json({ success: true, leadId: created.id, atualizado: false });
+    } catch (err: any) {
+      console.error("Erro no upsert da simulação pública:", err?.message || err);
+      return res.status(500).json({ success: false, error: "Não foi possível registrar a simulação." });
+    }
+  });
+
   app.post("/api/public/contrato/:leadId/assinar", async (req, res) => {
     try {
       const leadId = sanitizeLeadId(req.params?.leadId);
