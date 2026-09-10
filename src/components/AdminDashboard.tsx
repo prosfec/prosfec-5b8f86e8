@@ -13,6 +13,7 @@ import {
   getDoc
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+import { toast } from "sonner";
 import { db, auth, createNotification } from "../firebase";
 import { PendenciaItem, SolicitacaoComissao } from "../types";
 import { 
@@ -552,6 +553,25 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     setShowCertificadoSenha(false);
   }, [selectedLead, customServices]);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+
+  // Ajuste manual de saldo do parceiro (correção de cobranças que falharam)
+  const [balanceAdjustPartner, setBalanceAdjustPartner] = useState<Partner | null>(null);
+  const [balanceAdjustValue, setBalanceAdjustValue] = useState<string>("");
+  const [balanceAdjustReason, setBalanceAdjustReason] = useState<string>("Correção de falha de cobrança");
+  const [isSavingBalance, setIsSavingBalance] = useState(false);
+
+  const getPartnerBalance = (partner: Partner | null): number => {
+    if (!partner) return 0;
+    if (partner.saldoGeral !== undefined && partner.saldoGeral !== null) return Number(partner.saldoGeral) || 0;
+    if (partner.saldoConsultas !== undefined && partner.saldoConsultas !== null) return Number(partner.saldoConsultas) || 0;
+    return 0;
+  };
+
+  const openBalanceAdjust = (partner: Partner) => {
+    setBalanceAdjustPartner(partner);
+    setBalanceAdjustValue(getPartnerBalance(partner).toFixed(2));
+    setBalanceAdjustReason("Correção de falha de cobrança");
+  };
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [copiedPartnerId, setCopiedPartnerId] = useState<string | null>(null);
@@ -1003,6 +1023,105 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     } catch (err) {
       console.error("Erro ao aprovar recarga:", err);
       alert("Erro ao aprovar recarga: " + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
+  const handleAdjustPartnerBalance = async () => {
+    if (!balanceAdjustPartner) return;
+
+    if (userRole === "contador") {
+      toast.error("Acesso restrito: contadores não podem ajustar saldo.");
+      return;
+    }
+
+    const raw = String(balanceAdjustValue).replace(",", ".").trim();
+    const novoSaldo = Number(raw);
+
+    if (raw === "" || !Number.isFinite(novoSaldo) || novoSaldo < 0) {
+      toast.error("Informe um novo saldo válido (0 ou maior).");
+      return;
+    }
+
+    const partner = balanceAdjustPartner;
+    const saldoAnterior = getPartnerBalance(partner);
+    const saldoNovo = Number(novoSaldo.toFixed(2));
+    const diferenca = Number((saldoNovo - saldoAnterior).toFixed(2));
+    const motivo = balanceAdjustReason.trim() || "Ajuste manual de saldo pelo Admin";
+
+    const fmt = (v: number) => `R$ ${Math.abs(v).toFixed(2).replace(".", ",")}`;
+    const confirmMsg =
+      `Confirmar ajuste manual de saldo de ${partner.nome}?\n\n` +
+      `Saldo atual: ${fmt(saldoAnterior)}\n` +
+      `Novo saldo: ${fmt(saldoNovo)}\n` +
+      `Diferença: ${diferenca < 0 ? "-" : "+"}${fmt(diferenca)}\n\n` +
+      `Motivo: ${motivo}`;
+
+    if (!confirm(confirmMsg)) return;
+
+    setIsSavingBalance(true);
+    try {
+      const agora = new Date().toISOString();
+      const adminEmail = auth.currentUser?.email || "admin";
+
+      await updateDoc(doc(db, "parceiros", partner.id), {
+        saldoGeral: saldoNovo,
+        saldoConsultas: saldoNovo,
+        saldoAjustadoEm: agora,
+        saldoAjustadoPor: adminEmail
+      });
+
+      // Registro de auditoria no extrato financeiro
+      try {
+        await addDoc(collection(db, "recargas"), {
+          partnerId: partner.id,
+          partnerNome: partner.nome || "",
+          partnerEmail: partner.email || "",
+          tipo: "ajuste_manual",
+          saldoAnterior,
+          saldoNovo,
+          valor: diferenca,
+          motivo,
+          status: "aprovado",
+          dataSolicitacao: agora,
+          dataAprovacao: agora,
+          ajustadoPor: adminEmail
+        });
+      } catch (auditErr) {
+        console.error("Erro ao registrar auditoria do ajuste de saldo:", auditErr);
+      }
+
+      // Notifica o parceiro
+      try {
+        await createNotification(
+          partner.id,
+          "parceiro",
+          "Ajuste de Saldo Realizado",
+          `Seu saldo geral foi ajustado pela equipe PROSFEC para ${fmt(saldoNovo)}. Motivo: ${motivo}.`,
+          diferenca < 0 ? "warning" : "info"
+        );
+      } catch (notifErr) {
+        console.error("Erro ao notificar parceiro sobre ajuste de saldo:", notifErr);
+      }
+
+      // Atualiza estado local sem recarregar a página
+      setPartners(prev => prev.map(p =>
+        p.id === partner.id
+          ? { ...p, saldoGeral: saldoNovo, saldoConsultas: saldoNovo, saldoAjustadoEm: agora, saldoAjustadoPor: adminEmail }
+          : p
+      ));
+      setSelectedPartner(prev =>
+        prev && prev.id === partner.id
+          ? { ...prev, saldoGeral: saldoNovo, saldoConsultas: saldoNovo, saldoAjustadoEm: agora, saldoAjustadoPor: adminEmail }
+          : prev
+      );
+
+      toast.success(`Saldo de ${partner.nome} ajustado para ${fmt(saldoNovo)}.`);
+      setBalanceAdjustPartner(null);
+    } catch (err) {
+      console.error("Erro ao ajustar saldo do parceiro:", err);
+      toast.error("Erro ao ajustar saldo: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsSavingBalance(false);
     }
   };
 
@@ -4046,6 +4165,20 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                               <button
                                 type="button"
+                                onClick={() => openBalanceAdjust(partner)}
+                                disabled={userRole === "contador"}
+                                className={`p-1.5 rounded-lg border transition-all shrink-0 ${
+                                  userRole === "contador"
+                                    ? "bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed opacity-50"
+                                    : "bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-100 cursor-pointer"
+                                }`}
+                                title="Ajustar Saldo"
+                              >
+                                <Coins className="w-3.5 h-3.5" />
+                              </button>
+
+                              <button
+                                type="button"
                                 onClick={() => handleCopyPartnerLink(partner.id)}
                                 className={`p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 ${
                                   copiedPartnerId === partner.id 
@@ -4237,6 +4370,20 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#0A3D2E] text-slate-700 hover:text-white rounded-md font-bold transition-all cursor-pointer"
                               >
                                 Detalhes
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => openBalanceAdjust(partner)}
+                                disabled={userRole === "contador"}
+                                className={`px-2.5 py-1 text-xs rounded-md font-bold transition-all ${
+                                  userRole === "contador"
+                                    ? "bg-slate-100 text-slate-300 cursor-not-allowed opacity-60"
+                                    : "bg-amber-50 hover:bg-amber-500 hover:text-white text-amber-700 border border-amber-200 cursor-pointer"
+                                }`}
+                                title="Ajustar Saldo do Parceiro"
+                              >
+                                Ajustar Saldo
                               </button>
 
                               <button
@@ -7032,7 +7179,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       Créditos de prospecção e busca de empresas em tempo real
                     </span>
                   </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => openBalanceAdjust(selectedPartner)}
+                    disabled={userRole === "contador"}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                      userRole === "contador"
+                        ? "bg-slate-100 text-slate-300 cursor-not-allowed opacity-60"
+                        : "bg-amber-500 hover:bg-amber-600 text-white cursor-pointer shadow-xs"
+                    }`}
+                  >
+                    <Coins className="w-4 h-4" /> Ajustar Saldo
+                  </button>
                 </div>
+              </div>
               </div>
 
               {/* Se for Franquia Digital, mostrar equipe e override */}
@@ -7829,6 +7990,96 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           }}
         />
       )}
+
+      {/* Modal de Ajuste Manual de Saldo */}
+      {balanceAdjustPartner && (() => {
+        const saldoAtual = getPartnerBalance(balanceAdjustPartner);
+        const parsed = Number(String(balanceAdjustValue).replace(",", ".").trim());
+        const valido = Number.isFinite(parsed) && parsed >= 0 && String(balanceAdjustValue).trim() !== "";
+        const diferenca = valido ? Number((parsed - saldoAtual).toFixed(2)) : 0;
+
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[70] flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+              <div className="flex items-start justify-between p-5 border-b border-slate-100">
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 font-display">Ajustar Saldo</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">{balanceAdjustPartner.nome}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBalanceAdjustPartner(null)}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Saldo atual (Saldo Geral)</span>
+                  <span className="text-2xl font-black font-mono text-slate-900 block mt-1">
+                    {formatCurrencyBRL(saldoAtual)}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-1.5">Novo saldo (R$)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={balanceAdjustValue}
+                    onChange={(e) => setBalanceAdjustValue(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[#0A3D2E] focus:outline-hidden font-mono font-bold text-slate-900"
+                    placeholder="0.00"
+                  />
+                  {valido && (
+                    <span className={`text-[11px] font-bold block mt-1.5 ${diferenca < 0 ? "text-rose-600" : diferenca > 0 ? "text-emerald-700" : "text-slate-400"}`}>
+                      Diferença: {diferenca < 0 ? "−" : diferenca > 0 ? "+" : ""}{formatCurrencyBRL(Math.abs(diferenca))}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-1.5">Motivo do ajuste (opcional)</label>
+                  <input
+                    type="text"
+                    value={balanceAdjustReason}
+                    onChange={(e) => setBalanceAdjustReason(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[#0A3D2E] focus:outline-hidden text-sm text-slate-800"
+                    placeholder="Ex.: Correção de falha de cobrança"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 p-5 pt-0">
+                <button
+                  type="button"
+                  onClick={() => setBalanceAdjustPartner(null)}
+                  disabled={isSavingBalance}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black cursor-pointer transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAdjustPartnerBalance}
+                  disabled={!valido || isSavingBalance || userRole === "contador"}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${
+                    !valido || isSavingBalance || userRole === "contador"
+                      ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                      : "bg-[#0A3D2E] hover:bg-[#0d4f3b] text-white cursor-pointer"
+                  }`}
+                >
+                  {isSavingBalance ? "Salvando..." : "Confirmar ajuste"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
 
     </div>
   );
