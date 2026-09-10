@@ -1150,11 +1150,7 @@ export function createExpressApp() {
       };
 
       // 3. Load dynamic service price catalog from Firestore
-      let activeServicesCatalog: Array<{ id: string; nome: string; valor: number; hublaLink?: string; [key: string]: any }> = [
-        { id: "serv_reabilitacao", nome: "Programa de Reabilitação Financeira e Creditícia", valor: 0 },
-        { id: "serv_rating_score", nome: "Melhoria e Adequação de Rating e Score", valor: 1100 },
-        { id: "serv_contabil", nome: "Serviços Contábeis p/ Regularização/Adequação CNPJ", valor: 700 }
-      ];
+      let activeServicesCatalog: Array<{ id: string; nome: string; valor: number; hublaLink?: string; [key: string]: any }> = [];
 
       try {
         const configData: any = await getDocRest("configuracoes/precos_consultas");
@@ -1169,7 +1165,7 @@ export function createExpressApp() {
           );
         }
       } catch (err) {
-        console.warn("Could not load dynamic price catalog from Firestore, using default:", err);
+        console.warn("Could not load dynamic price catalog from Firestore:", err);
       }
 
       // Ensure activeServicesCatalog ALWAYS unifies Rating and Score into one item, and Reabilitação unificada
@@ -1205,23 +1201,9 @@ export function createExpressApp() {
         activeServicesCatalog = sanitizedCatalog;
       }
 
-      // Garantir presença do Programa de Reabilitação Financeira e Creditícia no catálogo ativo
-      const hasReabilitacao = activeServicesCatalog.some(s => 
-        s.id === "serv_reabilitacao" || 
-        s.nome?.toLowerCase().includes("reabilitação") ||
-        s.nome?.toLowerCase().includes("reabilitacao")
-      );
-      if (!hasReabilitacao) {
-        activeServicesCatalog.unshift({
-          id: "serv_reabilitacao",
-          nome: "Programa de Reabilitação Financeira e Creditícia",
-          valor: 0
-        });
-      }
-
       const catalogPromptText = activeServicesCatalog
         .map((s, idx) => `${idx + 1}. ${s.nome} (id: "${s.id}"): R$ ${Number(s.valor || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`)
-        .join("\n");
+        .join("\n") || "Nenhum serviço disponível no catálogo ativo.";
 
       // 4. Lazy initialize Gemini API and run the two-stage forensic pipeline
       const ai = getGeminiAI();
@@ -1302,9 +1284,32 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
           }, attempt.timeoutMs);
 
           if (stage1Response && stage1Response.text) {
-            const rawStage1 = stage1Response.text.replace(/```json/g, "").replace(/```/g, "").trim();
+            const rawStage1 = stage1Response.text
+              .replace(/```\s*json\s*/gi, "")
+              .replace(/```/g, "")
+              .trim();
             try {
-              auditResult = JSON.parse(rawStage1);
+              const parsedAudit = JSON.parse(rawStage1);
+              const nonNegativeNumber = (value: unknown) => {
+                const parsed = typeof value === "number" ? value : Number(value);
+                return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+              };
+              auditResult = {
+                totalDividasNegativadas: nonNegativeNumber(parsedAudit?.totalDividasNegativadas),
+                quantidadeNegativacoes: nonNegativeNumber(parsedAudit?.quantidadeNegativacoes),
+                totalProtestos: nonNegativeNumber(parsedAudit?.totalProtestos),
+                quantidadeProtestos: nonNegativeNumber(parsedAudit?.quantidadeProtestos),
+                totalAcoesJudiciaisOuCheques: nonNegativeNumber(parsedAudit?.totalAcoesJudiciaisOuCheques),
+                temApontamentosSCRBacen: parsedAudit?.temApontamentosSCRBacen === true,
+                resumoBacen: typeof parsedAudit?.resumoBacen === "string" ? parsedAudit.resumoBacen : "",
+                situacaoFiscalCadastral: typeof parsedAudit?.situacaoFiscalCadastral === "string" ? parsedAudit.situacaoFiscalCadastral : "",
+                capacidadeTomadaPronampe: nonNegativeNumber(parsedAudit?.capacidadeTomadaPronampe),
+                capacidadeTomadaGeral: nonNegativeNumber(parsedAudit?.capacidadeTomadaGeral),
+                fatoresCriticosBloqueio: Array.isArray(parsedAudit?.fatoresCriticosBloqueio) ? parsedAudit.fatoresCriticosBloqueio.filter((item: unknown) => typeof item === "string") : [],
+                servicosNecessariosIds: Array.isArray(parsedAudit?.servicosNecessariosIds) ? parsedAudit.servicosNecessariosIds.filter((item: unknown) => typeof item === "string") : [],
+                classificacaoElegibilidade: typeof parsedAudit?.classificacaoElegibilidade === "string" ? parsedAudit.classificacaoElegibilidade : "",
+                scoreEstimado: typeof parsedAudit?.scoreEstimado === "string" ? parsedAudit.scoreEstimado : "",
+              };
             } catch (parseErr) {
               invalidJson = true;
               stage1Failure = parseErr;
@@ -1377,6 +1382,8 @@ REGRA 2: COERÊNCIA COMERCIAL. Nunca recomende serviços de Limpa Nome, Baixa de
 
 REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_servicos/json_subetapas) devem estar 100% alinhados: nenhum dado, valor ou serviço pode aparecer em um e contradizer o outro.
 
+REGRA 4: CLASSIFICAÇÃO LITERAL. A chave valor_negativacoes deve ser preenchida APENAS com dívidas do Pefin/Refin. NUNCA coloque capacidade de crédito, limite estimado, PRONAMPE ou potencial de captação em chaves de restrição/negativação. Na ausência de dado comprovado, use 0 para números e [] para arrays.
+
 1. TOM FORMAL E PERICIAL BANCÁRIO:
    - Escreva como um Comitê de Crédito e Fomento de alto padrão.
    - Apresente tabelas claras em Markdown comparando situação atual vs meta após estruturação.
@@ -1443,25 +1450,35 @@ REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_se
       let customServicos: any[] = [];
       let customSubEtapas: any[] = [];
 
+      const parseMarkdownJson = (raw: string): unknown => {
+        const normalized = raw
+          .replace(/```\s*(?:json_servicos|json_subetapas|json)?\s*/gi, "")
+          .replace(/```/g, "")
+          .trim();
+        return JSON.parse(normalized);
+      };
+
       // Extract json_servicos
-      const matchServicos = responseText.match(/```json_servicos\s*([\s\S]*?)\s*```/);
+      const matchServicos = responseText.match(/```\s*json_servicos\s*([\s\S]*?)\s*```/i);
       if (matchServicos && matchServicos[1]) {
         try {
-          const parsedServ = JSON.parse(matchServicos[1].trim());
+          const parsedServ = parseMarkdownJson(matchServicos[1]);
           if (Array.isArray(parsedServ)) {
-            const rawServs: any[] = parsedServ.map((item: any) => ({
-              id: item.id || `serv_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-              nome: item.nome || item.servico || "Serviço PROSFEC",
-              valor: typeof item.valor === "number" ? item.valor : (parseFloat(item.valor) || 0),
-              justificativa: item.justificativa || "",
-              hublaLink: item.hublaLink,
-              status: "pendente"
-            }));
+            const rawServs: any[] = parsedServ
+              .filter((item: any) => item && typeof item === "object" && typeof (item.nome || item.servico) === "string")
+              .map((item: any) => ({
+                id: typeof item.id === "string" ? item.id : `serv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                nome: item.nome || item.servico,
+                valor: typeof item.valor === "number" && Number.isFinite(item.valor) && item.valor >= 0 ? item.valor : 0,
+                justificativa: typeof item.justificativa === "string" ? item.justificativa : "",
+                hublaLink: typeof item.hublaLink === "string" ? item.hublaLink : undefined,
+                status: "pendente"
+              }));
 
             let hasRatingScore = false;
             const targetRatingScoreObj = activeServicesCatalog.find(c => (c.id && c.id === "serv_rating_score") || (c.nome && c.nome.toLowerCase().includes("rating") && c.nome.toLowerCase().includes("score")));
-            const targetPrice = targetRatingScoreObj ? Number(targetRatingScoreObj.valor) : 1100;
-            const targetName = targetRatingScoreObj ? targetRatingScoreObj.nome : "Melhoria e Adequação de Rating e Score";
+            const targetPrice = targetRatingScoreObj ? Number(targetRatingScoreObj.valor) : 0;
+            const targetName = targetRatingScoreObj?.nome;
 
             customServicos = [];
             for (const s of rawServs) {
@@ -1471,7 +1488,7 @@ REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_se
               const isDossie = s.id === "serv_dossie" || s.id === "serv_projeto" || s.id === "serv_dossie_projeto" || nameLower.includes("dossiê") || nameLower.includes("dossie") || nameLower.includes("projeto");
 
               if (isRS) {
-                if (!hasRatingScore) {
+                if (!hasRatingScore && targetRatingScoreObj && targetName) {
                   hasRatingScore = true;
                   customServicos.push({
                     ...s,
@@ -1509,23 +1526,28 @@ REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_se
               }
             }
           }
-          cleanText = cleanText.replace(/```json_servicos\s*[\s\S]*?\s*```/, "").trim();
+          cleanText = cleanText.replace(/```\s*json_servicos\s*[\s\S]*?\s*```/i, "").trim();
         } catch (e) {
           console.warn("Could not parse json_servicos block from PROSFEC IA response:", e);
         }
       }
 
       // Extract custom sub-etapas for Step 6 from json_subetapas block
-      const matchSubEtapas = cleanText.match(/```json_subetapas\s*([\s\S]*?)\s*```/);
+      const matchSubEtapas = cleanText.match(/```\s*json_subetapas\s*([\s\S]*?)\s*```/i);
       if (matchSubEtapas && matchSubEtapas[1]) {
         try {
-          const parsedArray = JSON.parse(matchSubEtapas[1].trim());
+          const parsedArray = parseMarkdownJson(matchSubEtapas[1]);
           if (Array.isArray(parsedArray) && parsedArray.length > 0) {
-            customSubEtapas = parsedArray.map((item: any, idx: number) => {
-              const titleStr = typeof item === "string" ? item : (item.titulo || item.item || `Sub-etapa ${idx + 1}`);
+            customSubEtapas = parsedArray.filter((item: any) =>
+              (typeof item === "string" && item.trim().length > 0) ||
+              (item && typeof item === "object" && typeof (item.titulo || item.item) === "string")
+            ).map((item: any, idx: number) => {
+              const titleStr = typeof item === "string" ? item : (item.titulo || item.item);
               const titleLower = titleStr.toLowerCase();
-              const isNoCost = titleLower.includes("tarifa") || titleLower.includes("rtb") || titleLower.includes("dossiê") || titleLower.includes("dossie") || titleLower.includes("projeto") || item.preco === 0;
-              const itemPrice = isNoCost ? 0 : (typeof item.preco === "number" ? item.preco : (parseFloat(item.preco) || 0));
+              const rawPrice = typeof item === "object" ? item.preco : 0;
+              const isNoCost = titleLower.includes("tarifa") || titleLower.includes("rtb") || titleLower.includes("dossiê") || titleLower.includes("dossie") || titleLower.includes("projeto") || rawPrice === 0;
+              const parsedPrice = typeof rawPrice === "number" ? rawPrice : Number(rawPrice);
+              const itemPrice = isNoCost || !Number.isFinite(parsedPrice) || parsedPrice < 0 ? 0 : parsedPrice;
               const matchedServ = customServicos.find(s => s.id === item.id || (s.nome && titleLower.includes(s.nome.toLowerCase())));
               return {
                 id: `sub_${Date.now()}_${idx + 1}`,
@@ -1537,7 +1559,7 @@ REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_se
               };
             });
           }
-          cleanText = cleanText.replace(/```json_subetapas\s*[\s\S]*?\s*```/, "").trim();
+          cleanText = cleanText.replace(/```\s*json_subetapas\s*[\s\S]*?\s*```/i, "").trim();
         } catch (e) {
           console.warn("Could not parse json_subetapas block from PROSFEC IA response:", e);
         }
@@ -1552,14 +1574,6 @@ REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_se
           hublaLink: serv.hublaLink,
           semCustoInicial: serv.semCustoInicial || serv.valor === 0
         }));
-      } else if (customSubEtapas.length === 0) {
-        customSubEtapas = [
-          { id: `sub_${Date.now()}_1`, titulo: "Saneamento de restrições ativas apontadas nas consultas de crédito Serasa/SPC", concluida: false, preco: customServicos.find(s => s.nome.toLowerCase().includes("renegocia"))?.valor || 0, hublaLink: customServicos.find(s => s.nome.toLowerCase().includes("renegocia"))?.hublaLink },
-          { id: `sub_${Date.now()}_2`, titulo: "Regularização de CND e pendências fiscais do CNPJ e sócios na Receita Federal", concluida: false, preco: customServicos.find(s => s.nome.toLowerCase().includes("contábei"))?.valor || 0, hublaLink: customServicos.find(s => s.nome.toLowerCase().includes("contábei"))?.hublaLink },
-          { id: `sub_${Date.now()}_3`, titulo: "Transmissão do faturamento atualizado no e-CAC para enquadramento bancário", concluida: false, preco: 0 },
-          { id: `sub_${Date.now()}_4`, titulo: "Melhoria e Adequação unificada do Rating de Crédito e Score no SCR / Banco Central", concluida: false, preco: customServicos.find(s => s.nome.toLowerCase().includes("rating") || s.nome.toLowerCase().includes("score"))?.valor || 0, hublaLink: customServicos.find(s => s.nome.toLowerCase().includes("rating") || s.nome.toLowerCase().includes("score"))?.hublaLink },
-          { id: `sub_${Date.now()}_5`, titulo: "Apresentação da proposta estruturada e submissão às esteiras bancárias", concluida: false, preco: 0 }
-        ];
       }
 
       // Guarda vital: nunca sobrescrever um laudo válido com resposta vazia/inútil da IA.
@@ -1579,6 +1593,8 @@ REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_se
         dataGeracao: new Date().toISOString(),
         consultasAnalisadas: matchingConsultas.length,
         servicosRecomendados: cleanForFirestore(customServicos),
+        subEtapasPasso6: cleanForFirestore(customSubEtapas),
+        auditoria: cleanForFirestore(auditResult),
         geracoesCount: newGeracoesCount
       });
 
