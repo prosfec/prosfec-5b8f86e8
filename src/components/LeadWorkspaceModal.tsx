@@ -893,6 +893,7 @@ export default function LeadWorkspaceModal({
         throw new Error(data.error || "Erro ao processar o diagnóstico de crédito.");
       }
       setDiagnosticoPROSFEC(data.diagnostico);
+      setServicosRecomendados(Array.isArray(data.servicosRecomendados) ? data.servicosRecomendados : []);
       if (data.subEtapasPasso6 && Array.isArray(data.subEtapasPasso6)) {
         setSubEtapasPasso6(withoutMensalidades(data.subEtapasPasso6));
       }
@@ -901,8 +902,8 @@ export default function LeadWorkspaceModal({
       onLeadUpdated?.({
         ...lead,
         diagnosticoPROSFEC: data.diagnostico,
-        servicosRecomendados: data.diagnostico?.servicosRecomendados || lead.servicosRecomendados,
-        subEtapasPasso6: data.subEtapasPasso6 || lead.subEtapasPasso6
+        servicosRecomendados: Array.isArray(data.servicosRecomendados) ? data.servicosRecomendados : [],
+        subEtapasPasso6: Array.isArray(data.subEtapasPasso6) ? data.subEtapasPasso6 : []
       });
     } catch (err: any) {
       setWorkspaceError(err.message || "Erro ao gerar diagnóstico.");
@@ -3849,8 +3850,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       </div>
 
                       <FintechDiagnosisView
-                        lead={lead}
-                        diagnostico={diagnosticoPROSFEC}
+                        lead={{ ...lead, servicosRecomendados, subEtapasPasso6 }}
+                        diagnostico={{ ...diagnosticoPROSFEC, servicosRecomendados, subEtapasPasso6 }}
                         consultas={leadConsultas}
                         renderMarkdownContent={renderMarkdown}
                       />

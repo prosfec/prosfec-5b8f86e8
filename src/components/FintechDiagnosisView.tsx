@@ -26,6 +26,8 @@ interface FintechDiagnosisViewProps {
     dataGeracao?: string;
     geracoesCount?: number;
     servicosRecomendados?: any[];
+    subEtapasPasso6?: any[];
+    auditoria?: any;
   } | null;
   consultas?: any[];
   onOpenFullReport?: () => void;
@@ -192,14 +194,39 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
       });
     }
 
-    // --- CAMADA 2: Dados do Objeto Lead (ex: fichaRatingCredito) ---
+    // --- CAMADA 2: Auditoria estruturada validada pelo backend ---
+    const audit = diagnostico?.auditoria;
+    if (audit && typeof audit === "object") {
+      negativacoesCount = Number(audit.quantidadeNegativacoes) || 0;
+      negativacoesValor = Number(audit.totalDividasNegativadas) || 0;
+      protestosCount = Number(audit.quantidadeProtestos) || 0;
+      protestosValor = Number(audit.totalProtestos) || 0;
+      const scoreMatch = String(audit.scoreEstimado || "").match(/\b(\d{1,4})\b/);
+      if (scoreMatch) {
+        const parsedScore = Number(scoreMatch[1]);
+        if (parsedScore >= 0 && parsedScore <= 1000) scoreVal = parsedScore;
+      }
+      const eligibility = String(audit.classificacaoElegibilidade || "").toLowerCase();
+      if (eligibility === "alta") ratingLetter = "A";
+      else if (eligibility === "média" || eligibility === "media") ratingLetter = "C";
+      else if (eligibility === "baixa") ratingLetter = "E";
+      else if (eligibility === "crítica" || eligibility === "critica") ratingLetter = "G";
+      const generalCapacity = Number(audit.capacidadeTomadaGeral) || 0;
+      const pronampeCapacity = Number(audit.capacidadeTomadaPronampe) || 0;
+      if (generalCapacity > 0 || pronampeCapacity > 0) {
+        capMin = pronampeCapacity > 0 ? pronampeCapacity : generalCapacity;
+        capMax = generalCapacity > 0 ? generalCapacity : pronampeCapacity;
+      }
+    }
+
+    // --- CAMADA 3: Dados do Objeto Lead (ex: fichaRatingCredito) ---
     if (lead?.fichaRatingCredito) {
       const f = lead.fichaRatingCredito;
       if (!scoreVal && f.score && !isNaN(Number(f.score))) scoreVal = Number(f.score);
       if (!ratingLetter && f.rating) ratingLetter = String(f.rating).toUpperCase().trim().slice(0, 1);
     }
 
-    // --- CAMADA 3: Parser Inteligente de Texto (diagnostico.texto da IA) ---
+    // --- CAMADA 4: Texto livre somente para score/rating e indicadores não financeiros ---
     const text = diagnostico?.texto || "";
     if (text) {
       // 1. Extração de Rating do Texto
@@ -222,84 +249,14 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
         }
       }
 
-      // 3. Extração de Negativações do Texto
-      if (negativacoesCount === 0 && negativacoesValor === 0) {
-        // Ex: "4 negativações", "3 restrições financeiras", "2 pendências financeiras"
-        const nCountMatch = text.match(/(\d+)\s*(?:negativaç(?:ão|ões)|restriç(?:ão|ões)\s*financeir(?:a|as)|pendênci(?:a|as)\s*financeir(?:a|as))/i);
-        if (nCountMatch && nCountMatch[1]) {
-          negativacoesCount = parseInt(nCountMatch[1], 10);
-        }
-        // Valor de negativação
-        const nValMatch = text.match(/(?:negativaç(?:ão|ões)|restriç(?:ão|ões)|pendênci(?:a|as))[^\n\r]*?R\$\s*([\d\.,]+)/i);
-        if (nValMatch && nValMatch[1]) {
-          negativacoesValor = parseBrlCurrency(nValMatch[1]);
-          if (negativacoesCount === 0) negativacoesCount = 1;
-        }
-      }
-
-      // 4. Extração de Protestos do Texto
-      if (protestosCount === 0 && protestosValor === 0) {
-        const pCountMatch = text.match(/(\d+)\s*protesto(?:s)?/i);
-        if (pCountMatch && pCountMatch[1]) {
-          protestosCount = parseInt(pCountMatch[1], 10);
-        }
-        const pValMatch = text.match(/(?:protesto(?:s)?)[^\n\r]*?R\$\s*([\d\.,]+)/i);
-        if (pValMatch && pValMatch[1]) {
-          protestosValor = parseBrlCurrency(pValMatch[1]);
-          if (protestosCount === 0) protestosCount = 1;
-        }
-      }
-
-      // 5. Extração de CADIN do Texto
-      if (cadinCount === 0 && cadinValor === 0) {
-        const cadinValMatch = text.match(/CADIN[^\n\r]*?R\$\s*([\d\.,]+)/i);
-        if (cadinValMatch && cadinValMatch[1]) {
-          cadinValor = parseBrlCurrency(cadinValMatch[1]);
-          cadinCount = 1;
-        } else if (/inscrição\s*no\s*cadin|apontamento\s*no\s*cadin/i.test(text)) {
-          cadinCount = 1;
-        }
-      }
-
-      // 6. Extração de Cheques sem fundo do Texto
-      if (chequesCount === 0) {
-        const chMatch = text.match(/(\d+)\s*(?:cheque(?:s)?\s*sem\s*fundo|ocorrência(?:s)?\s*de\s*ccf)/i);
-        if (chMatch && chMatch[1]) {
-          chequesCount = parseInt(chMatch[1], 10);
-        }
-      }
-
-      // 7. Extração de Potencial de Captação do Texto
-      const capMatch = text.match(/R\$\s*([\d\.,]+)\s*(?:a|–|-|até)\s*R\$\s*([\d\.,]+)/i) ||
-                       text.match(/potencial\s*de\s*captação[^\n\r]*?R\$\s*([\d\.,]+)/i);
-      if (capMatch) {
-        if (capMatch[1] && capMatch[2]) {
-          capMin = parseBrlCurrency(capMatch[1]);
-          capMax = parseBrlCurrency(capMatch[2]);
-        } else if (capMatch[1]) {
-          capMin = parseBrlCurrency(capMatch[1]);
-          capMax = Math.round(capMin * 1.35);
-        }
-      }
-
-      // 8. Extração de Inadimplência do Texto
+      // Extração de inadimplência sem inferir valores de restrições.
       const inadMatch = text.match(/(?:inadimplência|probabilidade\s*de\s*inadimplência|risco\s*de\s*inadimplência)[:\s*]*(\d{1,3})%/i);
       if (inadMatch && inadMatch[1]) {
         inadimplenciaPercent = parseInt(inadMatch[1], 10);
       }
     }
 
-    // --- FALLBACKS E COMPATIBILIZAÇÃO INTELIGENTE ---
-    // Se não encontrou score/rating, estimar a partir das pendências ou dados cadastrais
-    if (scoreVal === null) {
-      if (negativacoesCount > 0 || protestosCount > 0 || cadinCount > 0) {
-        scoreVal = 438;
-      } else {
-        scoreVal = 720;
-      }
-    }
-
-    if (!ratingLetter) {
+    if (scoreVal !== null && !ratingLetter) {
       if (scoreVal >= 800) ratingLetter = "A";
       else if (scoreVal >= 700) ratingLetter = "B";
       else if (scoreVal >= 550) ratingLetter = "C";
@@ -309,13 +266,13 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
       else ratingLetter = "G";
     }
 
-    let ratingLabel = "Risco moderado";
+    let ratingLabel = "Não informado";
     if (["A", "B"].includes(ratingLetter)) ratingLabel = "Excelente · Baixo Risco";
     else if (["C", "D"].includes(ratingLetter)) ratingLabel = "Moderado · Risco Médio";
     else if (["E", "F"].includes(ratingLetter)) ratingLabel = "Atenção · Risco Alto";
     else ratingLabel = "Crítico · Risco Muito Alto";
 
-    if (inadimplenciaPercent === null) {
+    if (inadimplenciaPercent === null && ratingLetter && scoreVal !== null) {
       if (ratingLetter === "A") inadimplenciaPercent = 5;
       else if (ratingLetter === "B") inadimplenciaPercent = 15;
       else if (ratingLetter === "C") inadimplenciaPercent = 32;
@@ -325,25 +282,11 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
       else inadimplenciaPercent = Math.max(60, Math.min(92, Math.round(100 - (scoreVal / 10))));
     }
 
-    let inadimplenciaLabel = "Confiança moderada";
-    if (inadimplenciaPercent <= 15) inadimplenciaLabel = "Confiança Máxima";
-    else if (inadimplenciaPercent <= 35) inadimplenciaLabel = "Confiança Alta";
-    else if (inadimplenciaPercent <= 55) inadimplenciaLabel = "Confiança Média";
-    else inadimplenciaLabel = "Confiança Muito Baixa";
-
-    // Cálculo do Potencial de Captação se não extraído
-    if (!capMin || !capMax) {
-      const faturamento = Number(lead?.faturamentoAnual || (lead?.mediaReceitaMensal ? lead.mediaReceitaMensal * 12 : 0) || 0);
-      if (faturamento > 0) {
-        capMin = Math.round((faturamento * 0.20) / 5000) * 5000;
-        capMax = Math.round((faturamento * 0.35) / 5000) * 5000;
-        if (capMin < 50000) capMin = 50000;
-        if (capMax < capMin * 1.3) capMax = Math.round(capMin * 1.4);
-      } else {
-        capMin = 110000;
-        capMax = 150000;
-      }
-    }
+    let inadimplenciaLabel = "Não informado";
+    if (inadimplenciaPercent !== null && inadimplenciaPercent <= 15) inadimplenciaLabel = "Confiança Máxima";
+    else if (inadimplenciaPercent !== null && inadimplenciaPercent <= 35) inadimplenciaLabel = "Confiança Alta";
+    else if (inadimplenciaPercent !== null && inadimplenciaPercent <= 55) inadimplenciaLabel = "Confiança Média";
+    else if (inadimplenciaPercent !== null) inadimplenciaLabel = "Confiança Muito Baixa";
 
     return {
       scoreVal,
@@ -364,8 +307,8 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
   }, [loadedConsultas, lead, diagnostico?.texto]);
 
   // Estilização semântica dos Cards
-  const isGoodRating = ["A", "B"].includes(metrics.ratingLetter);
-  const isMediumRating = ["C", "D"].includes(metrics.ratingLetter);
+  const isGoodRating = metrics.ratingLetter ? ["A", "B"].includes(metrics.ratingLetter) : false;
+  const isMediumRating = metrics.ratingLetter ? ["C", "D"].includes(metrics.ratingLetter) : false;
 
   const ratingCardBg = isGoodRating
     ? "bg-emerald-50/90 border-emerald-200/80 text-emerald-950"
@@ -380,13 +323,11 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
     : "text-[#C53030]";
 
   // Serviços Recomendados
-  const rawServices = lead?.servicosRecomendados || diagnostico?.servicosRecomendados || [];
-  const displayServices = rawServices.length > 0
-    ? rawServices
-    : [
-        { id: "serv_reabilitacao", nome: "Programa de reabilitação financeira e creditícia", valor: 0 },
-        { id: "serv_rating_score", nome: "Melhoria e adequação de rating e score", valor: 1100 }
-      ];
+  const rawServices = diagnostico?.servicosRecomendados ?? lead?.servicosRecomendados ?? [];
+  const displayServices = Array.isArray(rawServices) ? rawServices : [];
+  const actionSteps = Array.isArray(diagnostico?.subEtapasPasso6)
+    ? diagnostico.subEtapasPasso6
+    : (Array.isArray(lead?.subEtapasPasso6) ? lead.subEtapasPasso6 : []);
 
   const handleCopy = () => {
     if (!diagnostico?.texto) return;
@@ -411,7 +352,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
           </div>
           <div className="my-1">
             <div className={`text-3xl font-extrabold font-display ${ratingTextColor}`}>
-              {metrics.ratingLetter}
+              {metrics.ratingLetter || "—"}
             </div>
           </div>
           <div className="text-xs font-bold text-inherit opacity-90">
@@ -431,19 +372,19 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
           </div>
           <div className="my-1">
             <div className="text-3xl font-extrabold font-display text-slate-900">
-              {metrics.scoreVal}
+              {metrics.scoreVal ?? "—"}
             </div>
           </div>
           <div className="space-y-1.5">
             <div className="w-full bg-amber-100/80 rounded-full h-2 overflow-hidden">
               <div 
                 className="bg-gradient-to-r from-amber-500 to-amber-400 h-full rounded-full transition-all duration-700" 
-                style={{ width: `${Math.min(100, Math.max(8, (metrics.scoreVal / 1000) * 100))}%` }}
+                style={{ width: `${metrics.scoreVal === null ? 0 : Math.min(100, Math.max(8, (metrics.scoreVal / 1000) * 100))}%` }}
               />
             </div>
             <div className="text-[10px] font-bold text-amber-800/80 flex justify-between">
               <span>Posicionamento de Mercado</span>
-              <span>{Math.round((metrics.scoreVal / 1000) * 100)}%</span>
+              <span>{metrics.scoreVal === null ? "Não informado" : `${Math.round((metrics.scoreVal / 1000) * 100)}%`}</span>
             </div>
           </div>
         </div>
@@ -458,7 +399,7 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
           </div>
           <div className="my-1">
             <div className="text-3xl font-extrabold font-display text-rose-700">
-              {metrics.inadimplenciaPercent}%
+              {metrics.inadimplenciaPercent === null ? "—" : `${metrics.inadimplenciaPercent}%`}
             </div>
           </div>
           <div className="text-xs font-bold text-rose-800/90">
@@ -549,58 +490,30 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
           Plano de ação Prosfec
         </h4>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          
-          {/* Passo 1 */}
-          <div className="flex items-start gap-3.5">
-            <div className="w-6 h-6 rounded-full bg-[#122A22] text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5 shadow-2xs">
-              1
-            </div>
-            <div className="space-y-0.5">
-              <div className="text-xs font-bold text-slate-800">
-                Regularização SCR/Bacen
+        {actionSteps.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {actionSteps.map((step: any, index: number) => (
+              <div key={step.id || `${step.titulo}-${index}`} className="flex items-start gap-3.5">
+                <div className="w-6 h-6 rounded-full bg-[#122A22] text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5 shadow-2xs">
+                  {index + 1}
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-xs font-bold text-slate-800">{step.titulo}</div>
+                  {Number(step.preco) > 0 && (
+                    <div className="text-[11px] text-slate-500 font-medium">
+                      R$ {Number(step.preco).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="text-[11px] text-slate-500 font-medium">
-                Remoção e saneamento do registro de prejuízo e baixa de anotações
-              </div>
-            </div>
+            ))}
           </div>
-
-          {/* Passo 2 */}
-          <div className="flex items-start gap-3.5">
-            <div className="w-6 h-6 rounded-full bg-[#122A22] text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5 shadow-2xs">
-              2
-            </div>
-            <div className="space-y-0.5">
-              <div className="text-xs font-bold text-slate-800">
-                Limpa nome e baixa de protestos
-              </div>
-              <div className="text-[11px] text-slate-500 font-medium">
-                {metrics.protestosCount > 0 || metrics.protestosValor > 0 
-                  ? `${metrics.protestosCount || "Títulos"} protestados, R$ ${metrics.protestosValor > 0 ? metrics.protestosValor.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "6.389,45"}`
-                  : metrics.negativacoesCount > 0
-                  ? `${metrics.negativacoesCount} apontamentos restritivos para renegociação e baixa liminar`
-                  : "Negociação direta e exclusão de apontamentos cadastrais ativos"}
-              </div>
-            </div>
+        ) : (
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800">
+            <CheckCircle className="w-4 h-4 text-emerald-600" />
+            Empresa apta para captação; nenhuma ação corretiva comprovada.
           </div>
-
-          {/* Passo 3 */}
-          <div className="flex items-start gap-3.5">
-            <div className="w-6 h-6 rounded-full bg-[#122A22] text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5 shadow-2xs">
-              3
-            </div>
-            <div className="space-y-0.5">
-              <div className="text-xs font-bold text-slate-800">
-                Melhoria e adequação unificada de Rating e Score
-              </div>
-              <div className="text-[11px] text-slate-500 font-medium">
-                Reestruturação de capacidade de crédito para viabilização de linhas bancárias
-              </div>
-            </div>
-          </div>
-
-        </div>
+        )}
       </div>
 
       {/* 4. HERO VERDE ESCURO - POTENCIAL DE CAPTAÇÃO PÓS-INTERVENÇÃO */}
@@ -615,7 +528,9 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
           </div>
 
           <div className="text-2xl sm:text-3xl font-extrabold font-display text-white py-1">
-            R$ {metrics.capMin.toLocaleString("pt-BR")} – {metrics.capMax.toLocaleString("pt-BR")}
+            {metrics.capMin !== null && metrics.capMax !== null
+              ? `R$ ${metrics.capMin.toLocaleString("pt-BR")} – ${metrics.capMax.toLocaleString("pt-BR")}`
+              : "Não informado"}
           </div>
 
           <div className="text-xs font-bold text-emerald-300/90 pt-0.5">
@@ -636,6 +551,9 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          {displayServices.length === 0 && (
+            <div className="md:col-span-2 text-xs text-slate-500">Nenhum serviço corretivo recomendado pelos dados auditados.</div>
+          )}
           {displayServices.map((serv: any, idx: number) => {
             const isZero = !serv.valor || Number(serv.valor) === 0;
             const servNome = (serv.nome || serv.titulo || "").toString();
