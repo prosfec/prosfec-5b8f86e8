@@ -695,7 +695,7 @@ export default function LeadWorkspaceModal({
   }, []);
 
   // Fetch matching consultations from Firestore
-  const loadLeadConsultas = async () => {
+  const loadLeadConsultas = async (attempt = 0) => {
     if (!lead.id) return;
     setLoadingConsultas(true);
     try {
@@ -732,6 +732,11 @@ export default function LeadWorkspaceModal({
       setLeadConsultas(list);
     } catch (err) {
       console.error("Error loading lead queries:", err);
+      // Bloqueio momentâneo (sessão ainda resolvendo): tenta novamente uma vez.
+      if (attempt < 1) {
+        setTimeout(() => loadLeadConsultas(attempt + 1), 1200);
+        return;
+      }
     } finally {
       setLoadingConsultas(false);
     }
