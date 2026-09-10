@@ -1264,7 +1264,7 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num√
                 required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado"],
               },
             }
-          }, 60_000);
+          }, attempt.timeoutMs);
 
           if (stage1Response && stage1Response.text) {
             const rawStage1 = stage1Response.text.replace(/```json/g, "").replace(/```/g, "").trim();
