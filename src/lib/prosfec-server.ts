@@ -873,14 +873,59 @@ export function createExpressApp() {
     if (!aiClient) {
       const key = optionalEnv("GEMINI_API_KEY");
       if (!key) {
-        throw new Error("A chave GEMINI_API_KEY não foi encontrada no arquivo .env ou no painel de controle.");
+        throw Object.assign(
+          new Error("Configuração ausente: a chave GEMINI_API_KEY não está definida no ambiente do servidor."),
+          { statusCode: 500, code: "GEMINI_KEY_MISSING" },
+        );
       }
       aiClient = new GoogleGenAI({ apiKey: key });
     }
     return aiClient;
   }
 
-  async function generateContentWithFallback(ai: any, requestOptions: any) {
+  // Classifica o erro bruto do provedor de IA em algo acionável para o cliente.
+  function describeGeminiFailure(err: any): { statusCode: number; message: string; code: string } {
+    const rawStatus = Number(err?.status ?? err?.statusCode ?? err?.code);
+    const text = String(err?.message || "");
+    if (err?.code === "GEMINI_KEY_MISSING") {
+      return { statusCode: 500, code: "GEMINI_KEY_MISSING", message: err.message };
+    }
+    if (text.includes("GEMINI_TIMEOUT")) {
+      return {
+        statusCode: 504,
+        code: "GEMINI_TIMEOUT",
+        message: "A IA demorou demais para responder. Tente gerar o diagnóstico novamente.",
+      };
+    }
+    if (rawStatus === 429 || /RESOURCE_EXHAUSTED|quota/i.test(text)) {
+      return {
+        statusCode: 429,
+        code: "GEMINI_QUOTA",
+        message: "O limite de uso da IA foi atingido no momento. Aguarde alguns instantes e tente novamente.",
+      };
+    }
+    if (rawStatus === 401 || rawStatus === 403 || /API key|PERMISSION_DENIED|UNAUTHENTICATED/i.test(text)) {
+      return {
+        statusCode: 500,
+        code: "GEMINI_AUTH",
+        message: "A chave de acesso da IA foi recusada pelo provedor. Verifique a configuração GEMINI_API_KEY.",
+      };
+    }
+    if (/token|too large|exceeds|INVALID_ARGUMENT/i.test(text)) {
+      return {
+        statusCode: 502,
+        code: "GEMINI_PAYLOAD",
+        message: "O relatório da consulta é grande demais para a análise da IA. Tente novamente; o conteúdo será reduzido.",
+      };
+    }
+    return {
+      statusCode: 502,
+      code: "GEMINI_UPSTREAM",
+      message: "A IA não conseguiu responder no momento. Tente novamente em instantes.",
+    };
+  }
+
+  async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 30_000) {
     const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastError: any = null;
 
@@ -888,15 +933,21 @@ export function createExpressApp() {
       try {
         const response = await Promise.race([
           ai.models.generateContent({ ...requestOptions, model: modelName }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), 30_000)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), timeoutMs)),
         ]);
         if (response && response.text) {
           return response;
         }
+        lastError = Object.assign(new Error(`O modelo ${modelName} retornou resposta vazia.`), {
+          code: "GEMINI_EMPTY",
+        });
       } catch (err: any) {
         lastError = err;
-        // If resource exhausted (429) or invalid model (404), skip to next candidate immediately
         const status = err?.status || err?.code;
+        console.error(
+          `[PROSFEC IA] Falha no modelo ${modelName} (status: ${status ?? "n/d"}): ${String(err?.message || err).slice(0, 500)}`,
+        );
+        // If resource exhausted (429) or invalid model (404), skip to next candidate immediately
         if (status === 429 || status === 404 || err?.message?.includes("RESOURCE_EXHAUSTED")) {
           continue;
         }
