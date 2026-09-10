@@ -1401,12 +1401,23 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
    ]
    \`\`\``;
 
+      // Guarda de tempo total: se a Etapa 1 já consumiu o orçamento, não inicia a Etapa 2.
+      const elapsedMs = Date.now() - routeStartedAt;
+      const remainingMs = TOTAL_AI_BUDGET_MS - elapsedMs;
+      if (remainingMs < 4_000) {
+        throw Object.assign(
+          new Error("A IA demorou demais para responder. Tente gerar o diagnóstico novamente."),
+          { statusCode: 504, code: "GEMINI_TIMEOUT" },
+        );
+      }
+
       const response = await generateContentWithFallback(ai, {
         contents: stage2SystemPrompt,
         config: {
-          temperature: 0.2
+          temperature: 0.2,
+          maxOutputTokens: 2200,
         }
-      });
+      }, Math.min(12_000, remainingMs));
 
       const responseText = response.text || "";
 
