@@ -2094,63 +2094,16 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           analiseResultado = JSON.parse(rawClean);
         }
       } catch (aiErr) {
-        console.warn("[RTB] Gemini AI analysis failed or timed out. Generating robust algorithmic forensic model:", aiErr);
+        console.warn("[RTB] Gemini analysis failed:", (aiErr as any)?.message || "erro");
       }
 
-      // Algorithmic Fallback Engine if AI fails or returns empty
-      if (!analiseResultado || !analiseResultado.potencialRecuperacaoTotal) {
-        const baseVal = valorOperacaoEstimado;
-        const seguroEst = Math.round(baseVal * 0.032 + 1200);
-        const tacEst = Math.round(Math.min(baseVal * 0.015, 3500) + 850);
-        const cadastroEst = 1650;
-        const cetDiffEst = Math.round(baseVal * 0.018);
-
-        const totalRecup = seguroEst + tacEst + cadastroEst + cetDiffEst;
-        const totalDobro = totalRecup * 2;
-
-        analiseResultado = {
-          bancoIdentificado: bancoPrincipal,
-          numeroContratoOuCCB: `CCB nº ${(Math.random() * 10000000).toFixed(0).padStart(8, '0')}`,
-          valorOperacao: baseVal,
-          taxaJurosMensal: "2.35% a.m.",
-          taxaJurosAnual: "32.12% a.a.",
-          cetInformado: "37.40% a.a.",
-          potencialRecuperacaoTotal: totalRecup,
-          potencialRepeticaoIndebito: totalDobro,
-          irregularidadesEncontradas: [
-            {
-              tipo: "Venda Casada / Seguro Prestamista",
-              descricao: `Inclusão presumida de seguro prestamista e proteção financeira agregada na CCB sem oportunização de contratação externa.`,
-              valorEstimado: seguroEst,
-              fundamentacaoLegal: "Tema Repetitivo 972/STJ e Art. 39, I do CDC",
-              probabilidadeExito: "Alta"
-            },
-            {
-              tipo: "TAC/TEC",
-              descricao: `Cobrança de Tarifa de Abertura de Crédito (TAC) ou taxa de liquidação/emissão não autorizada pelo BACEN.`,
-              valorEstimado: tacEst,
-              fundamentacaoLegal: "Súmula 566 do STJ e Resolução CMN nº 3.518/2007",
-              probabilidadeExito: "Alta"
-            },
-            {
-              tipo: "Tarifa de Cadastro Repetida",
-              descricao: `Encargos de renovação cadastral e abertura de ficha de financiamento.`,
-              valorEstimado: cadastroEst,
-              fundamentacaoLegal: "Súmula 566 do STJ e Resolução BACEN 3.919/2010",
-              probabilidadeExito: "Média"
-            },
-            {
-              tipo: "Capitalização Indevida / CET Divergente",
-              descricao: `Custo Efetivo Total (CET) superior à taxa de juros nominal contratada devido à inclusão de tarifas acessórias na base de cálculo.`,
-              valorEstimado: cetDiffEst,
-              fundamentacaoLegal: "Súmula 539/STJ e Art. 52, V do Código de Defesa do Consumidor",
-              probabilidadeExito: "Alta"
-            }
-          ],
-          resumoExecutivo: `Auditoria pericial identificou potencial de ressarcimento de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totalRecup)} em tarifas e seguros embutidos na CCB, com viabilidade de devolução em dobro via notificação administrativa ou acordo.`,
-          teseJuridicaRecomendada: "Notificação Extrajudicial com pedido de ressarcimento amigável c/c pleito de repetição do indébito (Art. 42, parágrafo único do CDC) e Tema 972/STJ.",
-          sugestaoAcao: "Acordo Extrajudicial Notificatório"
-        };
+      // Não produza um laudo financeiro com números presumidos quando a IA não
+      // conseguir validar o documento real.
+      if (!analiseResultado || !Number.isFinite(Number(analiseResultado.potencialRecuperacaoTotal))) {
+        throw Object.assign(
+          new Error("A IA não conseguiu validar o conteúdo da CCB. Nenhuma estimativa fictícia foi salva."),
+          { statusCode: 503 },
+        );
       }
 
       // Consolidate final RTB object
