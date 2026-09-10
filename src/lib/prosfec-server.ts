@@ -3214,6 +3214,85 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // Ficha de Sócios da simulação pública (visitante não autenticado)
+  const isValidCpf = (raw: any): boolean => {
+    const cpf = onlyDigits(raw);
+    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+    const calc = (len: number) => {
+      let sum = 0;
+      for (let i = 0; i < len; i++) sum += Number(cpf[i]) * (len + 1 - i);
+      const mod = (sum * 10) % 11;
+      return mod === 10 ? 0 : mod;
+    };
+    return calc(9) === Number(cpf[9]) && calc(10) === Number(cpf[10]);
+  };
+
+  app.post("/api/public/leads/socios", async (req, res) => {
+    try {
+      const body = req.body || {};
+      const leadId = sanitizeLeadId(body.leadId);
+      if (!leadId) return res.status(400).json({ success: false, error: "Identificador do lead inválido." });
+
+      const rawSocios = Array.isArray(body.socios) ? body.socios : [];
+      if (!rawSocios.length || rawSocios.length > 2) {
+        return res.status(400).json({ success: false, error: "Informe 1 ou 2 sócios." });
+      }
+
+      const socios = rawSocios.map((s: any, index: number) => {
+        const nome = String(s?.nome || "").trim().slice(0, 120);
+        const cpf = onlyDigits(s?.cpf);
+        if (!nome) throw new Error(`Nome do sócio ${index + 1} obrigatório.`);
+        if (!isValidCpf(cpf)) throw new Error(`CPF do sócio ${index + 1} inválido.`);
+        return {
+          nome,
+          cpf,
+          dataNascimento: String(s?.dataNascimento || "").slice(0, 20),
+          participacao: Number(s?.participacao) || 0,
+          nomeMae: String(s?.nomeMae || "").trim().slice(0, 120),
+          telefone: onlyDigits(s?.telefone).slice(0, 15),
+          rg: String(s?.rg || "").trim().slice(0, 30),
+          orgaoEmissor: String(s?.orgaoEmissor || "").trim().slice(0, 20),
+          cargo: String(s?.cargo || "").trim().slice(0, 40) || (index === 0 ? "Sócio Principal" : `Sócio ${index + 1}`),
+        };
+      });
+
+      const endereco = body.endereco && typeof body.endereco === "object" ? body.endereco : {};
+      const enderecoSocioPrincipal = {
+        cep: onlyDigits(endereco.cep).slice(0, 8),
+        logradouro: String(endereco.logradouro || "").trim().slice(0, 160),
+        numero: String(endereco.numero || "").trim().slice(0, 20),
+        complemento: String(endereco.complemento || "").trim().slice(0, 80),
+        bairro: String(endereco.bairro || "").trim().slice(0, 80),
+        cidade: String(endereco.cidade || "").trim().slice(0, 80),
+        uf: String(endereco.uf || "").trim().slice(0, 2).toUpperCase(),
+      };
+
+      const existing = await getDocRest(`leads/${leadId}`);
+      if (!existing) return res.status(404).json({ success: false, error: "Cadastro não encontrado." });
+
+      await patchDocRest(
+        `leads/${leadId}`,
+        cleanForFirestore({
+          socios,
+          enderecoSocioPrincipal,
+          etapa: 3,
+          status: "em atendimento",
+          updated_at: new Date().toISOString(),
+        }),
+      );
+
+      return res.json({ success: true, leadId });
+    } catch (err: any) {
+      const msg = String(err?.message || "");
+      if (/obrigatório|inválido/i.test(msg)) {
+        return res.status(400).json({ success: false, error: msg });
+      }
+      console.error("Erro ao salvar sócios da simulação pública:", msg || err);
+      return res.status(500).json({ success: false, error: "Não foi possível salvar os dados dos sócios." });
+    }
+  });
+
+
   app.post("/api/public/contrato/:leadId/assinar", async (req, res) => {
     try {
       const leadId = sanitizeLeadId(req.params?.leadId);
