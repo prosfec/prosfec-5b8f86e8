@@ -643,6 +643,8 @@ export default function LeadWorkspaceModal({
   const [localCatalog, setLocalCatalog] = useState<any[]>([]);
   const [localCatalogError, setLocalCatalogError] = useState<string | null>(null);
   const [loadingLocalCatalog, setLoadingLocalCatalog] = useState(true);
+  const [usingFallbackCatalog, setUsingFallbackCatalog] = useState(false);
+
   const [selectedProductCode, setSelectedProductCode] = useState("");
   const [executingLocalQuery, setExecutingLocalQuery] = useState(false);
   const [localQueryError, setLocalQueryError] = useState<string | null>(null);
