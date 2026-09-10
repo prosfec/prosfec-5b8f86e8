@@ -1082,21 +1082,38 @@ export function createExpressApp() {
       }
 
 
-      // Compile summaries of consultations
-      const consultationsSummary = matchingConsultas.map(c => {
-        const cleanResult = { ...c.resultado };
-        if (cleanResult.html_report) delete cleanResult.html_report;
-        if (cleanResult.pdf_report) delete cleanResult.pdf_report;
-        if (cleanResult.raw_response) delete cleanResult.raw_response;
+      // Compile summaries of consultations (mais recentes primeiro, sem campos pesados)
+      const HEAVY_RESULT_FIELDS = [
+        "html_report", "pdf_report", "raw_response", "html", "pdf", "pdf_base64",
+        "base64", "arquivo", "arquivo_base64", "conteudo_html", "xml", "rawXml",
+      ];
 
-        return {
-          id: c.id,
-          produto: c.produto_nome,
-          codigo: c.produto_code,
-          data: c.dataConsulta,
-          resumo_resultado: cleanResult
-        };
-      });
+      const consultationsSummary = [...matchingConsultas]
+        .sort((a, b) => (Date.parse(String(b.dataConsulta || "")) || 0) - (Date.parse(String(a.dataConsulta || "")) || 0))
+        .slice(0, 5)
+        .map(c => {
+          const cleanResult: any = { ...(c.resultado || {}) };
+          for (const field of HEAVY_RESULT_FIELDS) delete cleanResult[field];
+
+          return {
+            id: c.id,
+            produto: c.produto_nome,
+            codigo: c.produto_code,
+            data: c.dataConsulta,
+            resumo_resultado: cleanResult
+          };
+        });
+
+      // Serializa os relatórios com corte por tamanho para não estourar o limite da IA.
+      const buildConsultationsBlock = (maxItems: number, maxChars: number): string => {
+        if (!consultationsSummary.length) return "Nenhuma consulta de crédito realizada no sistema até o momento.";
+        const slice = consultationsSummary.slice(0, maxItems);
+        let text = JSON.stringify(slice, null, 2);
+        if (text.length > maxChars) {
+          text = `${text.slice(0, maxChars)}\n... [conteúdo truncado por tamanho — analise apenas os dados acima]`;
+        }
+        return text;
+      };
 
       // 3. Load dynamic service price catalog from Firestore
       let activeServicesCatalog: Array<{ id: string; nome: string; valor: number; hublaLink?: string; [key: string]: any }> = [
