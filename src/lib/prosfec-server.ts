@@ -967,6 +967,16 @@ export function createExpressApp() {
         return res.status(400).json({ error: "O parâmetro leadId é obrigatório." });
       }
 
+      // Falha rápida de configuração: evita criar trava e consumir leitura à toa.
+      if (!optionalEnv("GEMINI_API_KEY")) {
+        console.error("[PROSFEC IA] GEMINI_API_KEY não configurada no ambiente do servidor.");
+        return res.status(500).json({
+          success: false,
+          code: "GEMINI_KEY_MISSING",
+          error: "A chave de acesso da IA (GEMINI_API_KEY) não está configurada no servidor. Cadastre-a para gerar o diagnóstico.",
+        });
+      }
+
       console.log(`Generating PROSFEC IA Diagnosis for lead: ${leadId}...`);
 
       // 1. Fetch Lead data (via REST/fetch — SDK web depende de XMLHttpRequest)
