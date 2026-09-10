@@ -273,12 +273,14 @@ export default function App() {
             const data = partnerSnap.data();
             if (data) {
               if (data.nome) {
-                setReferredByPartnerNome(data.nome);
-                localStorage.setItem("lca_referred_by_nome", data.nome);
+                const nome = String(data.nome);
+                setReferredByPartnerNome(nome);
+                localStorage.setItem("lca_referred_by_nome", nome);
               }
               if (data.whatsapp) {
-                setReferredByPartnerWhatsapp(data.whatsapp);
-                localStorage.setItem("lca_referred_by_whatsapp", data.whatsapp);
+                const whatsapp = String(data.whatsapp);
+                setReferredByPartnerWhatsapp(whatsapp);
+                localStorage.setItem("lca_referred_by_whatsapp", whatsapp);
               }
               if (data.hotmartCode) {
                 localStorage.setItem("lca_referred_by_hotmart_code", data.hotmartCode);
