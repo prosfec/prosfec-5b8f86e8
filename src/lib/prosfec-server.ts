@@ -2945,6 +2945,22 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     return { id: name.split("/").pop() || "" };
   };
 
+  /** Grava um documento inteiro num caminho fixo (sem updateMask). */
+  const putDocRest = async (path: string, data: any): Promise<void> => {
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(path), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ fields: toFirestoreFields(cleanForFirestore(data)) }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore PUT ${r.status}: ${detail.slice(0, 160)}`);
+    }
+  };
+
+
+
   const createDocAtPathRest = async (path: string, data: any): Promise<void> => {
     const idToken = await getServiceIdToken();
     const separator = firestoreDocUrl(path).includes("?") ? "&" : "?";
