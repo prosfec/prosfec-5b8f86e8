@@ -1197,7 +1197,7 @@ export function createExpressApp() {
       // =========================================================================
       console.log(`[PROSFEC IA] Iniciando Etapa 1: Auditoria Quantitativa para o Lead ${leadId}`);
 
-      const stage1AuditPrompt = `Você é o Engenheiro Chefe de Risco e Auditor Pericial de Crédito da PROSFEC IA.
+      const buildStage1Prompt = (consultationsBlock: string) => `Você é o Engenheiro Chefe de Risco e Auditor Pericial de Crédito da PROSFEC IA.
 Sua única e estrita função nesta Etapa 1 é realizar a AUDITORIA QUANTITATIVA fria, matemática e pericial dos dados cadastrais e dos relatórios de consultas de crédito (Serasa, SPC, SCR/BACEN, CNDs, etc).
 
 DADOS CADASTRAIS DA EMPRESA:
