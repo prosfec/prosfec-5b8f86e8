@@ -1459,8 +1459,11 @@ REGRA 4: CLASSIFICAÇÃO LITERAL. A chave valor_negativacoes deve ser preenchida
       };
 
       const extractStructuredBlock = (source: string, key: "json_servicos" | "json_subetapas"): unknown => {
-        const taggedMatch = source.match(new RegExp(`\\`\\`\\`\\s*${key}\\s*([\\s\\S]*?)\\s*\\`\\`\\``, "i"));
+        const taggedMatch = source.match(new RegExp("```\\s*" + key + "\\s*([\\s\\S]*?)\\s*```", "i"));
         if (taggedMatch?.[1]) return parseMarkdownJson(taggedMatch[1]);
+
+        const contextualMatch = source.match(new RegExp(key + "[\\s\\S]{0,160}?```\\s*json\\s*([\\s\\S]*?)\\s*```", "i"));
+        if (contextualMatch?.[1]) return parseMarkdownJson(contextualMatch[1]);
 
         const genericBlocks = source.matchAll(/```\s*json\s*([\s\S]*?)\s*```/gi);
         for (const block of genericBlocks) {
@@ -1478,7 +1481,6 @@ REGRA 4: CLASSIFICAÇÃO LITERAL. A chave valor_negativacoes deve ser preenchida
       };
 
       // Extract json_servicos
-      const matchServicos = responseText.match(/```\s*json_servicos\s*([\s\S]*?)\s*```/i);
       const servicosBlock = extractStructuredBlock(responseText, "json_servicos");
       if (servicosBlock !== undefined) {
         try {
@@ -1553,7 +1555,6 @@ REGRA 4: CLASSIFICAÇÃO LITERAL. A chave valor_negativacoes deve ser preenchida
       }
 
       // Extract custom sub-etapas for Step 6 from json_subetapas block
-      const matchSubEtapas = cleanText.match(/```\s*json_subetapas\s*([\s\S]*?)\s*```/i);
       const subEtapasBlock = extractStructuredBlock(cleanText, "json_subetapas");
       if (subEtapasBlock !== undefined) {
         try {
