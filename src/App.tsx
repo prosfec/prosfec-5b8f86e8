@@ -434,9 +434,13 @@ export default function App() {
         : null;
 
       if (!response.ok || !payload?.success) {
-        console.warn("Simulação não registrada:", payload?.error || response.status);
+        console.error(
+          `Simulação não registrada (HTTP ${response.status}):`,
+          payload?.error || "resposta inválida da rota /api/public/leads/simulacao",
+        );
         return;
       }
+
 
       console.log(
         payload.atualizado

@@ -2747,13 +2747,26 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
   getServiceIdTokenRef.fn = getServiceIdToken;
 
+  // Nomes de campo fora do padrão simples (acento, cedilha, espaço, hífen)
+  // precisam ser envolvidos em crases no fieldPath, senão o Firestore recusa
+  // a gravação inteira com 400 INVALID_ARGUMENT.
+  const escapeFieldPath = (name: string) =>
+    /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) ? name : `\`${name.replace(/[`\\]/g, "\\$&")}\``;
+
   const firestoreDocUrl = (path: string, masks: string[] = []) => {
     const base =
       `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}` +
       `/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents/${path}`;
     if (!masks.length) return base;
-    return base + "?" + masks.map((m) => `updateMask.fieldPaths=${m}`).join("&");
+    return (
+      base +
+      "?" +
+      masks
+        .map((m) => `updateMask.fieldPaths=${encodeURIComponent(escapeFieldPath(m))}`)
+        .join("&")
+    );
   };
+
 
   const getLeadRest = async (leadId: string) => {
     const idToken = await getServiceIdToken();
@@ -2931,6 +2944,22 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     const name: string = created?.name || "";
     return { id: name.split("/").pop() || "" };
   };
+
+  /** Grava um documento inteiro num caminho fixo (sem updateMask). */
+  const putDocRest = async (path: string, data: any): Promise<void> => {
+    const idToken = await getServiceIdToken();
+    const r = await fetch(firestoreDocUrl(path), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ fields: toFirestoreFields(cleanForFirestore(data)) }),
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore PUT ${r.status}: ${detail.slice(0, 160)}`);
+    }
+  };
+
+
 
   const createDocAtPathRest = async (path: string, data: any): Promise<void> => {
     const idToken = await getServiceIdToken();
@@ -3163,15 +3192,19 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const novoLead = {
         ...payload,
         cnpj: String(payload.cnpj || "").trim(),
+        status: payload.status || "novo",
+        etapa: Number(payload.etapa || 1),
         dataCriacao: payload.dataCriacao || nowIso,
         dataUltimaSimulacao: nowIso,
+        updated_at: nowIso,
         historicoSimulacoes: [simulacaoEntry],
       };
 
       if (leadId) {
-        await patchDocRest(`leads/${leadId}`, cleanForFirestore(novoLead));
+        await putDocRest(`leads/${leadId}`, novoLead);
         return res.json({ success: true, leadId, atualizado: false });
       }
+
 
       const created = await createDocRest("leads", novoLead);
       return res.json({ success: true, leadId: created.id, atualizado: false });
