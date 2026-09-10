@@ -642,6 +642,7 @@ export default function LeadWorkspaceModal({
   // Credit Query Integration states
   const [localCatalog, setLocalCatalog] = useState<any[]>([]);
   const [localCatalogError, setLocalCatalogError] = useState<string | null>(null);
+  const [loadingLocalCatalog, setLoadingLocalCatalog] = useState(true);
   const [selectedProductCode, setSelectedProductCode] = useState("");
   const [executingLocalQuery, setExecutingLocalQuery] = useState(false);
   const [localQueryError, setLocalQueryError] = useState<string | null>(null);
@@ -659,31 +660,38 @@ export default function LeadWorkspaceModal({
     };
   };
 
-  // Fetch local credit query catalog
-  useEffect(() => {
-    const fetchCatalog = async () => {
-      setLocalCatalogError(null);
-      try {
-        const res = await fetch("/api/credit/catalogo");
-        const payload = await res.json().catch(() => null);
-        if (res.ok && payload?.success && payload?.catalog) {
-          setLocalCatalog(payload.catalog);
-          if (payload.catalog.length > 0) {
-            setSelectedProductCode(payload.catalog[0].code);
-          }
-          return;
-        }
-        setLocalCatalog([]);
-        setSelectedProductCode("");
-        setLocalCatalogError(payload?.error || "Tabela oficial de preços indisponível.");
-      } catch (err) {
-        console.error("Error fetching credit catalog in modal:", err);
-        setLocalCatalog([]);
-        setSelectedProductCode("");
-        setLocalCatalogError("Não foi possível carregar a tabela oficial de preços.");
+  // Fetch local credit query catalog (reutilizável para o botão "Tentar novamente")
+  const fetchLocalCatalog = async (): Promise<boolean> => {
+    setLoadingLocalCatalog(true);
+    setLocalCatalogError(null);
+    try {
+      const res = await fetch("/api/credit/catalogo");
+      const payload = await res.json().catch(() => null);
+      const catalog = Array.isArray(payload?.catalog) ? payload.catalog : [];
+      if (res.ok && payload?.success && catalog.length > 0) {
+        setLocalCatalog(catalog);
+        setSelectedProductCode((prev) =>
+          prev && catalog.some((item: any) => item.code === prev) ? prev : catalog[0].code
+        );
+        return true;
       }
-    };
-    fetchCatalog();
+      setLocalCatalog([]);
+      setSelectedProductCode("");
+      setLocalCatalogError(payload?.error || "Tabela oficial de preços indisponível.");
+      return false;
+    } catch (err) {
+      console.error("Error fetching credit catalog in modal:", err);
+      setLocalCatalog([]);
+      setSelectedProductCode("");
+      setLocalCatalogError("Não foi possível carregar a tabela oficial de preços.");
+      return false;
+    } finally {
+      setLoadingLocalCatalog(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLocalCatalog();
   }, []);
 
   // Fetch matching consultations from Firestore
