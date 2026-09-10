@@ -942,10 +942,42 @@ export function createExpressApp() {
       }
 
       const newGeracoesCount = previousGeracoesCount + 1;
-      diagnosisLockPath = `consultas_realizadas/ia_diagnostico_${String(leadId).replace(/[^A-Za-z0-9_-]/g, "")}_${newGeracoesCount}`;
-      await createDocAtPathRest(diagnosisLockPath, {
+      const lockPathCandidate = `consultas_realizadas/ia_diagnostico_${String(leadId).replace(/[^A-Za-z0-9_-]/g, "")}_${newGeracoesCount}`;
+      const lockPayload = {
         leadId: String(leadId), partnerId: caller.partnerId, status: "processando", dataCriacao: new Date().toISOString(),
-      });
+      };
+
+      let existingLock: any = null;
+      try {
+        existingLock = await getDocRest(lockPathCandidate);
+      } catch {
+        existingLock = null;
+      }
+
+      if (!existingLock) {
+        try {
+          await createDocAtPathRest(lockPathCandidate, lockPayload);
+        } catch (lockErr: any) {
+          if (lockErr?.code === "DUPLICATE") {
+            return res.status(409).json({ error: "Este diagnóstico já está sendo gerado. Aguarde alguns instantes." });
+          }
+          throw lockErr;
+        }
+      } else {
+        const lockStatus = String(existingLock.status || "");
+        const startedAt = Date.parse(String(existingLock.dataCriacao || "")) || 0;
+        const isStale = !startedAt || Date.now() - startedAt > 5 * 60 * 1000;
+        if (lockStatus === "sucesso") {
+          return res.status(409).json({ error: "Este diagnóstico já foi gerado para este lead." });
+        }
+        if (!["falha", "estornado"].includes(lockStatus) && !isStale) {
+          return res.status(409).json({ error: "Este diagnóstico já está sendo gerado. Aguarde alguns instantes." });
+        }
+        await patchDocRest(lockPathCandidate, { ...lockPayload, dataConclusao: "" });
+      }
+
+      diagnosisLockPath = lockPathCandidate;
+
 
       // 2. Fetch credit consultations performed for this lead's CNPJ or their partner's CPFs
       const docList: string[] = [];
