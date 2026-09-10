@@ -831,8 +831,6 @@ export default function Simulador({
         throw new Error("ID do lead não encontrado.");
       }
 
-      const refDoc = doc(db, "leads", leadId);
-      
       const sociosList = [
         {
           nome: socio1.nome,
@@ -861,12 +859,32 @@ export default function Simulador({
         });
       }
 
-      await updateDoc(refDoc, {
-        socios: sociosList,
-        enderecoSocioPrincipal: enderecoSocio,
-        etapa: 3, // Advances to Step 3: Consulta diagnóstica no CPF e CNPJ
-        status: "em atendimento" // Changes status to "em atendimento"
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      let response: Response;
+      try {
+        response = await fetch("/api/public/leads/socios", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId, socios: sociosList, endereco: enderecoSocio }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      let payload: any = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+
+      if (!response.ok || !payload?.success) {
+        console.error("Falha ao salvar sócios:", response.status, payload?.error);
+        setSociosError(payload?.error || "Erro ao salvar os dados no sistema. Tente novamente ou fale com o seu consultor.");
+        return;
+      }
 
       // Trigger standard Webhook simulation for step 2 completed
       triggerWebhookSimulation("socios_registration_completed", {
@@ -874,6 +892,7 @@ export default function Simulador({
         socios: sociosList,
         endereco: enderecoSocio
       });
+
 
       setSociosSubmitted(true);
     } catch (err) {
