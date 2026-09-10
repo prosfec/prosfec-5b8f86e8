@@ -23,7 +23,7 @@ import {
 import { LeadData, SimulationResult } from "../types";
 import PlanSelectionView from "./PlanSelectionView";
 import SimulationResultBoundary from "./SimulationResultBoundary";
-import { doc, updateDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../firebase";
 import {
   Building,
