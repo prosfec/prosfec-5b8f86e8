@@ -116,14 +116,14 @@ export function formatCPF(value: string): string {
 }
 
 // Normalize Brazilian phone for WhatsApp: digits only, with country code 55 guaranteed
-export function formatWhatsAppPhone(phone: string): string {
-  const clean = (phone || "").replace(/\D/g, "");
+export function formatWhatsAppPhone(phone: unknown): string {
+  const clean = String(phone ?? "").replace(/\D/g, "");
   if (!clean) return "";
   return clean.startsWith("55") ? clean : `55${clean}`;
 }
 
 // Build official wa.me URL with optional pre-filled message (encoded)
-export function buildWhatsAppUrl(phone: string, message?: string): string {
+export function buildWhatsAppUrl(phone: unknown, message?: string): string {
   const num = formatWhatsAppPhone(phone);
   if (!num) return "#";
   return `https://wa.me/${num}${message ? `?text=${encodeURIComponent(message)}` : ""}`;
