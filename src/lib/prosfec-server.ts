@@ -2630,13 +2630,77 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     return out;
   };
 
+  class UpstreamError extends Error {
+    code: string;
+    statusCode: number;
+    constructor(code: string, upstreamStatus?: number) {
+      super(code);
+      this.code = code;
+      this.statusCode = upstreamStatus === 429 ? 503 : 502;
+    }
+  }
+
+  const fetchWithTimeout = async (url: string, init: RequestInit = {}, timeoutMs = 20_000) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const sanitizeIdempotencyKey = (raw: any): string => {
+    const value = String(raw || "").trim();
+    return /^[A-Za-z0-9_-]{16,128}$/.test(value) ? value : "";
+  };
+
+  const authenticateApiCaller = async (req: any): Promise<{ uid: string; email: string; isAdmin: boolean; partnerId: string }> => {
+    const token = extractToken(req, "authorization");
+    if (!token) throw Object.assign(new Error("Autenticação obrigatória."), { statusCode: 401 });
+    const apiKey = requireEnv("FIREBASE_API_KEY");
+    const response = await fetchWithTimeout(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: token }),
+    }, 10_000);
+    if (!response.ok) throw Object.assign(new Error("Sessão inválida ou expirada."), { statusCode: 401 });
+    const user = (await response.json())?.users?.[0];
+    const uid = String(user?.localId || "");
+    const email = String(user?.email || "").trim().toLowerCase();
+    if (!uid) throw Object.assign(new Error("Sessão inválida."), { statusCode: 401 });
+    const isAdmin = uid === "Nso5FBoBVHXNY60RDw6NNKeaCC23" || email === "prosfec.tesouraria@gmail.com";
+    if (isAdmin) return { uid, email, isAdmin, partnerId: "admin" };
+
+    let rows = await runQueryRest("parceiros", {
+      fieldFilter: { field: { fieldPath: "authUid" }, op: "EQUAL", value: { stringValue: uid } },
+    }, 1);
+    if (!rows.length && email) {
+      rows = await runQueryRest("parceiros", {
+        fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: email } },
+      }, 1);
+    }
+    if (!rows.length) throw Object.assign(new Error("Usuário sem cadastro de parceiro."), { statusCode: 403 });
+    return { uid, email, isAdmin: false, partnerId: rows[0].id };
+  };
+
+  const assertLeadAccess = async (leadId: string, caller: any, partnerId = caller.partnerId) => {
+    if (caller.isAdmin) return;
+    const lead = await getDocRest(`leads/${leadId}`);
+    if (!lead) throw Object.assign(new Error("Lead não encontrado."), { statusCode: 404 });
+    const owners = [lead.parceiroId, lead.partnerId, lead.parceiro_id, lead.parentPartnerId].filter(Boolean).map(String);
+    if (!owners.includes(String(partnerId))) throw Object.assign(new Error("Você não tem acesso a este lead."), { statusCode: 403 });
+  };
+
   /** Lê um documento. Retorna null quando não existe. */
   const getDocRest = async (path: string): Promise<any | null> => {
     const idToken = await getServiceIdToken();
     const r = await fetch(firestoreDocUrl(path), {
       headers: { Authorization: `Bearer ${idToken}` },
     });
-    if (!r.ok) return null;
+    if (r.status === 404) return null;
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore GET ${r.status}: ${detail.slice(0, 160)}`);
+    }
     const data = await r.json().catch(() => null);
     if (!data?.fields) return null;
     return fromFirestoreFields(data.fields);
@@ -2657,6 +2721,42 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     const created = await r.json().catch(() => null);
     const name: string = created?.name || "";
     return { id: name.split("/").pop() || "" };
+  };
+
+  const createDocAtPathRest = async (path: string, data: any): Promise<void> => {
+    const idToken = await getServiceIdToken();
+    const separator = firestoreDocUrl(path).includes("?") ? "&" : "?";
+    const r = await fetch(`${firestoreDocUrl(path)}${separator}currentDocument.exists=false`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ fields: toFirestoreFields(cleanForFirestore(data)) }),
+    });
+    if (r.status === 409 || r.status === 412) throw Object.assign(new Error("Operação duplicada."), { statusCode: 409, code: "DUPLICATE" });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore CREATE ${r.status}: ${detail.slice(0, 160)}`);
+    }
+  };
+
+  const changePartnerBalanceAtomic = async (partnerId: string, delta: number): Promise<number> => {
+    const idToken = await getServiceIdToken();
+    const documentName = `projects/${FIREBASE_PROJECT_ID}/databases/${FIRESTORE_DB_ID}/documents/parceiros/${partnerId}`;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const read = await fetch(firestoreDocUrl(`parceiros/${partnerId}`), { headers: { Authorization: `Bearer ${idToken}` } });
+      if (!read.ok) throw new Error("Parceiro não encontrado durante a atualização do saldo.");
+      const raw = await read.json();
+      const current = Number(fromFirestoreFields(raw.fields)?.saldoGeral || 0);
+      const next = Number((current + delta).toFixed(2));
+      if (next < 0) throw Object.assign(new Error("Saldo insuficiente para realizar esta consulta."), { statusCode: 400, code: "INSUFFICIENT_BALANCE" });
+      const commitUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents:commit`;
+      const commit = await fetch(commitUrl, {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ writes: [{ update: { name: documentName, fields: { saldoGeral: toFirestoreValue(next) } }, updateMask: { fieldPaths: ["saldoGeral"] }, currentDocument: { updateTime: raw.updateTime } }] }),
+      });
+      if (commit.ok) return next;
+      if (![409, 412].includes(commit.status)) throw new Error(`Falha ao atualizar saldo (${commit.status}).`);
+    }
+    throw Object.assign(new Error("O saldo foi alterado simultaneamente. Tente novamente."), { statusCode: 409, code: "BALANCE_CONFLICT" });
   };
 
   /** Atualiza campos de um documento (merge via updateMask). */
