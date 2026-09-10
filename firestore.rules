@@ -313,6 +313,15 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
+    // 11.5 OPERACOES DE IA (locks de diagnóstico PROSFEC)
+    // ---------------------------------------------------------------------
+    match /operacoes_ia/{operacaoId} {
+      allow read: if isStaff() || isServico();
+      allow create, update: if isStaff() || isServico();
+      allow delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------------
     // 12. SERVICOS DE CONTABILIDADE (catálogo)
     // ---------------------------------------------------------------------
     match /servicos_contabilidade/{servicoId} {

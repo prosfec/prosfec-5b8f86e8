@@ -665,17 +665,14 @@ export default function LeadWorkspaceModal({
       setLocalCatalogError(null);
       try {
         const res = await fetch("/api/credit/catalogo");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.catalog) {
-            setLocalCatalog(data.catalog);
-            if (data.catalog.length > 0) {
-              setSelectedProductCode(data.catalog[0].code);
-            }
-            return;
-          }
-        }
         const payload = await res.json().catch(() => null);
+        if (res.ok && payload?.success && payload?.catalog) {
+          setLocalCatalog(payload.catalog);
+          if (payload.catalog.length > 0) {
+            setSelectedProductCode(payload.catalog[0].code);
+          }
+          return;
+        }
         setLocalCatalog([]);
         setSelectedProductCode("");
         setLocalCatalogError(payload?.error || "Tabela oficial de preços indisponível.");
