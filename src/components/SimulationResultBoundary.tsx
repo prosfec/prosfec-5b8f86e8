@@ -19,7 +19,7 @@ interface State {
  * o lead vê um aviso amigável em vez da tela "Esta página não carregou".
  */
 export class SimulationResultBoundary extends React.Component<Props, State> {
-  state: State = { hasError: false, message: "" };
+  override state: State = { hasError: false, message: "" };
 
   static getDerivedStateFromError(error: unknown): State {
     return {
@@ -28,7 +28,7 @@ export class SimulationResultBoundary extends React.Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: unknown, info: unknown) {
+  override componentDidCatch(error: unknown, info: unknown) {
     console.error("Simulation result render error:", error, info);
     try {
       reportLovableError(error instanceof Error ? error : new Error(String(error)), {
@@ -39,7 +39,7 @@ export class SimulationResultBoundary extends React.Component<Props, State> {
     }
   }
 
-  render() {
+  override render() {
     if (!this.state.hasError) return this.props.children;
 
     const whatsappUrl =
