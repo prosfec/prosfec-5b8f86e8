@@ -781,7 +781,6 @@ export default function LeadWorkspaceModal({
         throw new Error(`A API do servidor retornou uma resposta inválida (Status ${res.status}).`);
       }
       if (!res.ok || !data.success) {
-        if (res.status < 500 && res.status !== 409) queryRequestIdRef.current = null;
         throw new Error(data?.error || "Erro ao executar consulta.");
       }
       queryRequestIdRef.current = null;
@@ -797,6 +796,8 @@ export default function LeadWorkspaceModal({
       loadLeadConsultas();
       safeRefreshLeads();
     } catch (err: any) {
+      // Libera imediatamente a retentativa: a próxima tentativa usa uma chave nova.
+      queryRequestIdRef.current = null;
       setLocalQueryError(err.message || "Erro ao executar consulta.");
     } finally {
       setExecutingLocalQuery(false);
