@@ -625,7 +625,11 @@ export function createExpressApp() {
       if (prior?.status === "sucesso") {
         return res.json({ success: true, consulta_id: requestId, newBalance: prior.saldoApos, debited: prior.debitado === true, produto_nome: prior.produto_nome, data: prior.resultado, idempotentReplay: true });
       }
-      if (prior) return res.status(409).json({ error: "Esta consulta já está sendo processada ou foi encerrada." });
+      // Tentativas anteriores que terminaram em falha ou estorno podem ser
+      // refeitas; só bloqueia quando a operação ainda está em andamento.
+      if (prior && !["falha", "estornado"].includes(String(prior.status || ""))) {
+        return res.status(409).json({ error: "Esta consulta já está sendo processada." });
+      }
 
       const partnerData: any = partnerId === "admin" ? null : await getDocRest(`parceiros/${partnerId}`);
       const isAdminUser = caller.isAdmin;
