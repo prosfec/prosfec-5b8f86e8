@@ -1551,6 +1551,14 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
         ];
       }
 
+      // Guarda vital: nunca sobrescrever um laudo válido com resposta vazia/inútil da IA.
+      if (!cleanText || cleanText.trim().length < 50) {
+        throw Object.assign(
+          new Error("Laudo vazio gerado pela IA. Tente novamente."),
+          { statusCode: 502, code: "GEMINI_EMPTY_REPORT" },
+        );
+      }
+
       // 4. Update the Lead document in Firestore with diagnosis, recommended services, custom sub-etapas AND advance stage to Step 4 (Contrato & Termos)
       const currentEtapaVal = Number(leadData.etapa || 1);
       const nextEtapaVal = Math.max(currentEtapaVal, 4);
