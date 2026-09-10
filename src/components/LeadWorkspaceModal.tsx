@@ -861,7 +861,7 @@ export default function LeadWorkspaceModal({
   // Generate PROSFEC IA Diagnosis via Backend Route
   const handleGeneratePROSFECDiagnostico = async () => {
     const currentCount = diagnosticoPROSFEC?.geracoesCount || lead?.diagnosticoGeracoesCount || (diagnosticoPROSFEC ? 1 : 0);
-    if (diagnosticoPROSFEC && currentCount >= 2) {
+    if (!isAdminUser && diagnosticoPROSFEC && currentCount >= 2) {
       setWorkspaceError("O diagnóstico de IA já foi refeito 1 vez. O limite máximo de reanálises foi atingido para este lead.");
       return;
     }
@@ -3747,7 +3747,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                           <span>Diagnóstico IA Concluído</span>
                         </div>
-                        {((diagnosticoPROSFEC as any)?.geracoesCount || (lead as any)?.diagnosticoGeracoesCount || 1) >= 2 ? (
+                        {!isAdminUser && ((diagnosticoPROSFEC as any)?.geracoesCount || (lead as any)?.diagnosticoGeracoesCount || 1) >= 2 ? (
                           <button
                             disabled
                             title="O diagnóstico de IA já foi refeito 1 vez. Limite máximo de reanálises atingido para este lead."
@@ -3760,7 +3760,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           <button
                             onClick={handleGeneratePROSFECDiagnostico}
                             disabled={generatingDiagnostico || !canGenerateDiagnostico}
-                            title="Refazer a análise da IA com novos dados das consultas de crédito (permitido 1 única vez)"
+                            title={isAdminUser
+                              ? "Refazer a análise da IA com novos dados das consultas de crédito (sem limite para administradores)"
+                              : "Refazer a análise da IA com novos dados das consultas de crédito (permitido 1 única vez)"}
                             className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                           >
                             <RefreshCw className={`w-3.5 h-3.5 text-slate-400 ${generatingDiagnostico ? "animate-spin" : ""}`} />
