@@ -3741,7 +3741,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       </button>
                     </div>
 
-                    {diagnosticoPROSFEC ? (
+                    {diagnosticoPROSFEC && String(diagnosticoPROSFEC.texto || "").trim().length > 0 ? (
                       <div className="flex items-center gap-2">
                         <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-extrabold rounded-xl flex items-center gap-1.5 shadow-2xs">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -3832,7 +3832,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       Compilando as consultas de crédito realizadas, cruzando com os dados cadastrais e escrevendo uma resposta comercial focada no que a PROSFEC pode fazer para sanear esta empresa.
                     </p>
                   </div>
-                ) : diagnosticoPROSFEC ? (
+                ) : diagnosticoPROSFEC && String(diagnosticoPROSFEC.texto || "").trim().length > 0 ? (
                   <div className="space-y-6">
                     {/* Visualização de Alto Padrão Fintech do Diagnóstico PROSFEC IA */}
                     <div className="p-6 bg-white border border-slate-200/90 rounded-2xl relative space-y-4 shadow-xs">
