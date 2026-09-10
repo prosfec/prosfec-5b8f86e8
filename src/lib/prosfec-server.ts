@@ -880,15 +880,15 @@ export function createExpressApp() {
   }
 
   async function generateContentWithFallback(ai: any, requestOptions: any) {
-    const candidateModels = ["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.1-pro-preview"];
+    const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastError: any = null;
 
     for (const modelName of candidateModels) {
       try {
-        const response = await ai.models.generateContent({
-          ...requestOptions,
-          model: modelName
-        });
+        const response = await Promise.race([
+          ai.models.generateContent({ ...requestOptions, model: modelName }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), 30_000)),
+        ]);
         if (response && response.text) {
           return response;
         }
@@ -906,8 +906,10 @@ export function createExpressApp() {
   }
 
   app.post("/api/credit/diagnostico-prosfec", async (req, res) => {
+    let diagnosisLockPath = "";
     try {
-      const { leadId, partnerId } = req.body;
+      const caller = await authenticateApiCaller(req);
+      const { leadId } = req.body;
 
       if (!leadId) {
         return res.status(400).json({ error: "O parâmetro leadId é obrigatório." });
@@ -921,6 +923,7 @@ export function createExpressApp() {
       if (!leadData) {
         return res.status(404).json({ error: "Lead não encontrado no banco de dados." });
       }
+      await assertLeadAccess(String(leadId), caller);
 
 
       // Check generation count limit (Initial generation = 1, Refazer = 2 max)
@@ -938,6 +941,10 @@ export function createExpressApp() {
       }
 
       const newGeracoesCount = previousGeracoesCount + 1;
+      diagnosisLockPath = `operacoes_ia/diagnostico_${String(leadId).replace(/[^A-Za-z0-9_-]/g, "")}_${newGeracoesCount}`;
+      await createDocAtPathRest(diagnosisLockPath, {
+        leadId: String(leadId), partnerId: caller.partnerId, status: "processando", dataCriacao: new Date().toISOString(),
+      });
 
       // 2. Fetch credit consultations performed for this lead's CNPJ or their partner's CPFs
       const docList: string[] = [];
@@ -967,11 +974,17 @@ export function createExpressApp() {
             produto_nome: r.data.produto_nome,
             produto_code: r.data.produto_code,
             dataConsulta: r.data.dataConsulta,
-            resultado: r.data.resultado
-          }));
+            resultado: r.data.resultado,
+            partnerId: r.data.partnerId,
+            leadId: r.data.leadId,
+          })).filter((c: any) => caller.isAdmin || c.partnerId === caller.partnerId || c.leadId === leadId);
         } catch (dbErr) {
           console.warn("Could not load matching consultations from Firestore:", dbErr);
         }
+      }
+
+      if (!matchingConsultas.length) {
+        throw Object.assign(new Error("Nenhuma consulta de crédito válida foi encontrada para este lead."), { statusCode: 422 });
       }
 
 
@@ -1113,9 +1126,23 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
       try {
         const stage1Response = await generateContentWithFallback(ai, {
           contents: stage1AuditPrompt,
-          generationConfig: {
+          config: {
             responseMimeType: "application/json",
-            temperature: 0.1
+            temperature: 0.1,
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                totalDividasNegativadas: { type: Type.NUMBER }, quantidadeNegativacoes: { type: Type.NUMBER },
+                totalProtestos: { type: Type.NUMBER }, quantidadeProtestos: { type: Type.NUMBER },
+                totalAcoesJudiciaisOuCheques: { type: Type.NUMBER }, temApontamentosSCRBacen: { type: Type.BOOLEAN },
+                resumoBacen: { type: Type.STRING }, situacaoFiscalCadastral: { type: Type.STRING },
+                capacidadeTomadaPronampe: { type: Type.NUMBER }, capacidadeTomadaGeral: { type: Type.NUMBER },
+                fatoresCriticosBloqueio: { type: Type.ARRAY, items: { type: Type.STRING } },
+                servicosNecessariosIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+                classificacaoElegibilidade: { type: Type.STRING }, scoreEstimado: { type: Type.STRING },
+              },
+              required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado"],
+            },
           }
         });
 
@@ -1133,25 +1160,8 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
         console.warn("[PROSFEC IA] Etapa 1 (Auditoria) falhou ou retornou formato inválido. Prosseguindo com fallback de triagem:", stage1Err);
       }
 
-      // Fallback audit se a etapa 1 falhar
       if (!auditResult) {
-        const faturamento = leadData.faturamentoAnual || (leadData.mediaReceitaMensal ? leadData.mediaReceitaMensal * 12 : 0) || 0;
-        auditResult = {
-          totalDividasNegativadas: 0,
-          quantidadeNegativacoes: 0,
-          totalProtestos: 0,
-          quantidadeProtestos: 0,
-          totalAcoesJudiciaisOuCheques: 0,
-          temApontamentosSCRBacen: false,
-          resumoBacen: "Sem apontamentos críticos detectados ou pendente de consulta formal SCR",
-          situacaoFiscalCadastral: "Em análise",
-          capacidadeTomadaPronampe: Math.min(faturamento * 0.3, 500000),
-          capacidadeTomadaGeral: faturamento * 0.35,
-          fatoresCriticosBloqueio: consultationsSummary.length === 0 ? ["Necessária execução de consultas da grade PROSFEC para mapeamento de apontamentos"] : ["Necessária adequação de rating e faturamento fiscal"],
-          servicosNecessariosIds: ["serv_rating_score"],
-          classificacaoElegibilidade: faturamento > 0 ? "Média" : "Baixa",
-          scoreEstimado: "Sob análise cadastral"
-        };
+        throw Object.assign(new Error("A auditoria da IA não pôde validar os dados da consulta. Tente novamente; nenhum laudo estimado foi salvo."), { statusCode: 503 });
       }
 
       // =========================================================================
@@ -1218,7 +1228,7 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
 
       const response = await generateContentWithFallback(ai, {
         contents: stage2SystemPrompt,
-        generationConfig: {
+        config: {
           temperature: 0.2
         }
       });
@@ -1374,6 +1384,7 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
         servicosRecomendados: sanitizedServicos,
         etapa: nextEtapaVal
       }));
+      await patchDocRest(diagnosisLockPath, { status: "sucesso", dataConclusao: new Date().toISOString() });
 
 
       console.log(`PROSFEC IA Diagnosis, Services & Step 6 Sub-etapas successfully saved and lead ${leadId} advanced to stage ${nextEtapaVal}`);
@@ -1387,8 +1398,9 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
       });
 
     } catch (err: any) {
+      if (diagnosisLockPath) await patchDocRest(diagnosisLockPath, { status: "falha", dataConclusao: new Date().toISOString() }).catch(() => undefined);
       console.error("Error generating PROSFEC IA Diagnosis:", err);
-      return res.status(500).json({ error: err.message || "Erro interno ao gerar o diagnóstico PROSFEC IA." });
+      return res.status(err?.statusCode || 500).json({ error: err.message || "Erro interno ao gerar o diagnóstico PROSFEC IA." });
     }
   });
 
