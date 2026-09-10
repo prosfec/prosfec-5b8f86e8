@@ -1237,9 +1237,9 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num√
       let invalidJson = false;
 
       // Tentativa 1: payload completo (limitado). Tentativa 2: payload reduzido.
-      const stage1Attempts: Array<{ maxItems: number; maxChars: number }> = [
-        { maxItems: 5, maxChars: 60_000 },
-        { maxItems: 2, maxChars: 15_000 },
+      const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number }> = [
+        { maxItems: 5, maxChars: 60_000, timeoutMs: 45_000 },
+        { maxItems: 2, maxChars: 15_000, timeoutMs: 20_000 },
       ];
 
       for (const attempt of stage1Attempts) {
@@ -1264,7 +1264,7 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num√
                 required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado"],
               },
             }
-          }, 60_000);
+          }, attempt.timeoutMs);
 
           if (stage1Response && stage1Response.text) {
             const rawStage1 = stage1Response.text.replace(/```json/g, "").replace(/```/g, "").trim();
