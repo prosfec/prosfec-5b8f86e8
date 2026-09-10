@@ -925,14 +925,20 @@ export function createExpressApp() {
     };
   }
 
-  async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 30_000) {
-    const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
+  async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 8_000) {
+    // Modelos mais rápidos primeiro; nunca usar modelos "pro" nesta rota.
+    const candidateModels = ["gemini-2.5-flash-lite", "gemini-2.0-flash"];
     let lastError: any = null;
 
     for (const modelName of candidateModels) {
       try {
+        const fastConfig = {
+          ...(requestOptions?.config || {}),
+          // Desliga o raciocínio interno (principal causa de lentidão).
+          thinkingConfig: { thinkingBudget: 0 },
+        };
         const response = await Promise.race([
-          ai.models.generateContent({ ...requestOptions, model: modelName }),
+          ai.models.generateContent({ ...requestOptions, config: fastConfig, model: modelName }),
           new Promise((_, reject) => setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), timeoutMs)),
         ]);
         if (response && response.text) {
