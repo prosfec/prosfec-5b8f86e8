@@ -3578,14 +3578,30 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                             })}
                           </select>
                         ) : localCatalog.length === 1 ? (
-                          <div className="w-full text-xs px-3 py-2.5 bg-emerald-50/60 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-2">
-                            <span className="font-bold text-[#0A3D2E] truncate">
-                              Rating + Diagnóstico Financeiro 360
-                            </span>
-                            <span className="font-mono font-black text-emerald-800 text-[11px] shrink-0 bg-white px-2 py-0.5 rounded-lg border border-emerald-200/50">
-                              {typeof localCatalog[0]?.price === "number" ? `R$ ${localCatalog[0].price.toFixed(2).replace(".", ",")}` : "Carregando preço..."}
-                            </span>
+                          <div className="space-y-1">
+                            <div className="w-full text-xs px-3 py-2.5 bg-emerald-50/60 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-2">
+                              <span className="font-bold text-[#0A3D2E] truncate">
+                                Rating + Diagnóstico Financeiro 360
+                              </span>
+                              <span className="font-mono font-black text-emerald-800 text-[11px] shrink-0 bg-white px-2 py-0.5 rounded-lg border border-emerald-200/50">
+                                {typeof localCatalog[0]?.price === "number" ? `R$ ${localCatalog[0].price.toFixed(2).replace(".", ",")}` : "Preço indisponível"}
+                              </span>
+                            </div>
+                            {usingFallbackCatalog && (
+                              <div className="flex items-center justify-between gap-2 text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                                <span className="truncate">{localCatalogError || "Valor de referência."}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => fetchLocalCatalog()}
+                                  disabled={loadingLocalCatalog}
+                                  className="shrink-0 px-2 py-0.5 bg-white border border-amber-300 rounded-md text-[10px] font-extrabold text-amber-900 hover:bg-amber-100 disabled:opacity-60 transition-all cursor-pointer"
+                                >
+                                  {loadingLocalCatalog ? "Atualizando..." : "Atualizar preços"}
+                                </button>
+                              </div>
+                            )}
                           </div>
+
                         ) : (
                           <div className="w-full text-xs px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 font-semibold flex items-center justify-between gap-2">
                             <span>{loadingLocalCatalog ? "Carregando tabela oficial de preços..." : (localCatalogError || "Tabela oficial de preços indisponível.")}</span>
