@@ -1976,7 +1976,8 @@ Gere a análise do Consultor de Crédito Governamental em JSON estruturado com a
   // 6. RTB - Recuperação de Tarifa Bancária: Análise Pericial de CCB com PROSFEC IA
   app.post("/api/credit/analise-rtb-ccb", async (req, res) => {
     try {
-      const { leadId, ccbBase64, nomeArquivo, bancoInformado, valorInformado, partnerId } = req.body;
+      const caller = await authenticateApiCaller(req);
+      const { leadId, ccbBase64, nomeArquivo, bancoInformado, valorInformado } = req.body;
 
       if (!leadId) {
         return res.status(400).json({ error: "O parâmetro leadId é obrigatório." });
@@ -1984,14 +1985,11 @@ Gere a análise do Consultor de Crédito Governamental em JSON estruturado com a
 
       console.log(`[RTB] Iniciando auditoria de CCB para o lead: ${leadId}...`);
 
-      const leadRef = doc(db, "leads", leadId);
-      const leadSnap = await getDoc(leadRef);
-
-      if (!leadSnap.exists()) {
+      const leadData: any = await getDocRest(`leads/${leadId}`);
+      if (!leadData) {
         return res.status(404).json({ error: "Lead não encontrado no banco de dados." });
       }
-
-      const leadData = leadSnap.data();
+      await assertLeadAccess(String(leadId), caller);
       const fileName = nomeArquivo || "CCB_Contrato_Bancario.pdf";
       const fileData = ccbBase64 || leadData.fichaRatingCredito?.dadosCNPJ?.ccbContratoPdf || leadData.dadosCNPJ?.ccbContratoPdf || "";
       const docProtocol = `RTB-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}${String(new Date().getDate()).padStart(2, "0")}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -2085,7 +2083,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
         const aiResponse = await generateContentWithFallback(ai, {
           contents: parts,
-          generationConfig: {
+          config: {
             responseMimeType: "application/json",
             temperature: 0.2
           }
@@ -2189,14 +2187,14 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         updatePayload["fichaRatingCredito.dadosCNPJ.ccbValorContrato"] = finalAnaliseRTB.valorOperacao;
       }
 
-      await updateDoc(leadRef, cleanForFirestore(updatePayload));
+      await patchDocRest(`leads/${leadId}`, cleanForFirestore(updatePayload));
 
       // Create notification for admin / partner
       try {
-        await addDoc(collection(db, "notificacoes"), {
+        await createDocRest("notificacoes", {
           leadId: leadId,
           leadNome: razaoSocial,
-          partnerId: partnerId || leadData.parentPartnerId || "admin",
+          partnerId: caller.isAdmin ? "admin" : caller.partnerId,
           titulo: "Nova Análise de RTB Concluída pela PROSFEC IA",
           mensagem: `A perícia da CCB de ${razaoSocial} identificou R$ ${finalAnaliseRTB.potencialRecuperacaoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em potencial de recuperação de tarifas bancárias.`,
           dataCriacao: new Date().toISOString(),
