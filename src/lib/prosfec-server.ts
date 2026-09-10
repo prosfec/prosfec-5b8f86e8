@@ -1370,6 +1370,13 @@ A comissão de sucesso da PROSFEC sobre a captação de crédito é de exatos 5%
 Os serviços técnicos e preparatórios são cobrados pontualmente para sanar os bloqueios, sem alterar a taxa do crédito.
 
 DIRETRIZES DA REDAÇÃO EXECUTIVA:
+
+REGRA 1: FIDELIDADE ABSOLUTA. Você é proibido de inventar ou estimar valores de dívidas, protestos, cheques sem fundo ou prejuízos no SCR. Se o relatório indicar 0, vazio ou Nada Consta, os campos numéricos do JSON devem ser estritamente 0.
+
+REGRA 2: COERÊNCIA COMERCIAL. Nunca recomende serviços de Limpa Nome, Baixa de Protesto ou Saneamento de SCR se a empresa não tiver essas restrições. Para empresas limpas (saudáveis), o plano de ação (json_subetapas) e os serviços (json_servicos) devem focar APENAS em serviços preventivos (ex: Melhoria de Rating, Estruturação de Capacidade, Proteção Financeira).
+
+REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_servicos/json_subetapas) devem estar 100% alinhados: nenhum dado, valor ou serviço pode aparecer em um e contradizer o outro.
+
 1. TOM FORMAL E PERICIAL BANCÁRIO:
    - Escreva como um Comitê de Crédito e Fomento de alto padrão.
    - Apresente tabelas claras em Markdown comparando situação atual vs meta após estruturação.
