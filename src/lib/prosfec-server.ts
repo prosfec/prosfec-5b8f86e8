@@ -625,7 +625,11 @@ export function createExpressApp() {
       if (prior?.status === "sucesso") {
         return res.json({ success: true, consulta_id: requestId, newBalance: prior.saldoApos, debited: prior.debitado === true, produto_nome: prior.produto_nome, data: prior.resultado, idempotentReplay: true });
       }
-      if (prior) return res.status(409).json({ error: "Esta consulta já está sendo processada ou foi encerrada." });
+      // Tentativas anteriores que terminaram em falha ou estorno podem ser
+      // refeitas; só bloqueia quando a operação ainda está em andamento.
+      if (prior && !["falha", "estornado"].includes(String(prior.status || ""))) {
+        return res.status(409).json({ error: "Esta consulta já está sendo processada." });
+      }
 
       const partnerData: any = partnerId === "admin" ? null : await getDocRest(`parceiros/${partnerId}`);
       const isAdminUser = caller.isAdmin;
@@ -2723,6 +2727,17 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     });
     if (!r.ok) {
       const detail = await r.text().catch(() => "");
+      if (r.status === 403) {
+        console.error(
+          `Firestore negou a gravação em "${path}" para a identidade de serviço ` +
+          `"${optionalEnv("PROSFEC_SERVICE_EMAIL") || "(não configurada)"}". ` +
+          `Confira a função isServico() nas regras publicadas. Detalhe: ${detail.slice(0, 160)}`
+        );
+        throw Object.assign(
+          new Error("O banco de dados recusou a gravação do servidor (permissão da conta de serviço)."),
+          { statusCode: 500, code: "FIRESTORE_PERMISSION_DENIED" }
+        );
+      }
       throw new Error(`Firestore PATCH ${r.status}: ${detail.slice(0, 160)}`);
     }
   };
