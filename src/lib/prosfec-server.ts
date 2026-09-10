@@ -3192,15 +3192,19 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const novoLead = {
         ...payload,
         cnpj: String(payload.cnpj || "").trim(),
+        status: payload.status || "novo",
+        etapa: Number(payload.etapa || 1),
         dataCriacao: payload.dataCriacao || nowIso,
         dataUltimaSimulacao: nowIso,
+        updated_at: nowIso,
         historicoSimulacoes: [simulacaoEntry],
       };
 
       if (leadId) {
-        await patchDocRest(`leads/${leadId}`, cleanForFirestore(novoLead));
+        await putDocRest(`leads/${leadId}`, novoLead);
         return res.json({ success: true, leadId, atualizado: false });
       }
+
 
       const created = await createDocRest("leads", novoLead);
       return res.json({ success: true, leadId: created.id, atualizado: false });
