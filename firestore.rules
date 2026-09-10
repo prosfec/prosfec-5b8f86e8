@@ -292,7 +292,11 @@ service cloud.firestore {
     // ---------------------------------------------------------------------
     match /consultas_realizadas/{consultaId} {
       allow read:   if isStaff() || isServico()
-                    || (isSignedIn() && partnerDocBelongsToMe(resource.data.partnerId));
+                    || (isSignedIn() && (
+                         resource.data.partnerId == request.auth.uid ||
+                         resource.data.partnerId == request.auth.token.partnerId ||
+                         partnerDocBelongsToMe(resource.data.partnerId)
+                       ));
       allow create, update: if isStaff() || isServico();
       allow delete: if isAdmin();
     }
