@@ -422,10 +422,30 @@ export default function App() {
         parceiroNome: referredByPartnerNome || ""
       };
 
-      await setDoc(doc(db, "leads", lead.id), leadDoc);
-      console.log("Lead saved successfully to Firestore with refined AI risk analysis!");
+      const response = await fetch("/api/public/leads/simulacao", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: lead.id, lead: leadDoc }),
+      });
+
+      const contentType = response.headers.get("content-type") || "";
+      const payload = contentType.includes("application/json")
+        ? await response.json().catch(() => null)
+        : null;
+
+      if (!response.ok || !payload?.success) {
+        console.warn("Simulação não registrada:", payload?.error || response.status);
+        return;
+      }
+
+      console.log(
+        payload.atualizado
+          ? `Lead existente atualizado (${payload.leadId}).`
+          : `Novo lead registrado (${payload.leadId}).`,
+      );
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `leads/${lead.id}`);
+      // Nunca interrompe a tela de resultado do visitante.
+      console.warn("Falha ao registrar a simulação:", error);
     }
   };
 
