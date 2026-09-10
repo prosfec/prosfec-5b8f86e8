@@ -641,6 +641,7 @@ export default function LeadWorkspaceModal({
 
   // Credit Query Integration states
   const [localCatalog, setLocalCatalog] = useState<any[]>([]);
+  const [localCatalogError, setLocalCatalogError] = useState<string | null>(null);
   const [selectedProductCode, setSelectedProductCode] = useState("");
   const [executingLocalQuery, setExecutingLocalQuery] = useState(false);
   const [localQueryError, setLocalQueryError] = useState<string | null>(null);
@@ -661,6 +662,7 @@ export default function LeadWorkspaceModal({
   // Fetch local credit query catalog
   useEffect(() => {
     const fetchCatalog = async () => {
+      setLocalCatalogError(null);
       try {
         const res = await fetch("/api/credit/catalogo");
         if (res.ok) {
@@ -670,10 +672,18 @@ export default function LeadWorkspaceModal({
             if (data.catalog.length > 0) {
               setSelectedProductCode(data.catalog[0].code);
             }
+            return;
           }
         }
+        const payload = await res.json().catch(() => null);
+        setLocalCatalog([]);
+        setSelectedProductCode("");
+        setLocalCatalogError(payload?.error || "Tabela oficial de preços indisponível.");
       } catch (err) {
         console.error("Error fetching credit catalog in modal:", err);
+        setLocalCatalog([]);
+        setSelectedProductCode("");
+        setLocalCatalogError("Não foi possível carregar a tabela oficial de preços.");
       }
     };
     fetchCatalog();
@@ -3510,7 +3520,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               );
                             })}
                           </select>
-                        ) : (
+                        ) : localCatalog.length === 1 ? (
                           <div className="w-full text-xs px-3 py-2.5 bg-emerald-50/60 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-2">
                             <span className="font-bold text-[#0A3D2E] truncate">
                               Rating + Diagnóstico Financeiro 360
@@ -3518,6 +3528,10 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                             <span className="font-mono font-black text-emerald-800 text-[11px] shrink-0 bg-white px-2 py-0.5 rounded-lg border border-emerald-200/50">
                               {typeof localCatalog[0]?.price === "number" ? `R$ ${localCatalog[0].price.toFixed(2).replace(".", ",")}` : "Carregando preço..."}
                             </span>
+                          </div>
+                        ) : (
+                          <div className="w-full text-xs px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 font-semibold">
+                            {localCatalogError || "Carregando tabela oficial de preços..."}
                           </div>
                         )}
                       </div>
