@@ -1088,27 +1088,51 @@ export function createExpressApp() {
       }
 
 
-      // Compile summaries of consultations (mais recentes primeiro, sem campos pesados)
-      const HEAVY_RESULT_FIELDS = [
-        "html_report", "pdf_report", "raw_response", "html", "pdf", "pdf_base64",
-        "base64", "arquivo", "arquivo_base64", "conteudo_html", "xml", "rawXml",
-      ];
+      // Whitelist: só os blocos vitais do relatório vão para a IA.
+      const VITAL_KEY_PATTERN =
+        /(score|rating|divida|dívida|negativa|protesto|pendencia|pendência|restric|restriç|acao_judicial|ação|cheque|situacao|situação|cadastral|fiscal|scr|bacen|serasa|spc|resumo|total|quantidade|valor)/i;
+
+      // Extrai recursivamente apenas o que interessa, podando nulos, vazios e listas longas.
+      const extractVitalReport = (input: any, depth = 0): any => {
+        if (input == null || depth > 4) return undefined;
+        if (Array.isArray(input)) {
+          const items = input
+            .slice(0, 15)
+            .map((i) => (typeof i === "object" ? extractVitalReport(i, depth + 1) : i))
+            .filter((i) => i !== undefined && i !== null && i !== "");
+          return items.length ? items : undefined;
+        }
+        if (typeof input !== "object") {
+          const v = typeof input === "string" ? input.slice(0, 600) : input;
+          return v === "" ? undefined : v;
+        }
+        const out: any = {};
+        for (const key of Object.keys(input)) {
+          const val = (input as any)[key];
+          if (val == null || val === "" || val === "0" || val === false) continue;
+          const isVital = VITAL_KEY_PATTERN.test(key);
+          if (typeof val === "object") {
+            // Desce em containers mesmo sem nome vital (o dado vital pode estar aninhado).
+            const nested = extractVitalReport(val, depth + 1);
+            if (nested !== undefined) out[key] = nested;
+          } else if (isVital) {
+            const leaf = extractVitalReport(val, depth + 1);
+            if (leaf !== undefined) out[key] = leaf;
+          }
+        }
+        return Object.keys(out).length ? out : undefined;
+      };
 
       const consultationsSummary = [...matchingConsultas]
         .sort((a, b) => (Date.parse(String(b.dataConsulta || "")) || 0) - (Date.parse(String(a.dataConsulta || "")) || 0))
-        .slice(0, 5)
-        .map(c => {
-          const cleanResult: any = { ...(c.resultado || {}) };
-          for (const field of HEAVY_RESULT_FIELDS) delete cleanResult[field];
-
-          return {
-            id: c.id,
-            produto: c.produto_nome,
-            codigo: c.produto_code,
-            data: c.dataConsulta,
-            resumo_resultado: cleanResult
-          };
-        });
+        .slice(0, 3)
+        .map(c => ({
+          id: c.id,
+          produto: c.produto_nome,
+          codigo: c.produto_code,
+          data: c.dataConsulta,
+          resumo_resultado: extractVitalReport(c.resultado) || {},
+        }));
 
       // Serializa os relatórios com corte por tamanho para não estourar o limite da IA.
       const buildConsultationsBlock = (maxItems: number, maxChars: number): string => {
