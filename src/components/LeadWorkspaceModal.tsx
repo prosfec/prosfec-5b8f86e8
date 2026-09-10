@@ -5035,7 +5035,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         partnerId: currentPartner?.id || "admin"
                       })
                     });
-                    const data = await res.json();
+                    const data = await parseJsonResponse(res);
                     if (!res.ok || !data.success) {
                       throw new Error(data.error || "Erro ao gerar diagnóstico pós-estruturação.");
                     }
