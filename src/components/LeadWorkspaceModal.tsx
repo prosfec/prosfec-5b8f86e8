@@ -4108,7 +4108,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 ) : (
                   <div className="py-12 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/30 space-y-2">
                     <Sparkles className="w-8 h-8 text-slate-300 mx-auto" />
-                    <div className="text-xs font-bold text-slate-500">Nenhum diagnóstico gerado ainda</div>
+                    <div className="text-xs font-bold text-slate-500">Nenhuma análise gerada. Clique em gerar diagnóstico.</div>
                     <p className="text-[10px] text-slate-400 max-w-sm mx-auto">
                       Clique no botão acima para acionar a PROSFEC IA. O diagnóstico será gravado diretamente na ficha deste lead para acompanhamento contínuo.
                     </p>
