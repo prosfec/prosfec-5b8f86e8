@@ -335,7 +335,22 @@ export default function App() {
     console.log("Saving lead to Firestore:", lead.id);
 
     // Executa Etapa de Análise de Risco Preliminar para refinar nivelPreparacao e recomendações
-    const refinedResult = executarAnaliseRiscoPreliminar(lead, lead.result);
+    let refinedResult = lead?.result;
+    try {
+      refinedResult = executarAnaliseRiscoPreliminar(lead, lead.result) || lead.result;
+    } catch (analysisError) {
+      console.warn("Falha na análise de risco preliminar; usando resultado original.", analysisError);
+      refinedResult = lead?.result;
+    }
+    if (!refinedResult) {
+      console.warn("Simulação sem resultado calculado; gravação do lead ignorada.");
+      return;
+    }
+    refinedResult = {
+      ...refinedResult,
+      principaisAlertas: Array.isArray(refinedResult.principaisAlertas) ? refinedResult.principaisAlertas : [],
+      recomendações: Array.isArray(refinedResult.recomendações) ? refinedResult.recomendações : [],
+    };
 
     try {
       const leadDoc = {
