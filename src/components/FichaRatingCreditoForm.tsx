@@ -241,9 +241,11 @@ export default function FichaRatingCreditoForm({
     setSaveError(null);
 
     try {
+      const user = auth.currentUser;
+      if (!user) throw new Error("Sua sessão expirou. Entre novamente para continuar.");
       const response = await fetch("/api/credit/analise-rtb-ccb", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}` },
         body: JSON.stringify({
           leadId: lead.id,
           ccbBase64: dadosCNPJ.ccbContratoPdf,

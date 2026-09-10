@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { doc, updateDoc, collection, query, where, getDocs, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../firebase";
@@ -641,15 +641,28 @@ export default function LeadWorkspaceModal({
 
   // Credit Query Integration states
   const [localCatalog, setLocalCatalog] = useState<any[]>([]);
+  const [localCatalogError, setLocalCatalogError] = useState<string | null>(null);
   const [selectedProductCode, setSelectedProductCode] = useState("");
   const [executingLocalQuery, setExecutingLocalQuery] = useState(false);
   const [localQueryError, setLocalQueryError] = useState<string | null>(null);
   const [localQuerySuccess, setLocalQuerySuccess] = useState<string | null>(null);
   const [selectedQueryDocument, setSelectedQueryDocument] = useState(lead.cnpj || "");
+  const queryRequestIdRef = useRef<string | null>(null);
+
+  const authenticatedHeaders = async (requestId?: string) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Sua sessão expirou. Entre novamente para continuar.");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${await user.getIdToken()}`,
+      ...(requestId ? { "X-Idempotency-Key": requestId } : {}),
+    };
+  };
 
   // Fetch local credit query catalog
   useEffect(() => {
     const fetchCatalog = async () => {
+      setLocalCatalogError(null);
       try {
         const res = await fetch("/api/credit/catalogo");
         if (res.ok) {
@@ -659,10 +672,18 @@ export default function LeadWorkspaceModal({
             if (data.catalog.length > 0) {
               setSelectedProductCode(data.catalog[0].code);
             }
+            return;
           }
         }
+        const payload = await res.json().catch(() => null);
+        setLocalCatalog([]);
+        setSelectedProductCode("");
+        setLocalCatalogError(payload?.error || "Tabela oficial de preços indisponível.");
       } catch (err) {
         console.error("Error fetching credit catalog in modal:", err);
+        setLocalCatalog([]);
+        setSelectedProductCode("");
+        setLocalCatalogError("Não foi possível carregar a tabela oficial de preços.");
       }
     };
     fetchCatalog();
@@ -689,10 +710,9 @@ export default function LeadWorkspaceModal({
         return;
       }
 
-      const q = query(
-        collection(db, "consultas_realizadas"),
-        where("documento", "in", docsToMatch)
-      );
+      const constraints: any[] = [where("documento", "in", docsToMatch)];
+      if (!isAdmin && currentPartner?.id) constraints.push(where("partnerId", "==", currentPartner.id));
+      const q = query(collection(db, "consultas_realizadas"), ...constraints);
       
       const querySnap = await getDocs(q);
       const list = querySnap.docs.map(docSnap => ({
@@ -733,16 +753,22 @@ export default function LeadWorkspaceModal({
     setLocalQueryError(null);
     setLocalQuerySuccess(null);
     try {
+      if (!localCatalog.length || !selectedProductCode) {
+        throw new Error("A tabela oficial de consultas ainda não foi carregada. Tente novamente.");
+      }
+      const requestId = queryRequestIdRef.current || crypto.randomUUID();
+      queryRequestIdRef.current = requestId;
       const effectivePartnerId = (currentPartner?.id && currentPartner.id !== "admin")
         ? currentPartner.id
         : ((lead as any).parceiroId || (lead as any).partnerId || (lead as any).parceiro_id || (lead as any).parentPartnerId || currentPartner?.id || "admin");
 
       const res = await fetch("/api/credit/consultas", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await authenticatedHeaders(requestId),
         body: JSON.stringify({
           partnerId: effectivePartnerId,
           partnerNome: currentPartner?.nome || "Parceiro",
+          leadId: lead.id,
           produtoCode: selectedProductCode,
           documento: selectedQueryDocument.replace(/\D/g, "")
         })
@@ -755,8 +781,10 @@ export default function LeadWorkspaceModal({
         throw new Error(`A API do servidor retornou uma resposta inválida (Status ${res.status}).`);
       }
       if (!res.ok || !data.success) {
+        if (res.status < 500 && res.status !== 409) queryRequestIdRef.current = null;
         throw new Error(data?.error || "Erro ao executar consulta.");
       }
+      queryRequestIdRef.current = null;
       setLocalQuerySuccess(
         `Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}` +
         (data.debitWarning ? ` — ${data.debitWarning}` : "")
@@ -818,7 +846,7 @@ export default function LeadWorkspaceModal({
     try {
       const res = await fetch("/api/credit/diagnostico-prosfec", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await authenticatedHeaders(),
         body: JSON.stringify({
           leadId: lead.id,
           partnerId: currentPartner?.id || "admin"
@@ -3483,29 +3511,33 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                             className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-hidden text-ellipsis overflow-hidden font-medium text-slate-700"
                           >
                             {localCatalog.map((prod) => {
-                              const priceVal = typeof prod.price === "number" ? prod.price : (typeof prod.partner_price === "number" ? prod.partner_price : 69.86);
+                              const priceVal = typeof prod.partner_price === "number" ? prod.partner_price : prod.price;
                               return (
                                 <option key={prod.code} value={prod.code}>
-                                  {prod.name} (R$ {priceVal.toFixed(2).replace(".", ",")})
+                                  {prod.name} ({typeof priceVal === "number" ? `R$ ${priceVal.toFixed(2).replace(".", ",")}` : "Preço indisponível"})
                                 </option>
                               );
                             })}
                           </select>
-                        ) : (
+                        ) : localCatalog.length === 1 ? (
                           <div className="w-full text-xs px-3 py-2.5 bg-emerald-50/60 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-2">
                             <span className="font-bold text-[#0A3D2E] truncate">
                               Rating + Diagnóstico Financeiro 360
                             </span>
                             <span className="font-mono font-black text-emerald-800 text-[11px] shrink-0 bg-white px-2 py-0.5 rounded-lg border border-emerald-200/50">
-                              R$ {(localCatalog[0]?.price || 69.86).toFixed(2).replace(".", ",")}
+                              {typeof localCatalog[0]?.price === "number" ? `R$ ${localCatalog[0].price.toFixed(2).replace(".", ",")}` : "Carregando preço..."}
                             </span>
+                          </div>
+                        ) : (
+                          <div className="w-full text-xs px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 font-semibold">
+                            {localCatalogError || "Carregando tabela oficial de preços..."}
                           </div>
                         )}
                       </div>
 
                       <button
                         onClick={handleExecuteLocalQuery}
-                        disabled={executingLocalQuery || !selectedQueryDocument}
+                        disabled={executingLocalQuery || !selectedQueryDocument || !localCatalog.length || !selectedProductCode}
                         className="w-full py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                       >
                         {executingLocalQuery ? (

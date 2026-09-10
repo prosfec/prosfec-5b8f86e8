@@ -509,13 +509,9 @@ export function createExpressApp() {
   });
 
   // --- CREDIT QUERY API INTEGRATION (REDEBE API) ---
-  let REDEBE_TOKEN = optionalEnv("REDEBE_TOKEN");
   const REDEBE_API_URL = "https://consultas.redebe.com.br/api/v1/credito/diagnostico-inteligente";
 
-  let INTEGRADOR_API_KEY = optionalEnv("INTEGRADOR_API_KEY");
-  if (INTEGRADOR_API_KEY === "Tony@3419") {
-    INTEGRADOR_API_KEY = "intg_Rx5O65qGdNeY6vR1RFjSiKYH0AmXqE0GYFitRYiqf-c";
-  }
+  const INTEGRADOR_API_KEY = optionalEnv("INTEGRADOR_API_KEY");
 
   let INTEGRADOR_BASE_URL = optionalEnv("INTEGRADOR_API_BASE_URL");
   if (!INTEGRADOR_BASE_URL || !INTEGRADOR_BASE_URL.startsWith("http")) {
@@ -544,7 +540,7 @@ export function createExpressApp() {
     }
   });
 
-  // 1. List Credit Catalog (RedeBe 360 product at R$ 49.90 + 40% Prosfec profit = R$ 69.86)
+  // 1. List Credit Catalog from the official Firestore configuration.
   app.get("/api/credit/catalogo", async (req, res) => {
     try {
       console.log("Loading credit catalog for RedeBe and custom base prices...");
@@ -557,7 +553,11 @@ export function createExpressApp() {
         console.warn("Could not load custom base prices from config:", err);
       }
 
-      const partnerCatalog = FALLBACK_CATALOG.map((item: any) => {
+      if (!Object.keys(customBasePrices).length) {
+        return res.status(503).json({ success: false, error: "Tabela oficial de preços indisponível." });
+      }
+
+      const partnerCatalog = FALLBACK_CATALOG.filter((item: any) => customBasePrices[item.code] !== undefined).map((item: any) => {
         let origPrice = item.price;
         if (customBasePrices[item.code] !== undefined) {
           origPrice = Number(customBasePrices[item.code]);
@@ -576,13 +576,7 @@ export function createExpressApp() {
       return res.json({ success: true, catalog: partnerCatalog });
     } catch (err: any) {
       console.error("Error in /api/credit/catalogo:", err);
-      const partnerCatalog = FALLBACK_CATALOG.map((item: any) => ({
-        code: item.code,
-        name: item.name,
-        originalPrice: item.price,
-        price: Number((item.price * 1.40).toFixed(2))
-      }));
-      return res.json({ success: true, catalog: partnerCatalog, isFallback: true });
+      return res.status(503).json({ success: false, error: "Tabela oficial de preços indisponível." });
     }
   });
 
@@ -608,213 +602,103 @@ export function createExpressApp() {
 
   // 3. Execute Credit Query (RedeBe API)
   app.post("/api/credit/consultas", async (req, res) => {
+    let operationPath = "";
+    let chargedPartnerId = "";
+    let chargedAmount = 0;
     try {
-      const { partnerId, partnerNome, produto_code, produtoCode, input_data, documento: directDoc, isAdminBypass } = req.body;
+      const caller = await authenticateApiCaller(req);
+      const { partnerId: requestedPartnerId, partnerNome, produto_code, produtoCode, input_data, documento: directDoc, leadId } = req.body || {};
       const codeToUse = produto_code || produtoCode || "REDEBE_DIAGNOSTICO_360";
-      const rawDoc = input_data?.documento || directDoc;
+      const cleanDoc = String(input_data?.documento || directDoc || "").replace(/\D/g, "");
+      const requestId = sanitizeIdempotencyKey(req.headers?.["x-idempotency-key"]);
 
-      if (!partnerId || !rawDoc) {
-        return res.status(400).json({ error: "Parâmetros partnerId e documento são obrigatórios." });
+      if (!requestId || !cleanDoc || ![11, 14].includes(cleanDoc.length)) {
+        return res.status(400).json({ error: "Documento e identificador da tentativa são obrigatórios." });
       }
 
-      const cleanDoc = String(rawDoc).replace(/\D/g, "");
-      if (!cleanDoc || (cleanDoc.length !== 11 && cleanDoc.length !== 14)) {
-        return res.status(400).json({ error: "Documento inválido. Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido." });
+      const partnerId = caller.isAdmin ? String(requestedPartnerId || "admin") : caller.partnerId;
+      if (!partnerId) return res.status(403).json({ error: "Usuário sem vínculo de parceiro." });
+      if (leadId) await assertLeadAccess(String(leadId), caller, partnerId);
+
+      operationPath = `consultas_realizadas/${requestId}`;
+      const prior: any = await getDocRest(operationPath);
+      if (prior?.status === "sucesso") {
+        return res.json({ success: true, consulta_id: requestId, newBalance: prior.saldoApos, debited: prior.debitado === true, produto_nome: prior.produto_nome, data: prior.resultado, idempotentReplay: true });
       }
+      if (prior) return res.status(409).json({ error: "Esta consulta já está sendo processada ou foi encerrada." });
 
-      console.log(`Executing RedeBe credit query for partner ${partnerId} on document ${maskDoc(cleanDoc)} (isAdminBypass=${!!isAdminBypass})...`);
+      const partnerData: any = partnerId === "admin" ? null : await getDocRest(`parceiros/${partnerId}`);
+      const isAdminUser = caller.isAdmin;
+      if (!isAdminUser && !partnerData) return res.status(404).json({ error: "Parceiro não encontrado no sistema." });
 
-      // 3.1 Retrieve partner from Firestore to check balance (via REST/fetch)
-      const partnerData: any = await getDocRest(`parceiros/${partnerId}`);
-      const partnerExists = !!partnerData;
-
-      let currentBalance = 0;
-      const isAdminUser = partnerId === "admin" || partnerId === "mesa_operacoes" || !!isAdminBypass;
-
-      if (partnerExists) {
-        currentBalance = partnerData?.saldoGeral !== undefined && partnerData?.saldoGeral !== null
-          ? Number(partnerData.saldoGeral)
-          : 0.00;
-      } else if (isAdminUser) {
-        currentBalance = 999999;
-      } else {
-        return res.status(404).json({ error: "Parceiro não encontrado no sistema." });
+      const configData: any = await getDocRest("configuracoes/precos_consultas");
+      if (!configData?.precos || configData.precos[codeToUse] === undefined) {
+        return res.status(503).json({ error: "Tabela oficial de preços indisponível. Tente novamente em instantes." });
       }
-
-      // 3.2 Determine price (Base R$ 49.90 + 40% Lucro Prosfec = R$ 69.86)
-      let customBasePrices: Record<string, number> = {};
-      try {
-        const configData: any = await getDocRest("configuracoes/precos_consultas");
-        if (configData) {
-          customBasePrices = configData.precos || {};
-        }
-      } catch (err) {
-        console.warn("Could not load custom base prices from config:", err);
-      }
-
-
-      const catalogItem = FALLBACK_CATALOG.find((item: any) => item.code === codeToUse) || FALLBACK_CATALOG[0];
-      let origPrice = catalogItem.price;
-      if (customBasePrices[codeToUse] !== undefined) {
-        origPrice = Number(customBasePrices[codeToUse]);
-      }
-
-      const partnerPrice = Number((origPrice * 1.40).toFixed(2)); // R$ 69.86 for 49.90 base
+      const catalogItem = FALLBACK_CATALOG.find((item: any) => item.code === codeToUse);
+      if (!catalogItem) return res.status(400).json({ error: "Produto de consulta inválido." });
+      const origPrice = Number(configData.precos[codeToUse]);
+      if (!Number.isFinite(origPrice) || origPrice < 0) return res.status(503).json({ error: "Preço oficial inválido." });
+      const partnerPrice = Number((origPrice * 1.4).toFixed(2));
       const produtoNome = catalogItem.name;
 
-      // 3.3 Validate balance (pre-check before API call)
-      if (!isAdminUser && currentBalance < partnerPrice) {
-        return res.status(400).json({ 
-          error: `Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${currentBalance.toFixed(2).replace(".", ",")}. Realize uma recarga via Pix para prosseguir.`
-        });
-      }
-
-      // 3.4 Call RedeBe API
-      console.log(`Calling RedeBe API endpoint for document ${maskDoc(cleanDoc)}...`);
-      const HARDCODED_TOKEN = "ctk_6626261e8e3c6a7ecae118fa6415975852cc6d3b73dabca9fc7f3748eb216851";
-      const envToken = optionalEnv("REDEBE_TOKEN");
-      const tokenToUse = (envToken.startsWith("ctk_") || envToken.length > 20)
-        ? envToken.replace(/^Bearer\s+/i, "").trim()
-        : HARDCODED_TOKEN;
-
-      let apiResult: any = null;
-      let isSuccess = false;
-
-      try {
-        const redebeRes = await fetch(REDEBE_API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${tokenToUse}`,
-            "X-Api-Token": tokenToUse
-          },
-          body: JSON.stringify({ documento: cleanDoc })
-        });
-
-        if (!redebeRes.ok) {
-          const errText = await redebeRes.text();
-          console.error(`RedeBe API returned status ${redebeRes.status}:`, errText);
-          return res.status(502).json({
-            error: `A API da RedeBe retornou um erro (${redebeRes.status}). Verifique o token ou tente novamente em instantes.`
-          });
-        }
-
-        apiResult = await redebeRes.json();
-        console.log("RedeBe API response successfully received for document:", maskDoc(cleanDoc));
-        isSuccess = true;
-      } catch (fetchErr: any) {
-        console.error("Fetch exception while calling RedeBe API:", fetchErr);
-        return res.status(502).json({
-          error: `Falha na conexão com a API da RedeBe: ${fetchErr.message || "Timeout de conexão."}`
-        });
-      }
-
-      // 3.5 Deduct balance in Firestore via REST (relê o saldo antes de debitar)
-      let newBalance = currentBalance;
-      let debited = false;
-      let debitWarning: string | null = null;
-      if (partnerExists && !isAdminUser) {
-        try {
-          const freshData: any = await getDocRest(`parceiros/${partnerId}`);
-          if (!freshData) {
-            throw new Error("Parceiro não encontrado durante o débito do saldo.");
-          }
-          const rawFresh = freshData.saldoGeral;
-          const parsedFresh = Number(
-            typeof rawFresh === "string"
-              ? rawFresh.replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".")
-              : rawFresh
-          );
-          const freshBalance = Number.isFinite(parsedFresh) ? parsedFresh : 0.00;
-
-          if (freshBalance < partnerPrice) {
-            const err: any = new Error(`Saldo insuficiente para realizar esta consulta. Esta consulta custa R$ ${partnerPrice.toFixed(2).replace(".", ",")} e seu saldo atual é R$ ${freshBalance.toFixed(2).replace(".", ",")}. Realize uma recarga via Pix para prosseguir.`);
-            err.isInsufficientBalance = true;
-            throw err;
-          }
-
-          newBalance = Number((freshBalance - partnerPrice).toFixed(2));
-          await patchDocRest(`parceiros/${partnerId}`, { saldoGeral: newBalance });
-
-          // Confirma a gravação: relê o documento e, se o saldo não mudou, tenta 1x mais.
-          const checkData: any = await getDocRest(`parceiros/${partnerId}`);
-          const written = Number(checkData?.saldoGeral);
-          if (!Number.isFinite(written) || Math.abs(written - newBalance) > 0.011) {
-            console.warn(`Balance debit not confirmed for partner ${partnerId}. Expected ${newBalance}, got ${written}. Retrying...`);
-            await patchDocRest(`parceiros/${partnerId}`, { saldoGeral: newBalance });
-            const recheck: any = await getDocRest(`parceiros/${partnerId}`);
-            const written2 = Number(recheck?.saldoGeral);
-            if (!Number.isFinite(written2) || Math.abs(written2 - newBalance) > 0.011) {
-              debitWarning = "A consulta foi realizada, mas não foi possível confirmar o débito do saldo. Verifique seu saldo ou contate o suporte.";
-              console.error(`Failed to confirm balance debit for partner ${partnerId}.`);
-            } else {
-              debited = true;
-            }
-          } else {
-            debited = true;
-          }
-        } catch (transErr: any) {
-          if (transErr.isInsufficientBalance) {
-            return res.status(400).json({ error: transErr.message });
-          }
-          throw transErr;
-        }
-      }
-
-      // 3.6 Register the consultation in Firestore
-      const consultaDoc = {
-        partnerId,
-        partnerNome: partnerNome || partnerData?.nome || (isAdminUser ? "Administrador / Mesa de Operações" : "Parceiro"),
-        produto_code: codeToUse,
-        produto_nome: produtoNome,
-        documento: cleanDoc,
-        preco_original: origPrice,
+      await createDocAtPathRest(operationPath, {
+        requestId, leadId: String(leadId || ""), partnerId,
+        partnerNome: partnerNome || partnerData?.nome || "Mesa de Operações",
+        produto_code: codeToUse, produto_nome: produtoNome,
+        documento: cleanDoc, preco_original: origPrice,
         preco_parceiro: isAdminUser ? 0 : partnerPrice,
-        isAdminBypass: !!isAdminUser,
-        dataConsulta: new Date().toISOString(),
-        status: "sucesso",
-        request_id: `redebe_${Date.now()}`,
-        consulta_id: `redebe_${Date.now()}`,
-        resultado: apiResult
-      };
-
-      const consultaRef = await createDocRest("consultas_realizadas", consultaDoc);
-
-      // Create local notification for the partner if not admin bypass
-      if (!isAdminUser) {
-        try {
-          await createDocRest("notificacoes", {
-            recipientId: partnerId,
-            recipientType: "parceiro",
-            titulo: "Consulta Realizada (RedeBe 360)",
-            mensagem: `Consulta de crédito (${cleanDoc.length === 11 ? "CPF" : "CNPJ"}: ${cleanDoc}) realizada com sucesso. Valor de R$ ${partnerPrice.toFixed(2).replace(".", ",")} debitado do seu saldo geral.`,
-            tipo: "success",
-            lida: false,
-            dataCriacao: new Date().toISOString()
-          });
-        } catch (notifErr) {
-          console.error("Failed to create notification for query:", notifErr);
-        }
-      }
-
-      return res.json({
-        success: true,
-        consulta_id: consultaRef.id,
-
-        newBalance: newBalance,
-        debited,
-        debitWarning,
-        produto_nome: produtoNome,
-        data: apiResult,
-        meta: {
-          price: isAdminUser ? 0 : partnerPrice,
-          isAdminBypass: !!isAdminUser
-        }
+        status: "processando", dataCriacao: new Date().toISOString(),
       });
 
+      let newBalance = Number(partnerData?.saldoGeral || 0);
+      let debited = false;
+      if (!isAdminUser) {
+        newBalance = await changePartnerBalanceAtomic(partnerId, -partnerPrice);
+        chargedPartnerId = partnerId;
+        chargedAmount = partnerPrice;
+        debited = true;
+        await patchDocRest(operationPath, { debitado: true, saldoApos: newBalance });
+      }
+
+      const tokenToUse = requireEnv("REDEBE_TOKEN").replace(/^Bearer\s+/i, "").trim();
+      const redebeRes = await fetchWithTimeout(REDEBE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenToUse}`, "X-Api-Token": tokenToUse },
+        body: JSON.stringify({ documento: cleanDoc }),
+      }, 30_000);
+      if (!redebeRes.ok) throw new UpstreamError(`REDEBE_${redebeRes.status}`, redebeRes.status);
+      const apiResult = await redebeRes.json();
+
+      const consultaDoc = {
+        partnerId, partnerNome: partnerNome || partnerData?.nome || "Mesa de Operações",
+        leadId: String(leadId || ""), produto_code: codeToUse, produto_nome: produtoNome,
+        documento: cleanDoc, preco_original: origPrice, preco_parceiro: isAdminUser ? 0 : partnerPrice,
+        isAdminBypass: isAdminUser, dataConsulta: new Date().toISOString(), status: "sucesso",
+        request_id: requestId, consulta_id: requestId, resultado: apiResult,
+        debitado: debited, saldoApos: newBalance,
+      };
+      await patchDocRest(operationPath, consultaDoc);
+
+      if (!isAdminUser) {
+        createDocRest("notificacoes", {
+          recipientId: partnerId, recipientType: "parceiro", titulo: "Consulta Realizada (RedeBe 360)",
+          mensagem: `Consulta de crédito realizada com sucesso. Valor de R$ ${partnerPrice.toFixed(2).replace(".", ",")} debitado.`,
+          tipo: "success", lida: false, dataCriacao: new Date().toISOString(),
+        }).catch((error) => console.warn("Notification write failed:", error?.message || "erro"));
+      }
+
+      return res.json({ success: true, consulta_id: requestId, newBalance, debited, produto_nome: produtoNome, data: apiResult, meta: { price: isAdminUser ? 0 : partnerPrice, isAdminBypass: isAdminUser } });
     } catch (err: any) {
-      console.error("Error executing RedeBe credit query:", err);
-      return res.status(500).json({ error: err.message || "Erro interno ao executar a consulta de crédito." });
+      if (chargedPartnerId && chargedAmount > 0) {
+        try { await changePartnerBalanceAtomic(chargedPartnerId, chargedAmount); } catch { /* reconciliação manual pelo status */ }
+      }
+      if (operationPath) {
+        await patchDocRest(operationPath, { status: chargedPartnerId ? "estornado" : "falha", erroCodigo: err?.code || "QUERY_FAILED" }).catch(() => undefined);
+      }
+      const status = err?.statusCode || (String(err?.message || "").includes("Saldo insuficiente") ? 400 : 500);
+      console.error("RedeBe query failed:", err?.code || err?.message || "erro");
+      return res.status(status).json({ error: status === 502 ? "A RedeBE está temporariamente indisponível. Nenhum valor foi cobrado." : (err.message || "Erro interno ao executar a consulta.") });
     }
   });
 
@@ -990,15 +874,15 @@ export function createExpressApp() {
   }
 
   async function generateContentWithFallback(ai: any, requestOptions: any) {
-    const candidateModels = ["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.1-pro-preview"];
+    const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastError: any = null;
 
     for (const modelName of candidateModels) {
       try {
-        const response = await ai.models.generateContent({
-          ...requestOptions,
-          model: modelName
-        });
+        const response = await Promise.race([
+          ai.models.generateContent({ ...requestOptions, model: modelName }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), 30_000)),
+        ]);
         if (response && response.text) {
           return response;
         }
@@ -1016,8 +900,10 @@ export function createExpressApp() {
   }
 
   app.post("/api/credit/diagnostico-prosfec", async (req, res) => {
+    let diagnosisLockPath = "";
     try {
-      const { leadId, partnerId } = req.body;
+      const caller = await authenticateApiCaller(req);
+      const { leadId } = req.body;
 
       if (!leadId) {
         return res.status(400).json({ error: "O parâmetro leadId é obrigatório." });
@@ -1031,6 +917,7 @@ export function createExpressApp() {
       if (!leadData) {
         return res.status(404).json({ error: "Lead não encontrado no banco de dados." });
       }
+      await assertLeadAccess(String(leadId), caller);
 
 
       // Check generation count limit (Initial generation = 1, Refazer = 2 max)
@@ -1048,6 +935,10 @@ export function createExpressApp() {
       }
 
       const newGeracoesCount = previousGeracoesCount + 1;
+      diagnosisLockPath = `consultas_realizadas/ia_diagnostico_${String(leadId).replace(/[^A-Za-z0-9_-]/g, "")}_${newGeracoesCount}`;
+      await createDocAtPathRest(diagnosisLockPath, {
+        leadId: String(leadId), partnerId: caller.partnerId, status: "processando", dataCriacao: new Date().toISOString(),
+      });
 
       // 2. Fetch credit consultations performed for this lead's CNPJ or their partner's CPFs
       const docList: string[] = [];
@@ -1077,11 +968,17 @@ export function createExpressApp() {
             produto_nome: r.data.produto_nome,
             produto_code: r.data.produto_code,
             dataConsulta: r.data.dataConsulta,
-            resultado: r.data.resultado
-          }));
+            resultado: r.data.resultado,
+            partnerId: r.data.partnerId,
+            leadId: r.data.leadId,
+          })).filter((c: any) => caller.isAdmin || c.partnerId === caller.partnerId || c.leadId === leadId);
         } catch (dbErr) {
           console.warn("Could not load matching consultations from Firestore:", dbErr);
         }
+      }
+
+      if (!matchingConsultas.length) {
+        throw Object.assign(new Error("Nenhuma consulta de crédito válida foi encontrada para este lead."), { statusCode: 422 });
       }
 
 
@@ -1223,9 +1120,23 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
       try {
         const stage1Response = await generateContentWithFallback(ai, {
           contents: stage1AuditPrompt,
-          generationConfig: {
+          config: {
             responseMimeType: "application/json",
-            temperature: 0.1
+            temperature: 0.1,
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                totalDividasNegativadas: { type: Type.NUMBER }, quantidadeNegativacoes: { type: Type.NUMBER },
+                totalProtestos: { type: Type.NUMBER }, quantidadeProtestos: { type: Type.NUMBER },
+                totalAcoesJudiciaisOuCheques: { type: Type.NUMBER }, temApontamentosSCRBacen: { type: Type.BOOLEAN },
+                resumoBacen: { type: Type.STRING }, situacaoFiscalCadastral: { type: Type.STRING },
+                capacidadeTomadaPronampe: { type: Type.NUMBER }, capacidadeTomadaGeral: { type: Type.NUMBER },
+                fatoresCriticosBloqueio: { type: Type.ARRAY, items: { type: Type.STRING } },
+                servicosNecessariosIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+                classificacaoElegibilidade: { type: Type.STRING }, scoreEstimado: { type: Type.STRING },
+              },
+              required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado"],
+            },
           }
         });
 
@@ -1243,25 +1154,8 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
         console.warn("[PROSFEC IA] Etapa 1 (Auditoria) falhou ou retornou formato inválido. Prosseguindo com fallback de triagem:", stage1Err);
       }
 
-      // Fallback audit se a etapa 1 falhar
       if (!auditResult) {
-        const faturamento = leadData.faturamentoAnual || (leadData.mediaReceitaMensal ? leadData.mediaReceitaMensal * 12 : 0) || 0;
-        auditResult = {
-          totalDividasNegativadas: 0,
-          quantidadeNegativacoes: 0,
-          totalProtestos: 0,
-          quantidadeProtestos: 0,
-          totalAcoesJudiciaisOuCheques: 0,
-          temApontamentosSCRBacen: false,
-          resumoBacen: "Sem apontamentos críticos detectados ou pendente de consulta formal SCR",
-          situacaoFiscalCadastral: "Em análise",
-          capacidadeTomadaPronampe: Math.min(faturamento * 0.3, 500000),
-          capacidadeTomadaGeral: faturamento * 0.35,
-          fatoresCriticosBloqueio: consultationsSummary.length === 0 ? ["Necessária execução de consultas da grade PROSFEC para mapeamento de apontamentos"] : ["Necessária adequação de rating e faturamento fiscal"],
-          servicosNecessariosIds: ["serv_rating_score"],
-          classificacaoElegibilidade: faturamento > 0 ? "Média" : "Baixa",
-          scoreEstimado: "Sob análise cadastral"
-        };
+        throw Object.assign(new Error("A auditoria da IA não pôde validar os dados da consulta. Tente novamente; nenhum laudo estimado foi salvo."), { statusCode: 503 });
       }
 
       // =========================================================================
@@ -1328,7 +1222,7 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
 
       const response = await generateContentWithFallback(ai, {
         contents: stage2SystemPrompt,
-        generationConfig: {
+        config: {
           temperature: 0.2
         }
       });
@@ -1484,6 +1378,7 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
         servicosRecomendados: sanitizedServicos,
         etapa: nextEtapaVal
       }));
+      await patchDocRest(diagnosisLockPath, { status: "sucesso", dataConclusao: new Date().toISOString() });
 
 
       console.log(`PROSFEC IA Diagnosis, Services & Step 6 Sub-etapas successfully saved and lead ${leadId} advanced to stage ${nextEtapaVal}`);
@@ -1497,29 +1392,28 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
       });
 
     } catch (err: any) {
+      if (diagnosisLockPath) await patchDocRest(diagnosisLockPath, { status: "falha", dataConclusao: new Date().toISOString() }).catch(() => undefined);
       console.error("Error generating PROSFEC IA Diagnosis:", err);
-      return res.status(500).json({ error: err.message || "Erro interno ao gerar o diagnóstico PROSFEC IA." });
+      return res.status(err?.statusCode || 500).json({ error: err.message || "Erro interno ao gerar o diagnóstico PROSFEC IA." });
     }
   });
 
   // 5.1 Generate Step 7 Post-Structuring Comparative Diagnostic (Antes vs. Depois)
   app.post("/api/credit/diagnostico-passo7", async (req, res) => {
     try {
-      const { leadId, partnerId, documento, consultaResultado, consultaId } = req.body;
+      const caller = await authenticateApiCaller(req);
+      const { leadId, documento, consultaResultado, consultaId } = req.body;
 
       if (!leadId) {
         return res.status(400).json({ error: "O campo leadId é obrigatório." });
       }
 
       // 1. Retrieve Lead from Firestore
-      const leadRef = doc(db, "leads", leadId);
-      const leadSnap = await getDoc(leadRef);
-
-      if (!leadSnap.exists()) {
+      const leadData: any = await getDocRest(`leads/${leadId}`);
+      if (!leadData) {
         return res.status(404).json({ error: "Lead não encontrado no banco de dados." });
       }
-
-      const leadData = leadSnap.data();
+      await assertLeadAccess(String(leadId), caller);
       const cnpjClean = (leadData.cnpj || documento || "").replace(/\D/g, "");
 
       // 2. Fetch Latest Consultation if not provided directly
@@ -1528,19 +1422,14 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
 
       if (!latestConsultaData) {
         try {
-          const q = query(
-            collection(db, "consultas_realizadas"),
-            where("documento", "==", cnpjClean)
-          );
-          const snap = await getDocs(q);
-          if (!snap.empty) {
-            const sortedDocs = snap.docs.sort((a, b) => {
-              const timeA = new Date(a.data().dataConsulta || 0).getTime();
-              const timeB = new Date(b.data().dataConsulta || 0).getTime();
-              return timeB - timeA;
-            });
-            latestConsultaData = sortedDocs[0].data().resultado;
-            usedConsultaId = sortedDocs[0].id;
+          const rows = await runQueryRest("consultas_realizadas", {
+            fieldFilter: { field: { fieldPath: "documento" }, op: "EQUAL", value: { stringValue: cnpjClean } },
+          });
+          const allowedRows = rows.filter((r: any) => caller.isAdmin || r.data.partnerId === caller.partnerId);
+          if (allowedRows.length) {
+            allowedRows.sort((a: any, b: any) => new Date(b.data.dataConsulta || 0).getTime() - new Date(a.data.dataConsulta || 0).getTime());
+            latestConsultaData = allowedRows[0].data.resultado;
+            usedConsultaId = allowedRows[0].id;
           }
         } catch (queryErr) {
           console.warn("Could not query consultas_realizadas for Step 7:", queryErr);
@@ -1611,7 +1500,7 @@ REGRAS DE RESPOSTA OBRIGATÓRIAS:
       const ai = getGeminiAI();
       const aiResponse = await generateContentWithFallback(ai, {
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
+        config: {
           temperature: 0.2,
           maxOutputTokens: 2500,
         }
@@ -1661,7 +1550,7 @@ REGRAS DE RESPOSTA OBRIGATÓRIAS:
 
       // 6. Update Lead in Firestore
       const nextEtapaVal = Math.max(Number(leadData.etapa || 1), 7);
-      await updateDoc(leadRef, cleanForFirestore({
+      await patchDocRest(`leads/${leadId}`, cleanForFirestore({
         diagnosticoPosEstruturacao: cleanForFirestore(diagnosticoPosEstruturacao),
         etapa: nextEtapaVal,
         scoreFinal: parsedMetrics.scoreAtual,
@@ -2081,7 +1970,8 @@ Gere a análise do Consultor de Crédito Governamental em JSON estruturado com a
   // 6. RTB - Recuperação de Tarifa Bancária: Análise Pericial de CCB com PROSFEC IA
   app.post("/api/credit/analise-rtb-ccb", async (req, res) => {
     try {
-      const { leadId, ccbBase64, nomeArquivo, bancoInformado, valorInformado, partnerId } = req.body;
+      const caller = await authenticateApiCaller(req);
+      const { leadId, ccbBase64, nomeArquivo, bancoInformado, valorInformado } = req.body;
 
       if (!leadId) {
         return res.status(400).json({ error: "O parâmetro leadId é obrigatório." });
@@ -2089,14 +1979,11 @@ Gere a análise do Consultor de Crédito Governamental em JSON estruturado com a
 
       console.log(`[RTB] Iniciando auditoria de CCB para o lead: ${leadId}...`);
 
-      const leadRef = doc(db, "leads", leadId);
-      const leadSnap = await getDoc(leadRef);
-
-      if (!leadSnap.exists()) {
+      const leadData: any = await getDocRest(`leads/${leadId}`);
+      if (!leadData) {
         return res.status(404).json({ error: "Lead não encontrado no banco de dados." });
       }
-
-      const leadData = leadSnap.data();
+      await assertLeadAccess(String(leadId), caller);
       const fileName = nomeArquivo || "CCB_Contrato_Bancario.pdf";
       const fileData = ccbBase64 || leadData.fichaRatingCredito?.dadosCNPJ?.ccbContratoPdf || leadData.dadosCNPJ?.ccbContratoPdf || "";
       const docProtocol = `RTB-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}${String(new Date().getDate()).padStart(2, "0")}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -2190,7 +2077,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
         const aiResponse = await generateContentWithFallback(ai, {
           contents: parts,
-          generationConfig: {
+          config: {
             responseMimeType: "application/json",
             temperature: 0.2
           }
@@ -2201,63 +2088,16 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           analiseResultado = JSON.parse(rawClean);
         }
       } catch (aiErr) {
-        console.warn("[RTB] Gemini AI analysis failed or timed out. Generating robust algorithmic forensic model:", aiErr);
+        console.warn("[RTB] Gemini analysis failed:", (aiErr as any)?.message || "erro");
       }
 
-      // Algorithmic Fallback Engine if AI fails or returns empty
-      if (!analiseResultado || !analiseResultado.potencialRecuperacaoTotal) {
-        const baseVal = valorOperacaoEstimado;
-        const seguroEst = Math.round(baseVal * 0.032 + 1200);
-        const tacEst = Math.round(Math.min(baseVal * 0.015, 3500) + 850);
-        const cadastroEst = 1650;
-        const cetDiffEst = Math.round(baseVal * 0.018);
-
-        const totalRecup = seguroEst + tacEst + cadastroEst + cetDiffEst;
-        const totalDobro = totalRecup * 2;
-
-        analiseResultado = {
-          bancoIdentificado: bancoPrincipal,
-          numeroContratoOuCCB: `CCB nº ${(Math.random() * 10000000).toFixed(0).padStart(8, '0')}`,
-          valorOperacao: baseVal,
-          taxaJurosMensal: "2.35% a.m.",
-          taxaJurosAnual: "32.12% a.a.",
-          cetInformado: "37.40% a.a.",
-          potencialRecuperacaoTotal: totalRecup,
-          potencialRepeticaoIndebito: totalDobro,
-          irregularidadesEncontradas: [
-            {
-              tipo: "Venda Casada / Seguro Prestamista",
-              descricao: `Inclusão presumida de seguro prestamista e proteção financeira agregada na CCB sem oportunização de contratação externa.`,
-              valorEstimado: seguroEst,
-              fundamentacaoLegal: "Tema Repetitivo 972/STJ e Art. 39, I do CDC",
-              probabilidadeExito: "Alta"
-            },
-            {
-              tipo: "TAC/TEC",
-              descricao: `Cobrança de Tarifa de Abertura de Crédito (TAC) ou taxa de liquidação/emissão não autorizada pelo BACEN.`,
-              valorEstimado: tacEst,
-              fundamentacaoLegal: "Súmula 566 do STJ e Resolução CMN nº 3.518/2007",
-              probabilidadeExito: "Alta"
-            },
-            {
-              tipo: "Tarifa de Cadastro Repetida",
-              descricao: `Encargos de renovação cadastral e abertura de ficha de financiamento.`,
-              valorEstimado: cadastroEst,
-              fundamentacaoLegal: "Súmula 566 do STJ e Resolução BACEN 3.919/2010",
-              probabilidadeExito: "Média"
-            },
-            {
-              tipo: "Capitalização Indevida / CET Divergente",
-              descricao: `Custo Efetivo Total (CET) superior à taxa de juros nominal contratada devido à inclusão de tarifas acessórias na base de cálculo.`,
-              valorEstimado: cetDiffEst,
-              fundamentacaoLegal: "Súmula 539/STJ e Art. 52, V do Código de Defesa do Consumidor",
-              probabilidadeExito: "Alta"
-            }
-          ],
-          resumoExecutivo: `Auditoria pericial identificou potencial de ressarcimento de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totalRecup)} em tarifas e seguros embutidos na CCB, com viabilidade de devolução em dobro via notificação administrativa ou acordo.`,
-          teseJuridicaRecomendada: "Notificação Extrajudicial com pedido de ressarcimento amigável c/c pleito de repetição do indébito (Art. 42, parágrafo único do CDC) e Tema 972/STJ.",
-          sugestaoAcao: "Acordo Extrajudicial Notificatório"
-        };
+      // Não produza um laudo financeiro com números presumidos quando a IA não
+      // conseguir validar o documento real.
+      if (!analiseResultado || !Number.isFinite(Number(analiseResultado.potencialRecuperacaoTotal))) {
+        throw Object.assign(
+          new Error("A IA não conseguiu validar o conteúdo da CCB. Nenhuma estimativa fictícia foi salva."),
+          { statusCode: 503 },
+        );
       }
 
       // Consolidate final RTB object
@@ -2294,14 +2134,14 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         updatePayload["fichaRatingCredito.dadosCNPJ.ccbValorContrato"] = finalAnaliseRTB.valorOperacao;
       }
 
-      await updateDoc(leadRef, cleanForFirestore(updatePayload));
+      await patchDocRest(`leads/${leadId}`, cleanForFirestore(updatePayload));
 
       // Create notification for admin / partner
       try {
-        await addDoc(collection(db, "notificacoes"), {
+        await createDocRest("notificacoes", {
           leadId: leadId,
           leadNome: razaoSocial,
-          partnerId: partnerId || leadData.parentPartnerId || "admin",
+          partnerId: caller.isAdmin ? "admin" : caller.partnerId,
           titulo: "Nova Análise de RTB Concluída pela PROSFEC IA",
           mensagem: `A perícia da CCB de ${razaoSocial} identificou R$ ${finalAnaliseRTB.potencialRecuperacaoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em potencial de recuperação de tarifas bancárias.`,
           dataCriacao: new Date().toISOString(),
@@ -2321,7 +2161,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
     } catch (err: any) {
       console.error("[RTB] Error in /api/credit/analise-rtb-ccb:", err);
-      return res.status(500).json({ error: err.message || "Erro interno ao processar a auditoria de CCB (RTB)." });
+      return res.status(err?.statusCode || 500).json({ error: err.message || "Erro interno ao processar a auditoria de CCB (RTB)." });
     }
   });
 
@@ -2740,13 +2580,78 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     return out;
   };
 
+  class UpstreamError extends Error {
+    code: string;
+    statusCode: number;
+    constructor(code: string, upstreamStatus?: number) {
+      super(code);
+      this.code = code;
+      this.statusCode = upstreamStatus === 429 ? 503 : 502;
+    }
+  }
+
+  const fetchWithTimeout = async (url: string, init: RequestInit = {}, timeoutMs = 20_000) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const sanitizeIdempotencyKey = (raw: any): string => {
+    const value = String(raw || "").trim();
+    return /^[A-Za-z0-9_-]{16,128}$/.test(value) ? value : "";
+  };
+
+  const authenticateApiCaller = async (req: any): Promise<{ uid: string; email: string; isAdmin: boolean; partnerId: string }> => {
+    const token = extractToken(req, "authorization");
+    if (!token) throw Object.assign(new Error("Autenticação obrigatória."), { statusCode: 401 });
+    const apiKey = firstEnv("FIREBASE_API_KEY", "GOOGLE_API_KEY") || (firebaseConfig as any).apiKey;
+    if (!apiKey) throw Object.assign(new Error("Firebase Auth não configurado no servidor."), { statusCode: 503 });
+    const response = await fetchWithTimeout(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: token }),
+    }, 10_000);
+    if (!response.ok) throw Object.assign(new Error("Sessão inválida ou expirada."), { statusCode: 401 });
+    const user = (await response.json())?.users?.[0];
+    const uid = String(user?.localId || "");
+    const email = String(user?.email || "").trim().toLowerCase();
+    if (!uid) throw Object.assign(new Error("Sessão inválida."), { statusCode: 401 });
+    const isAdmin = uid === "Nso5FBoBVHXNY60RDw6NNKeaCC23" || email === "prosfec.tesouraria@gmail.com";
+    if (isAdmin) return { uid, email, isAdmin, partnerId: "admin" };
+
+    let rows = await runQueryRest("parceiros", {
+      fieldFilter: { field: { fieldPath: "authUid" }, op: "EQUAL", value: { stringValue: uid } },
+    }, 1);
+    if (!rows.length && email) {
+      rows = await runQueryRest("parceiros", {
+        fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: email } },
+      }, 1);
+    }
+    if (!rows.length) throw Object.assign(new Error("Usuário sem cadastro de parceiro."), { statusCode: 403 });
+    return { uid, email, isAdmin: false, partnerId: rows[0].id };
+  };
+
+  const assertLeadAccess = async (leadId: string, caller: any, partnerId = caller.partnerId) => {
+    if (caller.isAdmin) return;
+    const lead = await getDocRest(`leads/${leadId}`);
+    if (!lead) throw Object.assign(new Error("Lead não encontrado."), { statusCode: 404 });
+    const owners = [lead.parceiroId, lead.partnerId, lead.parceiro_id, lead.parentPartnerId].filter(Boolean).map(String);
+    if (!owners.includes(String(partnerId))) throw Object.assign(new Error("Você não tem acesso a este lead."), { statusCode: 403 });
+  };
+
   /** Lê um documento. Retorna null quando não existe. */
   const getDocRest = async (path: string): Promise<any | null> => {
     const idToken = await getServiceIdToken();
     const r = await fetch(firestoreDocUrl(path), {
       headers: { Authorization: `Bearer ${idToken}` },
     });
-    if (!r.ok) return null;
+    if (r.status === 404) return null;
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore GET ${r.status}: ${detail.slice(0, 160)}`);
+    }
     const data = await r.json().catch(() => null);
     if (!data?.fields) return null;
     return fromFirestoreFields(data.fields);
@@ -2767,6 +2672,42 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     const created = await r.json().catch(() => null);
     const name: string = created?.name || "";
     return { id: name.split("/").pop() || "" };
+  };
+
+  const createDocAtPathRest = async (path: string, data: any): Promise<void> => {
+    const idToken = await getServiceIdToken();
+    const separator = firestoreDocUrl(path).includes("?") ? "&" : "?";
+    const r = await fetch(`${firestoreDocUrl(path)}${separator}currentDocument.exists=false`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ fields: toFirestoreFields(cleanForFirestore(data)) }),
+    });
+    if (r.status === 409 || r.status === 412) throw Object.assign(new Error("Operação duplicada."), { statusCode: 409, code: "DUPLICATE" });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => "");
+      throw new Error(`Firestore CREATE ${r.status}: ${detail.slice(0, 160)}`);
+    }
+  };
+
+  const changePartnerBalanceAtomic = async (partnerId: string, delta: number): Promise<number> => {
+    const idToken = await getServiceIdToken();
+    const documentName = `projects/${FIREBASE_PROJECT_ID}/databases/${FIRESTORE_DB_ID}/documents/parceiros/${partnerId}`;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const read = await fetch(firestoreDocUrl(`parceiros/${partnerId}`), { headers: { Authorization: `Bearer ${idToken}` } });
+      if (!read.ok) throw new Error("Parceiro não encontrado durante a atualização do saldo.");
+      const raw = await read.json();
+      const current = Number(fromFirestoreFields(raw.fields)?.saldoGeral || 0);
+      const next = Number((current + delta).toFixed(2));
+      if (next < 0) throw Object.assign(new Error("Saldo insuficiente para realizar esta consulta."), { statusCode: 400, code: "INSUFFICIENT_BALANCE" });
+      const commitUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents:commit`;
+      const commit = await fetch(commitUrl, {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ writes: [{ update: { name: documentName, fields: { saldoGeral: toFirestoreValue(next) } }, updateMask: { fieldPaths: ["saldoGeral"] }, currentDocument: { updateTime: raw.updateTime } }] }),
+      });
+      if (commit.ok) return next;
+      if (![409, 412].includes(commit.status)) throw new Error(`Falha ao atualizar saldo (${commit.status}).`);
+    }
+    throw Object.assign(new Error("O saldo foi alterado simultaneamente. Tente novamente."), { statusCode: 409, code: "BALANCE_CONFLICT" });
   };
 
   /** Atualiza campos de um documento (merge via updateMask). */
