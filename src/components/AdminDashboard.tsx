@@ -7179,6 +7179,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       Créditos de prospecção e busca de empresas em tempo real
                     </span>
                   </div>
+                </div>
                 <div className="flex justify-end">
                   <button
                     type="button"
@@ -7193,7 +7194,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <Coins className="w-4 h-4" /> Ajustar Saldo
                   </button>
                 </div>
-              </div>
               </div>
 
               {/* Se for Franquia Digital, mostrar equipe e override */}
