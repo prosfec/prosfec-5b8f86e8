@@ -2747,13 +2747,26 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
   getServiceIdTokenRef.fn = getServiceIdToken;
 
+  // Nomes de campo fora do padrão simples (acento, cedilha, espaço, hífen)
+  // precisam ser envolvidos em crases no fieldPath, senão o Firestore recusa
+  // a gravação inteira com 400 INVALID_ARGUMENT.
+  const escapeFieldPath = (name: string) =>
+    /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) ? name : `\`${name.replace(/[`\\]/g, "\\$&")}\``;
+
   const firestoreDocUrl = (path: string, masks: string[] = []) => {
     const base =
       `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}` +
       `/databases/${encodeURIComponent(FIRESTORE_DB_ID)}/documents/${path}`;
     if (!masks.length) return base;
-    return base + "?" + masks.map((m) => `updateMask.fieldPaths=${m}`).join("&");
+    return (
+      base +
+      "?" +
+      masks
+        .map((m) => `updateMask.fieldPaths=${encodeURIComponent(escapeFieldPath(m))}`)
+        .join("&")
+    );
   };
+
 
   const getLeadRest = async (leadId: string) => {
     const idToken = await getServiceIdToken();
