@@ -3501,10 +3501,10 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                             className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-hidden text-ellipsis overflow-hidden font-medium text-slate-700"
                           >
                             {localCatalog.map((prod) => {
-                              const priceVal = typeof prod.price === "number" ? prod.price : (typeof prod.partner_price === "number" ? prod.partner_price : 69.86);
+                              const priceVal = typeof prod.partner_price === "number" ? prod.partner_price : prod.price;
                               return (
                                 <option key={prod.code} value={prod.code}>
-                                  {prod.name} (R$ {priceVal.toFixed(2).replace(".", ",")})
+                                  {prod.name} ({typeof priceVal === "number" ? `R$ ${priceVal.toFixed(2).replace(".", ",")}` : "Preço indisponível"})
                                 </option>
                               );
                             })}
@@ -3515,7 +3515,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               Rating + Diagnóstico Financeiro 360
                             </span>
                             <span className="font-mono font-black text-emerald-800 text-[11px] shrink-0 bg-white px-2 py-0.5 rounded-lg border border-emerald-200/50">
-                              R$ {(localCatalog[0]?.price || 69.86).toFixed(2).replace(".", ",")}
+                              {typeof localCatalog[0]?.price === "number" ? `R$ ${localCatalog[0].price.toFixed(2).replace(".", ",")}` : "Carregando preço..."}
                             </span>
                           </div>
                         )}
@@ -3523,7 +3523,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                       <button
                         onClick={handleExecuteLocalQuery}
-                        disabled={executingLocalQuery || !selectedQueryDocument}
+                        disabled={executingLocalQuery || !selectedQueryDocument || !localCatalog.length || !selectedProductCode}
                         className="w-full py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                       >
                         {executingLocalQuery ? (

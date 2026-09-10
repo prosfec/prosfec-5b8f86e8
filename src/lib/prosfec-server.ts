@@ -1407,21 +1407,19 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
   // 5.1 Generate Step 7 Post-Structuring Comparative Diagnostic (Antes vs. Depois)
   app.post("/api/credit/diagnostico-passo7", async (req, res) => {
     try {
-      const { leadId, partnerId, documento, consultaResultado, consultaId } = req.body;
+      const caller = await authenticateApiCaller(req);
+      const { leadId, documento, consultaResultado, consultaId } = req.body;
 
       if (!leadId) {
         return res.status(400).json({ error: "O campo leadId é obrigatório." });
       }
 
       // 1. Retrieve Lead from Firestore
-      const leadRef = doc(db, "leads", leadId);
-      const leadSnap = await getDoc(leadRef);
-
-      if (!leadSnap.exists()) {
+      const leadData: any = await getDocRest(`leads/${leadId}`);
+      if (!leadData) {
         return res.status(404).json({ error: "Lead não encontrado no banco de dados." });
       }
-
-      const leadData = leadSnap.data();
+      await assertLeadAccess(String(leadId), caller);
       const cnpjClean = (leadData.cnpj || documento || "").replace(/\D/g, "");
 
       // 2. Fetch Latest Consultation if not provided directly
@@ -1430,19 +1428,14 @@ DIRETRIZES DA REDAÇÃO EXECUTIVA:
 
       if (!latestConsultaData) {
         try {
-          const q = query(
-            collection(db, "consultas_realizadas"),
-            where("documento", "==", cnpjClean)
-          );
-          const snap = await getDocs(q);
-          if (!snap.empty) {
-            const sortedDocs = snap.docs.sort((a, b) => {
-              const timeA = new Date(a.data().dataConsulta || 0).getTime();
-              const timeB = new Date(b.data().dataConsulta || 0).getTime();
-              return timeB - timeA;
-            });
-            latestConsultaData = sortedDocs[0].data().resultado;
-            usedConsultaId = sortedDocs[0].id;
+          const rows = await runQueryRest("consultas_realizadas", {
+            fieldFilter: { field: { fieldPath: "documento" }, op: "EQUAL", value: { stringValue: cnpjClean } },
+          });
+          const allowedRows = rows.filter((r: any) => caller.isAdmin || r.data.partnerId === caller.partnerId);
+          if (allowedRows.length) {
+            allowedRows.sort((a: any, b: any) => new Date(b.data.dataConsulta || 0).getTime() - new Date(a.data.dataConsulta || 0).getTime());
+            latestConsultaData = allowedRows[0].data.resultado;
+            usedConsultaId = allowedRows[0].id;
           }
         } catch (queryErr) {
           console.warn("Could not query consultas_realizadas for Step 7:", queryErr);
@@ -1513,7 +1506,7 @@ REGRAS DE RESPOSTA OBRIGATÓRIAS:
       const ai = getGeminiAI();
       const aiResponse = await generateContentWithFallback(ai, {
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
+        config: {
           temperature: 0.2,
           maxOutputTokens: 2500,
         }
@@ -1563,7 +1556,7 @@ REGRAS DE RESPOSTA OBRIGATÓRIAS:
 
       // 6. Update Lead in Firestore
       const nextEtapaVal = Math.max(Number(leadData.etapa || 1), 7);
-      await updateDoc(leadRef, cleanForFirestore({
+      await patchDocRest(`leads/${leadId}`, cleanForFirestore({
         diagnosticoPosEstruturacao: cleanForFirestore(diagnosticoPosEstruturacao),
         etapa: nextEtapaVal,
         scoreFinal: parsedMetrics.scoreAtual,
