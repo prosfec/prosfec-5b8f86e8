@@ -1287,8 +1287,14 @@ export function createExpressApp() {
       }
 
       const consultationsSummary = [...matchingConsultas]
-        .sort((a, b) => (Date.parse(String(b.dataConsulta || "")) || 0) - (Date.parse(String(a.dataConsulta || "")) || 0))
+        .sort((a, b) => {
+          const aLead = a.leadId === String(leadId) ? 0 : 1;
+          const bLead = b.leadId === String(leadId) ? 0 : 1;
+          if (aLead !== bLead) return aLead - bLead;
+          return (Date.parse(String(b.dataConsulta || "")) || 0) - (Date.parse(String(a.dataConsulta || "")) || 0);
+        })
         .slice(0, 6)
+
         .map(c => {
           const doc = String(c.documento || "").replace(/\D/g, "");
           const isSocio = doc.length === 11 && sociosPorCpf.has(doc);
