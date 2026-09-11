@@ -1459,8 +1459,8 @@ ${consultationsBlock}
 REGRA DE EVIDÊNCIA REDEBE:
 Os dados da RedeBE constituem a fonte primária de evidência. Não invente, estime ou complete valores ausentes. Quando uma informação não estiver presente na resposta original, informe que não foi identificada. Os dados normalizados são uma representação estruturada da resposta original e devem ser conferidos contra a evidência original quando necessário.
 
-CATÁLOGO OFICIAL DE SERVIÇOS TÉCNICOS DISPONÍVEIS:
-${catalogPromptText}
+
+
 
 ETAPA "FATO" — SUA ÚNICA FUNÇÃO É EXTRAIR FATOS.
 Você NÃO classifica risco, NÃO consolida rating, NÃO estima capacidade de captação e NÃO recomenda serviços.
