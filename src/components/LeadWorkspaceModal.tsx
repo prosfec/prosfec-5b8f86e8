@@ -77,7 +77,8 @@ import LeadConciergeTracker from "./LeadConciergeTracker";
 import FichaRatingAdmViewer from "./FichaRatingAdmViewer";
 import FichaRatingCreditoForm from "./FichaRatingCreditoForm";
 import { DossierComparativeViewer } from "./DossierComparativeViewer";
-import { RedeBEReportViewerModal } from "./RedeBEReportViewerModal";
+import { RelatorioPdfViewerModal } from "./RelatorioPdfViewerModal";
+import { RelatorioPdfUploader } from "./RelatorioPdfUploader";
 import { calculateLeadStepStatus } from "../utils/stepValidation";
 import { 
   GOVERNMENT_CREDIT_LINES, 
@@ -3395,7 +3396,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     Consulta de Crédito & Relatórios
                   </h4>
                   <p className="text-[11px] text-slate-500">
-                    Execute a consulta de crédito e visualize o relatório oficial exatamente como entregue pela RedeBE, documento por documento.
+                    Execute a consulta de crédito e visualize o relatório oficial PROSFEC DIAGNÓSTICO 360 anexado pela equipe, documento por documento.
                   </p>
                 </div>
               </div>
@@ -3618,10 +3619,10 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <span className="text-[10px] bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded-sm uppercase font-mono tracking-wider">
-                                {consulta.produto_code}
+                                PROSFEC DIAGNÓSTICO 360
                               </span>
                               <h6 className="font-extrabold text-xs text-slate-800 mt-1">
-                                {consulta.produto_nome}
+                                {consulta.documentoNome || "Consulta de crédito"}
                               </h6>
                             </div>
                             <span className="text-[9px] text-slate-400 font-mono">
@@ -3634,57 +3635,24 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                             <span className="font-mono">{consulta.documento}</span>
                           </div>
 
-                          {/* Quick summary metrics */}
-                          {consulta.resultado && (() => {
-                            const res = consulta.resultado;
-                            const redebeData = Array.isArray(res) ? res[0]?.RedeBE || res[0] : (res?.RedeBE || res);
-                            const resumo = redebeData?.resumo || {};
-                            const serasaResumo = redebeData?.complementar?.serasa?.RedeBE?.resumo || {};
-                            const cadinResumo = redebeData?.complementar?.cadin || {};
+                          <div>
+                            <span
+                              className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider border ${
+                                consulta.relatorioPdfUrl
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                  : "bg-amber-50 text-amber-800 border-amber-200"
+                              }`}
+                            >
+                              {consulta.relatorioPdfUrl ? "Relatório disponível" : "Relatório em preparação"}
+                            </span>
+                          </div>
 
-                            const scoreVal = resumo?.score || resumo?.score_motor_credito || resumo?.score_analise || "Sucesso";
-                            const ratingVal = resumo?.rating || resumo?.faixa_score || "";
-
-                            const pendFinancCount = Number(resumo?.quantidade_restricoes_financeiras || resumo?.quantidade_pendencias_financeiras || serasaResumo?.quantidade_pendencias_financeiras || 0);
-                            const protestosCount = Number(resumo?.quantidade_protestos || 0);
-                            const protestoNacCount = Number(resumo?.quantidade_protesto_nacional || 0);
-                            const cadinCount = Number(cadinResumo?.QUANTIDADE_OCORRENCIAS || resumo?.quantidade_cadin || 0);
-                            const ccfCount = Number(resumo?.quantidade_ccf_bacen || 0);
-                            const hasScrPrejuizo = Boolean(resumo?.scr_prejuizo && resumo?.scr_prejuizo !== "0,00" && resumo?.scr_prejuizo !== "0");
-
-                            const rawOcorrencias = 
-                              redebeData?.retorno?.principal?.CREDCADASTRAL?.RESTRICOES_FINANCEIRAS?.OCORRENCIAS ||
-                              redebeData?.retorno?.principal?.CREDCADASTRAL?.PEND_FINANCEIRAS?.OCORRENCIAS ||
-                              [];
-                            const ocorrenciasCount = Array.isArray(rawOcorrencias) ? rawOcorrencias.length : 0;
-
-                            const totalPendenciasCount = Math.max(
-                              pendFinancCount + protestosCount + protestoNacCount + cadinCount + ccfCount + (hasScrPrejuizo ? 1 : 0),
-                              ocorrenciasCount
-                            );
-
-                            const valorPendencias = resumo?.valor_total_restricoes_financeiras || resumo?.valor_total_pendencias_financeiras || "";
-
-                            return (
-                              <div className="space-y-2">
-                                <div className="bg-emerald-50/80 p-3 rounded-xl border border-emerald-100 text-[10px] text-slate-700 grid grid-cols-2 gap-2 font-medium">
-                                  <div>
-                                    <span className="text-[8px] text-slate-400 uppercase font-black block">Score / Rating</span>
-                                    <span className="font-extrabold text-emerald-800">
-                                      {scoreVal} {ratingVal ? `(Rating ${ratingVal})` : ""}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-[8px] text-slate-400 uppercase font-black block">Pendências Financeiras</span>
-                                    <span className={`font-extrabold ${totalPendenciasCount > 0 ? "text-rose-600" : "text-emerald-700"}`}>
-                                      {totalPendenciasCount > 0 ? `${totalPendenciasCount} pendência(s)` : "Nenhuma Ativa"}
-                                      {totalPendenciasCount > 0 && valorPendencias && ` - ${valorPendencias}`}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })()}
+                          {isAdmin && (
+                            <RelatorioPdfUploader
+                              consulta={consulta}
+                              onUpdated={() => loadLeadConsultas()}
+                            />
+                          )}
 
                           <button
                             type="button"
@@ -5176,7 +5144,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
         </div>
       )}
 
-      <RedeBEReportViewerModal
+      <RelatorioPdfViewerModal
         isOpen={Boolean(viewingConsulta)}
         onClose={() => setViewingConsulta(null)}
         consulta={viewingConsulta}
