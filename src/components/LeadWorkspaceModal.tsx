@@ -3702,25 +3702,6 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                 {(
                   <div className="space-y-6">
-                    {/* Visualização de Alto Padrão Fintech do Diagnóstico PROSFEC IA */}
-                    <div className="p-6 bg-white border border-slate-200/90 rounded-2xl relative space-y-4 shadow-xs">
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 border-b border-slate-100 pb-2.5">
-                        <span className="flex items-center gap-1.5 font-bold text-emerald-800">
-                          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                          RESULTADO DA PERÍCIA E DIAGNÓSTICO PROSFEC IA
-                        </span>
-                        <span className="font-mono text-slate-500">
-                          Gerado em: {new Date(diagnosticoPROSFEC.dataGeracao).toLocaleString("pt-BR")}
-                        </span>
-                      </div>
-
-                      <FintechDiagnosisView
-                        lead={{ ...lead, servicosRecomendados, subEtapasPasso6 }}
-                        diagnostico={{ ...diagnosticoPROSFEC, servicosRecomendados, subEtapasPasso6 }}
-                        consultas={leadConsultas}
-                        renderMarkdownContent={renderMarkdown}
-                      />
-                    </div>
 
                     {/* Recommended Services Pricing Block (Admin Editable) */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
@@ -3918,7 +3899,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           {/* Total Box */}
                           <div className="flex items-center justify-between p-3.5 bg-emerald-900 text-white rounded-xl shadow-xs">
                             <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-200">
-                              Total dos Serviços do Diagnóstico:
+                              Total dos Serviços:
                             </span>
                             <span className="text-base font-black text-[#00A86B]">
                               {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
