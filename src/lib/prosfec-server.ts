@@ -1401,8 +1401,11 @@ DADOS CADASTRAIS DA EMPRESA:
 - Porte: ${leadData.porte || "Não informado"}
 - Sócios: ${leadData.socios ? leadData.socios.map((s: any) => `${s.nome} (CPF: ${s.cpf || "não informado"})`).join(", ") : "Nenhum sócio informado"}
 
-RELATÓRIOS BRUTOS DE CONSULTAS DE CRÉDITO REALIZADAS:
+RELATÓRIOS DE CONSULTAS DE CRÉDITO REALIZADAS (cada consulta traz DADOS NORMALIZADOS + RESULTADO ORIGINAL DA REDEBE):
 ${consultationsBlock}
+
+REGRA DE EVIDÊNCIA REDEBE:
+Os dados da RedeBE constituem a fonte primária de evidência. Não invente, estime ou complete valores ausentes. Quando uma informação não estiver presente na resposta original, informe que não foi identificada. Os dados normalizados são uma representação estruturada da resposta original e devem ser conferidos contra a evidência original quando necessário.
 
 CATÁLOGO OFICIAL DE SERVIÇOS TÉCNICOS DISPONÍVEIS:
 ${catalogPromptText}
