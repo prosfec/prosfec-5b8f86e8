@@ -447,6 +447,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [leadsViewMode, setLeadsViewMode] = useState<"grid" | "list">("list");
   const [hideTeamMembers, setHideTeamMembers] = useState<boolean>(true);
+  const [pendingReports, setPendingReports] = useState<{ byLead: Record<string, number>; byDoc: Record<string, number> }>({ byLead: {}, byDoc: {} });
+  const [onlyPendingPdf, setOnlyPendingPdf] = useState(false);
 
   // Pagination
   const [leadsPage, setLeadsPage] = useState(1);
