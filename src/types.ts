@@ -127,7 +127,6 @@ export interface Lead {
   dadosFiscais?: Record<string, any>;
   servicosRecomendados?: any[];
   subEtapasPasso6?: any[];
-  diagnosticoPROSFEC?: any;
   diagnosticoGeracoesCount?: number;
   diagnosticoPosEstruturacao?: DiagnosticoPosEstruturacao;
   clienteSenha?: string;

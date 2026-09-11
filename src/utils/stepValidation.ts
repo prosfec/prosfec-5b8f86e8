@@ -55,7 +55,6 @@ export function calculateLeadStepStatus(lead: Lead | null | undefined): StepLock
   // Step 3: Consulta / Diagnóstico (Credit analysis or diagnosis done)
   const isStep3Complete = Boolean(
     currentEtapa >= 4 ||
-    lead.diagnosticoPROSFEC !== undefined ||
     lead.diagnostico !== undefined ||
     (lead as any).diagnosticoIA !== undefined ||
     (lead as any).diagnosticoConsulta !== undefined ||

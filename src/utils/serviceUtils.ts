@@ -383,7 +383,6 @@ export function getApplicableContracts(lead: any): ApplicableContractTab[] {
   // Obter todas as fontes de serviços do lead
   const servs: any[] = [
     ...(Array.isArray(lead.servicosRecomendados) ? lead.servicosRecomendados : []),
-    ...(Array.isArray(lead.diagnosticoPROSFEC?.servicosRecomendados) ? lead.diagnosticoPROSFEC.servicosRecomendados : []),
     ...(Array.isArray(lead.subEtapasPasso6) ? lead.subEtapasPasso6 : []),
     ...(Array.isArray(lead.pendencias) ? lead.pendencias : [])
   ];

@@ -77,7 +77,7 @@ import LeadConciergeTracker from "./LeadConciergeTracker";
 import FichaRatingAdmViewer from "./FichaRatingAdmViewer";
 import FichaRatingCreditoForm from "./FichaRatingCreditoForm";
 import { DossierComparativeViewer } from "./DossierComparativeViewer";
-import { FintechDiagnosisView } from "./FintechDiagnosisView";
+import { RedeBEReportViewerModal } from "./RedeBEReportViewerModal";
 import { calculateLeadStepStatus } from "../utils/stepValidation";
 import { 
   GOVERNMENT_CREDIT_LINES, 
@@ -166,12 +166,6 @@ interface Lead {
     historico?: PendenciaItem[];
   } | null;
   diagnosticoGeracoesCount?: number;
-  diagnosticoPROSFEC?: {
-    texto: string;
-    dataGeracao: string;
-    consultasAnalisadas: number;
-    geracoesCount?: number;
-  } | null;
   servicosRecomendados?: any[];
   subEtapasPasso6?: any[];
   fichaRatingCredito?: any;
@@ -299,13 +293,11 @@ export default function LeadWorkspaceModal({
   // PROSFEC IA Diagnostic states
   const [leadConsultas, setLeadConsultas] = useState<any[]>([]);
   const [loadingConsultas, setLoadingConsultas] = useState(false);
-  const [generatingDiagnostico, setGeneratingDiagnostico] = useState(false);
-  const [diagnosticoPROSFEC, setDiagnosticoPROSFEC] = useState<any>(lead.diagnosticoPROSFEC || null);
-  const [copiedDiagnostico, setCopiedDiagnostico] = useState(false);
+  const [viewingConsulta, setViewingConsulta] = useState<any | null>(null);
 
   // Serviços Recomendados e Precificação (Apenas ADM altera)
   const [servicosRecomendados, setServicosRecomendados] = useState<any[]>(() => {
-    const raw = (lead as any).servicosRecomendados || ((lead.diagnosticoPROSFEC as any)?.servicosRecomendados) || [];
+    const raw = (lead as any).servicosRecomendados || [];
     return sanitizeAndSyncServicosList(raw, DEFAULT_SERVICES_CATALOG);
   });
   const [savingServicos, setSavingServicos] = useState(false);
@@ -327,7 +319,7 @@ export default function LeadWorkspaceModal({
       } catch (err) {
         console.warn("Could not load catalog services:", err);
       } finally {
-        const raw = (lead as any).servicosRecomendados || ((lead.diagnosticoPROSFEC as any)?.servicosRecomendados) || [];
+        const raw = (lead as any).servicosRecomendados || [];
         setServicosRecomendados(sanitizeAndSyncServicosList(raw, activeCatalog));
       }
     };
@@ -550,7 +542,7 @@ export default function LeadWorkspaceModal({
 
   // Sub-etapas do Passo 6 (Checklist de Estruturação)
   const getInitialSubEtapasPasso6 = () => {
-    const servs = (lead as any).servicosRecomendados || (lead as any).diagnosticoPROSFEC?.servicosRecomendados || [];
+    const servs = (lead as any).servicosRecomendados || [];
     const existingList = Array.isArray((lead as any).subEtapasPasso6) ? (lead as any).subEtapasPasso6 : [];
 
     if (Array.isArray(servs) && servs.length > 0) {
@@ -882,68 +874,7 @@ export default function LeadWorkspaceModal({
     return false;
   });
 
-  const canGenerateDiagnostico = hasCnpjQuery && hasCpfQuery;
-
-  // Generate PROSFEC IA Diagnosis via Backend Route
-  const handleGeneratePROSFECDiagnostico = async () => {
-    const currentCount = diagnosticoPROSFEC?.geracoesCount || lead?.diagnosticoGeracoesCount || (diagnosticoPROSFEC ? 1 : 0);
-    if (!isAdminUser && diagnosticoPROSFEC && currentCount >= 2) {
-      setWorkspaceError("O diagnóstico de IA já foi refeito 1 vez. O limite máximo de reanálises foi atingido para este lead.");
-      return;
-    }
-
-    if (!canGenerateDiagnostico) {
-      if (!hasCnpjQuery && !hasCpfQuery) {
-        setWorkspaceError("Para gerar o Diagnóstico IA, é necessário realizar as consultas de crédito do CNPJ e de ao menos um CPF de sócio.");
-      } else if (!hasCnpjQuery) {
-        setWorkspaceError("Para gerar o Diagnóstico IA, é necessário realizar a consulta de crédito do CNPJ da empresa.");
-      } else {
-        setWorkspaceError("Para gerar o Diagnóstico IA, é necessário realizar a consulta de crédito de ao menos um CPF de sócio.");
-      }
-      return;
-    }
-    setGeneratingDiagnostico(true);
-    setWorkspaceError(null);
-    setWorkspaceSuccess(null);
-    try {
-      const res = await fetch("/api/credit/diagnostico-prosfec", {
-        method: "POST",
-        headers: await authenticatedHeaders(),
-        body: JSON.stringify({
-          leadId: lead.id,
-          partnerId: currentPartner?.id || "admin"
-        })
-      });
-      const data = await parseJsonResponse(res);
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Erro ao processar o diagnóstico de crédito.");
-      }
-      setDiagnosticoPROSFEC(data.diagnostico);
-      setServicosRecomendados(Array.isArray(data.servicosRecomendados) ? data.servicosRecomendados : []);
-      if (data.subEtapasPasso6 && Array.isArray(data.subEtapasPasso6)) {
-        setSubEtapasPasso6(withoutMensalidades(data.subEtapasPasso6));
-      }
-      setWorkspaceSuccess("Diagnóstico PROSFEC IA gerado e Checklist do Passo 6 (Estruturação) configurado automaticamente com sucesso!");
-      safeRefreshLeads();
-      onLeadUpdated?.({
-        ...lead,
-        diagnosticoPROSFEC: data.diagnostico,
-        servicosRecomendados: Array.isArray(data.servicosRecomendados) ? data.servicosRecomendados : [],
-        subEtapasPasso6: Array.isArray(data.subEtapasPasso6) ? data.subEtapasPasso6 : []
-      });
-    } catch (err: any) {
-      setWorkspaceError(err.message || "Erro ao gerar diagnóstico.");
-    } finally {
-      setGeneratingDiagnostico(false);
-    }
-  };
-
-  const copyDiagnosticoToClipboard = () => {
-    if (!diagnosticoPROSFEC?.texto) return;
-    navigator.clipboard.writeText(diagnosticoPROSFEC.texto);
-    setCopiedDiagnostico(true);
-    setTimeout(() => setCopiedDiagnostico(false), 2000);
-  };
+  const hasAnyConsulta = leadConsultas.length > 0;
 
   function parseBoldText(text: string) {
     const parts = text.split(/\*\*([^*]+)\*\*/g);
@@ -3461,10 +3392,10 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 <div>
                   <h4 className="font-display font-extrabold text-sm text-[#0A3D2E] uppercase tracking-wider flex items-center gap-1.5">
                     <ShieldCheck className="w-5 h-5 text-[#00A86B]" />
-                    Consulta & Diagnóstico PROSFEC IA
+                    Consulta de Crédito & Relatórios
                   </h4>
                   <p className="text-[11px] text-slate-500">
-                    Consulte o histórico de relatórios de crédito e gere diagnósticos comerciais estratégicos guiados pela inteligência da PROSFEC.
+                    Execute a consulta de crédito e visualize o relatório oficial exatamente como entregue pela RedeBE, documento por documento.
                   </p>
                 </div>
               </div>
@@ -3677,7 +3608,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       <AlertCircle className="w-8 h-8 text-slate-300 mx-auto" />
                       <div className="text-xs font-extrabold text-slate-500">Nenhum relatório encontrado</div>
                       <p className="text-[10px] text-slate-400 max-w-xs mx-auto">
-                        Para gerar o diagnóstico inteligente PROSFEC IA, execute uma ou mais consultas ao lado para o CNPJ do lead ou CPFs dos sócios.
+                        Execute uma ou mais consultas ao lado para o CNPJ do lead ou CPFs dos sócios.
                       </p>
                     </div>
                   ) : (
@@ -3754,6 +3685,15 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               </div>
                             );
                           })()}
+
+                          <button
+                            type="button"
+                            onClick={() => setViewingConsulta(consulta)}
+                            className="w-full px-3 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            Ver relatório completo
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -3761,143 +3701,10 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 </div>
               </div>
 
-              {/* Section 2: PROSFEC IA DIAGNOSTIC ENGINE */}
+              {/* Section 2: Serviços definidos após análise da equipe */}
               <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
-                <div className="flex flex-col gap-3 border-b border-slate-100 pb-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <h5 className="font-display font-black text-sm text-[#0A3D2E] uppercase tracking-wider flex items-center gap-1.5">
-                        <Sparkles className="w-5 h-5 text-amber-500 animate-pulse" />
-                        Diagnóstico de Soluções Inteligentes PROSFEC IA
-                      </h5>
-                      <p className="text-[10px] text-slate-500">
-                        Diagnóstico automático focado exclusivamente nos serviços de reestruturação administrativa, elevação de rating e score da PROSFEC.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => loadLeadConsultas()}
-                        disabled={loadingConsultas}
-                        className="mt-2 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-extrabold text-slate-600 hover:bg-slate-50 disabled:opacity-60 transition-all cursor-pointer inline-flex items-center gap-1.5"
-                      >
-                        <RefreshCw className={`w-3 h-3 text-slate-400 ${loadingConsultas ? "animate-spin" : ""}`} />
-                        {loadingConsultas ? "Atualizando histórico..." : "Atualizar histórico"}
-                      </button>
-                    </div>
-
-                    {diagnosticoPROSFEC && String(diagnosticoPROSFEC.texto || "").trim().length > 0 ? (
-                      <div className="flex items-center gap-2">
-                        <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-extrabold rounded-xl flex items-center gap-1.5 shadow-2xs">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          <span>Diagnóstico IA Concluído</span>
-                        </div>
-                        {!isAdminUser && ((diagnosticoPROSFEC as any)?.geracoesCount || (lead as any)?.diagnosticoGeracoesCount || 1) >= 2 ? (
-                          <button
-                            disabled
-                            title="O diagnóstico de IA já foi refeito 1 vez. Limite máximo de reanálises atingido para este lead."
-                            className="px-3 py-2 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-not-allowed opacity-75 shadow-2xs"
-                          >
-                            <Lock className="w-3.5 h-3.5 text-slate-400" />
-                            <span>Refazer Bloqueado (1/1 usado)</span>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={handleGeneratePROSFECDiagnostico}
-                            disabled={generatingDiagnostico || !canGenerateDiagnostico}
-                            title={isAdminUser
-                              ? "Refazer a análise da IA com novos dados das consultas de crédito (sem limite para administradores)"
-                              : "Refazer a análise da IA com novos dados das consultas de crédito (permitido 1 única vez)"}
-                            className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                          >
-                            <RefreshCw className={`w-3.5 h-3.5 text-slate-400 ${generatingDiagnostico ? "animate-spin" : ""}`} />
-                            <span>{generatingDiagnostico ? "Atualizando..." : "Refazer Diagnóstico"}</span>
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <button
-                        onClick={handleGeneratePROSFECDiagnostico}
-                        disabled={generatingDiagnostico || !canGenerateDiagnostico}
-                        title={
-                          !canGenerateDiagnostico
-                            ? "Execute as consultas de crédito de CNPJ e CPF no painel ao lado para liberar o Diagnóstico IA"
-                            : "Gerar Diagnóstico pela PROSFEC IA"
-                        }
-                        className={`px-5 py-2.5 text-xs font-extrabold rounded-xl transition-all flex items-center gap-1.5 shadow-sm ${
-                          !canGenerateDiagnostico || generatingDiagnostico
-                            ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60"
-                            : "bg-gradient-to-r from-[#0A3D2E] to-[#00A86B] hover:from-[#00A86B] hover:to-[#0A3D2E] text-white cursor-pointer"
-                        }`}
-                      >
-                        {generatingDiagnostico ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            Gerando Diagnóstico...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                            Gerar Diagnóstico pela PROSFEC IA
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
-
-                  {!canGenerateDiagnostico && !generatingDiagnostico && (
-                    <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-3 text-[11px] text-amber-900 flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                        <span>
-                          {!hasCnpjQuery && !hasCpfQuery
-                            ? "O Diagnóstico IA exige que as consultas de crédito do CNPJ e de ao menos um CPF de sócio sejam executadas antes."
-                            : !hasCnpjQuery
-                            ? "Pendente: Realize a consulta de crédito do CNPJ da empresa no painel ao lado para liberar a IA."
-                            : "Pendente: Realize a consulta de crédito de ao menos um CPF de sócio no painel ao lado para liberar a IA."}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${hasCnpjQuery ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800 border border-rose-200"}`}>
-                          CNPJ {hasCnpjQuery ? "✓ Realizada" : "Pendente"}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${hasCpfQuery ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800 border border-rose-200"}`}>
-                          CPF {hasCpfQuery ? "✓ Realizada" : "Pendente"}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {generatingDiagnostico ? (
-                  <div className="py-16 text-center space-y-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#00A86B] mx-auto" />
-                    <div className="text-xs font-extrabold text-[#0A3D2E] uppercase tracking-wider">
-                      O Motor de Inteligência de Crédito está estruturando o plano administrativo...
-                    </div>
-                    <p className="text-[10px] text-slate-400 max-w-sm mx-auto">
-                      Compilando as consultas de crédito realizadas, cruzando com os dados cadastrais e escrevendo uma resposta comercial focada no que a PROSFEC pode fazer para sanear esta empresa.
-                    </p>
-                  </div>
-                ) : diagnosticoPROSFEC && String(diagnosticoPROSFEC.texto || "").trim().length > 0 ? (
+                {(
                   <div className="space-y-6">
-                    {/* Visualização de Alto Padrão Fintech do Diagnóstico PROSFEC IA */}
-                    <div className="p-6 bg-white border border-slate-200/90 rounded-2xl relative space-y-4 shadow-xs">
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 border-b border-slate-100 pb-2.5">
-                        <span className="flex items-center gap-1.5 font-bold text-emerald-800">
-                          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                          RESULTADO DA PERÍCIA E DIAGNÓSTICO PROSFEC IA
-                        </span>
-                        <span className="font-mono text-slate-500">
-                          Gerado em: {new Date(diagnosticoPROSFEC.dataGeracao).toLocaleString("pt-BR")}
-                        </span>
-                      </div>
-
-                      <FintechDiagnosisView
-                        lead={{ ...lead, servicosRecomendados, subEtapasPasso6 }}
-                        diagnostico={{ ...diagnosticoPROSFEC, servicosRecomendados, subEtapasPasso6 }}
-                        consultas={leadConsultas}
-                        renderMarkdownContent={renderMarkdown}
-                      />
-                    </div>
 
                     {/* Recommended Services Pricing Block (Admin Editable) */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
@@ -3943,11 +3750,11 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                       {/* List of recommended services */}
                       {servicosRecomendados.length === 0 ? (
-                        <div className="p-4 bg-emerald-50/50 border border-emerald-200/60 rounded-xl text-xs text-emerald-800 flex items-center gap-3">
-                          <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                        <div className="p-4 bg-amber-50/70 border border-amber-200/70 rounded-xl text-xs text-amber-900 flex items-center gap-3">
+                          <Clock className="w-5 h-5 text-amber-600 shrink-0" />
                           <div>
-                            <span className="font-extrabold block">Perfil Adequado — Sem Serviços Adicionais Necessários</span>
-                            <span className="text-[11px] text-emerald-700">O diagnóstico da IA indicou que este cliente possui perfil saudável para seguir diretamente para a Proposta de Crédito (comissão de 5% sobre o valor liberado).</span>
+                            <span className="font-extrabold block">Aguardando análise da equipe</span>
+                            <span className="text-[11px] text-amber-800">Os relatórios de crédito acima estão disponíveis para leitura. Após a análise, a equipe PROSFEC inclui manualmente os serviços necessários para este cliente.</span>
                           </div>
                         </div>
                       ) : (
@@ -4095,7 +3902,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           {/* Total Box */}
                           <div className="flex items-center justify-between p-3.5 bg-emerald-900 text-white rounded-xl shadow-xs">
                             <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-200">
-                              Total dos Serviços do Diagnóstico:
+                              Total dos Serviços:
                             </span>
                             <span className="text-base font-black text-[#00A86B]">
                               {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
@@ -4149,14 +3956,6 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       )}
                     </div>
 
-                  </div>
-                ) : (
-                  <div className="py-12 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/30 space-y-2">
-                    <Sparkles className="w-8 h-8 text-slate-300 mx-auto" />
-                    <div className="text-xs font-bold text-slate-500">Nenhuma análise gerada. Clique em gerar diagnóstico.</div>
-                    <p className="text-[10px] text-slate-400 max-w-sm mx-auto">
-                      Clique no botão acima para acionar a PROSFEC IA. O diagnóstico será gravado diretamente na ficha deste lead para acompanhamento contínuo.
-                    </p>
                   </div>
                 )}
               </div>
@@ -5376,6 +5175,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
           </motion.div>
         </div>
       )}
+
+      <RedeBEReportViewerModal
+        isOpen={Boolean(viewingConsulta)}
+        onClose={() => setViewingConsulta(null)}
+        consulta={viewingConsulta}
+        lead={lead}
+      />
 
     </div>
   );
