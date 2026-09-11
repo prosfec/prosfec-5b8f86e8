@@ -77,7 +77,7 @@ import LeadConciergeTracker from "./LeadConciergeTracker";
 import FichaRatingAdmViewer from "./FichaRatingAdmViewer";
 import FichaRatingCreditoForm from "./FichaRatingCreditoForm";
 import { DossierComparativeViewer } from "./DossierComparativeViewer";
-import { FintechDiagnosisView } from "./FintechDiagnosisView";
+import { RedeBEReportViewerModal } from "./RedeBEReportViewerModal";
 import { calculateLeadStepStatus } from "../utils/stepValidation";
 import { 
   GOVERNMENT_CREDIT_LINES, 
@@ -299,13 +299,11 @@ export default function LeadWorkspaceModal({
   // PROSFEC IA Diagnostic states
   const [leadConsultas, setLeadConsultas] = useState<any[]>([]);
   const [loadingConsultas, setLoadingConsultas] = useState(false);
-  const [generatingDiagnostico, setGeneratingDiagnostico] = useState(false);
-  const [diagnosticoPROSFEC, setDiagnosticoPROSFEC] = useState<any>(lead.diagnosticoPROSFEC || null);
-  const [copiedDiagnostico, setCopiedDiagnostico] = useState(false);
+  const [viewingConsulta, setViewingConsulta] = useState<any | null>(null);
 
   // Serviços Recomendados e Precificação (Apenas ADM altera)
   const [servicosRecomendados, setServicosRecomendados] = useState<any[]>(() => {
-    const raw = (lead as any).servicosRecomendados || ((lead.diagnosticoPROSFEC as any)?.servicosRecomendados) || [];
+    const raw = (lead as any).servicosRecomendados || [];
     return sanitizeAndSyncServicosList(raw, DEFAULT_SERVICES_CATALOG);
   });
   const [savingServicos, setSavingServicos] = useState(false);
@@ -327,7 +325,7 @@ export default function LeadWorkspaceModal({
       } catch (err) {
         console.warn("Could not load catalog services:", err);
       } finally {
-        const raw = (lead as any).servicosRecomendados || ((lead.diagnosticoPROSFEC as any)?.servicosRecomendados) || [];
+        const raw = (lead as any).servicosRecomendados || [];
         setServicosRecomendados(sanitizeAndSyncServicosList(raw, activeCatalog));
       }
     };
@@ -550,7 +548,7 @@ export default function LeadWorkspaceModal({
 
   // Sub-etapas do Passo 6 (Checklist de Estruturação)
   const getInitialSubEtapasPasso6 = () => {
-    const servs = (lead as any).servicosRecomendados || (lead as any).diagnosticoPROSFEC?.servicosRecomendados || [];
+    const servs = (lead as any).servicosRecomendados || [];
     const existingList = Array.isArray((lead as any).subEtapasPasso6) ? (lead as any).subEtapasPasso6 : [];
 
     if (Array.isArray(servs) && servs.length > 0) {
@@ -882,68 +880,7 @@ export default function LeadWorkspaceModal({
     return false;
   });
 
-  const canGenerateDiagnostico = hasCnpjQuery && hasCpfQuery;
-
-  // Generate PROSFEC IA Diagnosis via Backend Route
-  const handleGeneratePROSFECDiagnostico = async () => {
-    const currentCount = diagnosticoPROSFEC?.geracoesCount || lead?.diagnosticoGeracoesCount || (diagnosticoPROSFEC ? 1 : 0);
-    if (!isAdminUser && diagnosticoPROSFEC && currentCount >= 2) {
-      setWorkspaceError("O diagnóstico de IA já foi refeito 1 vez. O limite máximo de reanálises foi atingido para este lead.");
-      return;
-    }
-
-    if (!canGenerateDiagnostico) {
-      if (!hasCnpjQuery && !hasCpfQuery) {
-        setWorkspaceError("Para gerar o Diagnóstico IA, é necessário realizar as consultas de crédito do CNPJ e de ao menos um CPF de sócio.");
-      } else if (!hasCnpjQuery) {
-        setWorkspaceError("Para gerar o Diagnóstico IA, é necessário realizar a consulta de crédito do CNPJ da empresa.");
-      } else {
-        setWorkspaceError("Para gerar o Diagnóstico IA, é necessário realizar a consulta de crédito de ao menos um CPF de sócio.");
-      }
-      return;
-    }
-    setGeneratingDiagnostico(true);
-    setWorkspaceError(null);
-    setWorkspaceSuccess(null);
-    try {
-      const res = await fetch("/api/credit/diagnostico-prosfec", {
-        method: "POST",
-        headers: await authenticatedHeaders(),
-        body: JSON.stringify({
-          leadId: lead.id,
-          partnerId: currentPartner?.id || "admin"
-        })
-      });
-      const data = await parseJsonResponse(res);
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Erro ao processar o diagnóstico de crédito.");
-      }
-      setDiagnosticoPROSFEC(data.diagnostico);
-      setServicosRecomendados(Array.isArray(data.servicosRecomendados) ? data.servicosRecomendados : []);
-      if (data.subEtapasPasso6 && Array.isArray(data.subEtapasPasso6)) {
-        setSubEtapasPasso6(withoutMensalidades(data.subEtapasPasso6));
-      }
-      setWorkspaceSuccess("Diagnóstico PROSFEC IA gerado e Checklist do Passo 6 (Estruturação) configurado automaticamente com sucesso!");
-      safeRefreshLeads();
-      onLeadUpdated?.({
-        ...lead,
-        diagnosticoPROSFEC: data.diagnostico,
-        servicosRecomendados: Array.isArray(data.servicosRecomendados) ? data.servicosRecomendados : [],
-        subEtapasPasso6: Array.isArray(data.subEtapasPasso6) ? data.subEtapasPasso6 : []
-      });
-    } catch (err: any) {
-      setWorkspaceError(err.message || "Erro ao gerar diagnóstico.");
-    } finally {
-      setGeneratingDiagnostico(false);
-    }
-  };
-
-  const copyDiagnosticoToClipboard = () => {
-    if (!diagnosticoPROSFEC?.texto) return;
-    navigator.clipboard.writeText(diagnosticoPROSFEC.texto);
-    setCopiedDiagnostico(true);
-    setTimeout(() => setCopiedDiagnostico(false), 2000);
-  };
+  const hasAnyConsulta = leadConsultas.length > 0;
 
   function parseBoldText(text: string) {
     const parts = text.split(/\*\*([^*]+)\*\*/g);
