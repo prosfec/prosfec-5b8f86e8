@@ -1314,7 +1314,10 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
             } catch (parseErr) {
               invalidJson = true;
               stage1Failure = parseErr;
-              console.error("[PROSFEC IA] Etapa 1 retornou JSON inválido.");
+              console.error(
+                `[PROSFEC IA] Etapa 1 retornou JSON inválido (lead ${leadId}, tamanho bruto: ${String(stage1Response.text).length}).`,
+              );
+              console.error("[PROSFEC IA] Raw Gemini Response:", String(stage1Response.text).slice(0, 2000));
               continue;
             }
             invalidJson = false;
