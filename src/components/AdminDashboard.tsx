@@ -1286,6 +1286,40 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     avgFaturamento: 0,
   });
 
+  // Consultas executadas que ainda estão sem o relatório PDF anexado pela equipe
+  const loadPendingReports = async () => {
+    try {
+      const snap = await getDocs(collection(db, "consultas_realizadas"));
+      const byLead: Record<string, number> = {};
+      const byDoc: Record<string, number> = {};
+      snap.docs.forEach((d) => {
+        const data: any = d.data() || {};
+        if (d.id.startsWith("ia_diagnostico_")) return;
+        if (!data.resultado) return;
+        if (data.relatorioPdfUrl) return;
+        if (data.leadId) {
+          byLead[data.leadId] = (byLead[data.leadId] || 0) + 1;
+        } else if (data.documento) {
+          const doc = String(data.documento).replace(/\D/g, "");
+          if (doc) byDoc[doc] = (byDoc[doc] || 0) + 1;
+        }
+      });
+      setPendingReports({ byLead, byDoc });
+    } catch (err) {
+      console.warn("Não foi possível carregar as consultas pendentes de PDF:", err);
+    }
+  };
+
+  const getPendingReports = (lead: any): number => {
+    if (!lead) return 0;
+    const porLead = pendingReports.byLead[lead.id] || 0;
+    const cnpj = String(lead.cnpj || "").replace(/\D/g, "");
+    const porDoc = cnpj ? (pendingReports.byDoc[cnpj] || 0) : 0;
+    return porLead + porDoc;
+  };
+
+  const totalPendingPdfLeads = leads.filter(l => getPendingReports(l) > 0).length;
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
