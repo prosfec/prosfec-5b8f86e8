@@ -980,7 +980,7 @@ export function createExpressApp() {
     let diagnosisLockPath = "";
     const routeStartedAt = Date.now();
     // Orçamento total das chamadas de IA nesta rota (mantém a resposta dentro do limite do servidor).
-    const TOTAL_AI_BUDGET_MS = 22_000;
+    const TOTAL_AI_BUDGET_MS = 30_000;
     try {
       const caller = await authenticateApiCaller(req);
       const { leadId } = req.body;
