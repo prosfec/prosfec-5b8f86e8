@@ -256,31 +256,13 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
       }
     }
 
-    if (scoreVal !== null && !ratingLetter) {
-      if (scoreVal >= 800) ratingLetter = "A";
-      else if (scoreVal >= 700) ratingLetter = "B";
-      else if (scoreVal >= 550) ratingLetter = "C";
-      else if (scoreVal >= 450) ratingLetter = "D";
-      else if (scoreVal >= 350) ratingLetter = "E";
-      else if (scoreVal >= 250) ratingLetter = "F";
-      else ratingLetter = "G";
-    }
-
+    // Sem inferência: o rating só aparece quando vem do laudo ou da consulta real.
     let ratingLabel = "Não informado";
     if (["A", "B"].includes(ratingLetter)) ratingLabel = "Excelente · Baixo Risco";
     else if (["C", "D"].includes(ratingLetter)) ratingLabel = "Moderado · Risco Médio";
     else if (["E", "F"].includes(ratingLetter)) ratingLabel = "Atenção · Risco Alto";
-    else ratingLabel = "Crítico · Risco Muito Alto";
+    else if (ratingLetter) ratingLabel = "Crítico · Risco Muito Alto";
 
-    if (inadimplenciaPercent === null && ratingLetter && scoreVal !== null) {
-      if (ratingLetter === "A") inadimplenciaPercent = 5;
-      else if (ratingLetter === "B") inadimplenciaPercent = 15;
-      else if (ratingLetter === "C") inadimplenciaPercent = 32;
-      else if (ratingLetter === "D") inadimplenciaPercent = 45;
-      else if (ratingLetter === "E") inadimplenciaPercent = 58;
-      else if (ratingLetter === "F") inadimplenciaPercent = 68;
-      else inadimplenciaPercent = Math.max(60, Math.min(92, Math.round(100 - (scoreVal / 10))));
-    }
 
     let inadimplenciaLabel = "Não informado";
     if (inadimplenciaPercent !== null && inadimplenciaPercent <= 15) inadimplenciaLabel = "Confiança Máxima";
