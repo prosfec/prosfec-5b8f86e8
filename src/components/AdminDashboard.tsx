@@ -2657,6 +2657,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       (ratingFilter === "em_aplicacao" && lead.fichaRatingCredito?.faseRating === "em_aplicacao") ||
       (ratingFilter === "concluido" && (lead.fichaRatingCredito?.faseRating === "concluido" || Boolean(lead.fichaRatingCredito?.conclusaoRating?.notaFinalRating)));
 
+    if (onlyPendingPdf && getPendingReports(lead) === 0) {
+      return false;
+    }
+
     return matchesSearch && matchesStatus && matchesPorte && matchesPrep && matchesEtapa && matchesRating;
   });
 
