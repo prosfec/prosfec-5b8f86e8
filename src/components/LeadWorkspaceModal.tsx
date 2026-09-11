@@ -837,6 +837,11 @@ export default function LeadWorkspaceModal({
         throw new Error(`A API do servidor retornou uma resposta inválida (Status ${res.status}).`);
       }
       if (!res.ok || !data.success) {
+        // Erros definitivos (4xx, exceto 409) liberam nova chave; falhas de servidor
+        // ou operação em andamento mantêm a mesma chave para evitar cobrança dupla.
+        if (res.status < 500 && res.status !== 409) {
+          queryRequestIdRef.current = null;
+        }
         throw new Error(data?.error || "Erro ao executar consulta.");
       }
       queryRequestIdRef.current = null;

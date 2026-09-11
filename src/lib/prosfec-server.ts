@@ -927,7 +927,7 @@ export function createExpressApp() {
 
   async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 8_000) {
     // Modelos mais rápidos primeiro; nunca usar modelos "pro" nesta rota.
-    const candidateModels = ["gemini-2.5-flash-lite", "gemini-2.0-flash"];
+    const candidateModels = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
     let lastError: any = null;
 
     for (const modelName of candidateModels) {
