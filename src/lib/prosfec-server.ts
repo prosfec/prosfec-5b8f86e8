@@ -925,6 +925,19 @@ export function createExpressApp() {
     };
   }
 
+  // Extrai o JSON puro de uma resposta da IA, ignorando cercas markdown e texto conversacional.
+  function extractJsonPayload(text: string): string {
+    const raw = String(text || "").trim();
+    const fenced = raw.match(/```[ \t]*(?:json)?[ \t]*\r?\n?([\s\S]*?)```/i);
+    const candidate = fenced ? fenced[1].trim() : raw;
+    const start = candidate.indexOf("{");
+    const end = candidate.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+      return candidate.slice(start, end + 1).trim();
+    }
+    return candidate;
+  }
+
   async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 8_000) {
     // Modelos mais rápidos primeiro; nunca usar modelos "pro" nesta rota.
     const candidateModels = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
