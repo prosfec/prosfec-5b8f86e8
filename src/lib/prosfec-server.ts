@@ -1288,10 +1288,7 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria numÃ
           }, attempt.timeoutMs);
 
           if (stage1Response && stage1Response.text) {
-            const rawStage1 = stage1Response.text
-              .replace(/```\s*json\s*/gi, "")
-              .replace(/```/g, "")
-              .trim();
+            const rawStage1 = extractJsonPayload(stage1Response.text);
             try {
               const parsedAudit = JSON.parse(rawStage1);
               const nonNegativeNumber = (value: unknown) => {
