@@ -3747,11 +3747,11 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                       {/* List of recommended services */}
                       {servicosRecomendados.length === 0 ? (
-                        <div className="p-4 bg-emerald-50/50 border border-emerald-200/60 rounded-xl text-xs text-emerald-800 flex items-center gap-3">
-                          <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                        <div className="p-4 bg-amber-50/70 border border-amber-200/70 rounded-xl text-xs text-amber-900 flex items-center gap-3">
+                          <Clock className="w-5 h-5 text-amber-600 shrink-0" />
                           <div>
-                            <span className="font-extrabold block">Perfil Adequado — Sem Serviços Adicionais Necessários</span>
-                            <span className="text-[11px] text-emerald-700">O diagnóstico da IA indicou que este cliente possui perfil saudável para seguir diretamente para a Proposta de Crédito (comissão de 5% sobre o valor liberado).</span>
+                            <span className="font-extrabold block">Aguardando análise da equipe</span>
+                            <span className="text-[11px] text-amber-800">Os relatórios de crédito acima estão disponíveis para leitura. Após a análise, a equipe PROSFEC inclui manualmente os serviços necessários para este cliente.</span>
                           </div>
                         </div>
                       ) : (
@@ -3953,14 +3953,6 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       )}
                     </div>
 
-                  </div>
-                ) : (
-                  <div className="py-12 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/30 space-y-2">
-                    <Sparkles className="w-8 h-8 text-slate-300 mx-auto" />
-                    <div className="text-xs font-bold text-slate-500">Nenhuma análise gerada. Clique em gerar diagnóstico.</div>
-                    <p className="text-[10px] text-slate-400 max-w-sm mx-auto">
-                      Clique no botão acima para acionar a PROSFEC IA. O diagnóstico será gravado diretamente na ficha deste lead para acompanhamento contínuo.
-                    </p>
                   </div>
                 )}
               </div>
