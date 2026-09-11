@@ -925,6 +925,19 @@ export function createExpressApp() {
     };
   }
 
+  // Extrai o JSON puro de uma resposta da IA, ignorando cercas markdown e texto conversacional.
+  function extractJsonPayload(text: string): string {
+    const raw = String(text || "").trim();
+    const fenced = raw.match(/```[ \t]*(?:json)?[ \t]*\r?\n?([\s\S]*?)```/i);
+    const candidate = fenced ? fenced[1].trim() : raw;
+    const start = candidate.indexOf("{");
+    const end = candidate.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+      return candidate.slice(start, end + 1).trim();
+    }
+    return candidate;
+  }
+
   async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 8_000) {
     // Modelos mais rápidos primeiro; nunca usar modelos "pro" nesta rota.
     const candidateModels = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
@@ -967,7 +980,7 @@ export function createExpressApp() {
     let diagnosisLockPath = "";
     const routeStartedAt = Date.now();
     // Orçamento total das chamadas de IA nesta rota (mantém a resposta dentro do limite do servidor).
-    const TOTAL_AI_BUDGET_MS = 22_000;
+    const TOTAL_AI_BUDGET_MS = 30_000;
     try {
       const caller = await authenticateApiCaller(req);
       const { leadId } = req.body;
@@ -1252,20 +1265,24 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
       let stage1Failure: any = null;
       let invalidJson = false;
 
-      // Tentativa 1: payload já enxuto. Tentativa 2 (só por tamanho): payload mínimo.
-      const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number }> = [
-        { maxItems: 1, maxChars: 12_000, timeoutMs: 8_000 },
-        { maxItems: 1, maxChars: 5_000, timeoutMs: 6_000 },
+      // Tentativa 1: payload já enxuto. Tentativa 2: payload mínimo + instrução reforçada de JSON puro.
+      const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number; maxOutputTokens: number; reinforceJson?: boolean }> = [
+        { maxItems: 1, maxChars: 12_000, timeoutMs: 12_000, maxOutputTokens: 1_500 },
+        { maxItems: 1, maxChars: 5_000, timeoutMs: 8_000, maxOutputTokens: 1_200, reinforceJson: true },
       ];
 
       for (const attempt of stage1Attempts) {
         try {
           const stage1Response = await generateContentWithFallback(ai, {
-            contents: buildStage1Prompt(buildConsultationsBlock(attempt.maxItems, attempt.maxChars)),
+            contents:
+              buildStage1Prompt(buildConsultationsBlock(attempt.maxItems, attempt.maxChars)) +
+              (attempt.reinforceJson
+                ? "\n\nATENÇÃO: responda SOMENTE com o objeto JSON puro, sem crases, sem blocos de markdown e sem qualquer texto antes ou depois."
+                : ""),
             config: {
               responseMimeType: "application/json",
               temperature: 0.1,
-              maxOutputTokens: 800,
+              maxOutputTokens: attempt.maxOutputTokens,
               responseSchema: {
                 type: Type.OBJECT,
                 properties: {
@@ -1284,10 +1301,7 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
           }, attempt.timeoutMs);
 
           if (stage1Response && stage1Response.text) {
-            const rawStage1 = stage1Response.text
-              .replace(/```\s*json\s*/gi, "")
-              .replace(/```/g, "")
-              .trim();
+            const rawStage1 = extractJsonPayload(stage1Response.text);
             try {
               const parsedAudit = JSON.parse(rawStage1);
               const nonNegativeNumber = (value: unknown) => {
@@ -1313,7 +1327,10 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
             } catch (parseErr) {
               invalidJson = true;
               stage1Failure = parseErr;
-              console.error("[PROSFEC IA] Etapa 1 retornou JSON inválido.");
+              console.error(
+                `[PROSFEC IA] Etapa 1 retornou JSON inválido (lead ${leadId}, tamanho bruto: ${String(stage1Response.text).length}).`,
+              );
+              console.error("[PROSFEC IA] Raw Gemini Response:", String(stage1Response.text).slice(0, 2000));
               continue;
             }
             invalidJson = false;
@@ -1338,10 +1355,16 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
       }
 
       if (!auditResult) {
-        if (invalidJson || !stage1Failure) {
+        if (invalidJson) {
           throw Object.assign(
-            new Error("A auditoria da IA não pôde validar os dados da consulta. Tente novamente; nenhum laudo estimado foi salvo."),
-            { statusCode: 503 },
+            new Error("A IA respondeu em um formato inválido para a auditoria. Tente novamente; nenhum laudo estimado foi salvo."),
+            { statusCode: 503, code: "GEMINI_INVALID_JSON" },
+          );
+        }
+        if (!stage1Failure) {
+          throw Object.assign(
+            new Error("A IA não respondeu à auditoria da consulta. Tente novamente; nenhum laudo estimado foi salvo."),
+            { statusCode: 503, code: "GEMINI_EMPTY" },
           );
         }
         const detail = describeGeminiFailure(stage1Failure);
