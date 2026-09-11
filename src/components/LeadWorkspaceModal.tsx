@@ -857,8 +857,8 @@ export default function LeadWorkspaceModal({
       loadLeadConsultas();
       safeRefreshLeads();
     } catch (err: any) {
-      // Libera imediatamente a retentativa: a próxima tentativa usa uma chave nova.
-      queryRequestIdRef.current = null;
+      // Falhas de rede/tempo mantêm a mesma chave: a retentativa reaproveita a
+      // operação anterior no servidor e nunca gera uma segunda cobrança.
       setLocalQueryError(err.message || "Erro ao executar consulta.");
     } finally {
       setExecutingLocalQuery(false);
