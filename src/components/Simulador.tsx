@@ -575,7 +575,7 @@ export default function Simulador({
         };
 
         triggerWebhookSimulation("lead_simulation_completed", finalLead);
-        if (typeof onLeadCaptured === "function") onLeadCaptured(finalLead);
+        captureLead(finalLead);
         return;
       }
     } catch (error) {
@@ -797,7 +797,7 @@ export default function Simulador({
     };
 
     triggerWebhookSimulation("lead_simulation_completed", finalLead);
-    if (typeof onLeadCaptured === "function") onLeadCaptured(finalLead);
+    captureLead(finalLead);
   };
 
   const resetAll = () => {
