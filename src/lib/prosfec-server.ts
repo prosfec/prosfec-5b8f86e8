@@ -1462,43 +1462,49 @@ Os dados da RedeBE constituem a fonte primária de evidência. Não invente, est
 CATÁLOGO OFICIAL DE SERVIÇOS TÉCNICOS DISPONÍVEIS:
 ${catalogPromptText}
 
-Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria numérica e classificação de risco conforme o molde abaixo.
+ETAPA "FATO" — SUA ÚNICA FUNÇÃO É EXTRAIR FATOS.
+Você NÃO classifica risco, NÃO consolida rating, NÃO estima capacidade de captação e NÃO recomenda serviços.
+Essas decisões são feitas fora da IA. Limite-se a transcrever, por titular, o que consta nos relatórios.
+
+Retorne ESTRITAMENTE um JSON conforme o molde abaixo.
 O molde é APENAS FORMATO: todos os valores são placeholders neutros.
 {
-  "totalDividasNegativadas": 0,
-  "quantidadeNegativacoes": 0,
-  "totalProtestos": 0,
-  "quantidadeProtestos": 0,
-  "totalAcoesJudiciaisOuCheques": 0,
-  "temApontamentosSCRBacen": false,
-  "resumoBacen": "X",
-  "situacaoFiscalCadastral": "X",
-  "capacidadeTomadaPronampe": 0,
-  "capacidadeTomadaGeral": 0,
-  "fatoresCriticosBloqueio": [],
-  "servicosNecessariosIds": [],
-  "classificacaoElegibilidade": "X",
-  "scoreEstimado": "X",
-  "scoreNumerico": 0,
-  "ratingConsolidado": "X",
-  "probabilidadeInadimplenciaPercent": 0
+  "titulares": [
+    {
+      "tipo": "EMPRESA",
+      "documento": "X",
+      "nome": "X",
+      "scoreNumerico": 0,
+      "ratingInformado": "X",
+      "quantidadeNegativacoes": 0,
+      "totalNegativacoes": 0,
+      "quantidadeProtestos": 0,
+      "totalProtestos": 0,
+      "quantidadeChequesSemFundo": 0,
+      "quantidadeAcoesJudiciais": 0,
+      "totalAcoesJudiciais": 0,
+      "temApontamentosSCRBacen": false,
+      "resumoBacen": "X",
+      "situacaoFiscalCadastral": "X",
+      "probabilidadeInadimplenciaPercent": 0,
+      "apontamentos": []
+    }
+  ]
 }
 
 É PROIBIDO COPIAR OS VALORES DO EXEMPLO. VOCÊ DEVE EXTRAIR OS NÚMEROS REAIS DOS TEXTOS FORNECIDOS.
 
 REGRAS DE PREENCHIMENTO:
-- classificacaoElegibilidade deve ser exatamente uma destas palavras, conforme os dados reais: Alta, Média, Baixa ou Crítica.
-- scoreEstimado deve refletir o score realmente encontrado nos relatórios (ex: "<score real>/1000 - <faixa informada no relatório>"); se nenhum score constar, retorne "Não informado".
-- scoreNumerico deve conter o MESMO score real de scoreEstimado, apenas como número inteiro de 0 a 1000. Se nenhum score constar nos relatórios, retorne 0.
-- ratingConsolidado deve conter APENAS a letra do rating (A, B, C, D, E, F, G ou H) realmente apurada, já rebaixada pela REGRA DE RISCO CRUZADO quando aplicável. Se nenhum rating constar e não for possível consolidá-lo a partir dos apontamentos reais, retorne "X".
-- probabilidadeInadimplenciaPercent deve conter o percentual de inadimplência informado nos relatórios (0 a 100). Se não constar, retorne 0. NUNCA estime esse número.
-- capacidadeTomadaPronampe e capacidadeTomadaGeral só podem ser maiores que zero se houver base real nos relatórios e no faturamento informado; na dúvida, retorne 0. NÃO APLIQUE FÓRMULAS DE ESTIMATIVA.
-
-REGRA DE RISCO CRUZADO (CONTAMINAÇÃO) — INEGOCIÁVEL:
-O CNPJ do lead é avaliado EM CONJUNTO com os CPFs dos sócios. Se a empresa não tem restrições, mas os sócios possuem Ratings ruins (F, G, H), Dívidas Vencidas, Refin, Pefin ou Prejuízo Bacen, o Risco dos sócios CONTAMINA a empresa. Neste cenário, você DEVE rebaixar o Rating consolidado, definir o Potencial de Captação como 0 (zero), e listar os apontamentos dos sócios no campo fatoresCriticosBloqueio.
+- Crie um item em "titulares" para CADA documento consultado: a EMPRESA (CNPJ) e cada SÓCIO (CPF) presentes nos relatórios.
+- "tipo" deve ser exatamente "EMPRESA" ou "SOCIO", conforme o bloco de origem indicado no relatório.
+- "scoreNumerico" é o score realmente informado no relatório daquele titular (inteiro de 0 a 1000). Se não constar, 0.
+- "ratingInformado" é a letra de rating informada pelo bureau (A a H). Se não constar, "".
+- "probabilidadeInadimplenciaPercent" é o percentual informado no relatório (0 a 100). Se não constar, 0. NUNCA estime.
+- "apontamentos" lista, em texto curto, cada restrição realmente encontrada (Pefin, Refin, protesto, cheque sem fundo, ação judicial, prejuízo SCR, pendência fiscal). Sem restrição, retorne [].
+- "resumoBacen" e "situacaoFiscalCadastral" reproduzem o que consta no relatório; se não constar, "Não informado".
 
 REGRA DE FORMATO ESTRITO — INEGOCIÁVEL:
-RETORNE EXCLUSIVAMENTE O OBJETO JSON. NUNCA UTILIZE BLOCOS DE FORMATAÇÃO MARKDOWN (\`\`\`json). NUNCA REPITA AS INSTRUÇÕES DESTE PROMPT. O CAMPO servicosNecessariosIds DEVE SER ESTRITAMENTE UM ARRAY DE STRINGS CONTENDO APENAS OS CÓDIGOS/IDS DOS SERVIÇOS APLICÁVEIS DO CATÁLOGO. NUNCA CRIE OBJETOS COM "titulo" OU "preco". O VALOR DE PREÇO NÃO É RESPONSABILIDADE DA IA.
+RETORNE EXCLUSIVAMENTE O OBJETO JSON. NUNCA UTILIZE BLOCOS DE FORMATAÇÃO MARKDOWN (\`\`\`json). NUNCA REPITA AS INSTRUÇÕES DESTE PROMPT. NUNCA INCLUA SERVIÇOS, PREÇOS, CLASSIFICAÇÃO DE ELEGIBILIDADE OU CAPACIDADE DE CAPTAÇÃO.
 
 REGRA DE FIDELIDADE — INEGOCIÁVEL:
 NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONSTA", OS CAMPOS NUMÉRICOS DEVEM SER ESTRITAMENTE 0 E OS ARRAYS DEVEM SER [].`;
