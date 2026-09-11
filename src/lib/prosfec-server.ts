@@ -1060,7 +1060,7 @@ CONTEXTO DA OPERAÇÃO:
   * Parecer Inicial: Perfil com restrições ativas e necessidade de saneamento cadastral e contábil.
 - Histórico de Serviços de Estruturação Aplicados no Passo 6:
   ${JSON.stringify(leadData.subEtapasPasso6 || leadData.servicosRecomendados || "Saneamento completo de restrições, atualização de CNDs, retificação contábil e elevação de score/rating.")}
-- Nova Consulta de Crédito Pós-Estruturação (RedeBE API):
+- Nova Consulta de Crédito Pós-Estruturação (PROSFEC Diagnóstico 360):
   ${latestConsultaData ? JSON.stringify(latestConsultaData).slice(0, 3000) : "Perfil 100% saneado, sem restrições ativas, certidões negativas válidas e score restaurado."}
 
 SUA TAREFA:
