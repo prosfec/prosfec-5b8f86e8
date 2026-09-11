@@ -3398,10 +3398,10 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 <div>
                   <h4 className="font-display font-extrabold text-sm text-[#0A3D2E] uppercase tracking-wider flex items-center gap-1.5">
                     <ShieldCheck className="w-5 h-5 text-[#00A86B]" />
-                    Consulta & Diagnóstico PROSFEC IA
+                    Consulta de Crédito & Relatórios
                   </h4>
                   <p className="text-[11px] text-slate-500">
-                    Consulte o histórico de relatórios de crédito e gere diagnósticos comerciais estratégicos guiados pela inteligência da PROSFEC.
+                    Execute a consulta de crédito e visualize o relatório oficial exatamente como entregue pela RedeBE, documento por documento.
                   </p>
                 </div>
               </div>
@@ -3614,7 +3614,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       <AlertCircle className="w-8 h-8 text-slate-300 mx-auto" />
                       <div className="text-xs font-extrabold text-slate-500">Nenhum relatório encontrado</div>
                       <p className="text-[10px] text-slate-400 max-w-xs mx-auto">
-                        Para gerar o diagnóstico inteligente PROSFEC IA, execute uma ou mais consultas ao lado para o CNPJ do lead ou CPFs dos sócios.
+                        Execute uma ou mais consultas ao lado para o CNPJ do lead ou CPFs dos sócios.
                       </p>
                     </div>
                   ) : (
@@ -3691,6 +3691,15 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               </div>
                             );
                           })()}
+
+                          <button
+                            type="button"
+                            onClick={() => setViewingConsulta(consulta)}
+                            className="w-full px-3 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            Ver relatório completo
+                          </button>
                         </div>
                       ))}
                     </div>
