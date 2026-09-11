@@ -1271,26 +1271,34 @@ ${consultationsBlock}
 CATÁLOGO OFICIAL DE SERVIÇOS TÉCNICOS DISPONÍVEIS:
 ${catalogPromptText}
 
-Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria numérica e classificação de risco conforme o schema abaixo:
+Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria numérica e classificação de risco conforme o molde abaixo.
+O molde é APENAS FORMATO: todos os valores são placeholders neutros.
 {
-  "totalDividasNegativadas": number (soma de dívidas Pefin/Refin/Serasa em R$),
-  "quantidadeNegativacoes": number,
-  "totalProtestos": number (soma de protestos em cartórios em R$),
-  "quantidadeProtestos": number,
-  "totalAcoesJudiciaisOuCheques": number,
-  "temApontamentosSCRBacen": boolean,
-  "resumoBacen": "string detalhando se há prejuízo 30-34 no SCR ou operações ativas",
-  "situacaoFiscalCadastral": "string (ex: Regular, Pendente de CND Federal, Inconsistência Cadastral)",
-  "capacidadeTomadaPronampe": number (30% do faturamento anual, teto 500k),
-  "capacidadeTomadaGeral": number,
-  "fatoresCriticosBloqueio": ["array", "com", "os", "principais", "motivos", "de", "rejeição", "bancária"],
-  "servicosNecessariosIds": ["array", "com", "os", "ids", "dos", "serviços", "do", "catálogo", "rigorosamente", "necessários"],
-  "classificacaoElegibilidade": "Alta" | "Média" | "Baixa" | "Crítica",
-  "scoreEstimado": "string (ex: 280/1000 - Risco Alto ou 750/1000 - Saudável)"
+  "totalDividasNegativadas": 0,
+  "quantidadeNegativacoes": 0,
+  "totalProtestos": 0,
+  "quantidadeProtestos": 0,
+  "totalAcoesJudiciaisOuCheques": 0,
+  "temApontamentosSCRBacen": false,
+  "resumoBacen": "X",
+  "situacaoFiscalCadastral": "X",
+  "capacidadeTomadaPronampe": 0,
+  "capacidadeTomadaGeral": 0,
+  "fatoresCriticosBloqueio": [],
+  "servicosNecessariosIds": [],
+  "classificacaoElegibilidade": "X",
+  "scoreEstimado": "X"
 }
 
+É PROIBIDO COPIAR OS VALORES DO EXEMPLO. VOCÊ DEVE EXTRAIR OS NÚMEROS REAIS DOS TEXTOS FORNECIDOS.
+
+REGRAS DE PREENCHIMENTO:
+- classificacaoElegibilidade deve ser exatamente uma destas palavras, conforme os dados reais: Alta, Média, Baixa ou Crítica.
+- scoreEstimado deve refletir o score realmente encontrado nos relatórios; se nenhum score constar nos relatórios, retorne "Não informado".
+- capacidadeTomadaPronampe e capacidadeTomadaGeral só podem ser maiores que zero se houver base real nos relatórios e no faturamento informado; na dúvida, retorne 0. NÃO APLIQUE FÓRMULAS DE ESTIMATIVA.
+
 REGRA DE RISCO CRUZADO (CONTAMINAÇÃO) — INEGOCIÁVEL:
-ATENÇÃO: AVALIE O CNPJ E OS CPFS DOS SÓCIOS EM CONJUNTO. SE A EMPRESA POSSUI RATING BOM (LIMPO), MAS OS SÓCIOS POSSUEM RATINGS GRAVES (EX: F, G) COM APONTAMENTOS (REFIN, PEFIN, PROTESTOS, PREJUÍZO BACEN), O RISCO DOS SÓCIOS CONTAMINA A EMPRESA. O RATING/CLASSIFICAÇÃO CONSOLIDADA DEVE SER REBAIXADA, A SUGESTÃO DE CRÉDITO BLOQUEADA (capacidadeTomadaGeral E capacidadeTomadaPronampe = 0) E OS APONTAMENTOS DOS SÓCIOS DEVEM SER LISTADOS EM fatoresCriticosBloqueio, IDENTIFICANDO O NOME/CPF DO SÓCIO.
+O CNPJ do lead é avaliado EM CONJUNTO com os CPFs dos sócios. Se a empresa não tem restrições, mas os sócios possuem Ratings ruins (F, G, H), Dívidas Vencidas, Refin, Pefin ou Prejuízo Bacen, o Risco dos sócios CONTAMINA a empresa. Neste cenário, você DEVE rebaixar o Rating consolidado, definir o Potencial de Captação como 0 (zero), e listar os apontamentos dos sócios no campo fatoresCriticosBloqueio.
 
 REGRA DE FORMATO ESTRITO — INEGOCIÁVEL:
 RETORNE EXCLUSIVAMENTE O OBJETO JSON. NUNCA UTILIZE BLOCOS DE FORMATAÇÃO MARKDOWN (\`\`\`json). NUNCA REPITA AS INSTRUÇÕES DESTE PROMPT. O CAMPO servicosNecessariosIds DEVE SER ESTRITAMENTE UM ARRAY DE STRINGS CONTENDO APENAS OS CÓDIGOS/IDS DOS SERVIÇOS APLICÁVEIS DO CATÁLOGO. NUNCA CRIE OBJETOS COM "titulo" OU "preco". O VALOR DE PREÇO NÃO É RESPONSABILIDADE DA IA.
@@ -1758,7 +1766,7 @@ REGRA 5: REDAÇÃO COMERCIAL DE CAPACIDADE. Se a variável capacidadeTomadaGeral
       const step3Diag = leadData.diagnosticoPROSFEC || leadData.diagnosticoIA || leadData.diagnosticoConsulta;
       const initialScore = Number(leadData.scoreInicial || 320);
       const initialRestricoesCount = Number(leadData.restricoesIniciaisCount || (step3Diag?.alertas?.length) || 2);
-      const faturamentoAnual = Number(leadData.faturamentoAnual || (leadData.mediaReceitaMensal ? leadData.mediaReceitaMensal * 12 : 600000));
+      const faturamentoAnual = Number(leadData.faturamentoAnual || (leadData.mediaReceitaMensal ? leadData.mediaReceitaMensal * 12 : 0)) || 0;
       
       // Calculate realistic apt credit limits (PRONAMPE / FGI up to 30% of faturamento anual)
       const calculatedMaxLimit = Math.max(100000, Math.round(faturamentoAnual * 0.30));

@@ -206,11 +206,6 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
         const parsedScore = Number(scoreMatch[1]);
         if (parsedScore >= 0 && parsedScore <= 1000) scoreVal = parsedScore;
       }
-      const eligibility = String(audit.classificacaoElegibilidade || "").toLowerCase();
-      if (eligibility === "alta") ratingLetter = "A";
-      else if (eligibility === "média" || eligibility === "media") ratingLetter = "C";
-      else if (eligibility === "baixa") ratingLetter = "E";
-      else if (eligibility === "crítica" || eligibility === "critica") ratingLetter = "G";
       const generalCapacity = Number(audit.capacidadeTomadaGeral) || 0;
       const pronampeCapacity = Number(audit.capacidadeTomadaPronampe) || 0;
       if (generalCapacity > 0 || pronampeCapacity > 0) {
@@ -219,42 +214,8 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
       }
     }
 
-    // --- CAMADA 3: Dados do Objeto Lead (ex: fichaRatingCredito) ---
-    if (lead?.fichaRatingCredito) {
-      const f = lead.fichaRatingCredito;
-      if (!scoreVal && f.score && !isNaN(Number(f.score))) scoreVal = Number(f.score);
-      if (!ratingLetter && f.rating) ratingLetter = String(f.rating).toUpperCase().trim().slice(0, 1);
-    }
-
-    // --- CAMADA 4: Texto livre somente para score/rating e indicadores não financeiros ---
-    const text = diagnostico?.texto || "";
-    if (text) {
-      // 1. Extração de Rating do Texto
-      if (!ratingLetter) {
-        const ratingMatch = text.match(/(?:rating|classificação|faixa)[:\s*]*([A-H])\b/i) || 
-                            text.match(/\brating\s+([A-H])\b/i) ||
-                            text.match(/\b([A-H])\s*\((?:risco|excelente|bom|médio|baixo|alto|crítico)/i);
-        if (ratingMatch && ratingMatch[1]) {
-          ratingLetter = ratingMatch[1].toUpperCase();
-        }
-      }
-
-      // 2. Extração de Score do Texto
-      if (!scoreVal) {
-        const scoreMatch = text.match(/(?:score|pontuação)[^\d\n\r]*?(\d{2,4})\b/i) ||
-                           text.match(/score\s*(?:bacen|serasa|boa\s*vista)?[:\s*]*(\d{2,4})/i);
-        if (scoreMatch && scoreMatch[1]) {
-          const s = parseInt(scoreMatch[1], 10);
-          if (s >= 0 && s <= 1000) scoreVal = s;
-        }
-      }
-
-      // Extração de inadimplência sem inferir valores de restrições.
-      const inadMatch = text.match(/(?:inadimplência|probabilidade\s*de\s*inadimplência|risco\s*de\s*inadimplência)[:\s*]*(\d{1,3})%/i);
-      if (inadMatch && inadMatch[1]) {
-        inadimplenciaPercent = parseInt(inadMatch[1], 10);
-      }
-    }
+    // Nenhuma inferência a partir da ficha do lead ou do texto livre do laudo:
+    // score, rating e inadimplência vêm apenas da consulta real ou da auditoria validada.
 
     // Sem inferência: o rating só aparece quando vem do laudo ou da consulta real.
     let ratingLabel = "Não informado";
