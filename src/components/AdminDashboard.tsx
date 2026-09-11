@@ -3596,8 +3596,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   <h4 className="font-extrabold text-sm text-slate-900 tracking-tight line-clamp-1" title={lead.razaoSocial || lead.nome || "Não informado"}>
                                     {lead.razaoSocial || lead.nome || "Não informado"}
                                   </h4>
-                                  <span className="text-[11px] text-slate-500 font-mono block mt-0.5">{lead.cnpj || "-"}</span>
-                                </div>
+                                   <span className="text-[11px] text-slate-500 font-mono block mt-0.5">{lead.cnpj || "-"}</span>
+                                   {pdfPendentes > 0 && (
+                                     <span
+                                       className="mt-1.5 inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md"
+                                       title={`${pdfPendentes} consulta(s) executada(s) aguardando o relatório PDF`}
+                                     >
+                                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                       PDF pendente ({pdfPendentes})
+                                     </span>
+                                   )}
+                                 </div>
 
                                 {/* Quick status dropdown in card */}
                                 <select
