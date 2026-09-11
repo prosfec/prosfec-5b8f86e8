@@ -8020,7 +8020,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         <LeadWorkspaceModal
           lead={workspaceLead}
           isAdmin={true}
-          onClose={() => setWorkspaceLead(null)}
+          onClose={() => { setWorkspaceLead(null); loadPendingReports(); }}
           onRefreshLeads={async () => {
             // Recarga silenciosa e focada apenas nos leads (não derruba a tela com loading global)
             try {
