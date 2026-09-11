@@ -201,10 +201,23 @@ export const FintechDiagnosisView: React.FC<FintechDiagnosisViewProps> = ({
       negativacoesValor = Number(audit.totalDividasNegativadas) || 0;
       protestosCount = Number(audit.quantidadeProtestos) || 0;
       protestosValor = Number(audit.totalProtestos) || 0;
-      const scoreMatch = String(audit.scoreEstimado || "").match(/\b(\d{1,4})\b/);
-      if (scoreMatch) {
-        const parsedScore = Number(scoreMatch[1]);
-        if (parsedScore >= 0 && parsedScore <= 1000) scoreVal = parsedScore;
+      const auditScore = Number(audit.scoreNumerico) || 0;
+      if (auditScore > 0 && auditScore <= 1000) {
+        scoreVal = auditScore;
+      } else {
+        const scoreMatch = String(audit.scoreEstimado || "").match(/\b(\d{1,4})\b/);
+        if (scoreMatch) {
+          const parsedScore = Number(scoreMatch[1]);
+          if (parsedScore > 0 && parsedScore <= 1000) scoreVal = parsedScore;
+        }
+      }
+      const auditRating = String(audit.ratingConsolidado || "").toUpperCase().trim().slice(0, 1);
+      if (["A", "B", "C", "D", "E", "F", "G", "H"].includes(auditRating)) {
+        ratingLetter = auditRating;
+      }
+      const auditInadimplencia = Number(audit.probabilidadeInadimplenciaPercent) || 0;
+      if (auditInadimplencia > 0 && auditInadimplencia <= 100) {
+        inadimplenciaPercent = auditInadimplencia;
       }
       const generalCapacity = Number(audit.capacidadeTomadaGeral) || 0;
       const pronampeCapacity = Number(audit.capacidadeTomadaPronampe) || 0;
