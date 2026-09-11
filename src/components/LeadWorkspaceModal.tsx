@@ -166,12 +166,6 @@ interface Lead {
     historico?: PendenciaItem[];
   } | null;
   diagnosticoGeracoesCount?: number;
-  diagnosticoPROSFEC?: {
-    texto: string;
-    dataGeracao: string;
-    consultasAnalisadas: number;
-    geracoesCount?: number;
-  } | null;
   servicosRecomendados?: any[];
   subEtapasPasso6?: any[];
   fichaRatingCredito?: any;
@@ -5181,6 +5175,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
           </motion.div>
         </div>
       )}
+
+      <RedeBEReportViewerModal
+        isOpen={Boolean(viewingConsulta)}
+        onClose={() => setViewingConsulta(null)}
+        consulta={viewingConsulta}
+        lead={lead}
+      />
 
     </div>
   );
