@@ -1555,7 +1555,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       } catch {
         /* ignore */
       }
-      if (!cancelled) fetchData();
+      if (!cancelled) {
+        fetchData();
+        loadPendingReports();
+      }
     })();
     return () => {
       cancelled = true;
