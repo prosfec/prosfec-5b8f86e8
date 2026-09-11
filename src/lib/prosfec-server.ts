@@ -938,7 +938,12 @@ export function createExpressApp() {
     return candidate;
   }
 
-  async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 8_000) {
+  async function generateContentWithFallback(
+    ai: any,
+    requestOptions: any,
+    timeoutMs = 8_000,
+    validateText?: (text: string) => boolean,
+  ) {
     // Modelos mais rápidos primeiro; nunca usar modelos "pro" nesta rota.
     const candidateModels = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
     let lastError: any = null;
@@ -947,19 +952,36 @@ export function createExpressApp() {
       try {
         const fastConfig = {
           ...(requestOptions?.config || {}),
-          // Desliga o raciocínio interno (principal causa de lentidão) — só na família 2.5.
-          ...(modelName.startsWith("gemini-2.5") ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+          // Reduz o raciocínio interno (que consome o mesmo orçamento de saída do texto).
+          // Família 3.x aceita thinkingLevel; família 2.5 aceita thinkingBudget.
+          ...(modelName.startsWith("gemini-3")
+            ? { thinkingConfig: { thinkingLevel: "low" } }
+            : modelName.startsWith("gemini-2.5")
+              ? { thinkingConfig: { thinkingBudget: 0 } }
+              : {}),
         };
         const response = await Promise.race([
           ai.models.generateContent({ ...requestOptions, config: fastConfig, model: modelName }),
           new Promise((_, reject) => setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), timeoutMs)),
         ]);
-        if (response && response.text) {
-          return response;
+        const responseText = (response as any)?.text || "";
+        if (response && responseText) {
+          if (!validateText || validateText(responseText)) {
+            return response;
+          }
+          console.error(
+            `[PROSFEC IA] Resposta do modelo ${modelName} incompleta/truncada — tentando o próximo modelo.`,
+          );
+          lastError = Object.assign(
+            new Error(`O modelo ${modelName} retornou um laudo incompleto (resposta truncada).`),
+            { code: "GEMINI_TRUNCATED" },
+          );
+          continue;
         }
         lastError = Object.assign(new Error(`O modelo ${modelName} retornou resposta vazia.`), {
           code: "GEMINI_EMPTY",
         });
+
       } catch (err: any) {
         lastError = err;
         const status = err?.status || err?.code;
