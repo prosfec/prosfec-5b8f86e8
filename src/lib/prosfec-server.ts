@@ -1459,50 +1459,57 @@ ${consultationsBlock}
 REGRA DE EVIDÊNCIA REDEBE:
 Os dados da RedeBE constituem a fonte primária de evidência. Não invente, estime ou complete valores ausentes. Quando uma informação não estiver presente na resposta original, informe que não foi identificada. Os dados normalizados são uma representação estruturada da resposta original e devem ser conferidos contra a evidência original quando necessário.
 
-CATÁLOGO OFICIAL DE SERVIÇOS TÉCNICOS DISPONÍVEIS:
-${catalogPromptText}
 
-Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria numérica e classificação de risco conforme o molde abaixo.
+
+
+ETAPA "FATO" — SUA ÚNICA FUNÇÃO É EXTRAIR FATOS.
+Você NÃO classifica risco, NÃO consolida rating, NÃO estima capacidade de captação e NÃO recomenda serviços.
+Essas decisões são feitas fora da IA. Limite-se a transcrever, por titular, o que consta nos relatórios.
+
+Retorne ESTRITAMENTE um JSON conforme o molde abaixo.
 O molde é APENAS FORMATO: todos os valores são placeholders neutros.
 {
-  "totalDividasNegativadas": 0,
-  "quantidadeNegativacoes": 0,
-  "totalProtestos": 0,
-  "quantidadeProtestos": 0,
-  "totalAcoesJudiciaisOuCheques": 0,
-  "temApontamentosSCRBacen": false,
-  "resumoBacen": "X",
-  "situacaoFiscalCadastral": "X",
-  "capacidadeTomadaPronampe": 0,
-  "capacidadeTomadaGeral": 0,
-  "fatoresCriticosBloqueio": [],
-  "servicosNecessariosIds": [],
-  "classificacaoElegibilidade": "X",
-  "scoreEstimado": "X",
-  "scoreNumerico": 0,
-  "ratingConsolidado": "X",
-  "probabilidadeInadimplenciaPercent": 0
+  "titulares": [
+    {
+      "tipo": "EMPRESA",
+      "documento": "X",
+      "nome": "X",
+      "scoreNumerico": 0,
+      "ratingInformado": "X",
+      "quantidadeNegativacoes": 0,
+      "totalNegativacoes": 0,
+      "quantidadeProtestos": 0,
+      "totalProtestos": 0,
+      "quantidadeChequesSemFundo": 0,
+      "quantidadeAcoesJudiciais": 0,
+      "totalAcoesJudiciais": 0,
+      "temApontamentosSCRBacen": false,
+      "resumoBacen": "X",
+      "situacaoFiscalCadastral": "X",
+      "probabilidadeInadimplenciaPercent": 0,
+      "apontamentos": []
+    }
+  ]
 }
 
 É PROIBIDO COPIAR OS VALORES DO EXEMPLO. VOCÊ DEVE EXTRAIR OS NÚMEROS REAIS DOS TEXTOS FORNECIDOS.
 
 REGRAS DE PREENCHIMENTO:
-- classificacaoElegibilidade deve ser exatamente uma destas palavras, conforme os dados reais: Alta, Média, Baixa ou Crítica.
-- scoreEstimado deve refletir o score realmente encontrado nos relatórios (ex: "<score real>/1000 - <faixa informada no relatório>"); se nenhum score constar, retorne "Não informado".
-- scoreNumerico deve conter o MESMO score real de scoreEstimado, apenas como número inteiro de 0 a 1000. Se nenhum score constar nos relatórios, retorne 0.
-- ratingConsolidado deve conter APENAS a letra do rating (A, B, C, D, E, F, G ou H) realmente apurada, já rebaixada pela REGRA DE RISCO CRUZADO quando aplicável. Se nenhum rating constar e não for possível consolidá-lo a partir dos apontamentos reais, retorne "X".
-- probabilidadeInadimplenciaPercent deve conter o percentual de inadimplência informado nos relatórios (0 a 100). Se não constar, retorne 0. NUNCA estime esse número.
-- capacidadeTomadaPronampe e capacidadeTomadaGeral só podem ser maiores que zero se houver base real nos relatórios e no faturamento informado; na dúvida, retorne 0. NÃO APLIQUE FÓRMULAS DE ESTIMATIVA.
-
-REGRA DE RISCO CRUZADO (CONTAMINAÇÃO) — INEGOCIÁVEL:
-O CNPJ do lead é avaliado EM CONJUNTO com os CPFs dos sócios. Se a empresa não tem restrições, mas os sócios possuem Ratings ruins (F, G, H), Dívidas Vencidas, Refin, Pefin ou Prejuízo Bacen, o Risco dos sócios CONTAMINA a empresa. Neste cenário, você DEVE rebaixar o Rating consolidado, definir o Potencial de Captação como 0 (zero), e listar os apontamentos dos sócios no campo fatoresCriticosBloqueio.
+- Crie um item em "titulares" para CADA documento consultado: a EMPRESA (CNPJ) e cada SÓCIO (CPF) presentes nos relatórios.
+- "tipo" deve ser exatamente "EMPRESA" ou "SOCIO", conforme o bloco de origem indicado no relatório.
+- "scoreNumerico" é o score realmente informado no relatório daquele titular (inteiro de 0 a 1000). Se não constar, 0.
+- "ratingInformado" é a letra de rating informada pelo bureau (A a H). Se não constar, "".
+- "probabilidadeInadimplenciaPercent" é o percentual informado no relatório (0 a 100). Se não constar, 0. NUNCA estime.
+- "apontamentos" lista, em texto curto, cada restrição realmente encontrada (Pefin, Refin, protesto, cheque sem fundo, ação judicial, prejuízo SCR, pendência fiscal). Sem restrição, retorne [].
+- "resumoBacen" e "situacaoFiscalCadastral" reproduzem o que consta no relatório; se não constar, "Não informado".
 
 REGRA DE FORMATO ESTRITO — INEGOCIÁVEL:
-RETORNE EXCLUSIVAMENTE O OBJETO JSON. NUNCA UTILIZE BLOCOS DE FORMATAÇÃO MARKDOWN (\`\`\`json). NUNCA REPITA AS INSTRUÇÕES DESTE PROMPT. O CAMPO servicosNecessariosIds DEVE SER ESTRITAMENTE UM ARRAY DE STRINGS CONTENDO APENAS OS CÓDIGOS/IDS DOS SERVIÇOS APLICÁVEIS DO CATÁLOGO. NUNCA CRIE OBJETOS COM "titulo" OU "preco". O VALOR DE PREÇO NÃO É RESPONSABILIDADE DA IA.
+RETORNE EXCLUSIVAMENTE O OBJETO JSON. NUNCA UTILIZE BLOCOS DE FORMATAÇÃO MARKDOWN (\`\`\`json). NUNCA REPITA AS INSTRUÇÕES DESTE PROMPT. NUNCA INCLUA SERVIÇOS, PREÇOS, CLASSIFICAÇÃO DE ELEGIBILIDADE OU CAPACIDADE DE CAPTAÇÃO.
 
 REGRA DE FIDELIDADE — INEGOCIÁVEL:
 NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONSTA", OS CAMPOS NUMÉRICOS DEVEM SER ESTRITAMENTE 0 E OS ARRAYS DEVEM SER [].`;
 
+      let stage1Facts: any = null;
       let auditResult: any = null;
       let stage1Failure: any = null;
       let invalidJson = false;
@@ -1529,26 +1536,37 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
               responseSchema: {
                 type: Type.OBJECT,
                 properties: {
-                  totalDividasNegativadas: { type: Type.NUMBER }, quantidadeNegativacoes: { type: Type.NUMBER },
-                  totalProtestos: { type: Type.NUMBER }, quantidadeProtestos: { type: Type.NUMBER },
-                  totalAcoesJudiciaisOuCheques: { type: Type.NUMBER }, temApontamentosSCRBacen: { type: Type.BOOLEAN },
-                  resumoBacen: { type: Type.STRING }, situacaoFiscalCadastral: { type: Type.STRING },
-                  capacidadeTomadaPronampe: { type: Type.NUMBER }, capacidadeTomadaGeral: { type: Type.NUMBER },
-                  fatoresCriticosBloqueio: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  servicosNecessariosIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  classificacaoElegibilidade: { type: Type.STRING }, scoreEstimado: { type: Type.STRING },
-                  scoreNumerico: { type: Type.NUMBER }, ratingConsolidado: { type: Type.STRING },
-                  probabilidadeInadimplenciaPercent: { type: Type.NUMBER },
+                  titulares: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        tipo: { type: Type.STRING }, documento: { type: Type.STRING }, nome: { type: Type.STRING },
+                        scoreNumerico: { type: Type.NUMBER }, ratingInformado: { type: Type.STRING },
+                        quantidadeNegativacoes: { type: Type.NUMBER }, totalNegativacoes: { type: Type.NUMBER },
+                        quantidadeProtestos: { type: Type.NUMBER }, totalProtestos: { type: Type.NUMBER },
+                        quantidadeChequesSemFundo: { type: Type.NUMBER },
+                        quantidadeAcoesJudiciais: { type: Type.NUMBER }, totalAcoesJudiciais: { type: Type.NUMBER },
+                        temApontamentosSCRBacen: { type: Type.BOOLEAN },
+                        resumoBacen: { type: Type.STRING }, situacaoFiscalCadastral: { type: Type.STRING },
+                        probabilidadeInadimplenciaPercent: { type: Type.NUMBER },
+                        apontamentos: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      },
+                      required: ["tipo", "documento", "scoreNumerico", "quantidadeNegativacoes", "totalNegativacoes", "quantidadeProtestos", "totalProtestos", "temApontamentosSCRBacen", "apontamentos"],
+                    },
+                  },
                 },
-                required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado", "scoreNumerico", "ratingConsolidado", "probabilidadeInadimplenciaPercent"],
+                required: ["titulares"],
               },
+
             }
           }, attempt.timeoutMs);
 
           if (stage1Response && stage1Response.text) {
             const rawStage1 = extractJsonPayload(stage1Response.text);
             try {
-              const parsedAudit = JSON.parse(rawStage1);
+              const parsedFacts = JSON.parse(rawStage1);
+
               const nonNegativeNumber = (value: unknown) => {
                 const parsed = typeof value === "number" ? value : Number(value);
                 return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
@@ -1562,28 +1580,43 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
                   .replace(/[\u0300-\u036f]/g, "")
                   .replace(/[^a-zA-Z0-9]/g, "")
                   .toLowerCase();
-              const auditIndex = new Map<string, unknown>();
-              if (parsedAudit && typeof parsedAudit === "object") {
-                for (const [key, value] of Object.entries(parsedAudit)) {
-                  const normalized = normalizeKey(key);
-                  if (!auditIndex.has(normalized)) auditIndex.set(normalized, value);
+
+              const buildIndex = (obj: any) => {
+                const index = new Map<string, unknown>();
+                if (obj && typeof obj === "object") {
+                  for (const [key, value] of Object.entries(obj)) {
+                    const normalized = normalizeKey(key);
+                    if (!index.has(normalized)) index.set(normalized, value);
+                  }
                 }
-              }
-              const pickField = (aliases: string[]): unknown => {
-                for (const alias of aliases) {
-                  const value = auditIndex.get(normalizeKey(alias));
-                  if (value !== undefined && value !== null && value !== "") return value;
-                }
-                return undefined;
+                return index;
               };
-              const pickString = (aliases: string[]) => {
-                const value = pickField(aliases);
-                return typeof value === "string" ? value : typeof value === "number" ? String(value) : "";
+
+              const makePickers = (obj: any) => {
+                const index = buildIndex(obj);
+                const pickField = (aliases: string[]): unknown => {
+                  for (const alias of aliases) {
+                    const value = index.get(normalizeKey(alias));
+                    if (value !== undefined && value !== null && value !== "") return value;
+                  }
+                  return undefined;
+                };
+                return {
+                  pickField,
+                  pickNumber: (aliases: string[]) => nonNegativeNumber(pickField(aliases)),
+                  pickString: (aliases: string[]) => {
+                    const value = pickField(aliases);
+                    return typeof value === "string" ? value : typeof value === "number" ? String(value) : "";
+                  },
+                  pickArray: (aliases: string[]) => {
+                    const value = pickField(aliases);
+                    return Array.isArray(value)
+                      ? value.map((item: unknown) => (typeof item === "string" ? item : "")).filter(Boolean)
+                      : [];
+                  },
+                };
               };
-              const pickArray = (aliases: string[]) => {
-                const value = pickField(aliases);
-                return Array.isArray(value) ? value.filter((item: unknown) => typeof item === "string") : [];
-              };
+
               const extractScoreNumber = (value: unknown): number => {
                 const direct = nonNegativeNumber(value);
                 if (direct > 0 && direct <= 1000) return Math.round(direct);
@@ -1594,44 +1627,59 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
                 }
                 return 0;
               };
-              const ratingRaw = pickString(["ratingConsolidado", "rating", "ratingEmpresa", "ratingFinal", "classificacaoRating", "rating_consolidado"])
-                .toUpperCase()
-                .trim()
-                .slice(0, 1);
-              const ratingConsolidado = ["A", "B", "C", "D", "E", "F", "G", "H"].includes(ratingRaw) ? ratingRaw : "";
-              const inadimplenciaRaw = nonNegativeNumber(
-                pickField([
-                  "probabilidadeInadimplenciaPercent",
-                  "probabilidadeInadimplencia",
-                  "inadimplenciaPercent",
-                  "inadimplencia",
-                  "percentualInadimplencia",
-                  "riscoInadimplenciaPercent",
-                ]),
-              );
 
-              auditResult = {
-                totalDividasNegativadas: nonNegativeNumber(pickField(["totalDividasNegativadas", "totalDividas", "valorNegativacoes", "valorTotalNegativacoes", "totalPendenciasFinanceiras"])),
-                quantidadeNegativacoes: nonNegativeNumber(pickField(["quantidadeNegativacoes", "qtdNegativacoes", "quantidadePendenciasFinanceiras", "totalNegativacoes"])),
-                totalProtestos: nonNegativeNumber(pickField(["totalProtestos", "valorTotalProtestos", "valorProtestos"])),
-                quantidadeProtestos: nonNegativeNumber(pickField(["quantidadeProtestos", "qtdProtestos", "numeroProtestos"])),
-                totalAcoesJudiciaisOuCheques: nonNegativeNumber(pickField(["totalAcoesJudiciaisOuCheques", "totalAcoesJudiciais", "totalCheques", "chequesSemFundo"])),
-                temApontamentosSCRBacen:
-                  pickField(["temApontamentosSCRBacen", "apontamentosSCR", "temPrejuizoBacen", "scrBacen"]) === true,
-                resumoBacen: pickString(["resumoBacen", "resumoSCR", "scrResumo", "bacenResumo"]),
-                situacaoFiscalCadastral: pickString(["situacaoFiscalCadastral", "situacaoCadastral", "situacaoFiscal"]),
-                capacidadeTomadaPronampe: nonNegativeNumber(pickField(["capacidadeTomadaPronampe", "limitePronampe", "capacidadePronampe", "pronampe"])),
-                capacidadeTomadaGeral: nonNegativeNumber(pickField(["capacidadeTomadaGeral", "capacidadeGeral", "potencialCaptacao", "limiteGeral"])),
-                fatoresCriticosBloqueio: pickArray(["fatoresCriticosBloqueio", "fatoresCriticos", "bloqueios", "motivosBloqueio"]),
-                servicosNecessariosIds: pickArray(["servicosNecessariosIds", "servicosNecessarios", "servicosIds", "servicos"]),
-                classificacaoElegibilidade: pickString(["classificacaoElegibilidade", "elegibilidade", "classificacao"]),
-                scoreEstimado: pickString(["scoreEstimado", "score", "scoreBacen", "scoreSerasa"]),
-                scoreNumerico: extractScoreNumber(
-                  pickField(["scoreNumerico", "score", "scoreBacen", "scoreSerasa"]) ?? pickField(["scoreEstimado"]),
-                ),
-                ratingConsolidado,
-                probabilidadeInadimplenciaPercent: inadimplenciaRaw > 0 && inadimplenciaRaw <= 100 ? inadimplenciaRaw : 0,
-              };
+              const rootPickers = makePickers(parsedFacts);
+              const titularesRaw = rootPickers.pickField(["titulares", "titular", "documentos", "consultados"]);
+              const titularesList: any[] = Array.isArray(titularesRaw)
+                ? titularesRaw
+                : parsedFacts && typeof parsedFacts === "object"
+                  ? [parsedFacts]
+                  : [];
+
+              const titulares = titularesList
+                .filter((t: any) => t && typeof t === "object")
+                .map((t: any) => {
+                  const p = makePickers(t);
+                  const documento = p.pickString(["documento", "cpfCnpj", "cnpj", "cpf"]).replace(/\D/g, "");
+                  const tipoRaw = p.pickString(["tipo", "tipoDocumento", "titularTipo"]).toUpperCase();
+                  const tipo = tipoRaw.includes("SOCIO") || documento.length === 11 ? "SOCIO" : "EMPRESA";
+                  const ratingLetra = p
+                    .pickString(["ratingInformado", "rating", "ratingBureau", "classificacaoRating"])
+                    .toUpperCase()
+                    .trim()
+                    .slice(0, 1);
+                  const inadimplencia = p.pickNumber([
+                    "probabilidadeInadimplenciaPercent",
+                    "probabilidadeInadimplencia",
+                    "inadimplenciaPercent",
+                    "inadimplencia",
+                  ]);
+                  return {
+                    tipo,
+                    documento,
+                    nome: p.pickString(["nome", "razaoSocial", "titular"]),
+                    scoreNumerico: extractScoreNumber(p.pickField(["scoreNumerico", "score", "scoreSerasa", "scoreBacen"])),
+                    ratingInformado: ["A", "B", "C", "D", "E", "F", "G", "H"].includes(ratingLetra) ? ratingLetra : "",
+                    quantidadeNegativacoes: p.pickNumber(["quantidadeNegativacoes", "qtdNegativacoes", "quantidadePendenciasFinanceiras"]),
+                    totalNegativacoes: p.pickNumber(["totalNegativacoes", "totalDividasNegativadas", "valorNegativacoes", "totalPendenciasFinanceiras"]),
+                    quantidadeProtestos: p.pickNumber(["quantidadeProtestos", "qtdProtestos", "numeroProtestos"]),
+                    totalProtestos: p.pickNumber(["totalProtestos", "valorProtestos", "valorTotalProtestos"]),
+                    quantidadeChequesSemFundo: p.pickNumber(["quantidadeChequesSemFundo", "chequesSemFundo", "qtdCheques"]),
+                    quantidadeAcoesJudiciais: p.pickNumber(["quantidadeAcoesJudiciais", "qtdAcoesJudiciais", "acoesJudiciais"]),
+                    totalAcoesJudiciais: p.pickNumber(["totalAcoesJudiciais", "valorAcoesJudiciais"]),
+                    temApontamentosSCRBacen: p.pickField(["temApontamentosSCRBacen", "apontamentosSCR", "temPrejuizoBacen", "scrBacen"]) === true,
+                    resumoBacen: p.pickString(["resumoBacen", "resumoSCR", "scrResumo", "bacenResumo"]),
+                    situacaoFiscalCadastral: p.pickString(["situacaoFiscalCadastral", "situacaoCadastral", "situacaoFiscal"]),
+                    probabilidadeInadimplenciaPercent: inadimplencia > 0 && inadimplencia <= 100 ? inadimplencia : 0,
+                    apontamentos: p.pickArray(["apontamentos", "restricoes", "ocorrencias"]),
+                  };
+                });
+
+              if (!titulares.length) {
+                throw new Error("A auditoria não retornou nenhum titular.");
+              }
+
+              stage1Facts = { titulares };
             } catch (parseErr) {
               invalidJson = true;
               stage1Failure = parseErr;
@@ -1643,14 +1691,21 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
             }
             invalidJson = false;
             stage1Failure = null;
-            console.log(`[PROSFEC IA] Etapa 1 concluída com sucesso:`, {
-              elegibilidade: auditResult.classificacaoElegibilidade,
-              dividas: auditResult.totalDividasNegativadas,
-              protestos: auditResult.totalProtestos,
-              servicos: auditResult.servicosNecessariosIds
-            });
+            console.log(
+              `[PROSFEC IA] Etapa 1 (FATOS) concluída — titulares: ${stage1Facts.titulares.length}`,
+              stage1Facts.titulares.map((t: any) => ({
+                tipo: t.tipo,
+                doc: `***${String(t.documento).slice(-4)}`,
+                score: t.scoreNumerico,
+                rating: t.ratingInformado || "-",
+                negativacoes: t.quantidadeNegativacoes,
+                protestos: t.quantidadeProtestos,
+                scr: t.temApontamentosSCRBacen,
+              })),
+            );
             break;
           }
+
         } catch (stage1Err: any) {
           stage1Failure = stage1Err;
           const detail = describeGeminiFailure(stage1Err);
@@ -1662,7 +1717,7 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
         }
       }
 
-      if (!auditResult) {
+      if (!stage1Facts) {
         if (invalidJson) {
           throw Object.assign(
             new Error("A IA respondeu em um formato inválido para a auditoria. Tente novamente; nenhum laudo estimado foi salvo."),
@@ -1680,15 +1735,284 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
       }
 
       // =========================================================================
+      // ETAPA "ANÁLISE": consolidação determinística no servidor (sem IA)
+      // =========================================================================
+      const analisarRisco = (facts: any) => {
+        const titulares: any[] = Array.isArray(facts?.titulares) ? facts.titulares : [];
+        const empresa = titulares.find((t) => t.tipo === "EMPRESA") || null;
+        const socios = titulares.filter((t) => t.tipo === "SOCIO");
+
+        const soma = (campo: string) => titulares.reduce((acc, t) => acc + (Number(t[campo]) || 0), 0);
+
+        const totalNegativacoes = soma("totalNegativacoes");
+        const quantidadeNegativacoes = soma("quantidadeNegativacoes");
+        const totalProtestos = soma("totalProtestos");
+        const quantidadeProtestos = soma("quantidadeProtestos");
+        const totalAcoesJudiciaisOuCheques = soma("totalAcoesJudiciais") + soma("quantidadeChequesSemFundo") * 0;
+        const quantidadeChequesSemFundo = soma("quantidadeChequesSemFundo");
+        const quantidadeAcoesJudiciais = soma("quantidadeAcoesJudiciais");
+        const temApontamentosSCRBacen = titulares.some((t) => t.temApontamentosSCRBacen === true);
+
+        const scoreNumerico = Number(empresa?.scoreNumerico) || 0;
+        const probabilidadeInadimplenciaPercent = Number(empresa?.probabilidadeInadimplenciaPercent) || 0;
+
+        // Fatores críticos: apenas o que veio dos fatos reais.
+        const fatoresCriticosBloqueio: string[] = [];
+        titulares.forEach((t) => {
+          const prefixo = t.tipo === "SOCIO" ? `Sócio ${t.nome || "não identificado"}` : "Empresa";
+          (Array.isArray(t.apontamentos) ? t.apontamentos : []).forEach((a: string) => {
+            fatoresCriticosBloqueio.push(`${prefixo}: ${a}`);
+          });
+        });
+
+        const RATING_ORDEM = ["A", "B", "C", "D", "E", "F", "G", "H"];
+        const piorRating = (letras: string[]) =>
+          letras
+            .filter((l) => RATING_ORDEM.includes(l))
+            .sort((a, b) => RATING_ORDEM.indexOf(b) - RATING_ORDEM.indexOf(a))[0] || "";
+
+        const ratingPorScore = (score: number) => {
+          if (!score) return "";
+          if (score >= 850) return "A";
+          if (score >= 700) return "B";
+          if (score >= 550) return "C";
+          if (score >= 400) return "D";
+          if (score >= 250) return "E";
+          if (score >= 150) return "F";
+          return "G";
+        };
+
+        let ratingBase = empresa?.ratingInformado || ratingPorScore(scoreNumerico);
+
+        // REGRA DE RISCO CRUZADO: risco do sócio contamina a empresa.
+        const socioComprometido = socios.some(
+          (s) =>
+            ["F", "G", "H"].includes(s.ratingInformado) ||
+            (Number(s.quantidadeNegativacoes) || 0) > 0 ||
+            (Number(s.quantidadeProtestos) || 0) > 0 ||
+            s.temApontamentosSCRBacen === true,
+        );
+
+        if (socioComprometido && ratingBase) {
+          const piorSocio = piorRating(socios.map((s) => s.ratingInformado));
+          const rebaixado = RATING_ORDEM[Math.min(RATING_ORDEM.indexOf(ratingBase) + 2, RATING_ORDEM.length - 1)];
+          ratingBase = piorRating([rebaixado, piorSocio]) || rebaixado;
+        }
+
+        const temRestricaoEmpresa =
+          (Number(empresa?.quantidadeNegativacoes) || 0) > 0 ||
+          (Number(empresa?.quantidadeProtestos) || 0) > 0 ||
+          empresa?.temApontamentosSCRBacen === true;
+
+        let classificacaoElegibilidade = "Alta";
+        if (temApontamentosSCRBacen || quantidadeProtestos > 0) classificacaoElegibilidade = "Crítica";
+        else if (quantidadeNegativacoes > 0) classificacaoElegibilidade = temRestricaoEmpresa ? "Baixa" : "Média";
+        else if (socioComprometido) classificacaoElegibilidade = "Média";
+
+        return {
+          empresa,
+          socios,
+          socioComprometido,
+          totalDividasNegativadas: totalNegativacoes,
+          quantidadeNegativacoes,
+          totalProtestos,
+          quantidadeProtestos,
+          quantidadeChequesSemFundo,
+          quantidadeAcoesJudiciais,
+          totalAcoesJudiciaisOuCheques,
+          temApontamentosSCRBacen,
+          resumoBacen: empresa?.resumoBacen || titulares.find((t) => t.resumoBacen)?.resumoBacen || "Não informado",
+          situacaoFiscalCadastral: empresa?.situacaoFiscalCadastral || "Não informado",
+          fatoresCriticosBloqueio,
+          classificacaoElegibilidade,
+          ratingConsolidado: ratingBase || "",
+          scoreNumerico,
+          probabilidadeInadimplenciaPercent,
+        };
+      };
+
+      const analise = analisarRisco(stage1Facts);
+
+      // =========================================================================
+      // ETAPA "SERVIÇO": seleção determinística por regras fixas (sem IA)
+      // =========================================================================
+      const selecionarServicos = (an: any, catalogo: any[]) => {
+        const norm = (s: string) =>
+          String(s || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase();
+
+        const acharServico = (ids: string[], palavras: string[][]) => {
+          const porId = catalogo.find((c) => ids.includes(String(c.id)));
+          if (porId) return porId;
+          return catalogo.find((c) => {
+            const nome = norm(c.nome);
+            return palavras.some((grupo) => grupo.every((p) => nome.includes(p)));
+          });
+        };
+
+        const regras: Array<{ ativo: boolean; fato: string; ids: string[]; palavras: string[][] }> = [
+          {
+            ativo: an.quantidadeProtestos > 0,
+            fato: `${an.quantidadeProtestos} protesto(s) identificado(s)`,
+            ids: ["serv_protesto", "serv_baixa_protesto"],
+            palavras: [["protesto"]],
+          },
+          {
+            ativo: an.quantidadeNegativacoes > 0,
+            fato: `${an.quantidadeNegativacoes} negativação(ões) identificada(s) (Pefin/Refin)`,
+            ids: ["serv_reabilitacao", "serv_limpa_nome"],
+            palavras: [["reabilitacao"], ["limpa", "nome"], ["negativa"]],
+          },
+          {
+            ativo: an.temApontamentosSCRBacen === true,
+            fato: "Apontamento/prejuízo identificado no SCR/BACEN",
+            ids: ["serv_scr", "serv_saneamento_scr"],
+            palavras: [["scr"], ["bacen"]],
+          },
+          {
+            ativo: /irregular|pendente|inapta|suspens|baixad|d[ée]bito/i.test(String(an.situacaoFiscalCadastral || "")),
+            fato: `Situação fiscal/cadastral: ${an.situacaoFiscalCadastral}`,
+            ids: ["serv_regularizacao", "serv_fiscal"],
+            palavras: [["regulariza"], ["fiscal"], ["certid"]],
+          },
+          {
+            ativo: an.quantidadeChequesSemFundo > 0 || an.quantidadeAcoesJudiciais > 0,
+            fato: "Cheques sem fundo e/ou ações judiciais identificados",
+            ids: ["serv_reabilitacao"],
+            palavras: [["reabilitacao"], ["judicial"]],
+          },
+        ];
+
+        const aprovados: any[] = [];
+        const usados = new Set<string>();
+        const fatosSemServico: string[] = [];
+
+        for (const regra of regras) {
+          if (!regra.ativo) continue;
+          const servico = acharServico(regra.ids, regra.palavras);
+          if (!servico) {
+            fatosSemServico.push(regra.fato);
+            continue;
+          }
+          if (usados.has(String(servico.id))) {
+            const existente = aprovados.find((a) => a.id === servico.id);
+            if (existente) existente.justificativa += ` | ${regra.fato}`;
+            continue;
+          }
+          usados.add(String(servico.id));
+          aprovados.push({
+            id: servico.id,
+            nome: servico.nome,
+            valor: Number(servico.valor) || 0,
+            hublaLink: servico.hublaLink,
+            justificativa: `Necessário em razão de: ${regra.fato}.`,
+            fatoOrigem: regra.fato,
+            status: "pendente",
+          });
+        }
+
+        // Serviço estruturante/preventivo: sempre aplicável para preparar a captação.
+        const preventivo = acharServico(["serv_rating_score"], [["rating", "score"], ["rating"], ["score"]]);
+        if (preventivo && !usados.has(String(preventivo.id))) {
+          usados.add(String(preventivo.id));
+          aprovados.push({
+            id: preventivo.id,
+            nome: preventivo.nome,
+            valor: Number(preventivo.valor) || 0,
+            hublaLink: preventivo.hublaLink,
+            justificativa: aprovados.length
+              ? "Recomposição de rating e score após o saneamento das restrições identificadas."
+              : "Perfil sem restrições identificadas: adequação de rating e score para ampliar a elegibilidade em crédito.",
+            fatoOrigem: aprovados.length ? "Restrições identificadas" : "Perfil sem restrições",
+            status: "pendente",
+          });
+        }
+
+        return { aprovados, fatosSemServico };
+      };
+
+      const { aprovados: servicosAprovados, fatosSemServico } = selecionarServicos(analise, activeServicesCatalog);
+
+      auditResult = {
+        totalDividasNegativadas: analise.totalDividasNegativadas,
+        quantidadeNegativacoes: analise.quantidadeNegativacoes,
+        totalProtestos: analise.totalProtestos,
+        quantidadeProtestos: analise.quantidadeProtestos,
+        totalAcoesJudiciaisOuCheques: analise.totalAcoesJudiciaisOuCheques,
+        temApontamentosSCRBacen: analise.temApontamentosSCRBacen,
+        resumoBacen: analise.resumoBacen,
+        situacaoFiscalCadastral: analise.situacaoFiscalCadastral,
+        capacidadeTomadaPronampe: 0,
+        capacidadeTomadaGeral: 0,
+        fatoresCriticosBloqueio: analise.fatoresCriticosBloqueio,
+        servicosNecessariosIds: servicosAprovados.map((s: any) => s.id),
+        classificacaoElegibilidade: analise.classificacaoElegibilidade,
+        scoreEstimado: analise.scoreNumerico ? `${analise.scoreNumerico}/1000` : "Não informado",
+        scoreNumerico: analise.scoreNumerico,
+        ratingConsolidado: analise.ratingConsolidado,
+        probabilidadeInadimplenciaPercent: analise.probabilidadeInadimplenciaPercent,
+        titulares: stage1Facts.titulares,
+      };
+
+      console.log("[PROSFEC IA] ANÁLISE consolidada:", {
+        rating: auditResult.ratingConsolidado || "-",
+        elegibilidade: auditResult.classificacaoElegibilidade,
+        score: auditResult.scoreNumerico,
+        riscoCruzado: analise.socioComprometido,
+        fatores: auditResult.fatoresCriticosBloqueio.length,
+      });
+      console.log(
+        "[PROSFEC IA] SERVIÇOS aprovados por regra:",
+        servicosAprovados.map((s: any) => `${s.id} <- ${s.fatoOrigem}`),
+        fatosSemServico.length ? `| sem serviço no catálogo: ${fatosSemServico.join("; ")}` : "",
+      );
+
+
+      // =========================================================================
       // ETAPA 2: REDAÇÃO DO LAUDO EXECUTIVO & PLANO DE AÇÃO PROSFEC
       // =========================================================================
       console.log(`[PROSFEC IA] Iniciando Etapa 2: Redação Pericial Executiva`);
 
-      const stage2SystemPrompt = `Você é o Auditor Chefe de Risco e Crédito Corporativo da PROSFEC Soluções Administrativas e Financeiras.
-Sua missão é redigir o LAUDO PERICIAL EXECUTIVO e o PLANO DE DESTRAVE DE CRÉDITO para este CNPJ, fundamentando-se EXCLUSIVAMENTE nos dados auditados e validados na Etapa 1.
+      const servicosAprovadosTexto = servicosAprovados.length
+        ? servicosAprovados
+            .map(
+              (s: any) =>
+                `- ${s.nome} (id: ${s.id}) — R$ ${Number(s.valor || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} — Motivo factual: ${s.fatoOrigem}`,
+            )
+            .join("\n")
+        : "- Nenhum serviço técnico foi aprovado pelas regras do sistema para este perfil.";
 
-AUDITORIA TÉCNICA E QUANTITATIVA CONSOLIDADA (DADOS REAIS DA ETAPA 1):
-${JSON.stringify(auditResult, null, 2)}
+      const stage2SystemPrompt = `Você é o Auditor Chefe de Risco e Crédito Corporativo da PROSFEC Soluções Administrativas e Financeiras.
+Sua ÚNICA função nesta etapa é REDIGIR o LAUDO PERICIAL EXECUTIVO em Markdown. Você NÃO decide serviços, NÃO define preços e NÃO monta o plano de ação — isso já foi decidido pelo sistema.
+
+FATOS EXTRAÍDOS DOS RELATÓRIOS (por titular — fonte: RedeBE):
+${JSON.stringify(stage1Facts, null, 2)}
+
+ANÁLISE CONSOLIDADA CALCULADA PELO SISTEMA (não recalcule, não contradiga):
+${JSON.stringify(
+  {
+    ratingConsolidado: auditResult.ratingConsolidado,
+    scoreNumerico: auditResult.scoreNumerico,
+    probabilidadeInadimplenciaPercent: auditResult.probabilidadeInadimplenciaPercent,
+    classificacaoElegibilidade: auditResult.classificacaoElegibilidade,
+    totalDividasNegativadas: auditResult.totalDividasNegativadas,
+    quantidadeNegativacoes: auditResult.quantidadeNegativacoes,
+    totalProtestos: auditResult.totalProtestos,
+    quantidadeProtestos: auditResult.quantidadeProtestos,
+    temApontamentosSCRBacen: auditResult.temApontamentosSCRBacen,
+    resumoBacen: auditResult.resumoBacen,
+    situacaoFiscalCadastral: auditResult.situacaoFiscalCadastral,
+    fatoresCriticosBloqueio: auditResult.fatoresCriticosBloqueio,
+    riscoCruzadoSocios: analise.socioComprometido,
+  },
+  null,
+  2,
+)}
+
+SERVIÇOS APROVADOS PELO SISTEMA (lista fechada — não acrescente, não remova, não reprecifique):
+${servicosAprovadosTexto}
 
 DADOS DA EMPRESA (LEAD):
 - Razão Social: ${leadData.razaoSocial || leadData.nome || "Não informado"}
@@ -1698,62 +2022,36 @@ DADOS DA EMPRESA (LEAD):
 - Porte: ${leadData.porte || "Não informado"}
 - Sócios: ${leadData.socios ? leadData.socios.map((s: any) => `${s.nome} (CPF: ${s.cpf || "não informado"})`).join(", ") : "Nenhum sócio informado"}
 
-CATÁLOGO OFICIAL DE SERVIÇOS PROSFEC (Valores Atualizados em Sistema):
-${catalogPromptText}
-
 REGRA DE COMISSÃO PROSFEC SOBRE O CRÉDITO:
 A comissão de sucesso da PROSFEC sobre a captação de crédito é de exatos 5% sobre o valor efetivamente liberado ao cliente.
 Os serviços técnicos e preparatórios são cobrados pontualmente para sanar os bloqueios, sem alterar a taxa do crédito.
 
 DIRETRIZES DA REDAÇÃO EXECUTIVA:
 
-REGRA 1: FIDELIDADE ABSOLUTA. Você é proibido de inventar ou estimar valores de dívidas, protestos, cheques sem fundo ou prejuízos no SCR. Se o relatório indicar 0, vazio ou Nada Consta, os campos numéricos do JSON devem ser estritamente 0.
+REGRA 1 — FIDELIDADE ABSOLUTA: é PROIBIDO inventar, estimar ou arredondar valores. Cite apenas os números presentes nos FATOS e na ANÁLISE acima. Onde não houver dado, escreva "Não informado".
 
-REGRA 2: COERÊNCIA COMERCIAL. Nunca recomende serviços de Limpa Nome, Baixa de Protesto ou Saneamento de SCR se a empresa não tiver essas restrições. Para empresas limpas (saudáveis), o plano de ação (json_subetapas) e os serviços (json_servicos) devem focar APENAS em serviços preventivos (ex: Melhoria de Rating, Estruturação de Capacidade, Proteção Financeira).
+REGRA 2 — NÃO DECIDIR COMERCIALMENTE: é PROIBIDO citar, sugerir ou insinuar qualquer serviço fora da lista de SERVIÇOS APROVADOS, e é PROIBIDO citar preço diferente do informado nessa lista.
 
-REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_servicos/json_subetapas) devem estar 100% alinhados: nenhum dado, valor ou serviço pode aparecer em um e contradizer o outro.
+REGRA 3 — RISCO CRUZADO: se a análise indicar riscoCruzadoSocios = true, explique de forma técnica que o risco pessoal dos sócios contamina a avaliação do CNPJ e sustenta o rating consolidado informado.
 
-REGRA 4: CLASSIFICAÇÃO LITERAL. A chave valor_negativacoes deve ser preenchida APENAS com dívidas do Pefin/Refin. NUNCA coloque capacidade de crédito, limite estimado, PRONAMPE ou potencial de captação em chaves de restrição/negativação. Na ausência de dado comprovado, use 0 para números e [] para arrays.
+REGRA 4 — CAPACIDADE: não afirme que a capacidade de crédito é R$ 0,00. Se não houver limite auditado, trate a capacidade como "a ser dimensionada após a estruturação do dossiê", exaltando o que há de positivo no perfil.
 
-REGRA 5: REDAÇÃO COMERCIAL DE CAPACIDADE. Se a variável capacidadeTomadaGeral for 0 ou nula, mas a empresa for classificada como "Saudável" / "Alta Elegibilidade" ou possuir limite estimado em outras linhas (como PRONAMPE), OMITA completamente qualquer menção de que a capacidade geral é R$ 0,00. É expressamente proibido afirmar que uma empresa com Alta Elegibilidade possui limite de R$ 0,00. Em vez disso, exalte a saúde financeira, foque nos limites que foram identificados (ex: PRONAMPE) e afirme que a empresa tem forte potencial de alavancagem junto ao mercado.
+REGRA 5 — SEM BLOCOS JSON: NÃO inclua nenhum bloco de código JSON no final. Entregue APENAS o texto do laudo em Markdown.
 
 1. TOM FORMAL E PERICIAL BANCÁRIO:
    - Escreva como um Comitê de Crédito e Fomento de alto padrão.
    - Apresente tabelas claras em Markdown comparando situação atual vs meta após estruturação.
-   - Seja cirúrgico: cite os valores exatos de restrições, protestos e capacidade de crédito auditados na Etapa 1.
 
 2. AÇÕES DA PROSFEC (NÃO MANDE O CLIENTE FAZER SOZINHO):
-   - A linguagem deve ser "A equipe técnica da PROSFEC aplicará...", "A PROSFEC ingressará com...", "A PROSFEC estruturará o dossiê...".
+   - Use "A equipe técnica da PROSFEC aplicará...", "A PROSFEC ingressará com...", "A PROSFEC estruturará o dossiê...".
 
 3. ESTRUTURA DO LAUDO EM MARKDOWN:
-   - **1. Parecer Sintético do Comitê de Risco**: Score atual, Rating estimado e Enquadramento de Elegibilidade (${auditResult.classificacaoElegibilidade}).
-   - **2. Radiografia das Restrições e Pontos de Bloqueio**: Detalhamento dos valores auditados (Dívidas: R$ ${auditResult.totalDividasNegativadas}, Protestos: R$ ${auditResult.totalProtestos}, SCR/BACEN: ${auditResult.resumoBacen}).
-   - **3. Análise de Capacidade Financeira e Linhas Aptas**: Limite PRONAMPE / FGI / Fundo Constitucional potencial e taxa estimada.
-   - **4. Matriz de Intervenção Técnica PROSFEC**: Justificativa objetiva de cada serviço técnico necessário.
-   - **5. Cronograma Recomendado para o Passo 6 (Plano de Ação)**.
+   - **1. Parecer Sintético do Comitê de Risco**: score, rating consolidado e enquadramento de elegibilidade (${auditResult.classificacaoElegibilidade}).
+   - **2. Radiografia das Restrições e Pontos de Bloqueio**: por titular (empresa e cada sócio), com os valores auditados.
+   - **3. Análise de Capacidade Financeira e Linhas Aptas**.
+   - **4. Matriz de Intervenção Técnica PROSFEC**: justificativa de cada serviço APROVADO, na ordem em que foi listado.
+   - **5. Cronograma Recomendado para o Passo 6 (Plano de Ação)**, coerente com os serviços aprovados.`;
 
-4. COMPORTAMENTO PARA PERFIS SAUDÁVEIS (APTOS) — OBRIGATÓRIO:
-   - Se os relatórios auditados indicarem 0 restrições (0 dívidas, 0 protestos, 0 pendências, sem prejuízo SCR), o bloco json_subetapas NÃO PODE conter nenhum passo de reabilitação, renegociação, limpa nome ou saneamento. Ele deve conter apenas 1 ou 2 passos focados em: "Empresa Apta para Captação" e/ou "Estruturação de Linhas de Crédito".
-   - Se não houver protestos, a quantidade de protestos em qualquer JSON DEVE ser estritamente 0 (nunca 1 com valor 0). O mesmo vale para dívidas e pendências: quantidade 0 e valor 0.
-   - O bloco json_servicos DEVE OMITIR o "Programa de Reabilitação Financeira e Creditícia" e qualquer serviço corretivo (Limpa Nome, Baixa de Protesto, Saneamento SCR) quando o cliente não possuir a restrição correspondente. Para empresa 100% limpa, json_servicos deve ser [] ou conter APENAS serviços preventivos/estruturantes do CATÁLOGO ATIVO.
-
-5. ESTRUTURAÇÃO DE DADOS EM JSON OBRIGATÓRIOS AO FINAL:
-   Inclua dois blocos JSON delimitados estritamente ao final do relatório.
-   ATENÇÃO: os esqueletos abaixo são apenas moldes de formato. Os textos entre colchetes são placeholders — é PROIBIDO copiá-los ou inventar valores; preencha EXCLUSIVAMENTE com dados reais do CATÁLOGO ATIVO e da auditoria da Etapa 1.
-
-   A) Bloco \`\`\`json_servicos com a lista de serviços RECOMENDADOS (somente os estritamente necessários presentes no CATÁLOGO ATIVO, ou [] se o perfil estiver 100% livre de restrições):
-   \`\`\`json_servicos
-   [
-     { "id": "[id exato de um serviço do CATÁLOGO ATIVO]", "nome": "[nome exato do serviço no catálogo]", "valor": "[valor exato do serviço no catálogo]", "justificativa": "[motivo técnico baseado APENAS nos apontamentos auditados]" }
-   ]
-   \`\`\`
-
-   B) Bloco \`\`\`json_subetapas contendo as sub-etapas acionáveis da Etapa 6 (Estruturação) em ordem cronológica de execução:
-   \`\`\`json_subetapas
-   [
-     { "titulo": "[etapa baseada APENAS nos dados auditados]", "preco": "[valor exato do catálogo ou 0]" }
-   ]
-   \`\`\``;
 
       // Guarda de tempo total: se a Etapa 1 já consumiu o orçamento, não inicia a Etapa 2.
       const elapsedMs = Date.now() - routeStartedAt;
@@ -1765,9 +2063,9 @@ REGRA 5: REDAÇÃO COMERCIAL DE CAPACIDADE. Se a variável capacidadeTomadaGeral
         );
       }
 
-      // O laudo só é aceito se vier completo, com os dois blocos estruturados finais.
+      // O laudo agora é apenas texto: aceito quando vier com corpo suficiente e a seção final do cronograma.
       const hasStructuredBlocks = (text: string) =>
-        /json_servicos/i.test(text) && /json_subetapas/i.test(text);
+        text.trim().length >= 800 && /cronograma/i.test(text);
 
       const response = await generateContentWithFallback(
         ai,
@@ -1789,157 +2087,50 @@ REGRA 5: REDAÇÃO COMERCIAL DE CAPACIDADE. Se a variável capacidadeTomadaGeral
         throw new Error("O Gemini não retornou nenhum conteúdo válido para o diagnóstico.");
       }
 
-      let cleanText = responseText;
-      let customServicos: any[] = [];
-      let customSubEtapas: any[] = [];
+      // O laudo é apenas texto. Serviços e sub-etapas são montados pelo SISTEMA (regras fixas),
+      // nunca pela IA. Qualquer bloco JSON que a IA insista em produzir é removido do texto
+      // e usado somente para comparação em log.
+      let cleanText = responseText
+        .replace(/```\s*json_servicos\s*[\s\S]*?\s*```/gi, "")
+        .replace(/```\s*json_subetapas\s*[\s\S]*?\s*```/gi, "")
+        .trim();
 
-      const parseMarkdownJson = (raw: string): unknown => {
-        const normalized = raw
-          .replace(/```\s*(?:json_servicos|json_subetapas|json)?\s*/gi, "")
-          .replace(/```/g, "")
-          .trim();
-        return JSON.parse(normalized);
-      };
-
-      const extractStructuredBlock = (source: string, key: "json_servicos" | "json_subetapas"): unknown => {
-        const taggedMatch = source.match(new RegExp("```\\s*" + key + "\\s*([\\s\\S]*?)\\s*```", "i"));
-        if (taggedMatch?.[1]) return parseMarkdownJson(taggedMatch[1]);
-
-        const contextualMatch = source.match(new RegExp(key + "[\\s\\S]{0,160}?```\\s*json\\s*([\\s\\S]*?)\\s*```", "i"));
-        if (contextualMatch?.[1]) return parseMarkdownJson(contextualMatch[1]);
-
-        const genericBlocks = source.matchAll(/```\s*json\s*([\s\S]*?)\s*```/gi);
-        for (const block of genericBlocks) {
-          if (!block[1]) continue;
-          try {
-            const parsed = parseMarkdownJson(block[1]);
-            if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && key in parsed) {
-              return (parsed as Record<string, unknown>)[key];
-            }
-          } catch {
-            // Outro bloco JSON pode pertencer a uma seção diferente do laudo.
-          }
-        }
-        return undefined;
-      };
-
-      // Extract json_servicos
-      const servicosBlock = extractStructuredBlock(responseText, "json_servicos");
-      if (servicosBlock !== undefined) {
-        try {
-          const parsedServ = servicosBlock;
-          if (Array.isArray(parsedServ)) {
-            const rawServs: any[] = parsedServ
-              .filter((item: any) => item && typeof item === "object" && typeof (item.nome || item.servico) === "string")
-              .map((item: any) => ({
-                id: typeof item.id === "string" ? item.id : `serv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                nome: item.nome || item.servico,
-                valor: typeof item.valor === "number" && Number.isFinite(item.valor) && item.valor >= 0 ? item.valor : 0,
-                justificativa: typeof item.justificativa === "string" ? item.justificativa : "",
-                hublaLink: typeof item.hublaLink === "string" ? item.hublaLink : undefined,
-                status: "pendente"
-              }));
-
-            let hasRatingScore = false;
-            const targetRatingScoreObj = activeServicesCatalog.find(c => (c.id && c.id === "serv_rating_score") || (c.nome && c.nome.toLowerCase().includes("rating") && c.nome.toLowerCase().includes("score")));
-            const targetPrice = targetRatingScoreObj ? Number(targetRatingScoreObj.valor) : 0;
-            const targetName = targetRatingScoreObj?.nome;
-
-            customServicos = [];
-            for (const s of rawServs) {
-              const nameLower = (s.nome || "").toLowerCase();
-              const isRS = s.id === "serv_rating" || s.id === "serv_score" || s.id === "serv_rating_score" || nameLower.includes("rating") || nameLower.includes("score");
-              const isRTB = s.id === "serv_rtb" || nameLower.includes("tarifa") || nameLower.includes("rtb") || nameLower.includes("perícia") || nameLower.includes("pericia");
-              const isDossie = s.id === "serv_dossie" || s.id === "serv_projeto" || s.id === "serv_dossie_projeto" || nameLower.includes("dossiê") || nameLower.includes("dossie") || nameLower.includes("projeto");
-
-              if (isRS) {
-                if (!hasRatingScore && targetRatingScoreObj && targetName) {
-                  hasRatingScore = true;
-                  customServicos.push({
-                    ...s,
-                    id: "serv_rating_score",
-                    nome: targetName,
-                    valor: targetPrice,
-                    hublaLink: targetRatingScoreObj?.hublaLink || (activeServicesCatalog.find(c => c.id === "serv_rating_score") as any)?.hublaLink || undefined
-                  });
-                }
-              } else if (isRTB) {
-                customServicos.push({
-                  ...s,
-                  id: "serv_rtb",
-                  nome: "Recuperação de Tarifas Bancárias (RTB - Perícia CCB)",
-                  valor: 0,
-                  semCustoInicial: true,
-                  statusPagamento: "isento"
-                });
-              } else if (isDossie) {
-                customServicos.push({
-                  ...s,
-                  id: "serv_dossie_projeto",
-                  nome: "Dossiê Bancário & Projeto Estruturado de Crédito",
-                  valor: 0,
-                  semCustoInicial: true,
-                  statusPagamento: "isento"
-                });
-              } else {
-                const matchedCat = activeServicesCatalog.find(c => (c.id && s.id && c.id === s.id) || (c.nome && c.nome.toLowerCase().trim() === nameLower.trim()));
-                customServicos.push({
-                  ...s,
-                  valor: matchedCat ? Number(matchedCat.valor) : s.valor,
-                  hublaLink: matchedCat?.hublaLink || s.hublaLink || undefined
-                });
-              }
-            }
-          }
-          cleanText = cleanText.replace(/```\s*json_servicos\s*[\s\S]*?\s*```/i, "").trim();
-        } catch (e) {
-          console.warn("Could not parse json_servicos block from PROSFEC IA response:", e);
-        }
+      if (/json_servicos|json_subetapas/i.test(responseText)) {
+        console.warn(
+          `[PROSFEC IA] Etapa 2 devolveu blocos JSON (ignorados — decisão comercial é do sistema) no lead ${leadId}.`,
+        );
       }
 
-      // Extract custom sub-etapas for Step 6 from json_subetapas block
-      const subEtapasBlock = extractStructuredBlock(cleanText, "json_subetapas");
-      if (subEtapasBlock !== undefined) {
-        try {
-          const parsedArray = subEtapasBlock;
-          if (Array.isArray(parsedArray) && parsedArray.length > 0) {
-            customSubEtapas = parsedArray.filter((item: any) =>
-              (typeof item === "string" && item.trim().length > 0) ||
-              (item && typeof item === "object" && typeof (item.titulo || item.item) === "string")
-            ).map((item: any, idx: number) => {
-              const titleStr = typeof item === "string" ? item : (item.titulo || item.item);
-              const titleLower = titleStr.toLowerCase();
-              const rawPrice = typeof item === "object" ? item.preco : 0;
-              const isNoCost = titleLower.includes("tarifa") || titleLower.includes("rtb") || titleLower.includes("dossiê") || titleLower.includes("dossie") || titleLower.includes("projeto") || rawPrice === 0;
-              const parsedPrice = typeof rawPrice === "number" ? rawPrice : Number(rawPrice);
-              const itemPrice = isNoCost || !Number.isFinite(parsedPrice) || parsedPrice < 0 ? 0 : parsedPrice;
-              const matchedServ = customServicos.find(s => s.id === item.id || (s.nome && titleLower.includes(s.nome.toLowerCase())));
-              return {
-                id: `sub_${Date.now()}_${idx + 1}`,
-                titulo: titleStr,
-                concluida: false,
-                preco: itemPrice,
-                hublaLink: matchedServ?.hublaLink || item.hublaLink || undefined,
-                semCustoInicial: isNoCost
-              };
-            });
-          }
-          cleanText = cleanText.replace(/```\s*json_subetapas\s*[\s\S]*?\s*```/i, "").trim();
-        } catch (e) {
-          console.warn("Could not parse json_subetapas block from PROSFEC IA response:", e);
-        }
-      }
+      const customServicos: any[] = servicosAprovados.map((s: any) => ({
+        id: s.id,
+        nome: s.nome,
+        valor: Number(s.valor) || 0,
+        justificativa: s.justificativa,
+        fatoOrigem: s.fatoOrigem,
+        hublaLink: s.hublaLink,
+        status: "pendente",
+        ...((Number(s.valor) || 0) === 0 ? { semCustoInicial: true, statusPagamento: "isento" } : {}),
+      }));
 
-      if (customSubEtapas.length === 0 && customServicos.length > 0) {
-        customSubEtapas = customServicos.map((serv: any, idx: number) => ({
-          id: serv.id || `sub_${Date.now()}_${idx + 1}`,
-          titulo: serv.nome || serv.servico || `Aplicação de Serviço Técnico ${idx + 1}`,
-          concluida: false,
-          preco: typeof serv.valor === "number" ? serv.valor : (parseFloat(serv.valor) || 0),
-          hublaLink: serv.hublaLink,
-          semCustoInicial: serv.semCustoInicial || serv.valor === 0
-        }));
-      }
+      const customSubEtapas: any[] = customServicos.length
+        ? customServicos.map((serv: any, idx: number) => ({
+            id: `sub_${Date.now()}_${idx + 1}`,
+            titulo: serv.nome,
+            concluida: false,
+            preco: Number(serv.valor) || 0,
+            hublaLink: serv.hublaLink,
+            semCustoInicial: (Number(serv.valor) || 0) === 0,
+          }))
+        : [
+            {
+              id: `sub_${Date.now()}_1`,
+              titulo: "Empresa apta para captação — estruturação de linhas de crédito",
+              concluida: false,
+              preco: 0,
+              semCustoInicial: true,
+            },
+          ];
+
 
       // Guarda vital: nunca sobrescrever um laudo válido com resposta vazia/inútil da IA.
       if (!cleanText || cleanText.trim().length < 50) {
