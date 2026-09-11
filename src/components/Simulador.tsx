@@ -54,7 +54,9 @@ import {
 } from "lucide-react";
 
 interface SimuladorProps {
-  onLeadCaptured?: (lead: LeadData & { id: string; result: SimulationResult }) => void;
+  onLeadCaptured?: (
+    lead: LeadData & { id: string; result: SimulationResult },
+  ) => void | string | null | Promise<string | null | void>;
   referredByPartnerWhatsapp?: string | null;
   referredByPartnerNome?: string | null;
   referredByPartnerId?: string | null;
