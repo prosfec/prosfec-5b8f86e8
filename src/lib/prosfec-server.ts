@@ -1252,10 +1252,10 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
       let stage1Failure: any = null;
       let invalidJson = false;
 
-      // Tentativa 1: payload já enxuto. Tentativa 2 (só por tamanho): payload mínimo.
-      const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number }> = [
-        { maxItems: 1, maxChars: 12_000, timeoutMs: 8_000 },
-        { maxItems: 1, maxChars: 5_000, timeoutMs: 6_000 },
+      // Tentativa 1: payload já enxuto. Tentativa 2: payload mínimo + instrução reforçada de JSON puro.
+      const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number; maxOutputTokens: number; reinforceJson?: boolean }> = [
+        { maxItems: 1, maxChars: 12_000, timeoutMs: 12_000, maxOutputTokens: 1_500 },
+        { maxItems: 1, maxChars: 5_000, timeoutMs: 8_000, maxOutputTokens: 1_200, reinforceJson: true },
       ];
 
       for (const attempt of stage1Attempts) {
