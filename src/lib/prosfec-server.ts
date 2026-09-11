@@ -1128,39 +1128,107 @@ export function createExpressApp() {
       }
 
 
-      // Whitelist: só os blocos vitais do relatório vão para a IA.
-      const VITAL_KEY_PATTERN =
-        /(score|rating|divida|dívida|negativa|protesto|pendencia|pendência|restric|restriç|acao_judicial|ação|cheque|situacao|situação|cadastral|fiscal|scr|bacen|serasa|spc|resumo|total|quantidade|valor)/i;
+      // =====================================================================
+      // NORMALIZAÇÃO DA REDEBE (fonte de verdade) — sem filtro por whitelist
+      // e sem truncamento antes da normalização.
+      // =====================================================================
+      const parseMaybeJson = (value: any): any => {
+        if (typeof value !== "string") return value;
+        const trimmed = value.trim();
+        if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return value;
+        try {
+          return JSON.parse(trimmed);
+        } catch {
+          return value;
+        }
+      };
 
-      // Extrai recursivamente apenas o que interessa, podando nulos, vazios e listas longas.
-      const extractVitalReport = (input: any, depth = 0): any => {
-        if (input == null || depth > 4) return undefined;
-        if (Array.isArray(input)) {
-          const items = input
-            .slice(0, 15)
-            .map((i) => (typeof i === "object" ? extractVitalReport(i, depth + 1) : i))
-            .filter((i) => i !== undefined && i !== null && i !== "");
-          return items.length ? items : undefined;
+      // Desembrulha invólucros conhecidos (data / resultado / retorno / RedeBE)
+      // sem descartar o conteúdo original.
+      const unwrapRedeBEPayload = (input: any, depth = 0): any => {
+        let current = parseMaybeJson(input);
+        if (depth > 6 || current == null) return current;
+        if (Array.isArray(current)) {
+          return current.length === 1 ? unwrapRedeBEPayload(current[0], depth + 1) : current;
         }
-        if (typeof input !== "object") {
-          const v = typeof input === "string" ? input.slice(0, 600) : input;
-          return v === "" ? undefined : v;
-        }
-        const out: any = {};
-        for (const key of Object.keys(input)) {
-          const val = (input as any)[key];
-          if (val == null || val === "" || val === "0" || val === false) continue;
-          const isVital = VITAL_KEY_PATTERN.test(key);
-          if (typeof val === "object") {
-            // Desce em containers mesmo sem nome vital (o dado vital pode estar aninhado).
-            const nested = extractVitalReport(val, depth + 1);
-            if (nested !== undefined) out[key] = nested;
-          } else if (isVital) {
-            const leaf = extractVitalReport(val, depth + 1);
-            if (leaf !== undefined) out[key] = leaf;
+        if (typeof current !== "object") return current;
+        const WRAPPER_KEYS = ["RedeBE", "redebe", "data", "resultado", "retorno", "response", "body"];
+        const keys = Object.keys(current);
+        for (const wrapper of WRAPPER_KEYS) {
+          if (keys.length === 1 && keys[0] === wrapper) {
+            return unwrapRedeBEPayload((current as any)[wrapper], depth + 1);
           }
         }
-        return Object.keys(out).length ? out : undefined;
+        return current;
+      };
+
+      const CATEGORY_PATTERNS: Array<{ key: string; pattern: RegExp }> = [
+        { key: "identificacao", pattern: /(documento|cnpj|cpf|razao|razão|nome|data_consulta|dataconsulta|protocolo|identificador|consulta_id)/i },
+        { key: "score", pattern: /(score|pontuacao|pontuação)/i },
+        { key: "rating", pattern: /(rating|classificacao_risco|classificação_risco|faixa)/i },
+        { key: "restricoes", pattern: /(restric|restriç)/i },
+        { key: "negativacoes", pattern: /(negativ|pendencia|pendência|refin|pefin)/i },
+        { key: "protestos", pattern: /(protesto)/i },
+        { key: "scrBacen", pattern: /(scr|bacen|prejuizo|prejuízo|vencid)/i },
+        { key: "ccf", pattern: /(ccf|cheque)/i },
+        { key: "cadin", pattern: /(cadin)/i },
+        { key: "acoesJudiciais", pattern: /(acao_judicial|ação|judicial|processo|falencia|falência|recuperacao|recuperação)/i },
+      ];
+
+      /**
+       * Organiza a resposta da RedeBE em categorias, SEM inventar, calcular ou
+       * estimar qualquer valor. Ausência de dado permanece ausente.
+       * Retorna { normalized, raw } — o bruto nunca é podado aqui.
+       */
+      const normalizeRedeBEResult = (rawInput: any) => {
+        const raw = parseMaybeJson(rawInput);
+        const payload = unwrapRedeBEPayload(raw);
+
+        const normalized: Record<string, any[]> = {};
+        const outros: any[] = [];
+        const pushCategory = (categoria: string, path: string, valor: any) => {
+          if (!normalized[categoria]) normalized[categoria] = [];
+          if (normalized[categoria].length < 120) normalized[categoria].push({ campo: path, valor });
+        };
+
+        const visit = (node: any, path: string, depth: number) => {
+          if (node == null || depth > 12) return;
+          if (Array.isArray(node)) {
+            node.forEach((item, idx) => visit(item, `${path}[${idx}]`, depth + 1));
+            return;
+          }
+          if (typeof node !== "object") return;
+          for (const key of Object.keys(node)) {
+            const value = (node as any)[key];
+            const childPath = path ? `${path}.${key}` : key;
+            const matched = CATEGORY_PATTERNS.find((c) => c.pattern.test(key));
+            if (matched) {
+              if (value !== null && value !== undefined && value !== "") {
+                pushCategory(matched.key, childPath, value);
+              }
+            } else if (typeof value !== "object" && value !== null && value !== undefined && value !== "") {
+              // Categorias não previstas também são preservadas.
+              if (outros.length < 120) outros.push({ campo: childPath, valor: value });
+            }
+            if (value && typeof value === "object") visit(value, childPath, depth + 1);
+          }
+        };
+
+        visit(payload, "", 0);
+        if (outros.length) normalized.outrosApontamentos = outros;
+
+        return { normalized, raw };
+      };
+
+      // Poda apenas a EVIDÊNCIA BRUTA por profundidade (último recurso de tamanho),
+      // nunca corta o texto no meio de um registro.
+      const pruneByDepth = (value: any, maxDepth: number, depth = 0): any => {
+        if (value == null || typeof value !== "object") return value;
+        if (depth >= maxDepth) return Array.isArray(value) ? "[...]" : "{...}";
+        if (Array.isArray(value)) return value.map((v) => pruneByDepth(v, maxDepth, depth + 1));
+        const out: any = {};
+        for (const key of Object.keys(value)) out[key] = pruneByDepth((value as any)[key], maxDepth, depth + 1);
+        return out;
       };
 
       const cnpjDigits = String(leadData.cnpj || "").replace(/\D/g, "");
@@ -1179,6 +1247,7 @@ export function createExpressApp() {
           const doc = String(c.documento || "").replace(/\D/g, "");
           const isSocio = doc.length === 11 && sociosPorCpf.has(doc);
           const isEmpresa = doc.length === 14 || (cnpjDigits && doc === cnpjDigits);
+          const { normalized, raw } = normalizeRedeBEResult(c.resultado);
           return {
             id: c.id,
             tipoDocumento: isSocio ? "SOCIO_CPF" : isEmpresa ? "EMPRESA_CNPJ" : "NAO_IDENTIFICADO",
@@ -1187,30 +1256,75 @@ export function createExpressApp() {
             produto: c.produto_nome,
             codigo: c.produto_code,
             data: c.dataConsulta,
-            resumo_resultado: extractVitalReport(c.resultado) || {},
+            normalized,
+            raw,
           };
         });
 
-      // Serializa os relatórios com corte por tamanho para não estourar o limite da IA.
+      // Log técnico seguro (sem documento completo, sem payload, sem credenciais)
+      const approxKb = (value: any) => Math.round(JSON.stringify(value ?? null).length / 1024);
+      console.log(`[REDEBE] Consultas localizadas: ${matchingConsultas.length} | utilizadas: ${consultationsSummary.length}`);
+      consultationsSummary.forEach((c, idx) => {
+        const n = c.normalized || {};
+        console.log(
+          `[REDEBE] #${idx + 1} ${c.tipoDocumento} doc:***${String(c.documento).slice(-4)} | raw: ${approxKb(c.raw)} KB | normalized: ${approxKb(c.normalized)} KB | ` +
+          `score: ${n.score?.length ? "SIM" : "NÃO"} | rating: ${n.rating?.length ? "SIM" : "NÃO"} | ` +
+          `restrições: ${n.restricoes?.length ? "SIM" : "NÃO"} | protestos: ${n.protestos?.length ? "SIM" : "NÃO"} | ` +
+          `SCR/BACEN: ${n.scrBacen?.length ? "SIM" : "NÃO"} | categorias: ${Object.keys(n).length}`,
+        );
+      });
+
+      /**
+       * Monta o contexto enviado à IA com DOIS blocos por consulta:
+       * dados normalizados + evidência original. A redução, quando necessária,
+       * é feita por consulta inteira e por profundidade da evidência bruta.
+       */
       const buildConsultationsBlock = (maxItems: number, maxChars: number): string => {
         if (!consultationsSummary.length) return "Nenhuma consulta de crédito realizada no sistema até o momento.";
-        const slice = consultationsSummary.slice(0, maxItems);
-        let text = slice
-          .map((c) => {
-            const header =
-              c.tipoDocumento === "SOCIO_CPF"
-                ? `### SÓCIO — ${c.titular} (CPF: ${c.documento})`
-                : c.tipoDocumento === "EMPRESA_CNPJ"
-                  ? `### EMPRESA — ${c.titular} (CNPJ: ${c.documento})`
-                  : `### DOCUMENTO NÃO IDENTIFICADO (${c.documento || "sem documento"})`;
-            return `${header}\n${JSON.stringify(c, null, 2)}`;
-          })
-          .join("\n\n");
-        if (text.length > maxChars) {
-          text = `${text.slice(0, maxChars)}\n... [conteúdo truncado por tamanho — analise apenas os dados acima]`;
+        const selected = consultationsSummary.slice(0, maxItems);
+
+        const renderItem = (c: any, rawDepth: number | null) => {
+          const header =
+            c.tipoDocumento === "SOCIO_CPF"
+              ? `### SÓCIO — ${c.titular} (CPF: ${c.documento})`
+              : c.tipoDocumento === "EMPRESA_CNPJ"
+                ? `### EMPRESA — ${c.titular} (CNPJ: ${c.documento})`
+                : `### DOCUMENTO NÃO IDENTIFICADO (${c.documento || "sem documento"})`;
+          const meta = JSON.stringify(
+            { id: c.id, produto: c.produto, codigo: c.codigo, data: c.data, documento: c.documento },
+            null,
+            2,
+          );
+          const evidencia =
+            rawDepth === null
+              ? "[evidência original omitida por limite técnico nesta tentativa — use os dados normalizados acima]"
+              : JSON.stringify(pruneByDepth(c.raw, rawDepth), null, 2);
+          return `${header}\nIDENTIFICAÇÃO DA CONSULTA:\n${meta}\n\nDADOS NORMALIZADOS DA REDEBE:\n${JSON.stringify(c.normalized, null, 2)}\n\nRESULTADO ORIGINAL DA REDEBE (EVIDÊNCIA):\n${evidencia}`;
+        };
+
+        // Degradação progressiva: profundidade da evidência bruta → nº de consultas.
+        const depthLadder: Array<number | null> = [99, 8, 6, 4, null];
+        for (const depth of depthLadder) {
+          for (let count = selected.length; count >= 1; count--) {
+            const text = selected.slice(0, count).map((c) => renderItem(c, depth)).join("\n\n");
+            if (text.length <= maxChars) {
+              if (count < selected.length || depth !== 99) {
+                console.log(
+                  `[REDEBE] Contexto reduzido para caber no limite: consultas=${count}/${selected.length}, profundidade da evidência=${depth ?? "omitida"}`,
+                );
+              }
+              console.log(`[REDEBE] Contexto enviado à IA: ${Math.round(text.length / 1024)} KB`);
+              return text;
+            }
+          }
         }
-        return text;
+
+        // Último recurso: apenas os dados normalizados da consulta mais recente.
+        const fallback = renderItem(selected[0], null);
+        console.log(`[REDEBE] Contexto enviado à IA (mínimo): ${Math.round(fallback.length / 1024)} KB`);
+        return fallback;
       };
+
 
       // 3. Load dynamic service price catalog from Firestore
       let activeServicesCatalog: Array<{ id: string; nome: string; valor: number; hublaLink?: string; [key: string]: any }> = [];
@@ -1287,8 +1401,11 @@ DADOS CADASTRAIS DA EMPRESA:
 - Porte: ${leadData.porte || "Não informado"}
 - Sócios: ${leadData.socios ? leadData.socios.map((s: any) => `${s.nome} (CPF: ${s.cpf || "não informado"})`).join(", ") : "Nenhum sócio informado"}
 
-RELATÓRIOS BRUTOS DE CONSULTAS DE CRÉDITO REALIZADAS:
+RELATÓRIOS DE CONSULTAS DE CRÉDITO REALIZADAS (cada consulta traz DADOS NORMALIZADOS + RESULTADO ORIGINAL DA REDEBE):
 ${consultationsBlock}
+
+REGRA DE EVIDÊNCIA REDEBE:
+Os dados da RedeBE constituem a fonte primária de evidência. Não invente, estime ou complete valores ausentes. Quando uma informação não estiver presente na resposta original, informe que não foi identificada. Os dados normalizados são uma representação estruturada da resposta original e devem ser conferidos contra a evidência original quando necessário.
 
 CATÁLOGO OFICIAL DE SERVIÇOS TÉCNICOS DISPONÍVEIS:
 ${catalogPromptText}
@@ -1340,8 +1457,8 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
 
       // Tentativa 1: payload já enxuto. Tentativa 2: payload mínimo + instrução reforçada de JSON puro.
       const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number; maxOutputTokens: number; reinforceJson?: boolean }> = [
-        { maxItems: 6, maxChars: 20_000, timeoutMs: 25_000, maxOutputTokens: 3_000 },
-        { maxItems: 3, maxChars: 8_000, timeoutMs: 18_000, maxOutputTokens: 2_400, reinforceJson: true },
+        { maxItems: 6, maxChars: 45_000, timeoutMs: 25_000, maxOutputTokens: 3_000 },
+        { maxItems: 3, maxChars: 18_000, timeoutMs: 18_000, maxOutputTokens: 2_400, reinforceJson: true },
 
       ];
 
