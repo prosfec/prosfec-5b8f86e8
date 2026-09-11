@@ -2087,157 +2087,50 @@ REGRA 5 — SEM BLOCOS JSON: NÃO inclua nenhum bloco de código JSON no final. 
         throw new Error("O Gemini não retornou nenhum conteúdo válido para o diagnóstico.");
       }
 
-      let cleanText = responseText;
-      let customServicos: any[] = [];
-      let customSubEtapas: any[] = [];
+      // O laudo é apenas texto. Serviços e sub-etapas são montados pelo SISTEMA (regras fixas),
+      // nunca pela IA. Qualquer bloco JSON que a IA insista em produzir é removido do texto
+      // e usado somente para comparação em log.
+      let cleanText = responseText
+        .replace(/```\s*json_servicos\s*[\s\S]*?\s*```/gi, "")
+        .replace(/```\s*json_subetapas\s*[\s\S]*?\s*```/gi, "")
+        .trim();
 
-      const parseMarkdownJson = (raw: string): unknown => {
-        const normalized = raw
-          .replace(/```\s*(?:json_servicos|json_subetapas|json)?\s*/gi, "")
-          .replace(/```/g, "")
-          .trim();
-        return JSON.parse(normalized);
-      };
-
-      const extractStructuredBlock = (source: string, key: "json_servicos" | "json_subetapas"): unknown => {
-        const taggedMatch = source.match(new RegExp("```\\s*" + key + "\\s*([\\s\\S]*?)\\s*```", "i"));
-        if (taggedMatch?.[1]) return parseMarkdownJson(taggedMatch[1]);
-
-        const contextualMatch = source.match(new RegExp(key + "[\\s\\S]{0,160}?```\\s*json\\s*([\\s\\S]*?)\\s*```", "i"));
-        if (contextualMatch?.[1]) return parseMarkdownJson(contextualMatch[1]);
-
-        const genericBlocks = source.matchAll(/```\s*json\s*([\s\S]*?)\s*```/gi);
-        for (const block of genericBlocks) {
-          if (!block[1]) continue;
-          try {
-            const parsed = parseMarkdownJson(block[1]);
-            if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && key in parsed) {
-              return (parsed as Record<string, unknown>)[key];
-            }
-          } catch {
-            // Outro bloco JSON pode pertencer a uma seção diferente do laudo.
-          }
-        }
-        return undefined;
-      };
-
-      // Extract json_servicos
-      const servicosBlock = extractStructuredBlock(responseText, "json_servicos");
-      if (servicosBlock !== undefined) {
-        try {
-          const parsedServ = servicosBlock;
-          if (Array.isArray(parsedServ)) {
-            const rawServs: any[] = parsedServ
-              .filter((item: any) => item && typeof item === "object" && typeof (item.nome || item.servico) === "string")
-              .map((item: any) => ({
-                id: typeof item.id === "string" ? item.id : `serv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                nome: item.nome || item.servico,
-                valor: typeof item.valor === "number" && Number.isFinite(item.valor) && item.valor >= 0 ? item.valor : 0,
-                justificativa: typeof item.justificativa === "string" ? item.justificativa : "",
-                hublaLink: typeof item.hublaLink === "string" ? item.hublaLink : undefined,
-                status: "pendente"
-              }));
-
-            let hasRatingScore = false;
-            const targetRatingScoreObj = activeServicesCatalog.find(c => (c.id && c.id === "serv_rating_score") || (c.nome && c.nome.toLowerCase().includes("rating") && c.nome.toLowerCase().includes("score")));
-            const targetPrice = targetRatingScoreObj ? Number(targetRatingScoreObj.valor) : 0;
-            const targetName = targetRatingScoreObj?.nome;
-
-            customServicos = [];
-            for (const s of rawServs) {
-              const nameLower = (s.nome || "").toLowerCase();
-              const isRS = s.id === "serv_rating" || s.id === "serv_score" || s.id === "serv_rating_score" || nameLower.includes("rating") || nameLower.includes("score");
-              const isRTB = s.id === "serv_rtb" || nameLower.includes("tarifa") || nameLower.includes("rtb") || nameLower.includes("perícia") || nameLower.includes("pericia");
-              const isDossie = s.id === "serv_dossie" || s.id === "serv_projeto" || s.id === "serv_dossie_projeto" || nameLower.includes("dossiê") || nameLower.includes("dossie") || nameLower.includes("projeto");
-
-              if (isRS) {
-                if (!hasRatingScore && targetRatingScoreObj && targetName) {
-                  hasRatingScore = true;
-                  customServicos.push({
-                    ...s,
-                    id: "serv_rating_score",
-                    nome: targetName,
-                    valor: targetPrice,
-                    hublaLink: targetRatingScoreObj?.hublaLink || (activeServicesCatalog.find(c => c.id === "serv_rating_score") as any)?.hublaLink || undefined
-                  });
-                }
-              } else if (isRTB) {
-                customServicos.push({
-                  ...s,
-                  id: "serv_rtb",
-                  nome: "Recuperação de Tarifas Bancárias (RTB - Perícia CCB)",
-                  valor: 0,
-                  semCustoInicial: true,
-                  statusPagamento: "isento"
-                });
-              } else if (isDossie) {
-                customServicos.push({
-                  ...s,
-                  id: "serv_dossie_projeto",
-                  nome: "Dossiê Bancário & Projeto Estruturado de Crédito",
-                  valor: 0,
-                  semCustoInicial: true,
-                  statusPagamento: "isento"
-                });
-              } else {
-                const matchedCat = activeServicesCatalog.find(c => (c.id && s.id && c.id === s.id) || (c.nome && c.nome.toLowerCase().trim() === nameLower.trim()));
-                customServicos.push({
-                  ...s,
-                  valor: matchedCat ? Number(matchedCat.valor) : s.valor,
-                  hublaLink: matchedCat?.hublaLink || s.hublaLink || undefined
-                });
-              }
-            }
-          }
-          cleanText = cleanText.replace(/```\s*json_servicos\s*[\s\S]*?\s*```/i, "").trim();
-        } catch (e) {
-          console.warn("Could not parse json_servicos block from PROSFEC IA response:", e);
-        }
+      if (/json_servicos|json_subetapas/i.test(responseText)) {
+        console.warn(
+          `[PROSFEC IA] Etapa 2 devolveu blocos JSON (ignorados — decisão comercial é do sistema) no lead ${leadId}.`,
+        );
       }
 
-      // Extract custom sub-etapas for Step 6 from json_subetapas block
-      const subEtapasBlock = extractStructuredBlock(cleanText, "json_subetapas");
-      if (subEtapasBlock !== undefined) {
-        try {
-          const parsedArray = subEtapasBlock;
-          if (Array.isArray(parsedArray) && parsedArray.length > 0) {
-            customSubEtapas = parsedArray.filter((item: any) =>
-              (typeof item === "string" && item.trim().length > 0) ||
-              (item && typeof item === "object" && typeof (item.titulo || item.item) === "string")
-            ).map((item: any, idx: number) => {
-              const titleStr = typeof item === "string" ? item : (item.titulo || item.item);
-              const titleLower = titleStr.toLowerCase();
-              const rawPrice = typeof item === "object" ? item.preco : 0;
-              const isNoCost = titleLower.includes("tarifa") || titleLower.includes("rtb") || titleLower.includes("dossiê") || titleLower.includes("dossie") || titleLower.includes("projeto") || rawPrice === 0;
-              const parsedPrice = typeof rawPrice === "number" ? rawPrice : Number(rawPrice);
-              const itemPrice = isNoCost || !Number.isFinite(parsedPrice) || parsedPrice < 0 ? 0 : parsedPrice;
-              const matchedServ = customServicos.find(s => s.id === item.id || (s.nome && titleLower.includes(s.nome.toLowerCase())));
-              return {
-                id: `sub_${Date.now()}_${idx + 1}`,
-                titulo: titleStr,
-                concluida: false,
-                preco: itemPrice,
-                hublaLink: matchedServ?.hublaLink || item.hublaLink || undefined,
-                semCustoInicial: isNoCost
-              };
-            });
-          }
-          cleanText = cleanText.replace(/```\s*json_subetapas\s*[\s\S]*?\s*```/i, "").trim();
-        } catch (e) {
-          console.warn("Could not parse json_subetapas block from PROSFEC IA response:", e);
-        }
-      }
+      const customServicos: any[] = servicosAprovados.map((s: any) => ({
+        id: s.id,
+        nome: s.nome,
+        valor: Number(s.valor) || 0,
+        justificativa: s.justificativa,
+        fatoOrigem: s.fatoOrigem,
+        hublaLink: s.hublaLink,
+        status: "pendente",
+        ...((Number(s.valor) || 0) === 0 ? { semCustoInicial: true, statusPagamento: "isento" } : {}),
+      }));
 
-      if (customSubEtapas.length === 0 && customServicos.length > 0) {
-        customSubEtapas = customServicos.map((serv: any, idx: number) => ({
-          id: serv.id || `sub_${Date.now()}_${idx + 1}`,
-          titulo: serv.nome || serv.servico || `Aplicação de Serviço Técnico ${idx + 1}`,
-          concluida: false,
-          preco: typeof serv.valor === "number" ? serv.valor : (parseFloat(serv.valor) || 0),
-          hublaLink: serv.hublaLink,
-          semCustoInicial: serv.semCustoInicial || serv.valor === 0
-        }));
-      }
+      const customSubEtapas: any[] = customServicos.length
+        ? customServicos.map((serv: any, idx: number) => ({
+            id: `sub_${Date.now()}_${idx + 1}`,
+            titulo: serv.nome,
+            concluida: false,
+            preco: Number(serv.valor) || 0,
+            hublaLink: serv.hublaLink,
+            semCustoInicial: (Number(serv.valor) || 0) === 0,
+          }))
+        : [
+            {
+              id: `sub_${Date.now()}_1`,
+              titulo: "Empresa apta para captação — estruturação de linhas de crédito",
+              concluida: false,
+              preco: 0,
+              semCustoInicial: true,
+            },
+          ];
+
 
       // Guarda vital: nunca sobrescrever um laudo válido com resposta vazia/inútil da IA.
       if (!cleanText || cleanText.trim().length < 50) {
