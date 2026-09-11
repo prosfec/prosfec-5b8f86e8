@@ -1094,6 +1094,7 @@ export function createExpressApp() {
             resultado: r.data.resultado,
             partnerId: r.data.partnerId,
             leadId: r.data.leadId,
+            documento: String(r.data.documento || "").replace(/\D/g, ""),
           })).filter((c: any) => caller.isAdmin || c.partnerId === caller.partnerId || c.leadId === leadId);
         } catch (dbErr) {
           console.warn("Could not load matching consultations from Firestore:", dbErr);
@@ -1140,22 +1141,49 @@ export function createExpressApp() {
         return Object.keys(out).length ? out : undefined;
       };
 
+      const cnpjDigits = String(leadData.cnpj || "").replace(/\D/g, "");
+      const sociosPorCpf = new Map<string, string>();
+      if (Array.isArray(leadData.socios)) {
+        leadData.socios.forEach((s: any) => {
+          const cpf = String(s?.cpf || "").replace(/\D/g, "");
+          if (cpf) sociosPorCpf.set(cpf, String(s?.nome || "Sócio"));
+        });
+      }
+
       const consultationsSummary = [...matchingConsultas]
         .sort((a, b) => (Date.parse(String(b.dataConsulta || "")) || 0) - (Date.parse(String(a.dataConsulta || "")) || 0))
-        .slice(0, 3)
-        .map(c => ({
-          id: c.id,
-          produto: c.produto_nome,
-          codigo: c.produto_code,
-          data: c.dataConsulta,
-          resumo_resultado: extractVitalReport(c.resultado) || {},
-        }));
+        .slice(0, 6)
+        .map(c => {
+          const doc = String(c.documento || "").replace(/\D/g, "");
+          const isSocio = doc.length === 11 && sociosPorCpf.has(doc);
+          const isEmpresa = doc.length === 14 || (cnpjDigits && doc === cnpjDigits);
+          return {
+            id: c.id,
+            tipoDocumento: isSocio ? "SOCIO_CPF" : isEmpresa ? "EMPRESA_CNPJ" : "NAO_IDENTIFICADO",
+            titular: isSocio ? sociosPorCpf.get(doc) : (leadData.razaoSocial || leadData.nome || "Empresa"),
+            documento: doc,
+            produto: c.produto_nome,
+            codigo: c.produto_code,
+            data: c.dataConsulta,
+            resumo_resultado: extractVitalReport(c.resultado) || {},
+          };
+        });
 
       // Serializa os relatórios com corte por tamanho para não estourar o limite da IA.
       const buildConsultationsBlock = (maxItems: number, maxChars: number): string => {
         if (!consultationsSummary.length) return "Nenhuma consulta de crédito realizada no sistema até o momento.";
         const slice = consultationsSummary.slice(0, maxItems);
-        let text = JSON.stringify(slice, null, 2);
+        let text = slice
+          .map((c) => {
+            const header =
+              c.tipoDocumento === "SOCIO_CPF"
+                ? `### SÓCIO — ${c.titular} (CPF: ${c.documento})`
+                : c.tipoDocumento === "EMPRESA_CNPJ"
+                  ? `### EMPRESA — ${c.titular} (CNPJ: ${c.documento})`
+                  : `### DOCUMENTO NÃO IDENTIFICADO (${c.documento || "sem documento"})`;
+            return `${header}\n${JSON.stringify(c, null, 2)}`;
+          })
+          .join("\n\n");
         if (text.length > maxChars) {
           text = `${text.slice(0, maxChars)}\n... [conteúdo truncado por tamanho — analise apenas os dados acima]`;
         }
@@ -1259,7 +1287,16 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
   "servicosNecessariosIds": ["array", "com", "os", "ids", "dos", "serviços", "do", "catálogo", "rigorosamente", "necessários"],
   "classificacaoElegibilidade": "Alta" | "Média" | "Baixa" | "Crítica",
   "scoreEstimado": "string (ex: 280/1000 - Risco Alto ou 750/1000 - Saudável)"
-}`;
+}
+
+REGRA DE RISCO CRUZADO (CONTAMINAÇÃO) — INEGOCIÁVEL:
+ATENÇÃO: AVALIE O CNPJ E OS CPFS DOS SÓCIOS EM CONJUNTO. SE A EMPRESA POSSUI RATING BOM (LIMPO), MAS OS SÓCIOS POSSUEM RATINGS GRAVES (EX: F, G) COM APONTAMENTOS (REFIN, PEFIN, PROTESTOS, PREJUÍZO BACEN), O RISCO DOS SÓCIOS CONTAMINA A EMPRESA. O RATING/CLASSIFICAÇÃO CONSOLIDADA DEVE SER REBAIXADA, A SUGESTÃO DE CRÉDITO BLOQUEADA (capacidadeTomadaGeral E capacidadeTomadaPronampe = 0) E OS APONTAMENTOS DOS SÓCIOS DEVEM SER LISTADOS EM fatoresCriticosBloqueio, IDENTIFICANDO O NOME/CPF DO SÓCIO.
+
+REGRA DE FORMATO ESTRITO — INEGOCIÁVEL:
+RETORNE EXCLUSIVAMENTE O OBJETO JSON. NUNCA UTILIZE BLOCOS DE FORMATAÇÃO MARKDOWN (\`\`\`json). NUNCA REPITA AS INSTRUÇÕES DESTE PROMPT. O CAMPO servicosNecessariosIds DEVE SER ESTRITAMENTE UM ARRAY DE STRINGS CONTENDO APENAS OS CÓDIGOS/IDS DOS SERVIÇOS APLICÁVEIS DO CATÁLOGO. NUNCA CRIE OBJETOS COM "titulo" OU "preco". O VALOR DE PREÇO NÃO É RESPONSABILIDADE DA IA.
+
+REGRA DE FIDELIDADE — INEGOCIÁVEL:
+NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONSTA", OS CAMPOS NUMÉRICOS DEVEM SER ESTRITAMENTE 0 E OS ARRAYS DEVEM SER [].`;
 
       let auditResult: any = null;
       let stage1Failure: any = null;
@@ -1267,8 +1304,8 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
 
       // Tentativa 1: payload já enxuto. Tentativa 2: payload mínimo + instrução reforçada de JSON puro.
       const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number; maxOutputTokens: number; reinforceJson?: boolean }> = [
-        { maxItems: 1, maxChars: 12_000, timeoutMs: 12_000, maxOutputTokens: 1_500 },
-        { maxItems: 1, maxChars: 5_000, timeoutMs: 8_000, maxOutputTokens: 1_200, reinforceJson: true },
+        { maxItems: 6, maxChars: 20_000, timeoutMs: 14_000, maxOutputTokens: 1_500 },
+        { maxItems: 3, maxChars: 8_000, timeoutMs: 10_000, maxOutputTokens: 1_200, reinforceJson: true },
       ];
 
       for (const attempt of stage1Attempts) {
