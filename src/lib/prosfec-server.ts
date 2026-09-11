@@ -1085,10 +1085,10 @@ export function createExpressApp() {
       diagnosisLockPath = lockPathCandidate;
 
 
-      // 2. Fetch credit consultations performed for this lead's CNPJ or their partner's CPFs
+      // 2. Fetch credit consultations: prioridade para o vínculo com o lead, depois documento
       const docList: string[] = [];
       if (leadData.cnpj) docList.push(leadData.cnpj.replace(/\D/g, ""));
-      
+
       if (leadData.socios && Array.isArray(leadData.socios)) {
         leadData.socios.forEach((s: any) => {
           if (s.cpf) {
@@ -1097,7 +1097,45 @@ export function createExpressApp() {
         });
       }
 
-      let matchingConsultas: any[] = [];
+      const mapConsultaRow = (r: any, origem: "leadId" | "documento") => ({
+        id: r.id,
+        origem,
+        produto_nome: r.data.produto_nome,
+        produto_code: r.data.produto_code,
+        dataConsulta: r.data.dataConsulta,
+        resultado: r.data.resultado,
+        partnerId: r.data.partnerId,
+        leadId: String(r.data.leadId || ""),
+        documento: String(r.data.documento || "").replace(/\D/g, ""),
+      });
+
+      // Registros de controle (locks do diagnóstico) vivem na mesma coleção: descartar.
+      const isRealConsulta = (c: any) =>
+        !String(c.id || "").startsWith("ia_diagnostico_") &&
+        c.resultado !== undefined && c.resultado !== null && c.resultado !== "";
+
+      const canAccessConsulta = (c: any) =>
+        caller.isAdmin || c.partnerId === caller.partnerId || c.leadId === String(leadId);
+
+      const consultasPorLead: any[] = [];
+      const consultasPorDocumento: any[] = [];
+
+      try {
+        const rowsByLead = await runQueryRest("consultas_realizadas", {
+          fieldFilter: {
+            field: { fieldPath: "leadId" },
+            op: "EQUAL",
+            value: { stringValue: String(leadId) },
+          },
+        });
+        rowsByLead
+          .map((r: any) => mapConsultaRow(r, "leadId"))
+          .filter((c: any) => isRealConsulta(c) && canAccessConsulta(c))
+          .forEach((c: any) => consultasPorLead.push(c));
+      } catch (dbErr) {
+        console.warn("Could not load consultations by leadId from Firestore:", dbErr);
+      }
+
       if (docList.length > 0) {
         try {
           const rows = await runQueryRest("consultas_realizadas", {
@@ -1108,24 +1146,32 @@ export function createExpressApp() {
             }
           });
 
-          matchingConsultas = rows.map((r: any) => ({
-            id: r.id,
-            produto_nome: r.data.produto_nome,
-            produto_code: r.data.produto_code,
-            dataConsulta: r.data.dataConsulta,
-            resultado: r.data.resultado,
-            partnerId: r.data.partnerId,
-            leadId: r.data.leadId,
-            documento: String(r.data.documento || "").replace(/\D/g, ""),
-          })).filter((c: any) => caller.isAdmin || c.partnerId === caller.partnerId || c.leadId === leadId);
+          rows
+            .map((r: any) => mapConsultaRow(r, "documento"))
+            .filter((c: any) => isRealConsulta(c) && canAccessConsulta(c))
+            // registros com vínculo explícito a OUTRO lead não entram na análise
+            .filter((c: any) => !c.leadId || c.leadId === String(leadId))
+            .forEach((c: any) => consultasPorDocumento.push(c));
         } catch (dbErr) {
           console.warn("Could not load matching consultations from Firestore:", dbErr);
         }
       }
 
+      const consultasById = new Map<string, any>();
+      consultasPorLead.forEach((c) => consultasById.set(c.id, c));
+      consultasPorDocumento.forEach((c) => {
+        if (!consultasById.has(c.id)) consultasById.set(c.id, c);
+      });
+      const matchingConsultas: any[] = Array.from(consultasById.values());
+
+      console.log(
+        `[REDEBE] Vínculo — por leadId: ${consultasPorLead.length} | por documento: ${consultasPorDocumento.length} | total único: ${matchingConsultas.length}`,
+      );
+
       if (!matchingConsultas.length) {
         throw Object.assign(new Error("Nenhuma consulta de crédito válida foi encontrada para este lead."), { statusCode: 422 });
       }
+
 
 
       // =====================================================================
@@ -1241,8 +1287,14 @@ export function createExpressApp() {
       }
 
       const consultationsSummary = [...matchingConsultas]
-        .sort((a, b) => (Date.parse(String(b.dataConsulta || "")) || 0) - (Date.parse(String(a.dataConsulta || "")) || 0))
+        .sort((a, b) => {
+          const aLead = a.leadId === String(leadId) ? 0 : 1;
+          const bLead = b.leadId === String(leadId) ? 0 : 1;
+          if (aLead !== bLead) return aLead - bLead;
+          return (Date.parse(String(b.dataConsulta || "")) || 0) - (Date.parse(String(a.dataConsulta || "")) || 0);
+        })
         .slice(0, 6)
+
         .map(c => {
           const doc = String(c.documento || "").replace(/\D/g, "");
           const isSocio = doc.length === 11 && sociosPorCpf.has(doc);
