@@ -689,7 +689,7 @@ export function createExpressApp() {
 
       if (!isAdminUser) {
         createDocRest("notificacoes", {
-          recipientId: partnerId, recipientType: "parceiro", titulo: "Consulta Realizada (RedeBe 360)",
+          recipientId: partnerId, recipientType: "parceiro", titulo: "Consulta Realizada (PROSFEC Diagnóstico 360)",
           mensagem: `Consulta de crédito realizada com sucesso. Valor de R$ ${partnerPrice.toFixed(2).replace(".", ",")} debitado.`,
           tipo: "success", lida: false, dataCriacao: new Date().toISOString(),
         }).catch((error) => console.warn("Notification write failed:", error?.message || "erro"));
@@ -705,7 +705,7 @@ export function createExpressApp() {
       }
       const status = err?.statusCode || (String(err?.message || "").includes("Saldo insuficiente") ? 400 : 500);
       console.error("RedeBe query failed:", err?.code || err?.message || "erro");
-      return res.status(status).json({ error: status === 502 ? "A RedeBE está temporariamente indisponível. Nenhum valor foi cobrado." : (err.message || "Erro interno ao executar a consulta.") });
+      return res.status(status).json({ error: status === 502 ? "O serviço de consulta está temporariamente indisponível. Nenhum valor foi cobrado." : (err.message || "Erro interno ao executar a consulta.") });
     }
   });
 
@@ -1060,7 +1060,7 @@ CONTEXTO DA OPERAÇÃO:
   * Parecer Inicial: Perfil com restrições ativas e necessidade de saneamento cadastral e contábil.
 - Histórico de Serviços de Estruturação Aplicados no Passo 6:
   ${JSON.stringify(leadData.subEtapasPasso6 || leadData.servicosRecomendados || "Saneamento completo de restrições, atualização de CNDs, retificação contábil e elevação de score/rating.")}
-- Nova Consulta de Crédito Pós-Estruturação (RedeBE API):
+- Nova Consulta de Crédito Pós-Estruturação (PROSFEC Diagnóstico 360):
   ${latestConsultaData ? JSON.stringify(latestConsultaData).slice(0, 3000) : "Perfil 100% saneado, sem restrições ativas, certidões negativas válidas e score restaurado."}
 
 SUA TAREFA:

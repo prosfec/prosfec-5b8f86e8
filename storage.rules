@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userEmail() {
+      return request.auth != null && request.auth.token.email != null
+        ? request.auth.token.email
+        : "";
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.uid == "Nso5FBoBVHXNY60RDw6NNKeaCC23" ||
+        request.auth.token.admin == true ||
+        userEmail().lower() == "prosfec.tesouraria@gmail.com"
+      );
+    }
+
+    function isContador() {
+      return isSignedIn() && (
+        request.auth.uid == "vKZFCNniHJfzJ9B3yWlzErNC3892" ||
+        request.auth.token.contador == true ||
+        userEmail().lower() == "contador.prosfec@gmail.com"
+      );
+    }
+
+    function isStaff() {
+      return isAdmin() || isContador();
+    }
+
+    // Relatórios oficiais (PROSFEC DIAGNÓSTICO 360) anexados pela equipe.
+    // Leitura: quem tiver o link do arquivo (o parceiro só recebe o link
+    // dentro da ficha do lead). Escrita/remoção: somente a equipe.
+    match /relatorios_consultas/{arquivo} {
+      allow read: if true;
+      allow create, update: if isStaff()
+        && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType == 'application/pdf';
+      allow delete: if isStaff();
+    }
+
+    // Tudo o mais permanece bloqueado.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
