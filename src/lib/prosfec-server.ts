@@ -1342,10 +1342,16 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
       }
 
       if (!auditResult) {
-        if (invalidJson || !stage1Failure) {
+        if (invalidJson) {
           throw Object.assign(
-            new Error("A auditoria da IA não pôde validar os dados da consulta. Tente novamente; nenhum laudo estimado foi salvo."),
-            { statusCode: 503 },
+            new Error("A IA respondeu em um formato inválido para a auditoria. Tente novamente; nenhum laudo estimado foi salvo."),
+            { statusCode: 503, code: "GEMINI_INVALID_JSON" },
+          );
+        }
+        if (!stage1Failure) {
+          throw Object.assign(
+            new Error("A IA não respondeu à auditoria da consulta. Tente novamente; nenhum laudo estimado foi salvo."),
+            { statusCode: 503, code: "GEMINI_EMPTY" },
           );
         }
         const detail = describeGeminiFailure(stage1Failure);
