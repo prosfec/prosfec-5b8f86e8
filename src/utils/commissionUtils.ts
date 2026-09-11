@@ -415,8 +415,6 @@ export function calculateLeadMultilevelCommissions(
     rawServices = lead.subEtapasPasso6;
   } else if (Array.isArray(lead.servicosRecomendados) && lead.servicosRecomendados.length > 0) {
     rawServices = lead.servicosRecomendados;
-  } else if (Array.isArray(lead.diagnosticoPROSFEC?.servicosRecomendados) && lead.diagnosticoPROSFEC.servicosRecomendados.length > 0) {
-    rawServices = lead.diagnosticoPROSFEC.servicosRecomendados;
   }
 
   const parsedServices = augmentServiceItemsWithCommission(rawServices, lead, allPartners, currentPartnerContext);

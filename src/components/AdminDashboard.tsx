@@ -490,7 +490,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const pStatus = selectedLead.pendencias?.status;
       setEditingPendenciasStatus(pStatus === "resolvida" && !selectedLead.pendente ? "resolvida" : "pendente");
 
-      const rawServicos = selectedLead.servicosRecomendados || selectedLead.diagnosticoPROSFEC?.servicosRecomendados || [];
+      const rawServicos = selectedLead.servicosRecomendados || [];
       const currentServicos = sanitizeAndSyncServicosList(rawServicos, customServices);
       setEditingServicosRecomendados(currentServicos);
 
@@ -1884,7 +1884,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         return;
       }
 
-      const rawDiagnosticoServices = leadToUpdate.servicosRecomendados || leadToUpdate.diagnosticoPROSFEC?.servicosRecomendados || [];
+      const rawDiagnosticoServices = leadToUpdate.servicosRecomendados || [];
       const verifiedServices = sanitizeAndSyncServicosList(rawDiagnosticoServices, customServices);
 
       const currentSubEtapas = Array.isArray(leadToUpdate.subEtapasPasso6) && leadToUpdate.subEtapasPasso6.length > 0
@@ -1988,7 +1988,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       return;
     }
 
-    const rawDiagnosticoServices = selectedLead.servicosRecomendados || selectedLead.diagnosticoPROSFEC?.servicosRecomendados || [];
+    const rawDiagnosticoServices = selectedLead.servicosRecomendados || [];
     const verifiedServices = sanitizeAndSyncServicosList(rawDiagnosticoServices, customServices);
 
     // Filtra e valida sub-etapas garantindo que correspondam ao diagnóstico da Etapa 3 ou a adições manuais explícitas

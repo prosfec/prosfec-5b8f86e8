@@ -5557,8 +5557,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         rawServices = (l as any).subEtapasPasso6;
                       } else if (Array.isArray((l as any).servicosRecomendados) && (l as any).servicosRecomendados.length > 0) {
                         rawServices = (l as any).servicosRecomendados;
-                      } else if (Array.isArray((l as any).diagnosticoPROSFEC?.servicosRecomendados) && (l as any).diagnosticoPROSFEC.servicosRecomendados.length > 0) {
-                        rawServices = (l as any).diagnosticoPROSFEC.servicosRecomendados;
                       }
 
                       if (rawServices.length === 0) return;
@@ -5671,8 +5669,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           rawServices = (l as any).subEtapasPasso6;
                         } else if (Array.isArray((l as any).servicosRecomendados) && (l as any).servicosRecomendados.length > 0) {
                           rawServices = (l as any).servicosRecomendados;
-                        } else if (Array.isArray((l as any).diagnosticoPROSFEC?.servicosRecomendados) && (l as any).diagnosticoPROSFEC.servicosRecomendados.length > 0) {
-                          rawServices = (l as any).diagnosticoPROSFEC.servicosRecomendados;
                         }
 
                         if (rawServices.length === 0) return;
@@ -7165,7 +7161,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                       const hasActivePendency = lead.pendente || lead.pendencias?.status === "pendente";
 
                                       // Sub-etapas for Passo 6 Operacionalização
-                                      const rawServs = (lead as any).servicosRecomendados || ((lead as any).diagnosticoPROSFEC && (lead as any).diagnosticoPROSFEC.servicosRecomendados) || [];
+                                      const rawServs = (lead as any).servicosRecomendados || [];
                                       const syncedServs = sanitizeAndSyncServicosList(rawServs, catalogServices);
                                       const subList = (lead as any).subEtapasPasso6 && (lead as any).subEtapasPasso6.length > 0
                                         ? sanitizeAndSyncServicosList((lead as any).subEtapasPasso6, catalogServices)
@@ -11604,8 +11600,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   rawServices = (l as any).subEtapasPasso6;
                 } else if (Array.isArray((l as any).servicosRecomendados) && (l as any).servicosRecomendados.length > 0) {
                   rawServices = (l as any).servicosRecomendados;
-                } else if (Array.isArray((l as any).diagnosticoPROSFEC?.servicosRecomendados) && (l as any).diagnosticoPROSFEC.servicosRecomendados.length > 0) {
-                  rawServices = (l as any).diagnosticoPROSFEC.servicosRecomendados;
                 }
 
                 const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
@@ -11643,8 +11637,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     rawServices = (l as any).subEtapasPasso6;
                   } else if (Array.isArray((l as any).servicosRecomendados) && (l as any).servicosRecomendados.length > 0) {
                     rawServices = (l as any).servicosRecomendados;
-                  } else if (Array.isArray((l as any).diagnosticoPROSFEC?.servicosRecomendados) && (l as any).diagnosticoPROSFEC.servicosRecomendados.length > 0) {
-                    rawServices = (l as any).diagnosticoPROSFEC.servicosRecomendados;
                   }
 
                   const member = teamMembers.find(m => m.id === l.parceiroId);
