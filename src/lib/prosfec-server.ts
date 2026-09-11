@@ -1141,16 +1141,33 @@ export function createExpressApp() {
         return Object.keys(out).length ? out : undefined;
       };
 
+      const cnpjDigits = String(leadData.cnpj || "").replace(/\D/g, "");
+      const sociosPorCpf = new Map<string, string>();
+      if (Array.isArray(leadData.socios)) {
+        leadData.socios.forEach((s: any) => {
+          const cpf = String(s?.cpf || "").replace(/\D/g, "");
+          if (cpf) sociosPorCpf.set(cpf, String(s?.nome || "Sócio"));
+        });
+      }
+
       const consultationsSummary = [...matchingConsultas]
         .sort((a, b) => (Date.parse(String(b.dataConsulta || "")) || 0) - (Date.parse(String(a.dataConsulta || "")) || 0))
-        .slice(0, 3)
-        .map(c => ({
-          id: c.id,
-          produto: c.produto_nome,
-          codigo: c.produto_code,
-          data: c.dataConsulta,
-          resumo_resultado: extractVitalReport(c.resultado) || {},
-        }));
+        .slice(0, 6)
+        .map(c => {
+          const doc = String(c.documento || "").replace(/\D/g, "");
+          const isSocio = doc.length === 11 && sociosPorCpf.has(doc);
+          const isEmpresa = doc.length === 14 || (cnpjDigits && doc === cnpjDigits);
+          return {
+            id: c.id,
+            tipoDocumento: isSocio ? "SOCIO_CPF" : isEmpresa ? "EMPRESA_CNPJ" : "NAO_IDENTIFICADO",
+            titular: isSocio ? sociosPorCpf.get(doc) : (leadData.razaoSocial || leadData.nome || "Empresa"),
+            documento: doc,
+            produto: c.produto_nome,
+            codigo: c.produto_code,
+            data: c.dataConsulta,
+            resumo_resultado: extractVitalReport(c.resultado) || {},
+          };
+        });
 
       // Serializa os relatórios com corte por tamanho para não estourar o limite da IA.
       const buildConsultationsBlock = (maxItems: number, maxChars: number): string => {
