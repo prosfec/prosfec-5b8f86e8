@@ -1002,7 +1002,7 @@ export function createExpressApp() {
     let diagnosisLockPath = "";
     const routeStartedAt = Date.now();
     // Orçamento total das chamadas de IA nesta rota (mantém a resposta dentro do limite do servidor).
-    const TOTAL_AI_BUDGET_MS = 30_000;
+    const TOTAL_AI_BUDGET_MS = 90_000;
     try {
       const caller = await authenticateApiCaller(req);
       const { leadId } = req.body;
@@ -1340,8 +1340,9 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
 
       // Tentativa 1: payload já enxuto. Tentativa 2: payload mínimo + instrução reforçada de JSON puro.
       const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number; maxOutputTokens: number; reinforceJson?: boolean }> = [
-        { maxItems: 6, maxChars: 20_000, timeoutMs: 14_000, maxOutputTokens: 1_500 },
-        { maxItems: 3, maxChars: 8_000, timeoutMs: 10_000, maxOutputTokens: 1_200, reinforceJson: true },
+        { maxItems: 6, maxChars: 20_000, timeoutMs: 25_000, maxOutputTokens: 3_000 },
+        { maxItems: 3, maxChars: 8_000, timeoutMs: 18_000, maxOutputTokens: 2_400, reinforceJson: true },
+
       ];
 
       for (const attempt of stage1Attempts) {
