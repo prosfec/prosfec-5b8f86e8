@@ -1304,8 +1304,8 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
 
       // Tentativa 1: payload já enxuto. Tentativa 2: payload mínimo + instrução reforçada de JSON puro.
       const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number; maxOutputTokens: number; reinforceJson?: boolean }> = [
-        { maxItems: 1, maxChars: 12_000, timeoutMs: 12_000, maxOutputTokens: 1_500 },
-        { maxItems: 1, maxChars: 5_000, timeoutMs: 8_000, maxOutputTokens: 1_200, reinforceJson: true },
+        { maxItems: 6, maxChars: 20_000, timeoutMs: 14_000, maxOutputTokens: 1_500 },
+        { maxItems: 3, maxChars: 8_000, timeoutMs: 10_000, maxOutputTokens: 1_200, reinforceJson: true },
       ];
 
       for (const attempt of stage1Attempts) {
