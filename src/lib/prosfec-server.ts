@@ -1564,7 +1564,8 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
           if (stage1Response && stage1Response.text) {
             const rawStage1 = extractJsonPayload(stage1Response.text);
             try {
-              const parsedAudit = JSON.parse(rawStage1);
+              const parsedFacts = JSON.parse(rawStage1);
+
               const nonNegativeNumber = (value: unknown) => {
                 const parsed = typeof value === "number" ? value : Number(value);
                 return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
@@ -1578,28 +1579,43 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
                   .replace(/[\u0300-\u036f]/g, "")
                   .replace(/[^a-zA-Z0-9]/g, "")
                   .toLowerCase();
-              const auditIndex = new Map<string, unknown>();
-              if (parsedAudit && typeof parsedAudit === "object") {
-                for (const [key, value] of Object.entries(parsedAudit)) {
-                  const normalized = normalizeKey(key);
-                  if (!auditIndex.has(normalized)) auditIndex.set(normalized, value);
+
+              const buildIndex = (obj: any) => {
+                const index = new Map<string, unknown>();
+                if (obj && typeof obj === "object") {
+                  for (const [key, value] of Object.entries(obj)) {
+                    const normalized = normalizeKey(key);
+                    if (!index.has(normalized)) index.set(normalized, value);
+                  }
                 }
-              }
-              const pickField = (aliases: string[]): unknown => {
-                for (const alias of aliases) {
-                  const value = auditIndex.get(normalizeKey(alias));
-                  if (value !== undefined && value !== null && value !== "") return value;
-                }
-                return undefined;
+                return index;
               };
-              const pickString = (aliases: string[]) => {
-                const value = pickField(aliases);
-                return typeof value === "string" ? value : typeof value === "number" ? String(value) : "";
+
+              const makePickers = (obj: any) => {
+                const index = buildIndex(obj);
+                const pickField = (aliases: string[]): unknown => {
+                  for (const alias of aliases) {
+                    const value = index.get(normalizeKey(alias));
+                    if (value !== undefined && value !== null && value !== "") return value;
+                  }
+                  return undefined;
+                };
+                return {
+                  pickField,
+                  pickNumber: (aliases: string[]) => nonNegativeNumber(pickField(aliases)),
+                  pickString: (aliases: string[]) => {
+                    const value = pickField(aliases);
+                    return typeof value === "string" ? value : typeof value === "number" ? String(value) : "";
+                  },
+                  pickArray: (aliases: string[]) => {
+                    const value = pickField(aliases);
+                    return Array.isArray(value)
+                      ? value.map((item: unknown) => (typeof item === "string" ? item : "")).filter(Boolean)
+                      : [];
+                  },
+                };
               };
-              const pickArray = (aliases: string[]) => {
-                const value = pickField(aliases);
-                return Array.isArray(value) ? value.filter((item: unknown) => typeof item === "string") : [];
-              };
+
               const extractScoreNumber = (value: unknown): number => {
                 const direct = nonNegativeNumber(value);
                 if (direct > 0 && direct <= 1000) return Math.round(direct);
@@ -1610,44 +1626,59 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
                 }
                 return 0;
               };
-              const ratingRaw = pickString(["ratingConsolidado", "rating", "ratingEmpresa", "ratingFinal", "classificacaoRating", "rating_consolidado"])
-                .toUpperCase()
-                .trim()
-                .slice(0, 1);
-              const ratingConsolidado = ["A", "B", "C", "D", "E", "F", "G", "H"].includes(ratingRaw) ? ratingRaw : "";
-              const inadimplenciaRaw = nonNegativeNumber(
-                pickField([
-                  "probabilidadeInadimplenciaPercent",
-                  "probabilidadeInadimplencia",
-                  "inadimplenciaPercent",
-                  "inadimplencia",
-                  "percentualInadimplencia",
-                  "riscoInadimplenciaPercent",
-                ]),
-              );
 
-              auditResult = {
-                totalDividasNegativadas: nonNegativeNumber(pickField(["totalDividasNegativadas", "totalDividas", "valorNegativacoes", "valorTotalNegativacoes", "totalPendenciasFinanceiras"])),
-                quantidadeNegativacoes: nonNegativeNumber(pickField(["quantidadeNegativacoes", "qtdNegativacoes", "quantidadePendenciasFinanceiras", "totalNegativacoes"])),
-                totalProtestos: nonNegativeNumber(pickField(["totalProtestos", "valorTotalProtestos", "valorProtestos"])),
-                quantidadeProtestos: nonNegativeNumber(pickField(["quantidadeProtestos", "qtdProtestos", "numeroProtestos"])),
-                totalAcoesJudiciaisOuCheques: nonNegativeNumber(pickField(["totalAcoesJudiciaisOuCheques", "totalAcoesJudiciais", "totalCheques", "chequesSemFundo"])),
-                temApontamentosSCRBacen:
-                  pickField(["temApontamentosSCRBacen", "apontamentosSCR", "temPrejuizoBacen", "scrBacen"]) === true,
-                resumoBacen: pickString(["resumoBacen", "resumoSCR", "scrResumo", "bacenResumo"]),
-                situacaoFiscalCadastral: pickString(["situacaoFiscalCadastral", "situacaoCadastral", "situacaoFiscal"]),
-                capacidadeTomadaPronampe: nonNegativeNumber(pickField(["capacidadeTomadaPronampe", "limitePronampe", "capacidadePronampe", "pronampe"])),
-                capacidadeTomadaGeral: nonNegativeNumber(pickField(["capacidadeTomadaGeral", "capacidadeGeral", "potencialCaptacao", "limiteGeral"])),
-                fatoresCriticosBloqueio: pickArray(["fatoresCriticosBloqueio", "fatoresCriticos", "bloqueios", "motivosBloqueio"]),
-                servicosNecessariosIds: pickArray(["servicosNecessariosIds", "servicosNecessarios", "servicosIds", "servicos"]),
-                classificacaoElegibilidade: pickString(["classificacaoElegibilidade", "elegibilidade", "classificacao"]),
-                scoreEstimado: pickString(["scoreEstimado", "score", "scoreBacen", "scoreSerasa"]),
-                scoreNumerico: extractScoreNumber(
-                  pickField(["scoreNumerico", "score", "scoreBacen", "scoreSerasa"]) ?? pickField(["scoreEstimado"]),
-                ),
-                ratingConsolidado,
-                probabilidadeInadimplenciaPercent: inadimplenciaRaw > 0 && inadimplenciaRaw <= 100 ? inadimplenciaRaw : 0,
-              };
+              const rootPickers = makePickers(parsedFacts);
+              const titularesRaw = rootPickers.pickField(["titulares", "titular", "documentos", "consultados"]);
+              const titularesList: any[] = Array.isArray(titularesRaw)
+                ? titularesRaw
+                : parsedFacts && typeof parsedFacts === "object"
+                  ? [parsedFacts]
+                  : [];
+
+              const titulares = titularesList
+                .filter((t: any) => t && typeof t === "object")
+                .map((t: any) => {
+                  const p = makePickers(t);
+                  const documento = p.pickString(["documento", "cpfCnpj", "cnpj", "cpf"]).replace(/\D/g, "");
+                  const tipoRaw = p.pickString(["tipo", "tipoDocumento", "titularTipo"]).toUpperCase();
+                  const tipo = tipoRaw.includes("SOCIO") || documento.length === 11 ? "SOCIO" : "EMPRESA";
+                  const ratingLetra = p
+                    .pickString(["ratingInformado", "rating", "ratingBureau", "classificacaoRating"])
+                    .toUpperCase()
+                    .trim()
+                    .slice(0, 1);
+                  const inadimplencia = p.pickNumber([
+                    "probabilidadeInadimplenciaPercent",
+                    "probabilidadeInadimplencia",
+                    "inadimplenciaPercent",
+                    "inadimplencia",
+                  ]);
+                  return {
+                    tipo,
+                    documento,
+                    nome: p.pickString(["nome", "razaoSocial", "titular"]),
+                    scoreNumerico: extractScoreNumber(p.pickField(["scoreNumerico", "score", "scoreSerasa", "scoreBacen"])),
+                    ratingInformado: ["A", "B", "C", "D", "E", "F", "G", "H"].includes(ratingLetra) ? ratingLetra : "",
+                    quantidadeNegativacoes: p.pickNumber(["quantidadeNegativacoes", "qtdNegativacoes", "quantidadePendenciasFinanceiras"]),
+                    totalNegativacoes: p.pickNumber(["totalNegativacoes", "totalDividasNegativadas", "valorNegativacoes", "totalPendenciasFinanceiras"]),
+                    quantidadeProtestos: p.pickNumber(["quantidadeProtestos", "qtdProtestos", "numeroProtestos"]),
+                    totalProtestos: p.pickNumber(["totalProtestos", "valorProtestos", "valorTotalProtestos"]),
+                    quantidadeChequesSemFundo: p.pickNumber(["quantidadeChequesSemFundo", "chequesSemFundo", "qtdCheques"]),
+                    quantidadeAcoesJudiciais: p.pickNumber(["quantidadeAcoesJudiciais", "qtdAcoesJudiciais", "acoesJudiciais"]),
+                    totalAcoesJudiciais: p.pickNumber(["totalAcoesJudiciais", "valorAcoesJudiciais"]),
+                    temApontamentosSCRBacen: p.pickField(["temApontamentosSCRBacen", "apontamentosSCR", "temPrejuizoBacen", "scrBacen"]) === true,
+                    resumoBacen: p.pickString(["resumoBacen", "resumoSCR", "scrResumo", "bacenResumo"]),
+                    situacaoFiscalCadastral: p.pickString(["situacaoFiscalCadastral", "situacaoCadastral", "situacaoFiscal"]),
+                    probabilidadeInadimplenciaPercent: inadimplencia > 0 && inadimplencia <= 100 ? inadimplencia : 0,
+                    apontamentos: p.pickArray(["apontamentos", "restricoes", "ocorrencias"]),
+                  };
+                });
+
+              if (!titulares.length) {
+                throw new Error("A auditoria não retornou nenhum titular.");
+              }
+
+              stage1Facts = { titulares };
             } catch (parseErr) {
               invalidJson = true;
               stage1Failure = parseErr;
@@ -1659,14 +1690,21 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
             }
             invalidJson = false;
             stage1Failure = null;
-            console.log(`[PROSFEC IA] Etapa 1 concluída com sucesso:`, {
-              elegibilidade: auditResult.classificacaoElegibilidade,
-              dividas: auditResult.totalDividasNegativadas,
-              protestos: auditResult.totalProtestos,
-              servicos: auditResult.servicosNecessariosIds
-            });
+            console.log(
+              `[PROSFEC IA] Etapa 1 (FATOS) concluída — titulares: ${stage1Facts.titulares.length}`,
+              stage1Facts.titulares.map((t: any) => ({
+                tipo: t.tipo,
+                doc: `***${String(t.documento).slice(-4)}`,
+                score: t.scoreNumerico,
+                rating: t.ratingInformado || "-",
+                negativacoes: t.quantidadeNegativacoes,
+                protestos: t.quantidadeProtestos,
+                scr: t.temApontamentosSCRBacen,
+              })),
+            );
             break;
           }
+
         } catch (stage1Err: any) {
           stage1Failure = stage1Err;
           const detail = describeGeminiFailure(stage1Err);
