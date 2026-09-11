@@ -1173,7 +1173,17 @@ export function createExpressApp() {
       const buildConsultationsBlock = (maxItems: number, maxChars: number): string => {
         if (!consultationsSummary.length) return "Nenhuma consulta de crédito realizada no sistema até o momento.";
         const slice = consultationsSummary.slice(0, maxItems);
-        let text = JSON.stringify(slice, null, 2);
+        let text = slice
+          .map((c) => {
+            const header =
+              c.tipoDocumento === "SOCIO_CPF"
+                ? `### SÓCIO — ${c.titular} (CPF: ${c.documento})`
+                : c.tipoDocumento === "EMPRESA_CNPJ"
+                  ? `### EMPRESA — ${c.titular} (CNPJ: ${c.documento})`
+                  : `### DOCUMENTO NÃO IDENTIFICADO (${c.documento || "sem documento"})`;
+            return `${header}\n${JSON.stringify(c, null, 2)}`;
+          })
+          .join("\n\n");
         if (text.length > maxChars) {
           text = `${text.slice(0, maxChars)}\n... [conteúdo truncado por tamanho — analise apenas os dados acima]`;
         }
