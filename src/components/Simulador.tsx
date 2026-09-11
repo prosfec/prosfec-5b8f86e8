@@ -125,6 +125,19 @@ export default function Simulador({
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
   const [createdLeadId, setCreatedLeadId] = useState<string | null>(null);
 
+  // Envia o lead e adota o identificador real devolvido pelo servidor
+  // (empresas já cadastradas continuam no mesmo registro).
+  const captureLead = (finalLead: LeadData & { id: string; result: SimulationResult }) => {
+    if (typeof onLeadCaptured !== "function") return;
+    Promise.resolve(onLeadCaptured(finalLead))
+      .then((realId) => {
+        if (typeof realId === "string" && realId && realId !== finalLead.id) {
+          setCreatedLeadId(realId);
+        }
+      })
+      .catch((err) => console.warn("Falha ao registrar a simulação:", err));
+  };
+
   const [existingLeadTrack, setExistingLeadTrack] = useState<{ id: string; razaoSocial: string; dataCriacao: string; status: string } | null>(null);
   const [copiedLeadLink, setCopiedLeadLink] = useState(false);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
