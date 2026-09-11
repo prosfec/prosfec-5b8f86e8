@@ -1,0 +1,40 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Equipe PROSFEC (ADM / staff) — mesmo critério usado no Firestore.
+    function isStaff() {
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
+        request.auth.token.staff == true ||
+        request.auth.token.email in [
+          'prosfec.oficial@gmail.com',
+          'contato@prosfec.com.br'
+        ]
+      );
+    }
+
+    // Relatórios oficiais (PROSFEC DIAGNÓSTICO 360) anexados pela equipe.
+    // Leitura: qualquer pessoa com o link assinado do arquivo (o parceiro
+    // recebe o link somente dentro da ficha do lead).
+    // Escrita: exclusivamente a equipe, apenas PDF de até 15 MB.
+    match /relatorios_consultas/{arquivo} {
+      allow read: if true;
+      allow write: if isStaff()
+                   && request.resource == null
+                      || (isStaff()
+                          && request.resource.size < 15 * 1024 * 1024
+                          && request.resource.contentType == 'application/pdf');
+    }
+
+    // Tudo o mais permanece bloqueado.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
