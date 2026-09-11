@@ -1287,14 +1287,20 @@ O molde é APENAS FORMATO: todos os valores são placeholders neutros.
   "fatoresCriticosBloqueio": [],
   "servicosNecessariosIds": [],
   "classificacaoElegibilidade": "X",
-  "scoreEstimado": "X"
+  "scoreEstimado": "X",
+  "scoreNumerico": 0,
+  "ratingConsolidado": "X",
+  "probabilidadeInadimplenciaPercent": 0
 }
 
 É PROIBIDO COPIAR OS VALORES DO EXEMPLO. VOCÊ DEVE EXTRAIR OS NÚMEROS REAIS DOS TEXTOS FORNECIDOS.
 
 REGRAS DE PREENCHIMENTO:
 - classificacaoElegibilidade deve ser exatamente uma destas palavras, conforme os dados reais: Alta, Média, Baixa ou Crítica.
-- scoreEstimado deve refletir o score realmente encontrado nos relatórios; se nenhum score constar nos relatórios, retorne "Não informado".
+- scoreEstimado deve refletir o score realmente encontrado nos relatórios (ex: "<score real>/1000 - <faixa informada no relatório>"); se nenhum score constar, retorne "Não informado".
+- scoreNumerico deve conter o MESMO score real de scoreEstimado, apenas como número inteiro de 0 a 1000. Se nenhum score constar nos relatórios, retorne 0.
+- ratingConsolidado deve conter APENAS a letra do rating (A, B, C, D, E, F, G ou H) realmente apurada, já rebaixada pela REGRA DE RISCO CRUZADO quando aplicável. Se nenhum rating constar e não for possível consolidá-lo a partir dos apontamentos reais, retorne "X".
+- probabilidadeInadimplenciaPercent deve conter o percentual de inadimplência informado nos relatórios (0 a 100). Se não constar, retorne 0. NUNCA estime esse número.
 - capacidadeTomadaPronampe e capacidadeTomadaGeral só podem ser maiores que zero se houver base real nos relatórios e no faturamento informado; na dúvida, retorne 0. NÃO APLIQUE FÓRMULAS DE ESTIMATIVA.
 
 REGRA DE RISCO CRUZADO (CONTAMINAÇÃO) — INEGOCIÁVEL:
@@ -1339,8 +1345,10 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
                   fatoresCriticosBloqueio: { type: Type.ARRAY, items: { type: Type.STRING } },
                   servicosNecessariosIds: { type: Type.ARRAY, items: { type: Type.STRING } },
                   classificacaoElegibilidade: { type: Type.STRING }, scoreEstimado: { type: Type.STRING },
+                  scoreNumerico: { type: Type.NUMBER }, ratingConsolidado: { type: Type.STRING },
+                  probabilidadeInadimplenciaPercent: { type: Type.NUMBER },
                 },
-                required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado"],
+                required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado", "scoreNumerico", "ratingConsolidado", "probabilidadeInadimplenciaPercent"],
               },
             }
           }, attempt.timeoutMs);
@@ -1353,21 +1361,84 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
                 const parsed = typeof value === "number" ? value : Number(value);
                 return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
               };
+
+              // Normalização defensiva: aceita variações de nome de chave devolvidas pela IA.
+              // Nenhum valor é inventado — apenas o nome do campo é reconciliado.
+              const normalizeKey = (key: string) =>
+                key
+                  .normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "")
+                  .replace(/[^a-zA-Z0-9]/g, "")
+                  .toLowerCase();
+              const auditIndex = new Map<string, unknown>();
+              if (parsedAudit && typeof parsedAudit === "object") {
+                for (const [key, value] of Object.entries(parsedAudit)) {
+                  const normalized = normalizeKey(key);
+                  if (!auditIndex.has(normalized)) auditIndex.set(normalized, value);
+                }
+              }
+              const pickField = (aliases: string[]): unknown => {
+                for (const alias of aliases) {
+                  const value = auditIndex.get(normalizeKey(alias));
+                  if (value !== undefined && value !== null && value !== "") return value;
+                }
+                return undefined;
+              };
+              const pickString = (aliases: string[]) => {
+                const value = pickField(aliases);
+                return typeof value === "string" ? value : typeof value === "number" ? String(value) : "";
+              };
+              const pickArray = (aliases: string[]) => {
+                const value = pickField(aliases);
+                return Array.isArray(value) ? value.filter((item: unknown) => typeof item === "string") : [];
+              };
+              const extractScoreNumber = (value: unknown): number => {
+                const direct = nonNegativeNumber(value);
+                if (direct > 0 && direct <= 1000) return Math.round(direct);
+                const match = String(value ?? "").match(/\b(\d{1,4})\b/);
+                if (match) {
+                  const parsed = Number(match[1]);
+                  if (parsed >= 0 && parsed <= 1000) return parsed;
+                }
+                return 0;
+              };
+              const ratingRaw = pickString(["ratingConsolidado", "rating", "ratingEmpresa", "ratingFinal", "classificacaoRating", "rating_consolidado"])
+                .toUpperCase()
+                .trim()
+                .slice(0, 1);
+              const ratingConsolidado = ["A", "B", "C", "D", "E", "F", "G", "H"].includes(ratingRaw) ? ratingRaw : "";
+              const inadimplenciaRaw = nonNegativeNumber(
+                pickField([
+                  "probabilidadeInadimplenciaPercent",
+                  "probabilidadeInadimplencia",
+                  "inadimplenciaPercent",
+                  "inadimplencia",
+                  "percentualInadimplencia",
+                  "riscoInadimplenciaPercent",
+                ]),
+              );
+
               auditResult = {
-                totalDividasNegativadas: nonNegativeNumber(parsedAudit?.totalDividasNegativadas),
-                quantidadeNegativacoes: nonNegativeNumber(parsedAudit?.quantidadeNegativacoes),
-                totalProtestos: nonNegativeNumber(parsedAudit?.totalProtestos),
-                quantidadeProtestos: nonNegativeNumber(parsedAudit?.quantidadeProtestos),
-                totalAcoesJudiciaisOuCheques: nonNegativeNumber(parsedAudit?.totalAcoesJudiciaisOuCheques),
-                temApontamentosSCRBacen: parsedAudit?.temApontamentosSCRBacen === true,
-                resumoBacen: typeof parsedAudit?.resumoBacen === "string" ? parsedAudit.resumoBacen : "",
-                situacaoFiscalCadastral: typeof parsedAudit?.situacaoFiscalCadastral === "string" ? parsedAudit.situacaoFiscalCadastral : "",
-                capacidadeTomadaPronampe: nonNegativeNumber(parsedAudit?.capacidadeTomadaPronampe),
-                capacidadeTomadaGeral: nonNegativeNumber(parsedAudit?.capacidadeTomadaGeral),
-                fatoresCriticosBloqueio: Array.isArray(parsedAudit?.fatoresCriticosBloqueio) ? parsedAudit.fatoresCriticosBloqueio.filter((item: unknown) => typeof item === "string") : [],
-                servicosNecessariosIds: Array.isArray(parsedAudit?.servicosNecessariosIds) ? parsedAudit.servicosNecessariosIds.filter((item: unknown) => typeof item === "string") : [],
-                classificacaoElegibilidade: typeof parsedAudit?.classificacaoElegibilidade === "string" ? parsedAudit.classificacaoElegibilidade : "",
-                scoreEstimado: typeof parsedAudit?.scoreEstimado === "string" ? parsedAudit.scoreEstimado : "",
+                totalDividasNegativadas: nonNegativeNumber(pickField(["totalDividasNegativadas", "totalDividas", "valorNegativacoes", "valorTotalNegativacoes", "totalPendenciasFinanceiras"])),
+                quantidadeNegativacoes: nonNegativeNumber(pickField(["quantidadeNegativacoes", "qtdNegativacoes", "quantidadePendenciasFinanceiras", "totalNegativacoes"])),
+                totalProtestos: nonNegativeNumber(pickField(["totalProtestos", "valorTotalProtestos", "valorProtestos"])),
+                quantidadeProtestos: nonNegativeNumber(pickField(["quantidadeProtestos", "qtdProtestos", "numeroProtestos"])),
+                totalAcoesJudiciaisOuCheques: nonNegativeNumber(pickField(["totalAcoesJudiciaisOuCheques", "totalAcoesJudiciais", "totalCheques", "chequesSemFundo"])),
+                temApontamentosSCRBacen:
+                  pickField(["temApontamentosSCRBacen", "apontamentosSCR", "temPrejuizoBacen", "scrBacen"]) === true,
+                resumoBacen: pickString(["resumoBacen", "resumoSCR", "scrResumo", "bacenResumo"]),
+                situacaoFiscalCadastral: pickString(["situacaoFiscalCadastral", "situacaoCadastral", "situacaoFiscal"]),
+                capacidadeTomadaPronampe: nonNegativeNumber(pickField(["capacidadeTomadaPronampe", "limitePronampe", "capacidadePronampe", "pronampe"])),
+                capacidadeTomadaGeral: nonNegativeNumber(pickField(["capacidadeTomadaGeral", "capacidadeGeral", "potencialCaptacao", "limiteGeral"])),
+                fatoresCriticosBloqueio: pickArray(["fatoresCriticosBloqueio", "fatoresCriticos", "bloqueios", "motivosBloqueio"]),
+                servicosNecessariosIds: pickArray(["servicosNecessariosIds", "servicosNecessarios", "servicosIds", "servicos"]),
+                classificacaoElegibilidade: pickString(["classificacaoElegibilidade", "elegibilidade", "classificacao"]),
+                scoreEstimado: pickString(["scoreEstimado", "score", "scoreBacen", "scoreSerasa"]),
+                scoreNumerico: extractScoreNumber(
+                  pickField(["scoreNumerico", "score", "scoreBacen", "scoreSerasa"]) ?? pickField(["scoreEstimado"]),
+                ),
+                ratingConsolidado,
+                probabilidadeInadimplenciaPercent: inadimplenciaRaw > 0 && inadimplenciaRaw <= 100 ? inadimplenciaRaw : 0,
               };
             } catch (parseErr) {
               invalidJson = true;
