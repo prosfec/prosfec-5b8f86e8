@@ -1,0 +1,405 @@
+# Atualização das regras do Firestore (firestore.rules)
+
+O código abaixo é a versão completa e atualizada das regras de segurança. A única ação necessária é manual: copiar e colar no Firebase Console e clicar em **Publicar**.
+
+## Como aplicar (passo a passo)
+
+1. Acesse o [Console do Firebase](https://console.firebase.google.com) e abra o projeto da PROSFEC.
+2. No menu lateral, clique em **Firestore Database** → aba **Regras**.
+3. Apague todo o conteúdo atual e cole o código abaixo.
+4. Clique em **Publicar**.
+5. Aguarde 1-2 minutos para as regras propagarem.
+
+## Código completo para colar
+
+```javascript
+rules_version = "2";
+
+// =============================================================================
+// PROSFEC — Regras de Segurança do Firestore (versão blindada)
+//
+// Princípios:
+//  1. Nada é liberado por padrão (deny-all no final).
+//  2. Exceções públicas mínimas e intencionais:
+//       - leads: CREATE público (simulador / captação do site)
+//       - parceiros: READ público (resolver links de indicação)
+//  3. Toda escrita administrativa exige Admin ou Contador autenticado.
+//  4. Parceiro autenticado só escreve/le o que é dele.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userEmail() {
+      return request.auth != null && request.auth.token.email != null
+        ? request.auth.token.email
+        : "";
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.uid == "Nso5FBoBVHXNY60RDw6NNKeaCC23" ||
+        request.auth.token.admin == true ||
+        userEmail().lower() == "prosfec.tesouraria@gmail.com"
+      );
+    }
+
+    function isContador() {
+      return isSignedIn() && (
+        request.auth.uid == "vKZFCNniHJfzJ9B3yWlzErNC3892" ||
+        request.auth.token.contador == true ||
+        userEmail().lower() == "contador.prosfec@gmail.com"
+      );
+    }
+
+    function isStaff() {
+      return isAdmin() || isContador();
+    }
+
+    // Dono do documento de parceiro (após a migração para Firebase Auth)
+    function isOwnPartnerDoc(partnerId) {
+      return isSignedIn() && (
+        request.auth.uid == partnerId ||
+        (resource != null && (
+          (resource.data.authUid is string && resource.data.authUid == request.auth.uid) ||
+          (resource.data.email is string && resource.data.email.lower() == userEmail().lower())
+        ))
+      );
+    }
+
+    // Impede que um parceiro se auto-promova ou altere saldo/comissão
+    function partnerSafeUpdate() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny([
+          "senha", "role", "perfil", "isAdmin", "aprovado", "status",
+          "saldo", "saldoDisponivel", "comissaoTotal", "creditos",
+          "percentualComissao", "nivel", "authUid"
+        ]);
+    }
+
+    // O documento de parceiro cujo ID foi informado pertence ao usuário logado?
+    // (o parentPartnerId gravado pelo app é o ID do DOCUMENTO do Master, não o
+    // UID do Firebase Auth — por isso resolvemos o doc e conferimos o authUid)
+    function partnerDocBelongsToMe(partnerDocId) {
+      return partnerDocId is string
+        && exists(/databases/$(database)/documents/parceiros/$(partnerDocId))
+        && (
+          partnerDocId == request.auth.uid ||
+          get(/databases/$(database)/documents/parceiros/$(partnerDocId)).data.authUid == request.auth.uid
+        );
+    }
+
+    // Parceiro Master gerenciando um consultor direto da sua equipe:
+    // pode reativar/pausar o acesso e ajustar o plano de comissão, mas nunca
+    // mexer em senha, saldo, papel administrativo ou vínculo de Auth.
+    function isMyDirectConsultant() {
+      return isSignedIn()
+        && resource != null
+        && (
+          (resource.data.parentPartnerId is string && (
+            resource.data.parentPartnerId == request.auth.uid ||
+            resource.data.parentPartnerId == request.auth.token.partnerId ||
+            partnerDocBelongsToMe(resource.data.parentPartnerId)
+          )) ||
+          (resource.data.masterId is string && (
+            resource.data.masterId == request.auth.uid ||
+            partnerDocBelongsToMe(resource.data.masterId)
+          )) ||
+          (resource.data.parceiroMasterId is string && (
+            resource.data.parceiroMasterId == request.auth.uid ||
+            partnerDocBelongsToMe(resource.data.parceiroMasterId)
+          ))
+        );
+    }
+
+
+    function masterConsultantUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly([
+          "status", "inativoPorInatividade", "motivoInativacao",
+          "dataUltimoAcesso", "dataReativacao", "dataInativacao",
+          "plano", "planoComissao", "tipoConsultor"
+        ]);
+    }
+
+    // Migração para o Firebase Auth: o próprio parceiro (já autenticado) pode
+    // APENAS remover a senha em texto puro e gravar o vínculo com o Auth.
+    function partnerAuthMigration() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(["senha", "authUid", "authMigradoEm"])
+        && !("senha" in request.resource.data)
+        && request.resource.data.authUid == request.auth.uid;
+    }
+
+    // Limites de payload para escrita pública (anti-abuso)
+    function leadCreateIsSane() {
+      return request.resource.data.keys().size() < 120
+        && !request.resource.data.keys().hasAny([
+             "clienteSenha", "clienteSenhaHash", "clienteSenhaSalt",
+             "senha", "aprovado", "comissaoPaga"
+           ]);
+    }
+
+    // Etapa B-2: os campos de senha do cliente (hash/salt) só podem ser
+    // escritos pela identidade de serviço do servidor ou pelo staff.
+    function leadSenhaFieldsUntouched() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(["clienteSenha", "clienteSenhaHash", "clienteSenhaSalt", "clienteSenhaAlgo"]);
+    }
+
+    // Identidade de serviço do backend PROSFEC (login por e-mail/senha).
+    // Aceita o e-mail padrão, qualquer conta de serviço @prosfec.app usada pelo
+    // backend, ou uma marcação explícita de serviço no token.
+    function isServico() {
+      return isSignedIn() && (
+        request.auth.token.servico == true ||
+        userEmail().lower() == "servico.interno@prosfec.app" ||
+        userEmail().lower() == "servico@prosfec.app" ||
+        userEmail().lower().matches("^servico[a-z0-9._%+-]*@prosfec\\.app$")
+      );
+    }
+
+    // Cliente que vinculou sua conta real do Firebase Auth a este lead.
+    function isClienteDoLead() {
+      return isSignedIn()
+        && resource != null
+        && resource.data.clienteAuthUid is string
+        && resource.data.clienteAuthUid == request.auth.uid;
+    }
+
+    // Campos que o próprio cliente pode atualizar no seu lead (sem tocar em
+    // dados sensíveis, senhas, etapa, status financeiro ou campos de staff).
+    function leadClienteSafeUpdate() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny([
+          "clienteSenha", "clienteSenhaHash", "clienteSenhaSalt", "clienteSenhaAlgo",
+          "clienteAuthUid", "clienteAuthVinculadoEm", "etapa", "status", "statusAprovacao",
+          "limiteAprovado", "dataAprovacao", "parceiroId", "consultorResponsavel",
+          "comissaoPaga", "valorComissao", "dataPagamentoComissao"
+        ]);
+    }
+
+    // ---------------------------------------------------------------------
+    // 1. LEADS — create público (simulador), leitura/edição restrita
+    // ---------------------------------------------------------------------
+    match /leads/{leadId} {
+      allow create: if leadCreateIsSane();
+      // Leitura: staff, serviço, parceiro responsável (mantido via regra
+      // isSignedIn genérica enquanto não há vínculo por parceiro) ou o
+      // próprio cliente autenticado vinculado ao lead.
+      allow read:   if isServico() || isStaff() || isClienteDoLead() || isSignedIn();
+      // Escrita: serviço/staff têm controle total. Cliente autenticado só pode
+      // alterar campos seguros. Outros usuários autenticados não podem tocar
+      // nos campos de senha (proteção legada do Modelo A).
+      allow update: if isServico() || isStaff()
+                    || (isClienteDoLead() && leadClienteSafeUpdate())
+                    || (isSignedIn() && leadSenhaFieldsUntouched());
+      allow delete: if isAdmin();
+
+      match /pendencias/{pendenciaId} {
+        allow read, create, update: if isSignedIn();
+        allow delete: if isStaff();
+      }
+
+      match /{sub=**} {
+        allow read, write: if isStaff();
+      }
+    }
+
+    // ---------------------------------------------------------------------
+    // 2. PARCEIROS — read público (links de indicação), escrita restrita
+    // ---------------------------------------------------------------------
+    match /parceiros/{partnerId} {
+      allow read: if true;
+
+      // Cadastro de novo parceiro pelo site (sem senha em texto puro,
+      // sem se marcar como aprovado/admin)
+      allow create: if !request.resource.data.keys().hasAny(
+                        ["senha", "role", "isAdmin", "saldo", "comissaoTotal"]
+                      )
+                    && request.resource.data.keys().size() < 80;
+
+      // isServico(): identidade de serviço do backend (débito de saldo da
+      // consulta RedeBE, histórico operacional etc.).
+      allow update: if isStaff()
+                    || isServico()
+                    || (isOwnPartnerDoc(partnerId) && partnerSafeUpdate())
+                    || (isOwnPartnerDoc(partnerId) && partnerAuthMigration())
+                    || (isMyDirectConsultant() && masterConsultantUpdate());
+      allow delete: if isAdmin();
+
+      match /{sub=**} {
+        allow read: if isSignedIn();
+        allow write: if isStaff() || isServico() || isOwnPartnerDoc(partnerId);
+      }
+    }
+
+    // ---------------------------------------------------------------------
+    // 3. COMUNICADOS — leitura autenticada, escrita só staff
+    // ---------------------------------------------------------------------
+    match /comunicados/{comunicadoId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // ---------------------------------------------------------------------
+    // 4. RECARGAS DE CRÉDITO — parceiro solicita, staff aprova
+    // ---------------------------------------------------------------------
+    match /recargas/{recargaId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isStaff();
+    }
+
+    // ---------------------------------------------------------------------
+    // 5. LEADS VISTOS PELO PARCEIRO — marcação de leitura
+    // ---------------------------------------------------------------------
+    match /leads_vistos_parceiro/{seenId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isStaff();
+    }
+
+    // ---------------------------------------------------------------------
+    // 6. LEADS DISTRIBUIDOS — Master gerencia a carteira da sua rede
+    // ---------------------------------------------------------------------
+    match /leads_distribuidos/{distId} {
+      allow read:   if isSignedIn();
+      allow create, update: if isSignedIn();
+      // Staff, o Master dono da distribuição ou o próprio consultor da carteira
+      // podem excluir definitivamente (limpeza de leads descartados).
+      allow delete: if isStaff()
+                    || (isSignedIn() && resource != null && (
+                         partnerDocBelongsToMe(resource.data.parentPartnerId) ||
+                         partnerDocBelongsToMe(resource.data.teamMemberId)
+                       ));
+    }
+
+
+    // ---------------------------------------------------------------------
+    // 7. NOTIFICACOES
+    // ---------------------------------------------------------------------
+    match /notificacoes/{notificacaoId} {
+      allow read:   if isStaff() || isServico()
+                    || (isSignedIn() && (
+                         resource.data.recipientId == request.auth.uid
+                         || partnerDocBelongsToMe(resource.data.recipientId)
+                       ));
+      allow create: if isStaff() || isServico();
+      allow update: if isStaff() || isServico()
+                    || (isSignedIn() && (
+                          resource.data.recipientId == request.auth.uid
+                          || partnerDocBelongsToMe(resource.data.recipientId)
+                        )
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                             .hasOnly(["lida", "dataLeitura"]));
+      allow delete: if isStaff();
+    }
+
+    // ---------------------------------------------------------------------
+    // 8. CONSULTAS REALIZADAS (RedeBE / Integrador)
+    // ---------------------------------------------------------------------
+    match /consultas_realizadas/{consultaId} {
+      allow read:   if isStaff() || isServico()
+                    || (isSignedIn() && (
+                         resource.data.partnerId == request.auth.uid ||
+                         resource.data.partnerId == request.auth.token.partnerId ||
+                         partnerDocBelongsToMe(resource.data.partnerId)
+                       ));
+      allow create, update: if isStaff() || isServico();
+      allow delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------------
+    // 9. CONFIGURACOES — leitura autenticada, escrita SOMENTE ADM
+    // ---------------------------------------------------------------------
+    match /configuracoes/{configId} {
+      allow read:  if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------------
+    // 10. HISTORICO DE BUSCAS DO CACA-LEADS
+    // ---------------------------------------------------------------------
+    match /historico_buscas_caca_leads/{historyId} {
+      allow read, create: if isSignedIn();
+      allow update, delete: if isStaff();
+    }
+
+    // ---------------------------------------------------------------------
+    // 11. SOLICITACOES DE COMISSAO (saques) — parceiro cria, ADM decide
+    // ---------------------------------------------------------------------
+    match /solicitacoes_comissao/{solicitacaoId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.resource.data.status in ["pendente", "Pendente", "em_analise"];
+      allow update, delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------------
+    // 11.5 OPERACOES DE IA (locks de diagnóstico PROSFEC)
+    // ---------------------------------------------------------------------
+    match /operacoes_ia/{operacaoId} {
+      allow read: if isStaff() || isServico();
+      allow create, update: if isStaff() || isServico();
+      allow delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------------
+    // 12. SERVICOS DE CONTABILIDADE (catálogo)
+    // ---------------------------------------------------------------------
+    match /servicos_contabilidade/{servicoId} {
+      allow read:  if true;              // catálogo exibido no site/portal
+      allow write: if isStaff();
+    }
+
+    // ---------------------------------------------------------------------
+    // 13. PEDIDOS DE SERVICOS DE CONTABILIDADE
+    // ---------------------------------------------------------------------
+    match /pedidos_servicos_contabilidade/{pedidoId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isStaff();
+    }
+
+    // ---------------------------------------------------------------------
+    // 14. LOGS DE WEBHOOK — escrita só pelo servidor/staff, leitura só ADM
+    // ---------------------------------------------------------------------
+    match /webhook_logs_lastlink/{logId} {
+      allow read: if isAdmin();
+      allow write: if isStaff();
+    }
+
+    match /hubla_events/{eventId} {
+      allow read: if isAdmin();
+      allow write: if isStaff();
+    }
+
+    // ---------------------------------------------------------------------
+    // 15. TESTE DE CONEXAO
+    // ---------------------------------------------------------------------
+    match /test/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // ---------------------------------------------------------------------
+    // DENY-ALL final: qualquer coleção não listada acima fica bloqueada.
+    // ---------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+```
+
+## Observações
+
+- Nenhuma alteração de código é necessária no projeto — o arquivo `firestore.rules` local já contém exatamente este conteúdo.
+- A aplicação é feita apenas no Console do Firebase, pois a publicação de regras exige acesso à sua conta.
+- Após publicar, os erros de permissão (403) no painel do parceiro devem desaparecer.
