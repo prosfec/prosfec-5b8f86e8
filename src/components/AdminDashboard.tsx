@@ -3562,7 +3562,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       {paginatedLeads.map((lead) => {
                         const hasActivePendency = lead.pendente === true || lead.pendencias?.status === "pendente";
                         const isAnswered = !!lead.pendencias?.resposta;
-                        const stageNum = lead.etapa || 1;
+                         const stageNum = lead.etapa || 1;
+                         const pdfPendentes = getPendingReports(lead);
 
                         return (
                           <div 
