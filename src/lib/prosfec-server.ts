@@ -1094,6 +1094,7 @@ export function createExpressApp() {
             resultado: r.data.resultado,
             partnerId: r.data.partnerId,
             leadId: r.data.leadId,
+            documento: String(r.data.documento || "").replace(/\D/g, ""),
           })).filter((c: any) => caller.isAdmin || c.partnerId === caller.partnerId || c.leadId === leadId);
         } catch (dbErr) {
           console.warn("Could not load matching consultations from Firestore:", dbErr);
