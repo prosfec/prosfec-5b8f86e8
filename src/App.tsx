@@ -438,7 +438,7 @@ export default function App() {
           `Simulação não registrada (HTTP ${response.status}):`,
           payload?.error || "resposta inválida da rota /api/public/leads/simulacao",
         );
-        return;
+        return null;
       }
 
 
@@ -447,9 +447,13 @@ export default function App() {
           ? `Lead existente atualizado (${payload.leadId}).`
           : `Novo lead registrado (${payload.leadId}).`,
       );
+
+      // Devolve o identificador real gravado (pode ser o de um cadastro já existente).
+      return typeof payload.leadId === "string" && payload.leadId ? payload.leadId : null;
     } catch (error) {
       // Nunca interrompe a tela de resultado do visitante.
       console.warn("Falha ao registrar a simulação:", error);
+      return null;
     }
   };
 

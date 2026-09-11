@@ -54,7 +54,9 @@ import {
 } from "lucide-react";
 
 interface SimuladorProps {
-  onLeadCaptured?: (lead: LeadData & { id: string; result: SimulationResult }) => void;
+  onLeadCaptured?: (
+    lead: LeadData & { id: string; result: SimulationResult },
+  ) => void | string | null | Promise<string | null | void>;
   referredByPartnerWhatsapp?: string | null;
   referredByPartnerNome?: string | null;
   referredByPartnerId?: string | null;
@@ -122,6 +124,19 @@ export default function Simulador({
   const [finished, setFinished] = useState(false);
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
   const [createdLeadId, setCreatedLeadId] = useState<string | null>(null);
+
+  // Envia o lead e adota o identificador real devolvido pelo servidor
+  // (empresas já cadastradas continuam no mesmo registro).
+  const captureLead = (finalLead: LeadData & { id: string; result: SimulationResult }) => {
+    if (typeof onLeadCaptured !== "function") return;
+    Promise.resolve(onLeadCaptured(finalLead))
+      .then((realId) => {
+        if (typeof realId === "string" && realId && realId !== finalLead.id) {
+          setCreatedLeadId(realId);
+        }
+      })
+      .catch((err) => console.warn("Falha ao registrar a simulação:", err));
+  };
 
   const [existingLeadTrack, setExistingLeadTrack] = useState<{ id: string; razaoSocial: string; dataCriacao: string; status: string } | null>(null);
   const [copiedLeadLink, setCopiedLeadLink] = useState(false);
@@ -560,7 +575,7 @@ export default function Simulador({
         };
 
         triggerWebhookSimulation("lead_simulation_completed", finalLead);
-        if (typeof onLeadCaptured === "function") onLeadCaptured(finalLead);
+        captureLead(finalLead);
         return;
       }
     } catch (error) {
@@ -782,7 +797,7 @@ export default function Simulador({
     };
 
     triggerWebhookSimulation("lead_simulation_completed", finalLead);
-    if (typeof onLeadCaptured === "function") onLeadCaptured(finalLead);
+    captureLead(finalLead);
   };
 
   const resetAll = () => {
