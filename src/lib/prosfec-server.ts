@@ -1535,19 +1535,29 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
               responseSchema: {
                 type: Type.OBJECT,
                 properties: {
-                  totalDividasNegativadas: { type: Type.NUMBER }, quantidadeNegativacoes: { type: Type.NUMBER },
-                  totalProtestos: { type: Type.NUMBER }, quantidadeProtestos: { type: Type.NUMBER },
-                  totalAcoesJudiciaisOuCheques: { type: Type.NUMBER }, temApontamentosSCRBacen: { type: Type.BOOLEAN },
-                  resumoBacen: { type: Type.STRING }, situacaoFiscalCadastral: { type: Type.STRING },
-                  capacidadeTomadaPronampe: { type: Type.NUMBER }, capacidadeTomadaGeral: { type: Type.NUMBER },
-                  fatoresCriticosBloqueio: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  servicosNecessariosIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  classificacaoElegibilidade: { type: Type.STRING }, scoreEstimado: { type: Type.STRING },
-                  scoreNumerico: { type: Type.NUMBER }, ratingConsolidado: { type: Type.STRING },
-                  probabilidadeInadimplenciaPercent: { type: Type.NUMBER },
+                  titulares: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        tipo: { type: Type.STRING }, documento: { type: Type.STRING }, nome: { type: Type.STRING },
+                        scoreNumerico: { type: Type.NUMBER }, ratingInformado: { type: Type.STRING },
+                        quantidadeNegativacoes: { type: Type.NUMBER }, totalNegativacoes: { type: Type.NUMBER },
+                        quantidadeProtestos: { type: Type.NUMBER }, totalProtestos: { type: Type.NUMBER },
+                        quantidadeChequesSemFundo: { type: Type.NUMBER },
+                        quantidadeAcoesJudiciais: { type: Type.NUMBER }, totalAcoesJudiciais: { type: Type.NUMBER },
+                        temApontamentosSCRBacen: { type: Type.BOOLEAN },
+                        resumoBacen: { type: Type.STRING }, situacaoFiscalCadastral: { type: Type.STRING },
+                        probabilidadeInadimplenciaPercent: { type: Type.NUMBER },
+                        apontamentos: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      },
+                      required: ["tipo", "documento", "scoreNumerico", "quantidadeNegativacoes", "totalNegativacoes", "quantidadeProtestos", "totalProtestos", "temApontamentosSCRBacen", "apontamentos"],
+                    },
+                  },
                 },
-                required: ["totalDividasNegativadas", "quantidadeNegativacoes", "totalProtestos", "quantidadeProtestos", "temApontamentosSCRBacen", "resumoBacen", "situacaoFiscalCadastral", "fatoresCriticosBloqueio", "servicosNecessariosIds", "classificacaoElegibilidade", "scoreEstimado", "scoreNumerico", "ratingConsolidado", "probabilidadeInadimplenciaPercent"],
+                required: ["titulares"],
               },
+
             }
           }, attempt.timeoutMs);
 
