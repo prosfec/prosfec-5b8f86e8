@@ -2063,9 +2063,9 @@ REGRA 5 — SEM BLOCOS JSON: NÃO inclua nenhum bloco de código JSON no final. 
         );
       }
 
-      // O laudo só é aceito se vier completo, com os dois blocos estruturados finais.
+      // O laudo agora é apenas texto: aceito quando vier com corpo suficiente e a seção final do cronograma.
       const hasStructuredBlocks = (text: string) =>
-        /json_servicos/i.test(text) && /json_subetapas/i.test(text);
+        text.trim().length >= 800 && /cronograma/i.test(text);
 
       const response = await generateContentWithFallback(
         ai,
