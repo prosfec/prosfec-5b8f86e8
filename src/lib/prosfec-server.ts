@@ -938,7 +938,12 @@ export function createExpressApp() {
     return candidate;
   }
 
-  async function generateContentWithFallback(ai: any, requestOptions: any, timeoutMs = 8_000) {
+  async function generateContentWithFallback(
+    ai: any,
+    requestOptions: any,
+    timeoutMs = 8_000,
+    validateText?: (text: string) => boolean,
+  ) {
     // Modelos mais rápidos primeiro; nunca usar modelos "pro" nesta rota.
     const candidateModels = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
     let lastError: any = null;
@@ -947,19 +952,36 @@ export function createExpressApp() {
       try {
         const fastConfig = {
           ...(requestOptions?.config || {}),
-          // Desliga o raciocínio interno (principal causa de lentidão) — só na família 2.5.
-          ...(modelName.startsWith("gemini-2.5") ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+          // Reduz o raciocínio interno (que consome o mesmo orçamento de saída do texto).
+          // Família 3.x aceita thinkingLevel; família 2.5 aceita thinkingBudget.
+          ...(modelName.startsWith("gemini-3")
+            ? { thinkingConfig: { thinkingLevel: "low" } }
+            : modelName.startsWith("gemini-2.5")
+              ? { thinkingConfig: { thinkingBudget: 0 } }
+              : {}),
         };
         const response = await Promise.race([
           ai.models.generateContent({ ...requestOptions, config: fastConfig, model: modelName }),
           new Promise((_, reject) => setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), timeoutMs)),
         ]);
-        if (response && response.text) {
-          return response;
+        const responseText = (response as any)?.text || "";
+        if (response && responseText) {
+          if (!validateText || validateText(responseText)) {
+            return response;
+          }
+          console.error(
+            `[PROSFEC IA] Resposta do modelo ${modelName} incompleta/truncada — tentando o próximo modelo.`,
+          );
+          lastError = Object.assign(
+            new Error(`O modelo ${modelName} retornou um laudo incompleto (resposta truncada).`),
+            { code: "GEMINI_TRUNCATED" },
+          );
+          continue;
         }
         lastError = Object.assign(new Error(`O modelo ${modelName} retornou resposta vazia.`), {
           code: "GEMINI_EMPTY",
         });
+
       } catch (err: any) {
         lastError = err;
         const status = err?.status || err?.code;
@@ -980,7 +1002,7 @@ export function createExpressApp() {
     let diagnosisLockPath = "";
     const routeStartedAt = Date.now();
     // Orçamento total das chamadas de IA nesta rota (mantém a resposta dentro do limite do servidor).
-    const TOTAL_AI_BUDGET_MS = 30_000;
+    const TOTAL_AI_BUDGET_MS = 90_000;
     try {
       const caller = await authenticateApiCaller(req);
       const { leadId } = req.body;
@@ -1318,8 +1340,9 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
 
       // Tentativa 1: payload já enxuto. Tentativa 2: payload mínimo + instrução reforçada de JSON puro.
       const stage1Attempts: Array<{ maxItems: number; maxChars: number; timeoutMs: number; maxOutputTokens: number; reinforceJson?: boolean }> = [
-        { maxItems: 6, maxChars: 20_000, timeoutMs: 14_000, maxOutputTokens: 1_500 },
-        { maxItems: 3, maxChars: 8_000, timeoutMs: 10_000, maxOutputTokens: 1_200, reinforceJson: true },
+        { maxItems: 6, maxChars: 20_000, timeoutMs: 25_000, maxOutputTokens: 3_000 },
+        { maxItems: 3, maxChars: 8_000, timeoutMs: 18_000, maxOutputTokens: 2_400, reinforceJson: true },
+
       ];
 
       for (const attempt of stage1Attempts) {
@@ -1566,20 +1589,30 @@ REGRA 5: REDAÇÃO COMERCIAL DE CAPACIDADE. Se a variável capacidadeTomadaGeral
       // Guarda de tempo total: se a Etapa 1 já consumiu o orçamento, não inicia a Etapa 2.
       const elapsedMs = Date.now() - routeStartedAt;
       const remainingMs = TOTAL_AI_BUDGET_MS - elapsedMs;
-      if (remainingMs < 4_000) {
+      if (remainingMs < 10_000) {
         throw Object.assign(
           new Error("A IA demorou demais para responder. Tente gerar o diagnóstico novamente."),
           { statusCode: 504, code: "GEMINI_TIMEOUT" },
         );
       }
 
-      const response = await generateContentWithFallback(ai, {
-        contents: stage2SystemPrompt,
-        config: {
-          temperature: 0.2,
-          maxOutputTokens: 2200,
-        }
-      }, Math.min(12_000, remainingMs));
+      // O laudo só é aceito se vier completo, com os dois blocos estruturados finais.
+      const hasStructuredBlocks = (text: string) =>
+        /json_servicos/i.test(text) && /json_subetapas/i.test(text);
+
+      const response = await generateContentWithFallback(
+        ai,
+        {
+          contents: stage2SystemPrompt,
+          config: {
+            temperature: 0.2,
+            maxOutputTokens: 6000,
+          },
+        },
+        Math.min(45_000, remainingMs),
+        hasStructuredBlocks,
+      );
+
 
       const responseText = response.text || "";
 
