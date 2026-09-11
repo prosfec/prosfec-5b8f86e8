@@ -3163,10 +3163,27 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <List className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Tabela</span>
                       </button>
-                    </div>
+                     </div>
+                   )}
+
+                  {/* Filtro: leads com consulta executada aguardando o PDF */}
+                  {activeTab === "leads" && (
+                    <button
+                      type="button"
+                      onClick={() => { setOnlyPendingPdf(!onlyPendingPdf); setLeadsPage(1); }}
+                      className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                        onlyPendingPdf
+                          ? "bg-rose-600 text-white border-rose-600"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-rose-300 hover:text-rose-700"
+                      }`}
+                      title="Mostrar apenas leads com consulta executada aguardando o relatório PDF"
+                    >
+                      <span className={`w-2 h-2 rounded-full ${onlyPendingPdf ? "bg-white" : "bg-rose-500 animate-pulse"}`}></span>
+                      Aguardando PDF ({totalPendingPdfLeads})
+                    </button>
                   )}
 
-                  {/* Hide Team Members Switch (Partners Only) */}
+                   {/* Hide Team Members Switch (Partners Only) */}
                   {activeTab === "partners" && (
                     <button
                       type="button"
