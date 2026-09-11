@@ -6385,31 +6385,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   </button>
                 </div>
 
-                {/* Texto do Diagnóstico IA e Serviços Recomendados (Apenas se Passo 3 concluído) */}
-                {selectedLead.diagnosticoPROSFEC ? (
+                {/* Serviços Recomendados (inclusão manual pelo ADM após análise dos relatórios) */}
+                {(
                   <>
-                    <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 rounded-2xl p-5 space-y-4 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 border-b border-slate-100 pb-2.5">
-                        <span className="font-bold text-emerald-800 flex items-center gap-1.5">
-                          <CheckCircle className="w-4 h-4 text-emerald-600" />
-                          Resultado da Perícia & Diagnóstico PROSFEC IA
-                        </span>
-                        <div className="flex items-center gap-2 text-[11px]">
-                          {selectedLead.diagnosticoPROSFEC.dataGeracao && (
-                            <span>Gerado em: {new Date(selectedLead.diagnosticoPROSFEC.dataGeracao).toLocaleString('pt-BR')}</span>
-                          )}
-                          <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
-                            Refazeres: {selectedLead.diagnosticoPROSFEC.geracoesCount || selectedLead.diagnosticoGeracoesCount || 1}/2
-                          </span>
-                        </div>
-                      </div>
 
-                      <FintechDiagnosisView
-                        lead={selectedLead}
-                        diagnostico={selectedLead.diagnosticoPROSFEC}
-                        consultas={[]}
-                      />
-                    </div>
 
                     {/* Lista de Serviços Recomendados do Lead */}
                     <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 rounded-xl p-4 space-y-3 shadow-2xs">
@@ -6505,23 +6484,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       </div>
                     </div>
                   </>
-                ) : (
-                  <div className="bg-amber-50/60 border border-amber-200/80 rounded-xl p-4 text-center space-y-2">
-                    <p className="text-xs font-bold text-amber-900">
-                      Nenhum Diagnóstico PROSFEC IA gerado até o momento para este lead.
-                    </p>
-                    <p className="text-[11px] text-amber-700">
-                      Os serviços de estruturação e adequação serão liberados nesta ficha após a conclusão do Diagnóstico (Passo 3) no Workspace do Lead.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setWorkspaceLead(selectedLead)}
-                      className="mt-2 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Acessar Workspace & Gerar
-                    </button>
-                  </div>
                 )}
               </div>
 
