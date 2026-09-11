@@ -80,7 +80,7 @@ export const DossierComparativeViewer: React.FC<DossierComparativeViewerProps> =
             <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
               {isAdmin 
-                ? "Utilize o painel de consulta acima para executar a consulta RedeBE sem custo de saldo e emitir o dossiê oficial."
+                ? "Utilize o painel de consulta acima para executar a consulta de crédito sem custo de saldo e emitir o dossiê oficial."
                 : "Execute a reavaliação oficial dos dados no fluxo operacional para emitir o dossiê e liberar a homologação bancária."}
             </span>
           </div>

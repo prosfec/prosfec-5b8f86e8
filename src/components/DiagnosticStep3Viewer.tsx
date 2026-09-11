@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Brain, CheckCircle2, Clock, Eye, FileText } from "lucide-react";
 import { Lead } from "../types";
-import { RedeBEReportViewerModal } from "./RedeBEReportViewerModal";
+import { RelatorioPdfViewerModal } from "./RelatorioPdfViewerModal";
 
 interface DiagnosticStep3ViewerProps {
   lead: Lead;
@@ -32,12 +32,12 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
                 Passo 3: Consulta de Crédito CPF e CNPJ
               </h4>
               <p className="text-xs text-slate-500">
-                Relatório oficial de crédito emitido pela RedeBE
+                Relatório oficial PROSFEC DIAGNÓSTICO 360
               </p>
             </div>
           </div>
           <span className="bg-amber-50 text-amber-800 font-extrabold text-xs uppercase px-3 py-1 rounded-full border border-amber-200 font-mono">
-            Aguardando Consulta via API
+            Aguardando Consulta
           </span>
         </div>
 
@@ -60,10 +60,10 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
           </div>
           <div>
             <h4 className="font-display font-black text-sm md:text-base text-slate-900 uppercase tracking-wider">
-              Relatórios de Crédito RedeBE
+              Relatórios PROSFEC DIAGNÓSTICO 360
             </h4>
             <p className="text-xs text-slate-500 mt-0.5">
-              Resultado individual de cada documento consultado, exatamente como entregue pela RedeBE
+              Resultado individual de cada documento consultado, no arquivo oficial anexado pela equipe
             </p>
           </div>
         </div>
@@ -81,10 +81,10 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
           >
             <div className="space-y-1 min-w-0">
               <span className="text-[10px] bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded-sm uppercase font-mono tracking-wider">
-                {consulta.produto_code || "REDEBE"}
+                PROSFEC DIAGNÓSTICO 360
               </span>
               <h6 className="font-extrabold text-xs text-slate-800">
-                {consulta.documentoNome || consulta.produto_nome || "Consulta de crédito"}
+                {consulta.documentoNome || "Consulta de crédito"}
               </h6>
               <div className="text-[10px] text-slate-500 font-mono">
                 {consulta.documento}
@@ -92,6 +92,15 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
                   ? ` • ${new Date(consulta.dataConsulta).toLocaleString("pt-BR")}`
                   : ""}
               </div>
+              <span
+                className={`inline-block text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider border ${
+                  consulta.relatorioPdfUrl
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                    : "bg-amber-50 text-amber-800 border-amber-200"
+                }`}
+              >
+                {consulta.relatorioPdfUrl ? "Relatório disponível" : "Relatório em preparação"}
+              </span>
             </div>
 
             <button
@@ -106,7 +115,7 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
         ))}
       </div>
 
-      <RedeBEReportViewerModal
+      <RelatorioPdfViewerModal
         isOpen={Boolean(viewingConsulta)}
         onClose={() => setViewingConsulta(null)}
         consulta={viewingConsulta}
