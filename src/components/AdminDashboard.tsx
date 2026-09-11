@@ -3587,9 +3587,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     : lead.status === "arquivado" 
                                       ? "bg-slate-400" 
                                       : "bg-blue-500"
-                            }`}></div>
+                             }`}></div>
 
-                            {/* Header details */}
+                            {pdfPendentes > 0 && (
+                              <span
+                                className="absolute top-3 right-3 z-10 flex h-2.5 w-2.5"
+                                title={`${pdfPendentes} consulta(s) executada(s) aguardando o relatório PDF`}
+                              >
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                              </span>
+                            )}
+
+                             {/* Header details */}
                             <div className="p-4 flex-1 space-y-3">
                               <div className="flex justify-between items-start gap-2">
                                 <div className="min-w-0">
