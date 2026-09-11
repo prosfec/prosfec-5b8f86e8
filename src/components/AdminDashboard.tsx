@@ -92,7 +92,6 @@ import {
   onlyMensalidades,
   buildWhatsAppUrl
 } from "../utils";
-import { FintechDiagnosisView } from "./FintechDiagnosisView";
 import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
 import FunnelAnalyticsDashboard from "./FunnelAnalyticsDashboard";
