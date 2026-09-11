@@ -3847,7 +3847,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             >
                               <td className="py-3.5 px-4">
                                 <div className="flex items-center gap-2 flex-wrap">
+                                  {getPendingReports(lead) > 0 && (
+                                    <span
+                                      className="flex h-2.5 w-2.5 shrink-0"
+                                      title={`${getPendingReports(lead)} consulta(s) executada(s) aguardando o relatório PDF`}
+                                    >
+                                      <span className="animate-ping absolute inline-flex h-2.5 w-2.5 rounded-full bg-rose-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                                    </span>
+                                  )}
                                   <div className="font-bold text-slate-900">{lead.razaoSocial || lead.nome || "Não informado"}</div>
+                                  {getPendingReports(lead) > 0 && (
+                                    <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md shrink-0">
+                                      PDF pendente ({getPendingReports(lead)})
+                                    </span>
+                                  )}
                                   {lead.pendencias?.resposta && (lead.pendencias?.status === "pendente" || lead.pendente) && (
                                     <span className="inline-flex items-center gap-1 bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md animate-pulse shadow-xs shrink-0" title="Parceiro respondeu à pendência!">
                                       <MessageSquare className="w-2.5 h-2.5 text-white fill-white/20" />
