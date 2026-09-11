@@ -1717,7 +1717,7 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
         }
       }
 
-      if (!auditResult) {
+      if (!stage1Facts) {
         if (invalidJson) {
           throw Object.assign(
             new Error("A IA respondeu em um formato inválido para a auditoria. Tente novamente; nenhum laudo estimado foi salvo."),
@@ -1733,6 +1733,242 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
         const detail = describeGeminiFailure(stage1Failure);
         throw Object.assign(new Error(detail.message), { statusCode: detail.statusCode, code: detail.code });
       }
+
+      // =========================================================================
+      // ETAPA "ANÁLISE": consolidação determinística no servidor (sem IA)
+      // =========================================================================
+      const analisarRisco = (facts: any) => {
+        const titulares: any[] = Array.isArray(facts?.titulares) ? facts.titulares : [];
+        const empresa = titulares.find((t) => t.tipo === "EMPRESA") || null;
+        const socios = titulares.filter((t) => t.tipo === "SOCIO");
+
+        const soma = (campo: string) => titulares.reduce((acc, t) => acc + (Number(t[campo]) || 0), 0);
+
+        const totalNegativacoes = soma("totalNegativacoes");
+        const quantidadeNegativacoes = soma("quantidadeNegativacoes");
+        const totalProtestos = soma("totalProtestos");
+        const quantidadeProtestos = soma("quantidadeProtestos");
+        const totalAcoesJudiciaisOuCheques = soma("totalAcoesJudiciais") + soma("quantidadeChequesSemFundo") * 0;
+        const quantidadeChequesSemFundo = soma("quantidadeChequesSemFundo");
+        const quantidadeAcoesJudiciais = soma("quantidadeAcoesJudiciais");
+        const temApontamentosSCRBacen = titulares.some((t) => t.temApontamentosSCRBacen === true);
+
+        const scoreNumerico = Number(empresa?.scoreNumerico) || 0;
+        const probabilidadeInadimplenciaPercent = Number(empresa?.probabilidadeInadimplenciaPercent) || 0;
+
+        // Fatores críticos: apenas o que veio dos fatos reais.
+        const fatoresCriticosBloqueio: string[] = [];
+        titulares.forEach((t) => {
+          const prefixo = t.tipo === "SOCIO" ? `Sócio ${t.nome || "não identificado"}` : "Empresa";
+          (Array.isArray(t.apontamentos) ? t.apontamentos : []).forEach((a: string) => {
+            fatoresCriticosBloqueio.push(`${prefixo}: ${a}`);
+          });
+        });
+
+        const RATING_ORDEM = ["A", "B", "C", "D", "E", "F", "G", "H"];
+        const piorRating = (letras: string[]) =>
+          letras
+            .filter((l) => RATING_ORDEM.includes(l))
+            .sort((a, b) => RATING_ORDEM.indexOf(b) - RATING_ORDEM.indexOf(a))[0] || "";
+
+        const ratingPorScore = (score: number) => {
+          if (!score) return "";
+          if (score >= 850) return "A";
+          if (score >= 700) return "B";
+          if (score >= 550) return "C";
+          if (score >= 400) return "D";
+          if (score >= 250) return "E";
+          if (score >= 150) return "F";
+          return "G";
+        };
+
+        let ratingBase = empresa?.ratingInformado || ratingPorScore(scoreNumerico);
+
+        // REGRA DE RISCO CRUZADO: risco do sócio contamina a empresa.
+        const socioComprometido = socios.some(
+          (s) =>
+            ["F", "G", "H"].includes(s.ratingInformado) ||
+            (Number(s.quantidadeNegativacoes) || 0) > 0 ||
+            (Number(s.quantidadeProtestos) || 0) > 0 ||
+            s.temApontamentosSCRBacen === true,
+        );
+
+        if (socioComprometido && ratingBase) {
+          const piorSocio = piorRating(socios.map((s) => s.ratingInformado));
+          const rebaixado = RATING_ORDEM[Math.min(RATING_ORDEM.indexOf(ratingBase) + 2, RATING_ORDEM.length - 1)];
+          ratingBase = piorRating([rebaixado, piorSocio]) || rebaixado;
+        }
+
+        const temRestricaoEmpresa =
+          (Number(empresa?.quantidadeNegativacoes) || 0) > 0 ||
+          (Number(empresa?.quantidadeProtestos) || 0) > 0 ||
+          empresa?.temApontamentosSCRBacen === true;
+
+        let classificacaoElegibilidade = "Alta";
+        if (temApontamentosSCRBacen || quantidadeProtestos > 0) classificacaoElegibilidade = "Crítica";
+        else if (quantidadeNegativacoes > 0) classificacaoElegibilidade = temRestricaoEmpresa ? "Baixa" : "Média";
+        else if (socioComprometido) classificacaoElegibilidade = "Média";
+
+        return {
+          empresa,
+          socios,
+          socioComprometido,
+          totalDividasNegativadas: totalNegativacoes,
+          quantidadeNegativacoes,
+          totalProtestos,
+          quantidadeProtestos,
+          quantidadeChequesSemFundo,
+          quantidadeAcoesJudiciais,
+          totalAcoesJudiciaisOuCheques,
+          temApontamentosSCRBacen,
+          resumoBacen: empresa?.resumoBacen || titulares.find((t) => t.resumoBacen)?.resumoBacen || "Não informado",
+          situacaoFiscalCadastral: empresa?.situacaoFiscalCadastral || "Não informado",
+          fatoresCriticosBloqueio,
+          classificacaoElegibilidade,
+          ratingConsolidado: ratingBase || "",
+          scoreNumerico,
+          probabilidadeInadimplenciaPercent,
+        };
+      };
+
+      const analise = analisarRisco(stage1Facts);
+
+      // =========================================================================
+      // ETAPA "SERVIÇO": seleção determinística por regras fixas (sem IA)
+      // =========================================================================
+      const selecionarServicos = (an: any, catalogo: any[]) => {
+        const norm = (s: string) =>
+          String(s || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase();
+
+        const acharServico = (ids: string[], palavras: string[][]) => {
+          const porId = catalogo.find((c) => ids.includes(String(c.id)));
+          if (porId) return porId;
+          return catalogo.find((c) => {
+            const nome = norm(c.nome);
+            return palavras.some((grupo) => grupo.every((p) => nome.includes(p)));
+          });
+        };
+
+        const regras: Array<{ ativo: boolean; fato: string; ids: string[]; palavras: string[][] }> = [
+          {
+            ativo: an.quantidadeProtestos > 0,
+            fato: `${an.quantidadeProtestos} protesto(s) identificado(s)`,
+            ids: ["serv_protesto", "serv_baixa_protesto"],
+            palavras: [["protesto"]],
+          },
+          {
+            ativo: an.quantidadeNegativacoes > 0,
+            fato: `${an.quantidadeNegativacoes} negativação(ões) identificada(s) (Pefin/Refin)`,
+            ids: ["serv_reabilitacao", "serv_limpa_nome"],
+            palavras: [["reabilitacao"], ["limpa", "nome"], ["negativa"]],
+          },
+          {
+            ativo: an.temApontamentosSCRBacen === true,
+            fato: "Apontamento/prejuízo identificado no SCR/BACEN",
+            ids: ["serv_scr", "serv_saneamento_scr"],
+            palavras: [["scr"], ["bacen"]],
+          },
+          {
+            ativo: /irregular|pendente|inapta|suspens|baixad|d[ée]bito/i.test(String(an.situacaoFiscalCadastral || "")),
+            fato: `Situação fiscal/cadastral: ${an.situacaoFiscalCadastral}`,
+            ids: ["serv_regularizacao", "serv_fiscal"],
+            palavras: [["regulariza"], ["fiscal"], ["certid"]],
+          },
+          {
+            ativo: an.quantidadeChequesSemFundo > 0 || an.quantidadeAcoesJudiciais > 0,
+            fato: "Cheques sem fundo e/ou ações judiciais identificados",
+            ids: ["serv_reabilitacao"],
+            palavras: [["reabilitacao"], ["judicial"]],
+          },
+        ];
+
+        const aprovados: any[] = [];
+        const usados = new Set<string>();
+        const fatosSemServico: string[] = [];
+
+        for (const regra of regras) {
+          if (!regra.ativo) continue;
+          const servico = acharServico(regra.ids, regra.palavras);
+          if (!servico) {
+            fatosSemServico.push(regra.fato);
+            continue;
+          }
+          if (usados.has(String(servico.id))) {
+            const existente = aprovados.find((a) => a.id === servico.id);
+            if (existente) existente.justificativa += ` | ${regra.fato}`;
+            continue;
+          }
+          usados.add(String(servico.id));
+          aprovados.push({
+            id: servico.id,
+            nome: servico.nome,
+            valor: Number(servico.valor) || 0,
+            hublaLink: servico.hublaLink,
+            justificativa: `Necessário em razão de: ${regra.fato}.`,
+            fatoOrigem: regra.fato,
+            status: "pendente",
+          });
+        }
+
+        // Serviço estruturante/preventivo: sempre aplicável para preparar a captação.
+        const preventivo = acharServico(["serv_rating_score"], [["rating", "score"], ["rating"], ["score"]]);
+        if (preventivo && !usados.has(String(preventivo.id))) {
+          usados.add(String(preventivo.id));
+          aprovados.push({
+            id: preventivo.id,
+            nome: preventivo.nome,
+            valor: Number(preventivo.valor) || 0,
+            hublaLink: preventivo.hublaLink,
+            justificativa: aprovados.length
+              ? "Recomposição de rating e score após o saneamento das restrições identificadas."
+              : "Perfil sem restrições identificadas: adequação de rating e score para ampliar a elegibilidade em crédito.",
+            fatoOrigem: aprovados.length ? "Restrições identificadas" : "Perfil sem restrições",
+            status: "pendente",
+          });
+        }
+
+        return { aprovados, fatosSemServico };
+      };
+
+      const { aprovados: servicosAprovados, fatosSemServico } = selecionarServicos(analise, activeServicesCatalog);
+
+      auditResult = {
+        totalDividasNegativadas: analise.totalDividasNegativadas,
+        quantidadeNegativacoes: analise.quantidadeNegativacoes,
+        totalProtestos: analise.totalProtestos,
+        quantidadeProtestos: analise.quantidadeProtestos,
+        totalAcoesJudiciaisOuCheques: analise.totalAcoesJudiciaisOuCheques,
+        temApontamentosSCRBacen: analise.temApontamentosSCRBacen,
+        resumoBacen: analise.resumoBacen,
+        situacaoFiscalCadastral: analise.situacaoFiscalCadastral,
+        capacidadeTomadaPronampe: 0,
+        capacidadeTomadaGeral: 0,
+        fatoresCriticosBloqueio: analise.fatoresCriticosBloqueio,
+        servicosNecessariosIds: servicosAprovados.map((s: any) => s.id),
+        classificacaoElegibilidade: analise.classificacaoElegibilidade,
+        scoreEstimado: analise.scoreNumerico ? `${analise.scoreNumerico}/1000` : "Não informado",
+        scoreNumerico: analise.scoreNumerico,
+        ratingConsolidado: analise.ratingConsolidado,
+        probabilidadeInadimplenciaPercent: analise.probabilidadeInadimplenciaPercent,
+        titulares: stage1Facts.titulares,
+      };
+
+      console.log("[PROSFEC IA] ANÁLISE consolidada:", {
+        rating: auditResult.ratingConsolidado || "-",
+        elegibilidade: auditResult.classificacaoElegibilidade,
+        score: auditResult.scoreNumerico,
+        riscoCruzado: analise.socioComprometido,
+        fatores: auditResult.fatoresCriticosBloqueio.length,
+      });
+      console.log(
+        "[PROSFEC IA] SERVIÇOS aprovados por regra:",
+        servicosAprovados.map((s: any) => `${s.id} <- ${s.fatoOrigem}`),
+        fatosSemServico.length ? `| sem serviço no catálogo: ${fatosSemServico.join("; ")}` : "",
+      );
+
 
       // =========================================================================
       // ETAPA 2: REDAÇÃO DO LAUDO EXECUTIVO & PLANO DE AÇÃO PROSFEC
