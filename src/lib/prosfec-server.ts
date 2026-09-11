@@ -1287,14 +1287,20 @@ O molde é APENAS FORMATO: todos os valores são placeholders neutros.
   "fatoresCriticosBloqueio": [],
   "servicosNecessariosIds": [],
   "classificacaoElegibilidade": "X",
-  "scoreEstimado": "X"
+  "scoreEstimado": "X",
+  "scoreNumerico": 0,
+  "ratingConsolidado": "X",
+  "probabilidadeInadimplenciaPercent": 0
 }
 
 É PROIBIDO COPIAR OS VALORES DO EXEMPLO. VOCÊ DEVE EXTRAIR OS NÚMEROS REAIS DOS TEXTOS FORNECIDOS.
 
 REGRAS DE PREENCHIMENTO:
 - classificacaoElegibilidade deve ser exatamente uma destas palavras, conforme os dados reais: Alta, Média, Baixa ou Crítica.
-- scoreEstimado deve refletir o score realmente encontrado nos relatórios; se nenhum score constar nos relatórios, retorne "Não informado".
+- scoreEstimado deve refletir o score realmente encontrado nos relatórios (ex: "<score real>/1000 - <faixa informada no relatório>"); se nenhum score constar, retorne "Não informado".
+- scoreNumerico deve conter o MESMO score real de scoreEstimado, apenas como número inteiro de 0 a 1000. Se nenhum score constar nos relatórios, retorne 0.
+- ratingConsolidado deve conter APENAS a letra do rating (A, B, C, D, E, F, G ou H) realmente apurada, já rebaixada pela REGRA DE RISCO CRUZADO quando aplicável. Se nenhum rating constar e não for possível consolidá-lo a partir dos apontamentos reais, retorne "X".
+- probabilidadeInadimplenciaPercent deve conter o percentual de inadimplência informado nos relatórios (0 a 100). Se não constar, retorne 0. NUNCA estime esse número.
 - capacidadeTomadaPronampe e capacidadeTomadaGeral só podem ser maiores que zero se houver base real nos relatórios e no faturamento informado; na dúvida, retorne 0. NÃO APLIQUE FÓRMULAS DE ESTIMATIVA.
 
 REGRA DE RISCO CRUZADO (CONTAMINAÇÃO) — INEGOCIÁVEL:
