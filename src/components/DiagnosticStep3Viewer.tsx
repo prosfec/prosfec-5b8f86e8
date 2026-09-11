@@ -1,39 +1,25 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { 
-  Brain, 
-  CheckCircle2, 
-  Copy, 
-  Check, 
-  Clock
-} from "lucide-react";
+import { Brain, CheckCircle2, Clock, Eye, FileText } from "lucide-react";
 import { Lead } from "../types";
-import { FintechDiagnosisView } from "./FintechDiagnosisView";
-import { renderExecutiveMarkdown } from "../utils/markdownRenderer";
+import { RedeBEReportViewerModal } from "./RedeBEReportViewerModal";
 
 interface DiagnosticStep3ViewerProps {
   lead: Lead;
-  diagnostico?: any;
-  onCopy?: () => void;
+  consultas?: any[];
 }
 
 export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
   lead,
-  diagnostico,
+  consultas,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [viewingConsulta, setViewingConsulta] = useState<any | null>(null);
 
-  const diagObj = diagnostico || lead.diagnosticoPROSFEC || (lead as any).diagnosticoIA || (lead as any).diagnosticoConsulta;
-  
-  const hasRealConsulta = Boolean(
-    (lead as any).consultaEfetuada || 
-    (lead as any).consultaData || 
-    (lead as any).consultaResultado || 
-    diagObj ||
-    (lead.consultasExecutadas && lead.consultasExecutadas.length > 0)
-  );
+  const listaConsultas: any[] = Array.isArray(consultas) && consultas.length > 0
+    ? consultas
+    : (Array.isArray((lead as any).consultasExecutadas) ? (lead as any).consultasExecutadas : []);
 
-  if (!hasRealConsulta) {
+  if (listaConsultas.length === 0) {
     return (
       <div className="bg-white text-slate-800 rounded-xl border border-slate-200 p-5 md:p-6 space-y-4 text-left shadow-sm relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
@@ -43,10 +29,10 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
             </div>
             <div>
               <h4 className="font-display font-black text-sm md:text-base text-slate-900 uppercase tracking-wider">
-                Passo 3: Consulta Diagnóstica CPF e CNPJ
+                Passo 3: Consulta de Crédito CPF e CNPJ
               </h4>
               <p className="text-xs text-slate-500">
-                Relatório Técnico de Fomento e Perfil de Crédito PROSFEC IA
+                Relatório oficial de crédito emitido pela RedeBE
               </p>
             </div>
           </div>
@@ -55,92 +41,76 @@ export const DiagnosticStep3Viewer: React.FC<DiagnosticStep3ViewerProps> = ({
           </span>
         </div>
 
-        <p className="text-xs text-slate-600 leading-relaxed pt-1">
-          O resultado detalhado do perfil financeiro e o diagnóstico com inteligência artificial serão gerados após a equipe responsável executar a consulta de crédito oficial via API.
-        </p>
-
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center gap-2.5">
           <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>
-            Assim que a consulta técnica for executada e processada, o diagnóstico completo da PROSFEC IA estará disponível instantaneamente nesta etapa.
+            Assim que a consulta de crédito for executada pela equipe responsável, o relatório completo ficará disponível nesta etapa.
           </span>
         </div>
       </div>
     );
   }
 
-  // Prepara o objeto de diagnóstico para o visualizador Fintech
-  const formattedDiag = typeof diagObj === "string" 
-    ? { texto: diagObj, dataGeracao: (lead as any).consultaData || (lead as any).dataDiagnostico }
-    : (diagObj || { 
-        texto: (lead as any).diagnosticoIA || (lead as any).diagnosticoConsulta || "", 
-        dataGeracao: (lead as any).consultaData || (lead as any).dataDiagnostico 
-      });
-
-  const handleCopyParecer = () => {
-    if (!formattedDiag?.texto) return;
-    navigator.clipboard.writeText(formattedDiag.texto);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 space-y-6 text-left shadow-sm relative overflow-hidden">
-      
-      {/* Header Executivo */}
-      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center gap-3 border-b border-slate-200 pb-5">
+    <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 space-y-5 text-left shadow-sm relative overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="p-3 shrink-0 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200/70 shadow-2xs">
-            <Brain className="w-6 h-6 text-emerald-600" />
+          <div className="p-3 shrink-0 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200/70">
+            <FileText className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="font-display font-black text-sm md:text-base text-slate-900 uppercase tracking-wider">
-                Diagnóstico de Crédito &amp; Fomento PROSFEC
-              </h4>
-              <span className="bg-emerald-50 text-emerald-700 text-[10px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Passo 3 Concluído
-              </span>
-            </div>
+            <h4 className="font-display font-black text-sm md:text-base text-slate-900 uppercase tracking-wider">
+              Relatórios de Crédito RedeBE
+            </h4>
             <p className="text-xs text-slate-500 mt-0.5">
-              Análise pericial consolidada via API oficial com inteligência de crédito bancário
+              Resultado individual de cada documento consultado, exatamente como entregue pela RedeBE
             </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleCopyParecer}
-            className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Copiado!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5 text-slate-500" />
-                <span>Copiar Parecer</span>
-              </>
-            )}
-          </button>
-
-          <span className="bg-emerald-50 text-emerald-800 font-extrabold text-xs uppercase px-3 py-1.5 rounded-full border border-emerald-200/80 font-mono flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            Consulta Homologada
-          </span>
-        </div>
+        <span className="bg-emerald-50 text-emerald-800 font-extrabold text-xs uppercase px-3 py-1.5 rounded-full border border-emerald-200/80 font-mono flex items-center gap-1.5">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+          {listaConsultas.length} relatório(s)
+        </span>
       </div>
 
-      {/* Componente Central Fintech de Diagnóstico 360° */}
-      <FintechDiagnosisView
+      <div className="space-y-3">
+        {listaConsultas.map((consulta: any, idx: number) => (
+          <div
+            key={consulta.id || idx}
+            className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+          >
+            <div className="space-y-1 min-w-0">
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded-sm uppercase font-mono tracking-wider">
+                {consulta.produto_code || "REDEBE"}
+              </span>
+              <h6 className="font-extrabold text-xs text-slate-800">
+                {consulta.documentoNome || consulta.produto_nome || "Consulta de crédito"}
+              </h6>
+              <div className="text-[10px] text-slate-500 font-mono">
+                {consulta.documento}
+                {consulta.dataConsulta
+                  ? ` • ${new Date(consulta.dataConsulta).toLocaleString("pt-BR")}`
+                  : ""}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setViewingConsulta(consulta)}
+              className="px-3.5 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Ver relatório completo
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <RedeBEReportViewerModal
+        isOpen={Boolean(viewingConsulta)}
+        onClose={() => setViewingConsulta(null)}
+        consulta={viewingConsulta}
         lead={lead}
-        diagnostico={formattedDiag}
-        consultas={lead.consultasExecutadas || (lead as any).consultas}
-        defaultExpanded={true}
-        renderMarkdownContent={renderExecutiveMarkdown}
       />
     </div>
   );
