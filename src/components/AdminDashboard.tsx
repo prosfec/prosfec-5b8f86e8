@@ -447,6 +447,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [leadsViewMode, setLeadsViewMode] = useState<"grid" | "list">("list");
   const [hideTeamMembers, setHideTeamMembers] = useState<boolean>(true);
+  const [pendingReports, setPendingReports] = useState<{ byLead: Record<string, number>; byDoc: Record<string, number> }>({ byLead: {}, byDoc: {} });
+  const [onlyPendingPdf, setOnlyPendingPdf] = useState(false);
 
   // Pagination
   const [leadsPage, setLeadsPage] = useState(1);
@@ -1284,6 +1286,40 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     avgFaturamento: 0,
   });
 
+  // Consultas executadas que ainda estão sem o relatório PDF anexado pela equipe
+  const loadPendingReports = async () => {
+    try {
+      const snap = await getDocs(collection(db, "consultas_realizadas"));
+      const byLead: Record<string, number> = {};
+      const byDoc: Record<string, number> = {};
+      snap.docs.forEach((d) => {
+        const data: any = d.data() || {};
+        if (d.id.startsWith("ia_diagnostico_")) return;
+        if (!data.resultado) return;
+        if (data.relatorioPdfUrl) return;
+        if (data.leadId) {
+          byLead[data.leadId] = (byLead[data.leadId] || 0) + 1;
+        } else if (data.documento) {
+          const doc = String(data.documento).replace(/\D/g, "");
+          if (doc) byDoc[doc] = (byDoc[doc] || 0) + 1;
+        }
+      });
+      setPendingReports({ byLead, byDoc });
+    } catch (err) {
+      console.warn("Não foi possível carregar as consultas pendentes de PDF:", err);
+    }
+  };
+
+  const getPendingReports = (lead: any): number => {
+    if (!lead) return 0;
+    const porLead = pendingReports.byLead[lead.id] || 0;
+    const cnpj = String(lead.cnpj || "").replace(/\D/g, "");
+    const porDoc = cnpj ? (pendingReports.byDoc[cnpj] || 0) : 0;
+    return porLead + porDoc;
+  };
+
+  const totalPendingPdfLeads = leads.filter(l => getPendingReports(l) > 0).length;
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -1519,7 +1555,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       } catch {
         /* ignore */
       }
-      if (!cancelled) fetchData();
+      if (!cancelled) {
+        fetchData();
+        loadPendingReports();
+      }
     })();
     return () => {
       cancelled = true;
@@ -2618,6 +2657,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       (ratingFilter === "em_aplicacao" && lead.fichaRatingCredito?.faseRating === "em_aplicacao") ||
       (ratingFilter === "concluido" && (lead.fichaRatingCredito?.faseRating === "concluido" || Boolean(lead.fichaRatingCredito?.conclusaoRating?.notaFinalRating)));
 
+    if (onlyPendingPdf && getPendingReports(lead) === 0) {
+      return false;
+    }
+
     return matchesSearch && matchesStatus && matchesPorte && matchesPrep && matchesEtapa && matchesRating;
   });
 
@@ -3120,10 +3163,27 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <List className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Tabela</span>
                       </button>
-                    </div>
+                     </div>
+                   )}
+
+                  {/* Filtro: leads com consulta executada aguardando o PDF */}
+                  {activeTab === "leads" && (
+                    <button
+                      type="button"
+                      onClick={() => { setOnlyPendingPdf(!onlyPendingPdf); setLeadsPage(1); }}
+                      className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                        onlyPendingPdf
+                          ? "bg-rose-600 text-white border-rose-600"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-rose-300 hover:text-rose-700"
+                      }`}
+                      title="Mostrar apenas leads com consulta executada aguardando o relatório PDF"
+                    >
+                      <span className={`w-2 h-2 rounded-full ${onlyPendingPdf ? "bg-white" : "bg-rose-500 animate-pulse"}`}></span>
+                      Aguardando PDF ({totalPendingPdfLeads})
+                    </button>
                   )}
 
-                  {/* Hide Team Members Switch (Partners Only) */}
+                   {/* Hide Team Members Switch (Partners Only) */}
                   {activeTab === "partners" && (
                     <button
                       type="button"
@@ -3502,7 +3562,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       {paginatedLeads.map((lead) => {
                         const hasActivePendency = lead.pendente === true || lead.pendencias?.status === "pendente";
                         const isAnswered = !!lead.pendencias?.resposta;
-                        const stageNum = lead.etapa || 1;
+                         const stageNum = lead.etapa || 1;
+                         const pdfPendentes = getPendingReports(lead);
 
                         return (
                           <div 
@@ -3526,17 +3587,36 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     : lead.status === "arquivado" 
                                       ? "bg-slate-400" 
                                       : "bg-blue-500"
-                            }`}></div>
+                             }`}></div>
 
-                            {/* Header details */}
+                            {pdfPendentes > 0 && (
+                              <span
+                                className="absolute top-3 right-3 z-10 flex h-2.5 w-2.5"
+                                title={`${pdfPendentes} consulta(s) executada(s) aguardando o relatório PDF`}
+                              >
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                              </span>
+                            )}
+
+                             {/* Header details */}
                             <div className="p-4 flex-1 space-y-3">
                               <div className="flex justify-between items-start gap-2">
                                 <div className="min-w-0">
                                   <h4 className="font-extrabold text-sm text-slate-900 tracking-tight line-clamp-1" title={lead.razaoSocial || lead.nome || "Não informado"}>
                                     {lead.razaoSocial || lead.nome || "Não informado"}
                                   </h4>
-                                  <span className="text-[11px] text-slate-500 font-mono block mt-0.5">{lead.cnpj || "-"}</span>
-                                </div>
+                                   <span className="text-[11px] text-slate-500 font-mono block mt-0.5">{lead.cnpj || "-"}</span>
+                                   {pdfPendentes > 0 && (
+                                     <span
+                                       className="mt-1.5 inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md"
+                                       title={`${pdfPendentes} consulta(s) executada(s) aguardando o relatório PDF`}
+                                     >
+                                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                       PDF pendente ({pdfPendentes})
+                                     </span>
+                                   )}
+                                 </div>
 
                                 {/* Quick status dropdown in card */}
                                 <select
@@ -3767,7 +3847,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             >
                               <td className="py-3.5 px-4">
                                 <div className="flex items-center gap-2 flex-wrap">
+                                  {getPendingReports(lead) > 0 && (
+                                    <span
+                                      className="flex h-2.5 w-2.5 shrink-0"
+                                      title={`${getPendingReports(lead)} consulta(s) executada(s) aguardando o relatório PDF`}
+                                    >
+                                      <span className="animate-ping absolute inline-flex h-2.5 w-2.5 rounded-full bg-rose-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                                    </span>
+                                  )}
                                   <div className="font-bold text-slate-900">{lead.razaoSocial || lead.nome || "Não informado"}</div>
+                                  {getPendingReports(lead) > 0 && (
+                                    <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md shrink-0">
+                                      PDF pendente ({getPendingReports(lead)})
+                                    </span>
+                                  )}
                                   {lead.pendencias?.resposta && (lead.pendencias?.status === "pendente" || lead.pendente) && (
                                     <span className="inline-flex items-center gap-1 bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md animate-pulse shadow-xs shrink-0" title="Parceiro respondeu à pendência!">
                                       <MessageSquare className="w-2.5 h-2.5 text-white fill-white/20" />
@@ -7926,7 +8020,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         <LeadWorkspaceModal
           lead={workspaceLead}
           isAdmin={true}
-          onClose={() => setWorkspaceLead(null)}
+          onClose={() => { setWorkspaceLead(null); loadPendingReports(); }}
           onRefreshLeads={async () => {
             // Recarga silenciosa e focada apenas nos leads (não derruba a tela com loading global)
             try {
