@@ -1261,11 +1261,15 @@ Analise os dados e retorne ESTRITAMENTE um JSON estruturado com a auditoria num�
       for (const attempt of stage1Attempts) {
         try {
           const stage1Response = await generateContentWithFallback(ai, {
-            contents: buildStage1Prompt(buildConsultationsBlock(attempt.maxItems, attempt.maxChars)),
+            contents:
+              buildStage1Prompt(buildConsultationsBlock(attempt.maxItems, attempt.maxChars)) +
+              (attempt.reinforceJson
+                ? "\n\nATENÇÃO: responda SOMENTE com o objeto JSON puro, sem crases, sem blocos de markdown e sem qualquer texto antes ou depois."
+                : ""),
             config: {
               responseMimeType: "application/json",
               temperature: 0.1,
-              maxOutputTokens: 800,
+              maxOutputTokens: attempt.maxOutputTokens,
               responseSchema: {
                 type: Type.OBJECT,
                 properties: {
