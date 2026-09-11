@@ -1975,11 +1975,44 @@ NUNCA INVENTE OU ESTIME VALORES. SE O RELATÓRIO INDICAR 0, VAZIO OU "NADA CONST
       // =========================================================================
       console.log(`[PROSFEC IA] Iniciando Etapa 2: Redação Pericial Executiva`);
 
-      const stage2SystemPrompt = `Você é o Auditor Chefe de Risco e Crédito Corporativo da PROSFEC Soluções Administrativas e Financeiras.
-Sua missão é redigir o LAUDO PERICIAL EXECUTIVO e o PLANO DE DESTRAVE DE CRÉDITO para este CNPJ, fundamentando-se EXCLUSIVAMENTE nos dados auditados e validados na Etapa 1.
+      const servicosAprovadosTexto = servicosAprovados.length
+        ? servicosAprovados
+            .map(
+              (s: any) =>
+                `- ${s.nome} (id: ${s.id}) — R$ ${Number(s.valor || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} — Motivo factual: ${s.fatoOrigem}`,
+            )
+            .join("\n")
+        : "- Nenhum serviço técnico foi aprovado pelas regras do sistema para este perfil.";
 
-AUDITORIA TÉCNICA E QUANTITATIVA CONSOLIDADA (DADOS REAIS DA ETAPA 1):
-${JSON.stringify(auditResult, null, 2)}
+      const stage2SystemPrompt = `Você é o Auditor Chefe de Risco e Crédito Corporativo da PROSFEC Soluções Administrativas e Financeiras.
+Sua ÚNICA função nesta etapa é REDIGIR o LAUDO PERICIAL EXECUTIVO em Markdown. Você NÃO decide serviços, NÃO define preços e NÃO monta o plano de ação — isso já foi decidido pelo sistema.
+
+FATOS EXTRAÍDOS DOS RELATÓRIOS (por titular — fonte: RedeBE):
+${JSON.stringify(stage1Facts, null, 2)}
+
+ANÁLISE CONSOLIDADA CALCULADA PELO SISTEMA (não recalcule, não contradiga):
+${JSON.stringify(
+  {
+    ratingConsolidado: auditResult.ratingConsolidado,
+    scoreNumerico: auditResult.scoreNumerico,
+    probabilidadeInadimplenciaPercent: auditResult.probabilidadeInadimplenciaPercent,
+    classificacaoElegibilidade: auditResult.classificacaoElegibilidade,
+    totalDividasNegativadas: auditResult.totalDividasNegativadas,
+    quantidadeNegativacoes: auditResult.quantidadeNegativacoes,
+    totalProtestos: auditResult.totalProtestos,
+    quantidadeProtestos: auditResult.quantidadeProtestos,
+    temApontamentosSCRBacen: auditResult.temApontamentosSCRBacen,
+    resumoBacen: auditResult.resumoBacen,
+    situacaoFiscalCadastral: auditResult.situacaoFiscalCadastral,
+    fatoresCriticosBloqueio: auditResult.fatoresCriticosBloqueio,
+    riscoCruzadoSocios: analise.socioComprometido,
+  },
+  null,
+  2,
+)}
+
+SERVIÇOS APROVADOS PELO SISTEMA (lista fechada — não acrescente, não remova, não reprecifique):
+${servicosAprovadosTexto}
 
 DADOS DA EMPRESA (LEAD):
 - Razão Social: ${leadData.razaoSocial || leadData.nome || "Não informado"}
@@ -1989,62 +2022,36 @@ DADOS DA EMPRESA (LEAD):
 - Porte: ${leadData.porte || "Não informado"}
 - Sócios: ${leadData.socios ? leadData.socios.map((s: any) => `${s.nome} (CPF: ${s.cpf || "não informado"})`).join(", ") : "Nenhum sócio informado"}
 
-CATÁLOGO OFICIAL DE SERVIÇOS PROSFEC (Valores Atualizados em Sistema):
-${catalogPromptText}
-
 REGRA DE COMISSÃO PROSFEC SOBRE O CRÉDITO:
 A comissão de sucesso da PROSFEC sobre a captação de crédito é de exatos 5% sobre o valor efetivamente liberado ao cliente.
 Os serviços técnicos e preparatórios são cobrados pontualmente para sanar os bloqueios, sem alterar a taxa do crédito.
 
 DIRETRIZES DA REDAÇÃO EXECUTIVA:
 
-REGRA 1: FIDELIDADE ABSOLUTA. Você é proibido de inventar ou estimar valores de dívidas, protestos, cheques sem fundo ou prejuízos no SCR. Se o relatório indicar 0, vazio ou Nada Consta, os campos numéricos do JSON devem ser estritamente 0.
+REGRA 1 — FIDELIDADE ABSOLUTA: é PROIBIDO inventar, estimar ou arredondar valores. Cite apenas os números presentes nos FATOS e na ANÁLISE acima. Onde não houver dado, escreva "Não informado".
 
-REGRA 2: COERÊNCIA COMERCIAL. Nunca recomende serviços de Limpa Nome, Baixa de Protesto ou Saneamento de SCR se a empresa não tiver essas restrições. Para empresas limpas (saudáveis), o plano de ação (json_subetapas) e os serviços (json_servicos) devem focar APENAS em serviços preventivos (ex: Melhoria de Rating, Estruturação de Capacidade, Proteção Financeira).
+REGRA 2 — NÃO DECIDIR COMERCIALMENTE: é PROIBIDO citar, sugerir ou insinuar qualquer serviço fora da lista de SERVIÇOS APROVADOS, e é PROIBIDO citar preço diferente do informado nessa lista.
 
-REGRA 3: COERÊNCIA TOTAL. O texto final em Markdown e a estrutura JSON (json_servicos/json_subetapas) devem estar 100% alinhados: nenhum dado, valor ou serviço pode aparecer em um e contradizer o outro.
+REGRA 3 — RISCO CRUZADO: se a análise indicar riscoCruzadoSocios = true, explique de forma técnica que o risco pessoal dos sócios contamina a avaliação do CNPJ e sustenta o rating consolidado informado.
 
-REGRA 4: CLASSIFICAÇÃO LITERAL. A chave valor_negativacoes deve ser preenchida APENAS com dívidas do Pefin/Refin. NUNCA coloque capacidade de crédito, limite estimado, PRONAMPE ou potencial de captação em chaves de restrição/negativação. Na ausência de dado comprovado, use 0 para números e [] para arrays.
+REGRA 4 — CAPACIDADE: não afirme que a capacidade de crédito é R$ 0,00. Se não houver limite auditado, trate a capacidade como "a ser dimensionada após a estruturação do dossiê", exaltando o que há de positivo no perfil.
 
-REGRA 5: REDAÇÃO COMERCIAL DE CAPACIDADE. Se a variável capacidadeTomadaGeral for 0 ou nula, mas a empresa for classificada como "Saudável" / "Alta Elegibilidade" ou possuir limite estimado em outras linhas (como PRONAMPE), OMITA completamente qualquer menção de que a capacidade geral é R$ 0,00. É expressamente proibido afirmar que uma empresa com Alta Elegibilidade possui limite de R$ 0,00. Em vez disso, exalte a saúde financeira, foque nos limites que foram identificados (ex: PRONAMPE) e afirme que a empresa tem forte potencial de alavancagem junto ao mercado.
+REGRA 5 — SEM BLOCOS JSON: NÃO inclua nenhum bloco de código JSON no final. Entregue APENAS o texto do laudo em Markdown.
 
 1. TOM FORMAL E PERICIAL BANCÁRIO:
    - Escreva como um Comitê de Crédito e Fomento de alto padrão.
    - Apresente tabelas claras em Markdown comparando situação atual vs meta após estruturação.
-   - Seja cirúrgico: cite os valores exatos de restrições, protestos e capacidade de crédito auditados na Etapa 1.
 
 2. AÇÕES DA PROSFEC (NÃO MANDE O CLIENTE FAZER SOZINHO):
-   - A linguagem deve ser "A equipe técnica da PROSFEC aplicará...", "A PROSFEC ingressará com...", "A PROSFEC estruturará o dossiê...".
+   - Use "A equipe técnica da PROSFEC aplicará...", "A PROSFEC ingressará com...", "A PROSFEC estruturará o dossiê...".
 
 3. ESTRUTURA DO LAUDO EM MARKDOWN:
-   - **1. Parecer Sintético do Comitê de Risco**: Score atual, Rating estimado e Enquadramento de Elegibilidade (${auditResult.classificacaoElegibilidade}).
-   - **2. Radiografia das Restrições e Pontos de Bloqueio**: Detalhamento dos valores auditados (Dívidas: R$ ${auditResult.totalDividasNegativadas}, Protestos: R$ ${auditResult.totalProtestos}, SCR/BACEN: ${auditResult.resumoBacen}).
-   - **3. Análise de Capacidade Financeira e Linhas Aptas**: Limite PRONAMPE / FGI / Fundo Constitucional potencial e taxa estimada.
-   - **4. Matriz de Intervenção Técnica PROSFEC**: Justificativa objetiva de cada serviço técnico necessário.
-   - **5. Cronograma Recomendado para o Passo 6 (Plano de Ação)**.
+   - **1. Parecer Sintético do Comitê de Risco**: score, rating consolidado e enquadramento de elegibilidade (${auditResult.classificacaoElegibilidade}).
+   - **2. Radiografia das Restrições e Pontos de Bloqueio**: por titular (empresa e cada sócio), com os valores auditados.
+   - **3. Análise de Capacidade Financeira e Linhas Aptas**.
+   - **4. Matriz de Intervenção Técnica PROSFEC**: justificativa de cada serviço APROVADO, na ordem em que foi listado.
+   - **5. Cronograma Recomendado para o Passo 6 (Plano de Ação)**, coerente com os serviços aprovados.`;
 
-4. COMPORTAMENTO PARA PERFIS SAUDÁVEIS (APTOS) — OBRIGATÓRIO:
-   - Se os relatórios auditados indicarem 0 restrições (0 dívidas, 0 protestos, 0 pendências, sem prejuízo SCR), o bloco json_subetapas NÃO PODE conter nenhum passo de reabilitação, renegociação, limpa nome ou saneamento. Ele deve conter apenas 1 ou 2 passos focados em: "Empresa Apta para Captação" e/ou "Estruturação de Linhas de Crédito".
-   - Se não houver protestos, a quantidade de protestos em qualquer JSON DEVE ser estritamente 0 (nunca 1 com valor 0). O mesmo vale para dívidas e pendências: quantidade 0 e valor 0.
-   - O bloco json_servicos DEVE OMITIR o "Programa de Reabilitação Financeira e Creditícia" e qualquer serviço corretivo (Limpa Nome, Baixa de Protesto, Saneamento SCR) quando o cliente não possuir a restrição correspondente. Para empresa 100% limpa, json_servicos deve ser [] ou conter APENAS serviços preventivos/estruturantes do CATÁLOGO ATIVO.
-
-5. ESTRUTURAÇÃO DE DADOS EM JSON OBRIGATÓRIOS AO FINAL:
-   Inclua dois blocos JSON delimitados estritamente ao final do relatório.
-   ATENÇÃO: os esqueletos abaixo são apenas moldes de formato. Os textos entre colchetes são placeholders — é PROIBIDO copiá-los ou inventar valores; preencha EXCLUSIVAMENTE com dados reais do CATÁLOGO ATIVO e da auditoria da Etapa 1.
-
-   A) Bloco \`\`\`json_servicos com a lista de serviços RECOMENDADOS (somente os estritamente necessários presentes no CATÁLOGO ATIVO, ou [] se o perfil estiver 100% livre de restrições):
-   \`\`\`json_servicos
-   [
-     { "id": "[id exato de um serviço do CATÁLOGO ATIVO]", "nome": "[nome exato do serviço no catálogo]", "valor": "[valor exato do serviço no catálogo]", "justificativa": "[motivo técnico baseado APENAS nos apontamentos auditados]" }
-   ]
-   \`\`\`
-
-   B) Bloco \`\`\`json_subetapas contendo as sub-etapas acionáveis da Etapa 6 (Estruturação) em ordem cronológica de execução:
-   \`\`\`json_subetapas
-   [
-     { "titulo": "[etapa baseada APENAS nos dados auditados]", "preco": "[valor exato do catálogo ou 0]" }
-   ]
-   \`\`\``;
 
       // Guarda de tempo total: se a Etapa 1 já consumiu o orçamento, não inicia a Etapa 2.
       const elapsedMs = Date.now() - routeStartedAt;
