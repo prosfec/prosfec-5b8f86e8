@@ -1766,7 +1766,7 @@ REGRA 5: REDAÇÃO COMERCIAL DE CAPACIDADE. Se a variável capacidadeTomadaGeral
       const step3Diag = leadData.diagnosticoPROSFEC || leadData.diagnosticoIA || leadData.diagnosticoConsulta;
       const initialScore = Number(leadData.scoreInicial || 320);
       const initialRestricoesCount = Number(leadData.restricoesIniciaisCount || (step3Diag?.alertas?.length) || 2);
-      const faturamentoAnual = Number(leadData.faturamentoAnual || (leadData.mediaReceitaMensal ? leadData.mediaReceitaMensal * 12 : 600000));
+      const faturamentoAnual = Number(leadData.faturamentoAnual || (leadData.mediaReceitaMensal ? leadData.mediaReceitaMensal * 12 : 0)) || 0;
       
       // Calculate realistic apt credit limits (PRONAMPE / FGI up to 30% of faturamento anual)
       const calculatedMaxLimit = Math.max(100000, Math.round(faturamentoAnual * 0.30));
