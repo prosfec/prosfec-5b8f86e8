@@ -146,6 +146,12 @@ export interface Lead {
   /** Links de documentos enviados pelo cliente na página pública de proposta */
   documentosCliente?: Record<string, string>;
   documentosClienteAtualizadoEm?: string;
+  /** Dados cadastrais completados pelo próprio cliente na página pública de proposta */
+  enderecoEmpresa?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  cadastroClienteAtualizadoEm?: string;
 
   /** Passo 4 — pasta do Drive com os contratos assinados pelo cliente via GOV.br */
   contratosAssinadosUrl?: string;

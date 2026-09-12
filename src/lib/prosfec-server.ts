@@ -2822,6 +2822,15 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     { key: "outros", label: "Outros documentos (opcional)" },
   ];
 
+  const CADASTRO_PROPOSTA: Array<{ key: string; label: string; placeholder: string }> = [
+    { key: "email", label: "E-mail de contato", placeholder: "empresa@email.com" },
+    { key: "whatsapp", label: "Telefone / WhatsApp", placeholder: "(00) 00000-0000" },
+    { key: "enderecoEmpresa", label: "Endereço da empresa", placeholder: "Rua, número, bairro" },
+    { key: "cidade", label: "Cidade", placeholder: "Cidade" },
+    { key: "estado", label: "Estado (UF)", placeholder: "UF" },
+    { key: "cep", label: "CEP", placeholder: "00000-000" },
+  ];
+
   const maskCnpjPublic = (raw: any): string => {
     const d = String(raw || "").replace(/\D/g, "");
     if (d.length !== 14) return "";
@@ -2890,6 +2899,33 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         if (typeof v === "string" && v.trim()) docsEnviados[d.key] = v.trim();
       }
 
+      const prop = lead.propostaNegociada && typeof lead.propostaNegociada === "object"
+        ? lead.propostaNegociada
+        : null;
+
+      const simulacao = prop
+        ? {
+            creditLineCode: String(prop.creditLineCode || lead.creditLineCode || ""),
+            creditLineName: String(prop.creditLineName || lead.creditLineName || ""),
+            valorDesejado: Number(prop.valorDesejado ?? lead.limiteEstimado ?? 0) || 0,
+            carenciaMeses: Number(prop.carenciaMeses ?? 0) || 0,
+            amortizacaoMeses: Number(prop.amortizacaoMeses ?? 0) || 0,
+            sistemaAmortizacao: prop.sistemaAmortizacao === "PRICE" ? "PRICE" : "SAC",
+            taxaAnual: Number(prop.taxaAnual ?? 0) || 0,
+            pagarJurosCarencia: Boolean(prop.pagarJurosCarencia),
+            parcelaInicial: Number(prop.parcelaInicial ?? 0) || 0,
+            parcelaFinal: Number(prop.parcelaFinal ?? 0) || 0,
+            totalJuros: Number(prop.totalJuros ?? 0) || 0,
+            totalPago: Number(prop.totalPago ?? 0) || 0,
+            dataSimulacao: prop.dataSimulacao || null,
+          }
+        : null;
+
+      const cadastroFaltante = CADASTRO_PROPOSTA.filter((c) => {
+        const v = (lead as any)[c.key];
+        return !(typeof v === "string" && v.trim());
+      });
+
       return res.json({
         success: true,
         proposta: {
@@ -2899,6 +2935,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           cnpj: maskCnpjPublic(lead.cnpj),
           servicos,
           total,
+          simulacao,
+          cadastroCampos: cadastroFaltante,
           documentosCampos: DOCUMENTOS_PROPOSTA,
           documentosCliente: docsEnviados,
           documentosClienteAtualizadoEm: lead.documentosClienteAtualizadoEm || null,
@@ -2932,12 +2970,36 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         documentos[d.key] = link;
       }
 
-      if (!Object.keys(documentos).length) {
-        return res.status(400).json({ error: "Informe ao menos um link de documento." });
+      const cadastroInput =
+        body.cadastro && typeof body.cadastro === "object" ? body.cadastro : {};
+      const cadastroRaw: Record<string, string> = {};
+      for (const c of CADASTRO_PROPOSTA) {
+        const raw = cadastroInput[c.key];
+        if (raw === undefined || raw === null) continue;
+        const val = String(raw).trim();
+        if (!val) continue;
+        if (val.length > 200) {
+          return res.status(400).json({ error: `O campo "${c.label}" é muito longo.` });
+        }
+        cadastroRaw[c.key] = val;
       }
 
       const lead = await getDocRest(`leads/${leadId}`);
       if (!lead) return res.status(404).json({ error: "Proposta não encontrada." });
+
+      // Somente campos ainda vazios no cadastro podem ser preenchidos pelo cliente
+      const cadastro: Record<string, string> = {};
+      for (const [k, v] of Object.entries(cadastroRaw)) {
+        const atualValor = (lead as any)[k];
+        if (typeof atualValor === "string" && atualValor.trim()) continue;
+        cadastro[k] = v;
+      }
+
+      if (!Object.keys(documentos).length && !Object.keys(cadastro).length) {
+        return res
+          .status(400)
+          .json({ error: "Informe ao menos um dado cadastral ou um link de documento." });
+      }
 
       const nowIso = new Date().toISOString();
       const atual =
@@ -2945,20 +3007,21 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           ? (lead as any).documentosCliente
           : {};
 
-      await patchDocRest(
-        `leads/${leadId}`,
-        cleanForFirestore({
-          documentosCliente: { ...atual, ...documentos },
-          documentosClienteAtualizadoEm: nowIso,
-        }),
-      );
+      const patch: Record<string, any> = { ...cadastro };
+      if (Object.keys(cadastro).length) patch.cadastroClienteAtualizadoEm = nowIso;
+      if (Object.keys(documentos).length) {
+        patch.documentosCliente = { ...atual, ...documentos };
+        patch.documentosClienteAtualizadoEm = nowIso;
+      }
+
+      await patchDocRest(`leads/${leadId}`, cleanForFirestore(patch));
 
       try {
         await createDocRest("notificacoes", {
           recipientId: "admin",
           recipientType: "admin",
-          titulo: "Documentação enviada pelo cliente",
-          mensagem: `O cliente ${(lead as any).nomeEmpresa || (lead as any).razaoSocial || leadId} enviou links de documentação pela proposta.`,
+          titulo: "Dados e documentos enviados pelo cliente",
+          mensagem: `O cliente ${(lead as any).nomeEmpresa || (lead as any).razaoSocial || leadId} enviou dados cadastrais e/ou links de documentação pela proposta.`,
           tipo: "info",
           lida: false,
           leadId,
@@ -2968,7 +3031,12 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         console.error("Falha ao notificar documentação do cliente:", notifErr?.message || notifErr);
       }
 
-      return res.json({ success: true, documentosCliente: { ...atual, ...documentos }, atualizadoEm: nowIso });
+      return res.json({
+        success: true,
+        documentosCliente: { ...atual, ...documentos },
+        cadastroSalvo: cadastro,
+        atualizadoEm: nowIso,
+      });
     } catch (err: any) {
       console.error("Erro ao salvar documentos da proposta:", err?.message || err);
       return res.status(500).json({ error: "Não foi possível salvar os links enviados." });
