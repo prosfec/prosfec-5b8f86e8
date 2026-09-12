@@ -16,8 +16,6 @@ import {
   CreditCard,
   ShieldCheck,
   Clock,
-  Send,
-  Link2,
   Calculator,
   Lock,
   ListChecks,
