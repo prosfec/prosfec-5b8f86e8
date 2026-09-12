@@ -68,7 +68,6 @@ function PropostaPublicaPage() {
           setErro(json?.error || "Proposta não encontrada.");
         } else {
           setProposta(json.proposta);
-          setLinks({ ...(json.proposta?.documentosCliente || {}) });
         }
       } catch {
         if (ativo) setErro("Não foi possível carregar a proposta.");
