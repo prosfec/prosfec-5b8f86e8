@@ -294,6 +294,8 @@ export default function LeadWorkspaceModal({
   // PROSFEC IA Diagnostic states
   const [leadConsultas, setLeadConsultas] = useState<any[]>([]);
   const [loadingConsultas, setLoadingConsultas] = useState(false);
+  const [consultasError, setConsultasError] = useState<string | null>(null);
+
   const [viewingConsulta, setViewingConsulta] = useState<any | null>(null);
 
   // Serviços Recomendados e Precificação (Apenas ADM altera)
