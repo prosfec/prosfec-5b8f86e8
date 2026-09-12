@@ -294,6 +294,8 @@ export default function LeadWorkspaceModal({
   // PROSFEC IA Diagnostic states
   const [leadConsultas, setLeadConsultas] = useState<any[]>([]);
   const [loadingConsultas, setLoadingConsultas] = useState(false);
+  const [consultasError, setConsultasError] = useState<string | null>(null);
+
   const [viewingConsulta, setViewingConsulta] = useState<any | null>(null);
 
   // Serviços Recomendados e Precificação (Apenas ADM altera)
@@ -734,49 +736,31 @@ export default function LeadWorkspaceModal({
   const loadLeadConsultas = async (attempt = 0) => {
     if (!lead.id) return;
     setLoadingConsultas(true);
+    setConsultasError(null);
     try {
-      const docsToMatch: string[] = [];
-      if (lead.cnpj) docsToMatch.push(lead.cnpj.replace(/\D/g, ""));
-      if (lead.socios && Array.isArray(lead.socios)) {
-        lead.socios.forEach((s: any) => {
-          if (s.cpf) {
-            docsToMatch.push(s.cpf.replace(/\D/g, ""));
-          }
-        });
+      const res = await fetch(
+        `/api/credit/consultas?leadId=${encodeURIComponent(lead.id)}`,
+        { headers: await authenticatedHeaders() }
+      );
+      const data = await parseJsonResponse(res);
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || "Não foi possível carregar as consultas deste lead.");
       }
-
-      if (docsToMatch.length === 0) {
-        setLeadConsultas([]);
-        setLoadingConsultas(false);
-        return;
-      }
-
-      const constraints: any[] = [where("documento", "in", docsToMatch)];
-      // O filtro precisa usar o MESMO identificador aceito pelas regras do
-      // Firestore, senão a listagem é negada por permissão.
-      const ownerId = currentPartner?.id || auth.currentUser?.uid || "";
-      if (!isAdmin && ownerId) constraints.push(where("partnerId", "==", ownerId));
-      const q = query(collection(db, "consultas_realizadas"), ...constraints);
-      
-      const querySnap = await getDocs(q);
-      const list = querySnap.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data()
-      })) as any[];
-      
-      list.sort((a, b) => new Date(b.dataConsulta || 0).getTime() - new Date(a.dataConsulta || 0).getTime());
+      const list: any[] = Array.isArray(data.consultas) ? data.consultas : [];
       setLeadConsultas(list);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error loading lead queries:", err);
       // Bloqueio momentâneo (sessão ainda resolvendo): tenta novamente uma vez.
       if (attempt < 1) {
         setTimeout(() => loadLeadConsultas(attempt + 1), 1200);
         return;
       }
+      setConsultasError(err?.message || "Não foi possível carregar as consultas deste lead.");
     } finally {
       setLoadingConsultas(false);
     }
   };
+
 
   // Run lead query listener on active tab (only after Firebase Auth resolves,
   // otherwise the rules reject the query with permission-denied)
@@ -3604,7 +3588,23 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       <Loader2 className="w-6 h-6 animate-spin text-[#00A86B]" />
                       <span className="text-xs">Sincronizando relatórios com o banco de dados...</span>
                     </div>
+                  ) : consultasError ? (
+                    <div className="py-10 text-center border-2 border-dashed border-red-200 rounded-2xl space-y-3 bg-red-50/50">
+                      <AlertCircle className="w-8 h-8 text-red-400 mx-auto" />
+                      <div className="text-xs font-extrabold text-red-700">
+                        Não foi possível carregar as consultas
+                      </div>
+                      <p className="text-[10px] text-red-500 max-w-xs mx-auto">{consultasError}</p>
+                      <button
+                        type="button"
+                        onClick={() => loadLeadConsultas()}
+                        className="px-3 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+                      >
+                        Tentar novamente
+                      </button>
+                    </div>
                   ) : leadConsultas.length === 0 ? (
+
                     <div className="py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl space-y-2 bg-slate-50/50">
                       <AlertCircle className="w-8 h-8 text-slate-300 mx-auto" />
                       <div className="text-xs font-extrabold text-slate-500">Nenhum relatório encontrado</div>
