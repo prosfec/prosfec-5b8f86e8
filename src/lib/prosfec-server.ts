@@ -2970,12 +2970,36 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         documentos[d.key] = link;
       }
 
-      if (!Object.keys(documentos).length) {
-        return res.status(400).json({ error: "Informe ao menos um link de documento." });
+      const cadastroInput =
+        body.cadastro && typeof body.cadastro === "object" ? body.cadastro : {};
+      const cadastroRaw: Record<string, string> = {};
+      for (const c of CADASTRO_PROPOSTA) {
+        const raw = cadastroInput[c.key];
+        if (raw === undefined || raw === null) continue;
+        const val = String(raw).trim();
+        if (!val) continue;
+        if (val.length > 200) {
+          return res.status(400).json({ error: `O campo "${c.label}" é muito longo.` });
+        }
+        cadastroRaw[c.key] = val;
       }
 
       const lead = await getDocRest(`leads/${leadId}`);
       if (!lead) return res.status(404).json({ error: "Proposta não encontrada." });
+
+      // Somente campos ainda vazios no cadastro podem ser preenchidos pelo cliente
+      const cadastro: Record<string, string> = {};
+      for (const [k, v] of Object.entries(cadastroRaw)) {
+        const atualValor = (lead as any)[k];
+        if (typeof atualValor === "string" && atualValor.trim()) continue;
+        cadastro[k] = v;
+      }
+
+      if (!Object.keys(documentos).length && !Object.keys(cadastro).length) {
+        return res
+          .status(400)
+          .json({ error: "Informe ao menos um dado cadastral ou um link de documento." });
+      }
 
       const nowIso = new Date().toISOString();
       const atual =
@@ -2983,13 +3007,14 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           ? (lead as any).documentosCliente
           : {};
 
-      await patchDocRest(
-        `leads/${leadId}`,
-        cleanForFirestore({
-          documentosCliente: { ...atual, ...documentos },
-          documentosClienteAtualizadoEm: nowIso,
-        }),
-      );
+      const patch: Record<string, any> = { ...cadastro };
+      if (Object.keys(cadastro).length) patch.cadastroClienteAtualizadoEm = nowIso;
+      if (Object.keys(documentos).length) {
+        patch.documentosCliente = { ...atual, ...documentos };
+        patch.documentosClienteAtualizadoEm = nowIso;
+      }
+
+      await patchDocRest(`leads/${leadId}`, cleanForFirestore(patch));
 
       try {
         await createDocRest("notificacoes", {
