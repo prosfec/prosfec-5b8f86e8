@@ -127,10 +127,6 @@ function PropostaPublicaPage() {
 
   const servicos: any[] = Array.isArray(proposta?.servicos) ? proposta.servicos : [];
   const temServicos = servicos.length > 0;
-  const campos: any[] = Array.isArray(proposta?.documentosCampos) ? proposta.documentosCampos : [];
-  const camposCadastro: any[] = Array.isArray(proposta?.cadastroCampos)
-    ? proposta.cadastroCampos
-    : [];
   const acompanhamento: any = proposta?.acompanhamento || null;
   const subEtapas: any[] = Array.isArray(acompanhamento?.subEtapas)
     ? acompanhamento.subEtapas
