@@ -576,7 +576,12 @@ function PropostaPublicaPage() {
                     </span>
                   </div>
 
-                  {s.linkPagamento ? (
+                  {s.pago ? (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-2 rounded-xl shrink-0">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Pago
+                    </span>
+                  ) : s.linkPagamento ? (
                     <a
                       href={s.linkPagamento}
                       target="_blank"
