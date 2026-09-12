@@ -2822,6 +2822,15 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     { key: "outros", label: "Outros documentos (opcional)" },
   ];
 
+  const CADASTRO_PROPOSTA: Array<{ key: string; label: string; placeholder: string }> = [
+    { key: "email", label: "E-mail de contato", placeholder: "empresa@email.com" },
+    { key: "whatsapp", label: "Telefone / WhatsApp", placeholder: "(00) 00000-0000" },
+    { key: "enderecoEmpresa", label: "Endereço da empresa", placeholder: "Rua, número, bairro" },
+    { key: "cidade", label: "Cidade", placeholder: "Cidade" },
+    { key: "estado", label: "Estado (UF)", placeholder: "UF" },
+    { key: "cep", label: "CEP", placeholder: "00000-000" },
+  ];
+
   const maskCnpjPublic = (raw: any): string => {
     const d = String(raw || "").replace(/\D/g, "");
     if (d.length !== 14) return "";
