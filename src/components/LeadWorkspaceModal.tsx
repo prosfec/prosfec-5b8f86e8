@@ -4015,6 +4015,14 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       <Copy className="w-3.5 h-3.5" />
                       {copiedProposalReport ? "Copiado!" : "Copiar Proposta WhatsApp"}
                     </button>
+                    <button
+                      onClick={handleCopiarLinkProposta}
+                      className="px-3.5 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      {linkPropostaCopiado ? "Link copiado!" : "Copiar Link da Proposta para o Cliente"}
+                    </button>
+
                   </div>
                 </div>
 
