@@ -3588,7 +3588,23 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       <Loader2 className="w-6 h-6 animate-spin text-[#00A86B]" />
                       <span className="text-xs">Sincronizando relatórios com o banco de dados...</span>
                     </div>
+                  ) : consultasError ? (
+                    <div className="py-10 text-center border-2 border-dashed border-red-200 rounded-2xl space-y-3 bg-red-50/50">
+                      <AlertCircle className="w-8 h-8 text-red-400 mx-auto" />
+                      <div className="text-xs font-extrabold text-red-700">
+                        Não foi possível carregar as consultas
+                      </div>
+                      <p className="text-[10px] text-red-500 max-w-xs mx-auto">{consultasError}</p>
+                      <button
+                        type="button"
+                        onClick={() => loadLeadConsultas()}
+                        className="px-3 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+                      >
+                        Tentar novamente
+                      </button>
+                    </div>
                   ) : leadConsultas.length === 0 ? (
+
                     <div className="py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl space-y-2 bg-slate-50/50">
                       <AlertCircle className="w-8 h-8 text-slate-300 mx-auto" />
                       <div className="text-xs font-extrabold text-slate-500">Nenhum relatório encontrado</div>
