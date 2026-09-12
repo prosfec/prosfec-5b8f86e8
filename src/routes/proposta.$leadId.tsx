@@ -537,11 +537,11 @@ function PropostaPublicaPage() {
           )}
         </section>
 
-        {/* Bloco 2 — Serviços e pagamento */}
+        {/* Bloco 3 — Serviços e pagamento */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
-              2
+              3
             </span>
             <h2 className="font-black text-sm uppercase tracking-wider text-slate-900">
               Serviços e pagamento
