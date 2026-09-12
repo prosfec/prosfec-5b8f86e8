@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React, { useEffect, useState } from "react";
-import { X, ShieldCheck, Download, ExternalLink, Clock, FileText, AlertCircle } from "lucide-react";
+import React from "react";
+import { X, ShieldCheck, Download, ExternalLink, FileText } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface RelatorioPdfViewerModalProps {
@@ -17,23 +17,8 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
   lead,
 }) => {
   const isMobile = useIsMobile();
-  const [loaded, setLoaded] = useState(false);
-  const [loadFailed, setLoadFailed] = useState(false);
 
   const url: string = consulta?.relatorioPdfUrl || "";
-
-  useEffect(() => {
-    setLoaded(false);
-    setLoadFailed(false);
-    if (!isOpen || !url || isMobile) return;
-    const timer = window.setTimeout(() => {
-      setLoaded((ok) => {
-        if (!ok) setLoadFailed(true);
-        return ok;
-      });
-    }, 9000);
-    return () => window.clearTimeout(timer);
-  }, [isOpen, url, isMobile]);
 
   if (!isOpen || !consulta) return null;
 
@@ -48,30 +33,6 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
     ? new Date(consulta.dataConsulta).toLocaleString("pt-BR")
     : "";
   const downloadName = `PROSFEC_DIAGNOSTICO_360_${(documento || "relatorio").replace(/\D/g, "") || "relatorio"}.pdf`;
-
-  const acoes = (
-    <div className="flex flex-col sm:flex-row gap-2.5 w-full max-w-xs">
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer"
-        className="flex-1 px-4 py-3 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2"
-      >
-        <ExternalLink className="w-4 h-4" />
-        Abrir relatório
-      </a>
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer"
-        download={downloadName}
-        className="flex-1 px-4 py-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2"
-      >
-        <Download className="w-4 h-4" />
-        Baixar PDF
-      </a>
-    </div>
-  );
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-0 sm:p-4">
@@ -125,61 +86,61 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
           </div>
         </div>
 
-        <div className="flex-1 bg-slate-100 overflow-y-auto">
+        <div className="flex-1 bg-slate-100 overflow-y-auto flex items-center justify-center p-4 sm:p-8">
           {!url ? (
             <div className="min-h-[60vh] h-full flex flex-col items-center justify-center gap-3 text-center px-6 py-10">
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
-                <Clock className="w-8 h-8 text-amber-600" />
+                <FileText className="w-8 h-8 text-amber-600" />
               </div>
               <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
                 Relatório em preparação pela equipe
               </h3>
               <p className="text-xs text-slate-500 max-w-md">
                 A consulta já foi executada. Assim que a equipe PROSFEC anexar o relatório
-                oficial em PDF, ele ficará disponível aqui para visualização e download.
+                oficial em PDF, ele ficará disponível aqui para download.
               </p>
               <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5" />
                 PROSFEC DIAGNÓSTICO 360
               </span>
             </div>
-          ) : isMobile || loadFailed ? (
-            <div className="min-h-[60vh] h-full flex flex-col items-center justify-center gap-4 text-center px-6 py-10">
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
-                {loadFailed && !isMobile ? (
-                  <AlertCircle className="w-8 h-8 text-amber-600" />
-                ) : (
-                  <FileText className="w-8 h-8 text-emerald-600" />
-                )}
+          ) : (
+            <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl p-8 sm:p-10 text-center space-y-6">
+              <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-600" />
               </div>
-              <div className="space-y-1">
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
-                  {loadFailed && !isMobile
-                    ? "Não foi possível exibir aqui"
-                    : "Relatório disponível"}
+
+              <div className="space-y-2">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 uppercase tracking-wider">
+                  Laudo Oficial PROSFEC DIAGNÓSTICO 360
                 </h3>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Toque em um dos botões abaixo para abrir o relatório oficial no leitor de PDF
-                  do seu aparelho ou salvar o arquivo.
+                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                  O documento abaixo contém o detalhamento oficial da consulta de crédito.
+                  Baixe o PDF completo para visualizar todas as informações.
                 </p>
               </div>
-              <div className="text-[10px] text-slate-500 font-mono">
-                {titular}
-                {documento ? ` • ${documento}` : ""}
-                {data ? ` • ${data}` : ""}
+
+              <div className="text-[10px] sm:text-xs text-slate-500 font-mono space-y-0.5">
+                <div className="font-semibold text-slate-700">{titular}</div>
+                <div>{documento || "Documento não informado"}</div>
+                {data ? <div>{data}</div> : null}
               </div>
-              {acoes}
-              <span className="text-[10px] text-slate-400 font-mono">
+
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                download={downloadName}
+                className="inline-flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all shadow-lg hover:shadow-xl"
+              >
+                <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                Baixar PDF Completo
+              </a>
+
+              <span className="block text-[10px] text-slate-400 font-mono">
                 PROSFEC DIAGNÓSTICO 360
               </span>
             </div>
-          ) : (
-            <iframe
-              src={url}
-              title="PROSFEC DIAGNÓSTICO 360"
-              onLoad={() => setLoaded(true)}
-              className="w-full h-[78vh] border-0 bg-white"
-            />
           )}
         </div>
       </div>
