@@ -734,49 +734,31 @@ export default function LeadWorkspaceModal({
   const loadLeadConsultas = async (attempt = 0) => {
     if (!lead.id) return;
     setLoadingConsultas(true);
+    setConsultasError(null);
     try {
-      const docsToMatch: string[] = [];
-      if (lead.cnpj) docsToMatch.push(lead.cnpj.replace(/\D/g, ""));
-      if (lead.socios && Array.isArray(lead.socios)) {
-        lead.socios.forEach((s: any) => {
-          if (s.cpf) {
-            docsToMatch.push(s.cpf.replace(/\D/g, ""));
-          }
-        });
+      const res = await fetch(
+        `/api/credit/consultas?leadId=${encodeURIComponent(lead.id)}`,
+        { headers: await authenticatedHeaders() }
+      );
+      const data = await parseJsonResponse(res);
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || "Não foi possível carregar as consultas deste lead.");
       }
-
-      if (docsToMatch.length === 0) {
-        setLeadConsultas([]);
-        setLoadingConsultas(false);
-        return;
-      }
-
-      const constraints: any[] = [where("documento", "in", docsToMatch)];
-      // O filtro precisa usar o MESMO identificador aceito pelas regras do
-      // Firestore, senão a listagem é negada por permissão.
-      const ownerId = currentPartner?.id || auth.currentUser?.uid || "";
-      if (!isAdmin && ownerId) constraints.push(where("partnerId", "==", ownerId));
-      const q = query(collection(db, "consultas_realizadas"), ...constraints);
-      
-      const querySnap = await getDocs(q);
-      const list = querySnap.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data()
-      })) as any[];
-      
-      list.sort((a, b) => new Date(b.dataConsulta || 0).getTime() - new Date(a.dataConsulta || 0).getTime());
+      const list: any[] = Array.isArray(data.consultas) ? data.consultas : [];
       setLeadConsultas(list);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error loading lead queries:", err);
       // Bloqueio momentâneo (sessão ainda resolvendo): tenta novamente uma vez.
       if (attempt < 1) {
         setTimeout(() => loadLeadConsultas(attempt + 1), 1200);
         return;
       }
+      setConsultasError(err?.message || "Não foi possível carregar as consultas deste lead.");
     } finally {
       setLoadingConsultas(false);
     }
   };
+
 
   // Run lead query listener on active tab (only after Firebase Auth resolves,
   // otherwise the rules reject the query with permission-denied)
