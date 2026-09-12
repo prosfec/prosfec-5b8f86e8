@@ -2874,6 +2874,9 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const catalog = await loadServicesCatalog();
       const rawServicos = Array.isArray(lead.servicosRecomendados) ? lead.servicosRecomendados : [];
 
+      const isPagoFlag = (s: any) =>
+        String(s?.statusPagamento || "").toLowerCase() === "pago" || s?.pago === true;
+
       const servicos = rawServicos
         .filter((s: any) => s && (s.nome || s.titulo || s.servico))
         .map((s: any) => {
@@ -2884,6 +2887,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
             nome: String(s.nome || s.titulo || s.servico || "").slice(0, 160),
             descricao: String(s.descricao || s.detalhe || "").slice(0, 400),
             valor,
+            pago: isPagoFlag(s),
             linkPagamento: resolveCheckoutLink(s, catalog),
           };
         });
@@ -2926,6 +2930,61 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         return !(typeof v === "string" && v.trim());
       });
 
+      // ---- Painel de acompanhamento (somente leitura) ----
+      const rawSubEtapas = Array.isArray(lead.subEtapasPasso6) ? lead.subEtapasPasso6 : [];
+      const subEtapas = rawSubEtapas
+        .filter((s: any) => s && (s.titulo || s.nome))
+        .map((s: any) => {
+          const valor = Number(s.preco ?? s.valor ?? 0) || 0;
+          const titulo = String(s.titulo || s.nome || "").slice(0, 200);
+          const porDemanda = /demanda/i.test(titulo) || s.porDemanda === true;
+          return {
+            titulo,
+            concluida: s.concluida === true,
+            valor,
+            pago: isPagoFlag(s),
+            semCustoInicial: !(valor > 0),
+            porDemanda,
+          };
+        });
+
+      const concluidas = subEtapas.filter((s: any) => s.concluida).length;
+      const totalSub = subEtapas.length;
+
+      const ficha: any = lead.fichaRatingCredito && typeof lead.fichaRatingCredito === "object"
+        ? lead.fichaRatingCredito
+        : {};
+      const validacoes: any =
+        ficha.validacoesDocumentos && typeof ficha.validacoesDocumentos === "object"
+          ? ficha.validacoesDocumentos
+          : {};
+      const valsDocs = Object.values(validacoes) as any[];
+      const faseRating = String(ficha.faseRating || "");
+      const faseLabel =
+        faseRating === "concluido"
+          ? "Rating concluído"
+          : faseRating === "em_aplicacao"
+            ? "Rating em aplicação"
+            : faseRating === "documentos_recebidos"
+              ? "Documentos recebidos"
+              : "Aguardando documentos";
+
+      const etapasLabels = [
+        "Dados cadastrais do CNPJ",
+        "Coleta de dados dos sócios",
+        "Consulta diagnóstica CPF e CNPJ",
+        "Assinatura de termos e contratos",
+        "Recolhimento de acessos e certificado digital",
+        "Estruturação da operação",
+        "Operação apta para solicitação bancária",
+        "Resultado do crédito",
+      ];
+
+      const rule =
+        (simulacao?.creditLineCode && (GOVERNMENT_CREDIT_LINES as any)[simulacao.creditLineCode]) ||
+        (lead.creditLineCode && (GOVERNMENT_CREDIT_LINES as any)[lead.creditLineCode]) ||
+        null;
+
       return res.json({
         success: true,
         proposta: {
@@ -2936,6 +2995,24 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           servicos,
           total,
           simulacao,
+          linhaCredito: rule
+            ? { code: rule.code, name: rule.name, badge: rule.badge }
+            : null,
+          acompanhamento: {
+            subEtapas,
+            progresso: {
+              concluidas,
+              total: totalSub,
+              percentual: totalSub > 0 ? Math.round((concluidas / totalSub) * 100) : 0,
+            },
+            documentacao: {
+              fase: faseLabel,
+              aprovados: valsDocs.filter((v: any) => v?.status === "aprovado").length,
+              rejeitados: valsDocs.filter((v: any) => v?.status === "rejeitado").length,
+            },
+            etapaAtual: Number(lead.etapa ?? 1) || 1,
+            etapasLabels,
+          },
           cadastroCampos: cadastroFaltante,
           documentosCampos: DOCUMENTOS_PROPOSTA,
           documentosCliente: docsEnviados,
