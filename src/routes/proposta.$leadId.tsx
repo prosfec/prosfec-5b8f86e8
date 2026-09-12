@@ -186,6 +186,14 @@ function PropostaPublicaPage() {
   const camposCadastro: any[] = Array.isArray(proposta?.cadastroCampos)
     ? proposta.cadastroCampos
     : [];
+  const acompanhamento: any = proposta?.acompanhamento || null;
+  const subEtapas: any[] = Array.isArray(acompanhamento?.subEtapas)
+    ? acompanhamento.subEtapas
+    : [];
+  const etapasLabels: string[] = Array.isArray(acompanhamento?.etapasLabels)
+    ? acompanhamento.etapasLabels
+    : [];
+  const etapaAtual: number = Number(acompanhamento?.etapaAtual || 1) || 1;
 
   const ReadField = ({ label, value }: { label: string; value: string }) => (
     <div className="space-y-1">
