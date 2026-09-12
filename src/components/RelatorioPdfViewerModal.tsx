@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { X, ShieldCheck, Download, FileText } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -19,6 +19,7 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
   const isMobile = useIsMobile();
   const [previewLoaded, setPreviewLoaded] = useState(false);
   const [previewFailed, setPreviewFailed] = useState(false);
+  const fallbackTimerRef = useRef<number | null>(null);
 
   const url: string = consulta?.relatorioPdfUrl || "";
 
@@ -28,11 +29,16 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
 
     if (!isOpen || !url || isMobile) return;
 
-    const fallbackTimer = window.setTimeout(() => {
+    fallbackTimerRef.current = window.setTimeout(() => {
       setPreviewFailed(true);
     }, 8000);
 
-    return () => window.clearTimeout(fallbackTimer);
+    return () => {
+      if (fallbackTimerRef.current !== null) {
+        window.clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+    };
   }, [isOpen, isMobile, url]);
 
   if (!isOpen || !consulta) return null;
@@ -163,7 +169,13 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
                 src={url}
                 title="Laudo Oficial PROSFEC DIAGNÓSTICO 360"
                 className="h-full w-full border-0"
-                onLoad={() => setPreviewLoaded(true)}
+                onLoad={() => {
+                  if (fallbackTimerRef.current !== null) {
+                    window.clearTimeout(fallbackTimerRef.current);
+                    fallbackTimerRef.current = null;
+                  }
+                  setPreviewLoaded(true);
+                }}
                 onError={() => setPreviewFailed(true)}
               />
             </div>
