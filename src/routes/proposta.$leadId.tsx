@@ -94,53 +94,6 @@ function PropostaPublicaPage() {
     });
   }, [simulacao]);
 
-  const handleSalvar = async () => {
-    setFormErro(null);
-    const docsPayload: Record<string, string> = {};
-    for (const [k, v] of Object.entries(links)) {
-      const val = String(v || "").trim();
-      if (val) docsPayload[k] = val;
-    }
-    const cadPayload: Record<string, string> = {};
-    for (const [k, v] of Object.entries(cadastro)) {
-      const val = String(v || "").trim();
-      if (val) cadPayload[k] = val;
-    }
-    if (!Object.keys(docsPayload).length && !Object.keys(cadPayload).length) {
-      setFormErro("Preencha ao menos um dado ou cole um link de documento antes de enviar.");
-      return;
-    }
-    setEnviando(true);
-    try {
-      const r = await fetch(`/api/public/proposta/${leadId}/documentos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentos: docsPayload, cadastro: cadPayload }),
-      });
-      const json = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setFormErro(json?.error || "Não foi possível salvar as informações.");
-      } else {
-        setEnviado(true);
-        setLinks({ ...(json.documentosCliente || docsPayload) });
-        const salvos = json.cadastroSalvo || {};
-        if (Object.keys(salvos).length) {
-          setProposta((prev: any) =>
-            prev
-              ? {
-                  ...prev,
-                  cadastroCampos: (prev.cadastroCampos || []).filter((c: any) => !salvos[c.key]),
-                }
-              : prev,
-          );
-        }
-      }
-    } catch {
-      setFormErro("Falha de conexão. Tente novamente.");
-    } finally {
-      setEnviando(false);
-    }
-  };
 
   if (loading) {
     return (
