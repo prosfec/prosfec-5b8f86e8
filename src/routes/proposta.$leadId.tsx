@@ -20,6 +20,9 @@ import {
   Link2,
   Calculator,
   Lock,
+  ListChecks,
+  Circle,
+  FolderCheck,
 } from "lucide-react";
 import { calculateAmortizationSchedule } from "@/utils/amortizationSchedule";
 
@@ -183,6 +186,14 @@ function PropostaPublicaPage() {
   const camposCadastro: any[] = Array.isArray(proposta?.cadastroCampos)
     ? proposta.cadastroCampos
     : [];
+  const acompanhamento: any = proposta?.acompanhamento || null;
+  const subEtapas: any[] = Array.isArray(acompanhamento?.subEtapas)
+    ? acompanhamento.subEtapas
+    : [];
+  const etapasLabels: string[] = Array.isArray(acompanhamento?.etapasLabels)
+    ? acompanhamento.etapasLabels
+    : [];
+  const etapaAtual: number = Number(acompanhamento?.etapaAtual || 1) || 1;
 
   const ReadField = ({ label, value }: { label: string; value: string }) => (
     <div className="space-y-1">
@@ -214,15 +225,191 @@ function PropostaPublicaPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-5 py-8 space-y-6">
-        <h1 className="text-lg sm:text-xl font-black text-[#0A3D2E] uppercase tracking-wider">
-          Estruturação da Operação & Melhoria de Perfil de Crédito
-        </h1>
+        {/* Cabeçalho no padrão do Passo 6 */}
+        <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-2xl border border-emerald-800 shadow-sm grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] md:items-center gap-4">
+          <div className="space-y-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider font-mono">
+                Acompanhamento da Operação
+              </span>
+              {proposta?.linhaCredito?.badge ? (
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider">
+                  {proposta.linhaCredito.badge}
+                </span>
+              ) : null}
+            </div>
+            <h1 className="font-display font-extrabold text-lg sm:text-xl text-white">
+              Estruturação da Operação & Melhoria de Perfil de Crédito
+            </h1>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {proposta?.nomeEmpresa || "Sua empresa"}
+              {proposta?.cnpj ? ` • ${proposta.cnpj}` : ""}
+            </p>
+          </div>
 
-        {/* Bloco 1 — Simulação (somente leitura) */}
+          <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-left md:text-right shrink-0">
+            <span className="text-[9px] uppercase font-black tracking-wider text-emerald-300 block">
+              Progresso da Estruturação
+            </span>
+            <span className="text-base font-black text-white font-mono">
+              {acompanhamento?.progresso?.concluidas || 0}/{acompanhamento?.progresso?.total || 0}{" "}
+              concluídas ({acompanhamento?.progresso?.percentual || 0}%)
+            </span>
+          </div>
+        </div>
+
+        {/* Bloco 1 — Acompanhamento (somente leitura) */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
               1
+            </span>
+            <div className="min-w-0">
+              <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                <ListChecks className="w-4 h-4 text-emerald-600" />
+                Acompanhamento da Operação
+              </h2>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Andamento das ações técnicas executadas pela equipe PROSFEC.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-5 sm:p-6 space-y-5">
+            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-emerald-600 to-[#00A86B] h-2.5 rounded-full transition-all duration-500"
+                style={{ width: `${Math.max(5, acompanhamento?.progresso?.percentual || 0)}%` }}
+              />
+            </div>
+
+            {subEtapas.length === 0 ? (
+              <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                As ações de estruturação estão sendo definidas pela equipe.
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {subEtapas.map((sub: any, idx: number) => (
+                  <div
+                    key={`sub-${idx}`}
+                    className={`flex flex-wrap items-center gap-3 p-3.5 rounded-2xl border ${
+                      sub.concluida
+                        ? "bg-emerald-50/40 border-emerald-200/80"
+                        : "bg-white border-slate-200"
+                    }`}
+                  >
+                    {sub.concluida ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <Circle className="w-4 h-4 text-slate-300 shrink-0" />
+                    )}
+                    <span
+                      className={`flex-1 min-w-[180px] text-xs font-semibold ${
+                        sub.concluida ? "line-through text-slate-400" : "text-slate-800"
+                      }`}
+                    >
+                      {sub.titulo}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      {sub.valor > 0 && (
+                        <span className="text-[10px] font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                          {formatBRL(sub.valor)}
+                        </span>
+                      )}
+                      {sub.porDemanda ? (
+                        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
+                          Contratado por demanda
+                        </span>
+                      ) : sub.semCustoInicial ? (
+                        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-blue-50 text-blue-800 border-blue-200">
+                          Sem custo inicial
+                        </span>
+                      ) : (
+                        <span
+                          className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border ${
+                            sub.pago
+                              ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                              : "bg-amber-50 text-amber-800 border-amber-200"
+                          }`}
+                        >
+                          {sub.pago ? "Pago" : "Aguardando pagamento"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Situação da documentação */}
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <FolderCheck className="w-4 h-4 text-[#00A86B]" />
+                Documentação
+              </span>
+              <span className="text-[11px] font-extrabold bg-slate-100 text-slate-700 px-3 py-1 rounded-xl border border-slate-200">
+                {acompanhamento?.documentacao?.fase || "Aguardando documentos"}
+              </span>
+              <span className="text-[11px] font-extrabold bg-emerald-50 text-emerald-800 px-3 py-1 rounded-xl border border-emerald-200">
+                {acompanhamento?.documentacao?.aprovados || 0} aprovado(s)
+              </span>
+              {(acompanhamento?.documentacao?.rejeitados || 0) > 0 && (
+                <span className="text-[11px] font-extrabold bg-amber-50 text-amber-800 px-3 py-1 rounded-xl border border-amber-200">
+                  {acompanhamento.documentacao.rejeitados} aguardando reenvio
+                </span>
+              )}
+            </div>
+
+            {/* Linha do tempo das etapas */}
+            {etapasLabels.length > 0 && (
+              <div className="border-t border-slate-100 pt-4 space-y-2">
+                <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                  Linha do tempo da operação
+                </span>
+                <ol className="space-y-1.5">
+                  {etapasLabels.map((label: string, i: number) => {
+                    const num = i + 1;
+                    const concluida = num < etapaAtual;
+                    const atual = num === etapaAtual;
+                    return (
+                      <li key={label} className="flex items-center gap-2.5">
+                        <span
+                          className={`w-5 h-5 rounded-full text-[9px] font-black flex items-center justify-center shrink-0 ${
+                            concluida
+                              ? "bg-emerald-600 text-white"
+                              : atual
+                                ? "bg-amber-400 text-slate-900"
+                                : "bg-slate-100 text-slate-400 border border-slate-200"
+                          }`}
+                        >
+                          {num}
+                        </span>
+                        <span
+                          className={`text-[11px] ${
+                            atual
+                              ? "font-black text-slate-900"
+                              : concluida
+                                ? "text-slate-500"
+                                : "text-slate-400"
+                          }`}
+                        >
+                          {label}
+                          {atual ? " • em andamento" : ""}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Bloco 2 — Simulação (somente leitura) */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
+              2
             </span>
             <div className="min-w-0">
               <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
@@ -350,11 +537,11 @@ function PropostaPublicaPage() {
           )}
         </section>
 
-        {/* Bloco 2 — Serviços e pagamento */}
+        {/* Bloco 3 — Serviços e pagamento */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
-              2
+              3
             </span>
             <h2 className="font-black text-sm uppercase tracking-wider text-slate-900">
               Serviços e pagamento
@@ -389,7 +576,12 @@ function PropostaPublicaPage() {
                     </span>
                   </div>
 
-                  {s.linkPagamento ? (
+                  {s.pago ? (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-2 rounded-xl shrink-0">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Pago
+                    </span>
+                  ) : s.linkPagamento ? (
                     <a
                       href={s.linkPagamento}
                       target="_blank"
@@ -419,11 +611,11 @@ function PropostaPublicaPage() {
           )}
         </section>
 
-        {/* Bloco 3 — Cadastro e documentação */}
+        {/* Bloco 4 — Cadastro e documentação */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
-              3
+              4
             </span>
             <h2 className="font-black text-sm uppercase tracking-wider text-slate-900">
               Completar Cadastro e Documentação
