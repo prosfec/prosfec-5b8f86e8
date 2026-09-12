@@ -2890,6 +2890,33 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         if (typeof v === "string" && v.trim()) docsEnviados[d.key] = v.trim();
       }
 
+      const prop = lead.propostaNegociada && typeof lead.propostaNegociada === "object"
+        ? lead.propostaNegociada
+        : null;
+
+      const simulacao = prop
+        ? {
+            creditLineCode: String(prop.creditLineCode || lead.creditLineCode || ""),
+            creditLineName: String(prop.creditLineName || lead.creditLineName || ""),
+            valorDesejado: Number(prop.valorDesejado ?? lead.limiteEstimado ?? 0) || 0,
+            carenciaMeses: Number(prop.carenciaMeses ?? 0) || 0,
+            amortizacaoMeses: Number(prop.amortizacaoMeses ?? 0) || 0,
+            sistemaAmortizacao: prop.sistemaAmortizacao === "PRICE" ? "PRICE" : "SAC",
+            taxaAnual: Number(prop.taxaAnual ?? 0) || 0,
+            pagarJurosCarencia: Boolean(prop.pagarJurosCarencia),
+            parcelaInicial: Number(prop.parcelaInicial ?? 0) || 0,
+            parcelaFinal: Number(prop.parcelaFinal ?? 0) || 0,
+            totalJuros: Number(prop.totalJuros ?? 0) || 0,
+            totalPago: Number(prop.totalPago ?? 0) || 0,
+            dataSimulacao: prop.dataSimulacao || null,
+          }
+        : null;
+
+      const cadastroFaltante = CADASTRO_PROPOSTA.filter((c) => {
+        const v = (lead as any)[c.key];
+        return !(typeof v === "string" && v.trim());
+      });
+
       return res.json({
         success: true,
         proposta: {
@@ -2899,6 +2926,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           cnpj: maskCnpjPublic(lead.cnpj),
           servicos,
           total,
+          simulacao,
+          cadastroCampos: cadastroFaltante,
           documentosCampos: DOCUMENTOS_PROPOSTA,
           documentosCliente: docsEnviados,
           documentosClienteAtualizadoEm: lead.documentosClienteAtualizadoEm || null,
