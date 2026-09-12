@@ -3020,8 +3020,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         await createDocRest("notificacoes", {
           recipientId: "admin",
           recipientType: "admin",
-          titulo: "Documentação enviada pelo cliente",
-          mensagem: `O cliente ${(lead as any).nomeEmpresa || (lead as any).razaoSocial || leadId} enviou links de documentação pela proposta.`,
+          titulo: "Dados e documentos enviados pelo cliente",
+          mensagem: `O cliente ${(lead as any).nomeEmpresa || (lead as any).razaoSocial || leadId} enviou dados cadastrais e/ou links de documentação pela proposta.`,
           tipo: "info",
           lida: false,
           leadId,
@@ -3031,7 +3031,12 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         console.error("Falha ao notificar documentação do cliente:", notifErr?.message || notifErr);
       }
 
-      return res.json({ success: true, documentosCliente: { ...atual, ...documentos }, atualizadoEm: nowIso });
+      return res.json({
+        success: true,
+        documentosCliente: { ...atual, ...documentos },
+        cadastroSalvo: cadastro,
+        atualizadoEm: nowIso,
+      });
     } catch (err: any) {
       console.error("Erro ao salvar documentos da proposta:", err?.message || err);
       return res.status(500).json({ error: "Não foi possível salvar os links enviados." });
