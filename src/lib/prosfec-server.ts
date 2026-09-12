@@ -734,6 +734,95 @@ export function createExpressApp() {
     }
   });
 
+  // 3.3 Listar as consultas de um lead (equipe ou parceiro responsável).
+  // A leitura passa pelo servidor porque o registro pode ter sido criado pela
+  // equipe (partnerId "admin"), caso em que o navegador do parceiro é barrado
+  // pelas regras do Firestore.
+  app.get("/api/credit/consultas", async (req, res) => {
+    try {
+      const caller = await authenticateApiCaller(req);
+      const leadId = String((req.query as any)?.leadId || "").trim();
+      if (!leadId) return res.status(400).json({ error: "Parâmetro 'leadId' é obrigatório." });
+
+      const leadData: any = await getDocRest(`leads/${leadId}`);
+      if (!leadData) return res.status(404).json({ error: "Lead não encontrado." });
+      await assertLeadAccess(leadId, caller);
+
+      const docsToMatch: string[] = [];
+      const cnpj = String(leadData.cnpj || "").replace(/\D/g, "");
+      if (cnpj) docsToMatch.push(cnpj);
+      if (Array.isArray(leadData.socios)) {
+        leadData.socios.forEach((s: any) => {
+          const cpf = String(s?.cpf || "").replace(/\D/g, "");
+          if (cpf) docsToMatch.push(cpf);
+        });
+      }
+
+      const byId = new Map<string, any>();
+
+      try {
+        const rowsByLead = await runQueryRest("consultas_realizadas", {
+          fieldFilter: { field: { fieldPath: "leadId" }, op: "EQUAL", value: { stringValue: leadId } },
+        });
+        rowsByLead.forEach((r: any) => byId.set(r.id, r));
+      } catch (e: any) {
+        console.warn("consultas by leadId failed:", e?.message || "erro");
+      }
+
+      if (docsToMatch.length) {
+        try {
+          const rowsByDoc = await runQueryRest("consultas_realizadas", {
+            fieldFilter: {
+              field: { fieldPath: "documento" },
+              op: "IN",
+              value: { arrayValue: { values: docsToMatch.slice(0, 10).map((d) => ({ stringValue: d })) } },
+            },
+          });
+          rowsByDoc.forEach((r: any) => {
+            const owner = String(r.data?.leadId || "");
+            if (owner && owner !== leadId) return; // consulta de outro lead
+            if (!byId.has(r.id)) byId.set(r.id, r);
+          });
+        } catch (e: any) {
+          console.warn("consultas by documento failed:", e?.message || "erro");
+        }
+      }
+
+      const consultas = Array.from(byId.values())
+        .filter((r: any) => !String(r.id).startsWith("ia_diagnostico_"))
+        .filter((r: any) => r.data && r.data.resultado)
+        .map((r: any) => ({
+          id: r.id,
+          leadId: r.data.leadId || "",
+          partnerId: r.data.partnerId || "",
+          partnerNome: r.data.partnerNome || "",
+          produto_code: r.data.produto_code || "",
+          produto_nome: r.data.produto_nome || "",
+          documento: r.data.documento || "",
+          documentoNome: r.data.documentoNome || "",
+          dataConsulta: r.data.dataConsulta || "",
+          status: r.data.status || "",
+          preco_parceiro: r.data.preco_parceiro ?? null,
+          relatorioPdfUrl: r.data.relatorioPdfUrl || "",
+          relatorioPdfNome: r.data.relatorioPdfNome || "",
+          relatorioPdfTamanho: r.data.relatorioPdfTamanho ?? null,
+          relatorioPdfEnviadoEm: r.data.relatorioPdfEnviadoEm || "",
+        }))
+        .sort(
+          (a: any, b: any) =>
+            new Date(b.dataConsulta || 0).getTime() - new Date(a.dataConsulta || 0).getTime(),
+        );
+
+      return res.json({ success: true, consultas });
+    } catch (err: any) {
+      const status = err?.statusCode || 500;
+      console.error("Error in /api/credit/consultas:", err?.message || err);
+      return res.status(status).json({ error: err?.message || "Erro ao carregar as consultas do lead." });
+    }
+  });
+
+
+
   // 4.1 Solicitar Serviço de Contabilidade com débito real em saldoGeral via runTransaction
   const handleSolicitarServicoContabilidade = async (req: express.Request, res: express.Response) => {
     try {
