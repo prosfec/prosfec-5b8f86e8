@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as PdfTestRouteImport } from './routes/pdf-test'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ContratoLeadIdRouteImport } from './routes/contrato.$leadId'
@@ -24,11 +23,6 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PdfTestRoute = PdfTestRouteImport.update({
-  id: '/pdf-test',
-  path: '/pdf-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -50,7 +44,6 @@ const ContratoLeadIdRoute = ContratoLeadIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/pdf-test': typeof PdfTestRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
@@ -58,7 +51,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/pdf-test': typeof PdfTestRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
@@ -67,33 +59,19 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/pdf-test': typeof PdfTestRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/admin'
-    | '/pdf-test'
-    | '/sitemap.xml'
-    | '/api/$'
-    | '/contrato/$leadId'
+  fullPaths: '/' | '/admin' | '/sitemap.xml' | '/api/$' | '/contrato/$leadId'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/admin'
-    | '/pdf-test'
-    | '/sitemap.xml'
-    | '/api/$'
-    | '/contrato/$leadId'
+  to: '/' | '/admin' | '/sitemap.xml' | '/api/$' | '/contrato/$leadId'
   id:
     | '__root__'
     | '/'
     | '/admin'
-    | '/pdf-test'
     | '/sitemap.xml'
     | '/api/$'
     | '/contrato/$leadId'
@@ -102,7 +80,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
-  PdfTestRoute: typeof PdfTestRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ContratoLeadIdRoute: typeof ContratoLeadIdRoute
@@ -122,13 +99,6 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pdf-test': {
-      id: '/pdf-test'
-      path: '/pdf-test'
-      fullPath: '/pdf-test'
-      preLoaderRoute: typeof PdfTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -158,7 +128,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
-  PdfTestRoute: PdfTestRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSplatRoute: ApiSplatRoute,
   ContratoLeadIdRoute: ContratoLeadIdRoute,
