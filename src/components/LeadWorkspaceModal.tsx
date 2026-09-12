@@ -2045,10 +2045,26 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
   const [savingPlanoContratacao, setSavingPlanoContratacao] = useState(false);
   const [planoContratacaoFeedback, setPlanoContratacaoFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [linkContratoCopiado, setLinkContratoCopiado] = useState(false);
+  const [linkPropostaCopiado, setLinkPropostaCopiado] = useState(false);
 
   const contratoPublicLink = typeof window !== "undefined"
     ? `${window.location.origin}/contrato/${lead.id}`
     : `/contrato/${lead.id}`;
+
+  const propostaPublicLink = typeof window !== "undefined"
+    ? `${window.location.origin}/proposta/${lead.id}`
+    : `/proposta/${lead.id}`;
+
+  const handleCopiarLinkProposta = async () => {
+    try {
+      await navigator.clipboard.writeText(propostaPublicLink);
+      setLinkPropostaCopiado(true);
+      setTimeout(() => setLinkPropostaCopiado(false), 2000);
+    } catch {
+      /* silencioso: o parceiro pode copiar manualmente */
+    }
+  };
+
 
   const handleSalvarPlanoContratacao = async () => {
     if (!planoContratacao) return;
@@ -3999,6 +4015,14 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       <Copy className="w-3.5 h-3.5" />
                       {copiedProposalReport ? "Copiado!" : "Copiar Proposta WhatsApp"}
                     </button>
+                    <button
+                      onClick={handleCopiarLinkProposta}
+                      className="px-3.5 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      {linkPropostaCopiado ? "Link copiado!" : "Copiar Link da Proposta para o Cliente"}
+                    </button>
+
                   </div>
                 </div>
 

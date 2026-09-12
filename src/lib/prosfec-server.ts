@@ -2808,7 +2808,175 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // =====================================================================
+  // Proposta pública do cliente final (link direto, sem cadastro)
+  // =====================================================================
+
+  const DOCUMENTOS_PROPOSTA: Array<{ key: string; label: string }> = [
+    { key: "identidade", label: "Documento de identidade (RG/CNH)" },
+    { key: "cpf", label: "CPF do responsável" },
+    { key: "contratoSocial", label: "Contrato Social / MEI" },
+    { key: "comprovanteEndereco", label: "Comprovante de endereço da empresa" },
+    { key: "cartaoCnpj", label: "Cartão CNPJ" },
+    { key: "extratosBancarios", label: "Últimos extratos bancários" },
+    { key: "outros", label: "Outros documentos (opcional)" },
+  ];
+
+  const maskCnpjPublic = (raw: any): string => {
+    const d = String(raw || "").replace(/\D/g, "");
+    if (d.length !== 14) return "";
+    return `**.***.${d.slice(5, 8)}/${d.slice(8, 12)}-**`;
+  };
+
+  const loadServicesCatalog = async (): Promise<any[]> => {
+    try {
+      const cfg: any = await getDocRest("configuracoes/precos_consultas");
+      const list = cfg?.servicos;
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const resolveCheckoutLink = (serv: any, catalog: any[]): string => {
+    const pick = (v: any) =>
+      typeof v === "string" && v.trim().startsWith("http") ? v.trim() : "";
+    const own = pick(serv?.hublaLink) || pick(serv?.linkPagamento) || pick(serv?.checkoutUrl);
+    if (own) return own;
+
+    const nome = String(serv?.nome || serv?.titulo || serv?.servico || "").toLowerCase().trim();
+    const match = (catalog || []).find(
+      (c: any) =>
+        c &&
+        ((c.id && serv?.id && c.id === serv.id) ||
+          (c.nome && nome && String(c.nome).toLowerCase().trim() === nome)),
+    );
+    return match ? pick(match.hublaLink) : "";
+  };
+
+  app.get("/api/public/proposta/:leadId", async (req, res) => {
+    try {
+      const leadId = sanitizeLeadId(req.params?.leadId);
+      if (!leadId) return res.status(400).json({ error: "Link de proposta inválido." });
+
+      const lead: any = await getDocRest(`leads/${leadId}`);
+      if (!lead) return res.status(404).json({ error: "Proposta não encontrada." });
+
+      const catalog = await loadServicesCatalog();
+      const rawServicos = Array.isArray(lead.servicosRecomendados) ? lead.servicosRecomendados : [];
+
+      const servicos = rawServicos
+        .filter((s: any) => s && (s.nome || s.titulo || s.servico))
+        .map((s: any) => {
+          const valor =
+            Number(s.preco ?? s.valor ?? s.valorTotal ?? 0) || 0;
+          return {
+            id: String(s.id || ""),
+            nome: String(s.nome || s.titulo || s.servico || "").slice(0, 160),
+            descricao: String(s.descricao || s.detalhe || "").slice(0, 400),
+            valor,
+            linkPagamento: resolveCheckoutLink(s, catalog),
+          };
+        });
+
+      const total = servicos.reduce((acc: number, s: any) => acc + (Number(s.valor) || 0), 0);
+
+      const docsEnviados: Record<string, string> = {};
+      const stored = lead.documentosCliente && typeof lead.documentosCliente === "object"
+        ? lead.documentosCliente
+        : {};
+      for (const d of DOCUMENTOS_PROPOSTA) {
+        const v = stored[d.key];
+        if (typeof v === "string" && v.trim()) docsEnviados[d.key] = v.trim();
+      }
+
+      return res.json({
+        success: true,
+        proposta: {
+          leadId,
+          nomeEmpresa: lead.nomeEmpresa || lead.razaoSocial || lead.nome || "",
+          nomeContato: lead.nomeContato || lead.nome || "",
+          cnpj: maskCnpjPublic(lead.cnpj),
+          servicos,
+          total,
+          documentosCampos: DOCUMENTOS_PROPOSTA,
+          documentosCliente: docsEnviados,
+          documentosClienteAtualizadoEm: lead.documentosClienteAtualizadoEm || null,
+        },
+      });
+    } catch (err: any) {
+      console.error("Erro ao carregar proposta pública:", err?.message || err);
+      return res.status(500).json({ error: "Erro ao carregar a proposta." });
+    }
+  });
+
+  app.post("/api/public/proposta/:leadId/documentos", async (req, res) => {
+    try {
+      const leadId = sanitizeLeadId(req.params?.leadId);
+      if (!leadId) return res.status(400).json({ error: "Link de proposta inválido." });
+
+      const body = req.body || {};
+      const input = body.documentos && typeof body.documentos === "object" ? body.documentos : {};
+
+      const documentos: Record<string, string> = {};
+      for (const d of DOCUMENTOS_PROPOSTA) {
+        const raw = input[d.key];
+        if (raw === undefined || raw === null) continue;
+        const link = String(raw).trim();
+        if (!link) continue;
+        if (!/^https:\/\/\S+$/i.test(link) || link.length > 500) {
+          return res
+            .status(400)
+            .json({ error: `Link inválido em "${d.label}". Use um endereço começando com https://` });
+        }
+        documentos[d.key] = link;
+      }
+
+      if (!Object.keys(documentos).length) {
+        return res.status(400).json({ error: "Informe ao menos um link de documento." });
+      }
+
+      const lead = await getDocRest(`leads/${leadId}`);
+      if (!lead) return res.status(404).json({ error: "Proposta não encontrada." });
+
+      const nowIso = new Date().toISOString();
+      const atual =
+        (lead as any).documentosCliente && typeof (lead as any).documentosCliente === "object"
+          ? (lead as any).documentosCliente
+          : {};
+
+      await patchDocRest(
+        `leads/${leadId}`,
+        cleanForFirestore({
+          documentosCliente: { ...atual, ...documentos },
+          documentosClienteAtualizadoEm: nowIso,
+        }),
+      );
+
+      try {
+        await createDocRest("notificacoes", {
+          recipientId: "admin",
+          recipientType: "admin",
+          titulo: "Documentação enviada pelo cliente",
+          mensagem: `O cliente ${(lead as any).nomeEmpresa || (lead as any).razaoSocial || leadId} enviou links de documentação pela proposta.`,
+          tipo: "info",
+          lida: false,
+          leadId,
+          dataCriacao: nowIso,
+        });
+      } catch (notifErr: any) {
+        console.error("Falha ao notificar documentação do cliente:", notifErr?.message || notifErr);
+      }
+
+      return res.json({ success: true, documentosCliente: { ...atual, ...documentos }, atualizadoEm: nowIso });
+    } catch (err: any) {
+      console.error("Erro ao salvar documentos da proposta:", err?.message || err);
+      return res.status(500).json({ error: "Não foi possível salvar os links enviados." });
+    }
+  });
+
   return app;
+
 
 
 

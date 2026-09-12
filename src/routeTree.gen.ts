@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ContratoLeadIdRouteImport } from './routes/contrato.$leadId'
+import { Route as PropostaLeadIdRouteImport } from './routes/proposta.$leadId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const ContratoLeadIdRoute = ContratoLeadIdRouteImport.update({
   path: '/contrato/$leadId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PropostaLeadIdRoute = PropostaLeadIdRouteImport.update({
+  id: '/proposta/$leadId',
+  path: '/proposta/$leadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
+  '/proposta/$leadId': typeof PropostaLeadIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
+  '/proposta/$leadId': typeof PropostaLeadIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,12 +70,25 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
+  '/proposta/$leadId': typeof PropostaLeadIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/sitemap.xml' | '/api/$' | '/contrato/$leadId'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/sitemap.xml'
+    | '/api/$'
+    | '/contrato/$leadId'
+    | '/proposta/$leadId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/sitemap.xml' | '/api/$' | '/contrato/$leadId'
+  to:
+    | '/'
+    | '/admin'
+    | '/sitemap.xml'
+    | '/api/$'
+    | '/contrato/$leadId'
+    | '/proposta/$leadId'
   id:
     | '__root__'
     | '/'
@@ -75,6 +96,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/$'
     | '/contrato/$leadId'
+    | '/proposta/$leadId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -83,6 +105,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ContratoLeadIdRoute: typeof ContratoLeadIdRoute
+  PropostaLeadIdRoute: typeof PropostaLeadIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -122,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContratoLeadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/proposta/$leadId': {
+      id: '/proposta/$leadId'
+      path: '/proposta/$leadId'
+      fullPath: '/proposta/$leadId'
+      preLoaderRoute: typeof PropostaLeadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -131,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSplatRoute: ApiSplatRoute,
   ContratoLeadIdRoute: ContratoLeadIdRoute,
+  PropostaLeadIdRoute: PropostaLeadIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
