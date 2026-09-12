@@ -143,6 +143,10 @@ export interface Lead {
   fichaRatingCredito?: FichaRatingCredito;
   /** Espelho na raiz do lead do link da pasta de documentos (Drive/Dropbox/OneDrive) */
   linkDocumentos?: string;
+  /** Links de documentos enviados pelo cliente na página pública de proposta */
+  documentosCliente?: Record<string, string>;
+  documentosClienteAtualizadoEm?: string;
+
   /** Passo 4 — pasta do Drive com os contratos assinados pelo cliente via GOV.br */
   contratosAssinadosUrl?: string;
   contratosAssinadosAtualizadoEm?: string;
