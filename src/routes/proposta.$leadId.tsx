@@ -20,6 +20,9 @@ import {
   Link2,
   Calculator,
   Lock,
+  ListChecks,
+  Circle,
+  FolderCheck,
 } from "lucide-react";
 import { calculateAmortizationSchedule } from "@/utils/amortizationSchedule";
 
