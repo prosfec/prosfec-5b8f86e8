@@ -86,29 +86,44 @@ export const PdfDocumentViewer: React.FC<PdfDocumentViewerProps> = ({ url }) => 
       (entries) => {
         setVisiblePages((prev) => {
           const next = new Set(prev);
-          let best: { page: number; ratio: number } | null = null;
           for (const entry of entries) {
             const page = Number((entry.target as HTMLElement).dataset.page);
             if (!page) continue;
-            if (entry.isIntersecting) {
-              next.add(page);
-              if (!best || entry.intersectionRatio > best.ratio) {
-                best = { page, ratio: entry.intersectionRatio };
-              }
-            } else {
-              next.delete(page);
-            }
+            if (entry.isIntersecting) next.add(page);
+            else next.delete(page);
           }
-          if (best) setCurrentPage(best.page);
           return Array.from(next);
         });
       },
-      { root, rootMargin: "300px 0px", threshold: [0, 0.25, 0.5] },
+      { root, rootMargin: "300px 0px", threshold: 0 },
     );
 
     Object.values(pageRefs.current).forEach((el) => el && observer.observe(el));
-    return () => observer.disconnect();
+
+    // Página atual pela posição da rolagem (mais estável que o observer)
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const top = root.scrollTop + root.clientHeight * 0.35;
+        let atual = 1;
+        for (let i = 1; i <= numPages; i += 1) {
+          const el = pageRefs.current[i];
+          if (el && el.offsetTop <= top) atual = i;
+        }
+        setCurrentPage(atual);
+      });
+    };
+    root.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      root.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, [numPages, reloadKey]);
+
 
   const pagesToRender = useMemo(() => {
     const set = new Set<number>();
