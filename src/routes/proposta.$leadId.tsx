@@ -56,11 +56,6 @@ function PropostaPublicaPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [proposta, setProposta] = useState<any>(null);
 
-  const [links, setLinks] = useState<Record<string, string>>({});
-  const [cadastro, setCadastro] = useState<Record<string, string>>({});
-  const [enviando, setEnviando] = useState(false);
-  const [formErro, setFormErro] = useState<string | null>(null);
-  const [enviado, setEnviado] = useState(false);
 
   useEffect(() => {
     let ativo = true;
