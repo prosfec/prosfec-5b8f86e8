@@ -2045,10 +2045,26 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
   const [savingPlanoContratacao, setSavingPlanoContratacao] = useState(false);
   const [planoContratacaoFeedback, setPlanoContratacaoFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [linkContratoCopiado, setLinkContratoCopiado] = useState(false);
+  const [linkPropostaCopiado, setLinkPropostaCopiado] = useState(false);
 
   const contratoPublicLink = typeof window !== "undefined"
     ? `${window.location.origin}/contrato/${lead.id}`
     : `/contrato/${lead.id}`;
+
+  const propostaPublicLink = typeof window !== "undefined"
+    ? `${window.location.origin}/proposta/${lead.id}`
+    : `/proposta/${lead.id}`;
+
+  const handleCopiarLinkProposta = async () => {
+    try {
+      await navigator.clipboard.writeText(propostaPublicLink);
+      setLinkPropostaCopiado(true);
+      setTimeout(() => setLinkPropostaCopiado(false), 2000);
+    } catch {
+      /* silencioso: o parceiro pode copiar manualmente */
+    }
+  };
+
 
   const handleSalvarPlanoContratacao = async () => {
     if (!planoContratacao) return;
