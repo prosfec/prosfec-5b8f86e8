@@ -2963,6 +2963,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           const porDemanda = /demanda/i.test(titulo) || s.porDemanda === true;
           return {
             titulo,
+            descricao: String(s.descricao || "").slice(0, 600),
             concluida: s.concluida === true,
             valor,
             pago: isPagoFlag(s),
