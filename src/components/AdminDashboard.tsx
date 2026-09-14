@@ -2078,6 +2078,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           concluida: existing ? existing.concluida : (s.status === "concluido" || false),
           preco: typeof s.valor === "number" ? s.valor : (parseFloat(s.valor) || 0),
           statusPagamento: existing?.statusPagamento || (s.status === "concluido" ? "pago" : "pendente"),
+          descricao: typeof s.descricao === "string" ? s.descricao : (existing as any)?.descricao || "",
         };
         if (s.hublaLink || existing?.hublaLink) item.hublaLink = s.hublaLink || existing?.hublaLink;
         if (existing?.formaPagamento || s.formaPagamento) item.formaPagamento = existing?.formaPagamento || s.formaPagamento;
