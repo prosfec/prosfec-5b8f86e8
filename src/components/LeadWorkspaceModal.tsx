@@ -3921,13 +3921,17 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               if (!sel || !sel.value) return;
                               const [nome, valStr] = sel.value.split("|");
                               const defaultVal = parseFloat(valStr) || 0;
-                              const newServ = {
-                                id: `serv_${Date.now()}`,
+                              const catalogMatch = catalogServices.find(
+                                (c: any) => (c?.nome || "").trim() === (nome || "").trim(),
+                              );
+                              const newServ: any = {
+                                id: catalogMatch?.id || `serv_${Date.now()}`,
                                 nome,
                                 valor: defaultVal,
-                                justificativa: "Incluso manualmente pelo Administrador ADM",
+                                descricao: typeof catalogMatch?.descricao === "string" ? catalogMatch.descricao : "",
                                 status: "pendente"
                               };
+                              if (catalogMatch?.hublaLink) newServ.hublaLink = catalogMatch.hublaLink;
                               const updated = [...servicosRecomendados, newServ];
                               setServicosRecomendados(updated);
                               handleSaveServicos(updated);
