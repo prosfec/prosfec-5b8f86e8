@@ -5413,6 +5413,23 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     }}
                                     className="w-full bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 font-bold text-slate-800 py-1 outline-none text-xs"
                                   />
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-2 mb-1">
+                                    Descrição do serviço (exibida ao parceiro e ao cliente)
+                                  </label>
+                                  <textarea
+                                    rows={3}
+                                    maxLength={600}
+                                    value={(serv as any).descricao || ""}
+                                    placeholder="Ex.: Necessário para a remoção de negativações, protestos e saldos vencidos vinculados ao CNPJ e aos sócios."
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setCustomServices(prev => prev.map((item, idx) => idx === sIdx ? { ...item, descricao: val } : item));
+                                    }}
+                                    className="w-full min-w-[220px] rounded-lg border border-slate-200 bg-slate-50/50 focus:bg-white p-2 text-[11px] text-slate-700 leading-relaxed focus:border-emerald-500 focus:outline-none resize-y"
+                                  />
+                                  <p className="text-[10px] text-slate-400 mt-1">
+                                    {((serv as any).descricao || "").length}/600 caracteres
+                                  </p>
                                 </td>
                                 <td className="py-3 px-4">
                                   <div className="relative rounded-lg shadow-xs max-w-[130px]">
