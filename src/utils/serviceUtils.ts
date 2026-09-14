@@ -3,8 +3,15 @@ export interface ServiceCatalogItem {
   id: string;
   nome: string;
   valor: number;
+  descricao?: string;
   hublaLink?: string;
   semCustoInicial?: boolean;
+}
+
+/** Normaliza a descrição padronizada do serviço definida pelo ADM no catálogo */
+export function normalizeServiceDescription(value: any): string {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, 600);
 }
 
 export const HUBLA_SERVICE_LINKS: Record<string, string> = {
