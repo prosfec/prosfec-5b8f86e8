@@ -240,6 +240,8 @@ export function sanitizeServiceCatalogForFirestore(catalog: ServiceCatalogItem[]
         nome: (item.nome || "").toString().trim(),
         valor: typeof item.valor === "number" && !isNaN(item.valor) ? item.valor : (parseFloat(String(item.valor || 0)) || 0)
       };
+      const desc = normalizeServiceDescription((item as any).descricao);
+      cleaned.descricao = desc;
       if (item.hublaLink && typeof item.hublaLink === "string" && item.hublaLink.trim()) {
         cleaned.hublaLink = item.hublaLink.trim();
       }
