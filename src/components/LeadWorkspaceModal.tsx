@@ -3751,9 +3751,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                 <span className="font-extrabold text-xs text-slate-800 block">
                                   {serv.nome}
                                 </span>
-                                {serv.justificativa && (
-                                  <span className="text-[11px] text-slate-500 block">
-                                    💡 {serv.justificativa}
+                                {typeof (serv as any).descricao === "string" && (serv as any).descricao.trim() && (
+                                  <span className="text-[11px] text-slate-500 block whitespace-pre-line">
+                                    💡 {(serv as any).descricao}
                                   </span>
                                 )}
                               </div>
