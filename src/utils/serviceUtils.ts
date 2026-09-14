@@ -24,13 +24,6 @@ export const HUBLA_SERVICE_LINKS: Record<string, string> = {
 
 export const DEFAULT_SERVICES_CATALOG: ServiceCatalogItem[] = [
   { 
-    id: "serv_reabilitacao", 
-    nome: "Programa de Reabilitação Financeira e Creditícia", 
-    valor: 0, 
-    semCustoInicial: true,
-    hublaLink: HUBLA_SERVICE_LINKS.serv_reabilitacao 
-  },
-  { 
     id: "serv_rating_score", 
     nome: "Melhoria e Adequação de Rating e Score", 
     valor: 1100, 
