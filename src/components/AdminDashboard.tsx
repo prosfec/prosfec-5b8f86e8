@@ -1496,23 +1496,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               processedCatalog = filtered;
             }
 
-            // Garantir presença do Programa de Reabilitação Financeira e Creditícia (R$ 2.000,00)
-            const hasReabilitacao = processedCatalog.some((s: any) =>
-              s.id === "serv_reabilitacao" ||
-              s.nome?.toLowerCase().includes("reabilitação") ||
-              s.nome?.toLowerCase().includes("reabilitacao")
-            );
-            if (!hasReabilitacao) {
-              processedCatalog.unshift({
-                id: "serv_reabilitacao",
-                nome: "Programa de Reabilitação Financeira e Creditícia",
-                valor: 2000,
-                hublaLink: HUBLA_SERVICE_LINKS.serv_reabilitacao
-              });
-            }
-
             // Atribuir links padrão para serviços pré-definidos caso não tenham link customizado
             processedCatalog = processedCatalog.map((s: any) => {
+              if (s.id === "serv_reabilitacao" || s.id === "serv_renegociacao") return s;
               if (!s.hublaLink && s.id && (HUBLA_SERVICE_LINKS as any)[s.id]) {
                 return { ...s, hublaLink: (HUBLA_SERVICE_LINKS as any)[s.id] };
               }
