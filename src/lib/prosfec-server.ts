@@ -2955,7 +2955,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       // ---- Painel de acompanhamento (somente leitura) ----
       const rawSubEtapas = Array.isArray(lead.subEtapasPasso6) ? lead.subEtapasPasso6 : [];
       const subEtapas = rawSubEtapas
-        .filter((s: any) => s && (s.titulo || s.nome))
+        .filter((s: any) => s && (s.titulo || s.nome) && !isMensalidadeMirror(s))
+
         .map((s: any) => {
           const valor = Number(s.preco ?? s.valor ?? 0) || 0;
           const titulo = String(s.titulo || s.nome || "").slice(0, 200);
