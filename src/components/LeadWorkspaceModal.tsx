@@ -497,6 +497,7 @@ export default function LeadWorkspaceModal({
           concluida: existing ? existing.concluida : (s.status === "concluido" || false),
           preco: typeof s.valor === "number" ? s.valor : (parseFloat(s.valor) || 0),
           statusPagamento: existing?.statusPagamento || (s.status === "concluido" ? "pago" : "pendente"),
+          descricao: typeof s.descricao === "string" ? s.descricao : (existing as any)?.descricao || "",
         };
         const hLink = s.hublaLink || existing?.hublaLink;
         if (hLink) item.hublaLink = hLink;
