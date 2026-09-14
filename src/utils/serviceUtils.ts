@@ -353,6 +353,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           ...(sItem.titulo ? { titulo: sItem.titulo || matchedCatalog.nome } : {}),
           valor: matchedCatalog.valor,
           preco: matchedCatalog.valor,
+          descricao: normalizeServiceDescription(matchedCatalog.descricao),
           ...(hLink ? { hublaLink: hLink } : {})
         });
       } else {
