@@ -2877,6 +2877,17 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const isPagoFlag = (s: any) =>
         String(s?.statusPagamento || "").toLowerCase() === "pago" || s?.pago === true;
 
+      const rawSubEtapasBaixa = Array.isArray(lead.subEtapasPasso6) ? lead.subEtapasPasso6 : [];
+      const findSubEtapaForServico = (s: any) => {
+        const nome = String(s?.nome || s?.titulo || s?.servico || "").toLowerCase().trim();
+        return rawSubEtapasBaixa.find(
+          (sub: any) =>
+            sub &&
+            ((s?.id && sub.id && String(sub.id) === String(s.id)) ||
+              (nome && String(sub.titulo || sub.nome || "").toLowerCase().trim() === nome)),
+        );
+      };
+
       const servicos = rawServicos
         .filter((s: any) => s && (s.nome || s.titulo || s.servico))
         .map((s: any) => {
@@ -2887,10 +2898,11 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
             nome: String(s.nome || s.titulo || s.servico || "").slice(0, 160),
             descricao: String(s.descricao || s.detalhe || "").slice(0, 400),
             valor,
-            pago: isPagoFlag(s),
+            pago: isPagoFlag(s) || isPagoFlag(findSubEtapaForServico(s)),
             linkPagamento: resolveCheckoutLink(s, catalog),
           };
         });
+
 
       const total = servicos.reduce((acc: number, s: any) => acc + (Number(s.valor) || 0), 0);
 
