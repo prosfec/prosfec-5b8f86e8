@@ -558,6 +558,7 @@ export default function LeadWorkspaceModal({
           concluida: existing ? existing.concluida : (s.status === "concluido" || s.concluida || false),
           preco: typeof s.valor === "number" ? s.valor : (parseFloat(s.valor) || 0),
           statusPagamento: existing?.statusPagamento || (s.pago || s.statusPagamento === "pago" ? "pago" : "pendente"),
+          descricao: typeof s.descricao === "string" ? s.descricao : (existing as any)?.descricao || "",
         };
         const forma = existing?.formaPagamento || s.formaPagamento;
         if (forma) item.formaPagamento = forma;
