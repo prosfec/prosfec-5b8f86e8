@@ -497,6 +497,7 @@ export default function LeadWorkspaceModal({
           concluida: existing ? existing.concluida : (s.status === "concluido" || false),
           preco: typeof s.valor === "number" ? s.valor : (parseFloat(s.valor) || 0),
           statusPagamento: existing?.statusPagamento || (s.status === "concluido" ? "pago" : "pendente"),
+          descricao: typeof s.descricao === "string" ? s.descricao : (existing as any)?.descricao || "",
         };
         const hLink = s.hublaLink || existing?.hublaLink;
         if (hLink) item.hublaLink = hLink;
@@ -557,6 +558,7 @@ export default function LeadWorkspaceModal({
           concluida: existing ? existing.concluida : (s.status === "concluido" || s.concluida || false),
           preco: typeof s.valor === "number" ? s.valor : (parseFloat(s.valor) || 0),
           statusPagamento: existing?.statusPagamento || (s.pago || s.statusPagamento === "pago" ? "pago" : "pendente"),
+          descricao: typeof s.descricao === "string" ? s.descricao : (existing as any)?.descricao || "",
         };
         const forma = existing?.formaPagamento || s.formaPagamento;
         if (forma) item.formaPagamento = forma;
@@ -3749,9 +3751,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                 <span className="font-extrabold text-xs text-slate-800 block">
                                   {serv.nome}
                                 </span>
-                                {serv.justificativa && (
-                                  <span className="text-[11px] text-slate-500 block">
-                                    💡 {serv.justificativa}
+                                {typeof (serv as any).descricao === "string" && (serv as any).descricao.trim() && (
+                                  <span className="text-[11px] text-slate-500 block whitespace-pre-line">
+                                    💡 {(serv as any).descricao}
                                   </span>
                                 )}
                               </div>
@@ -3919,13 +3921,17 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               if (!sel || !sel.value) return;
                               const [nome, valStr] = sel.value.split("|");
                               const defaultVal = parseFloat(valStr) || 0;
-                              const newServ = {
-                                id: `serv_${Date.now()}`,
+                              const catalogMatch = catalogServices.find(
+                                (c: any) => (c?.nome || "").trim() === (nome || "").trim(),
+                              );
+                              const newServ: any = {
+                                id: catalogMatch?.id || `serv_${Date.now()}`,
                                 nome,
                                 valor: defaultVal,
-                                justificativa: "Incluso manualmente pelo Administrador ADM",
+                                descricao: typeof catalogMatch?.descricao === "string" ? catalogMatch.descricao : "",
                                 status: "pendente"
                               };
+                              if (catalogMatch?.hublaLink) newServ.hublaLink = catalogMatch.hublaLink;
                               const updated = [...servicosRecomendados, newServ];
                               setServicosRecomendados(updated);
                               handleSaveServicos(updated);
@@ -4190,6 +4196,11 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                     : "bg-transparent cursor-default"
                                 } ${sub.concluida ? "line-through text-slate-400" : "text-slate-800"}`}
                               />
+                              {typeof (sub as any).descricao === "string" && (sub as any).descricao.trim() && (
+                                <p className="text-[11px] text-slate-500 px-2 mt-0.5 whitespace-pre-line">
+                                  {(sub as any).descricao}
+                                </p>
+                              )}
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2 shrink-0">

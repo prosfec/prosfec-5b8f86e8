@@ -3,8 +3,15 @@ export interface ServiceCatalogItem {
   id: string;
   nome: string;
   valor: number;
+  descricao?: string;
   hublaLink?: string;
   semCustoInicial?: boolean;
+}
+
+/** Normaliza a descrição padronizada do serviço definida pelo ADM no catálogo */
+export function normalizeServiceDescription(value: any): string {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, 600);
 }
 
 export const HUBLA_SERVICE_LINKS: Record<string, string> = {
@@ -233,6 +240,8 @@ export function sanitizeServiceCatalogForFirestore(catalog: ServiceCatalogItem[]
         nome: (item.nome || "").toString().trim(),
         valor: typeof item.valor === "number" && !isNaN(item.valor) ? item.valor : (parseFloat(String(item.valor || 0)) || 0)
       };
+      const desc = normalizeServiceDescription((item as any).descricao);
+      cleaned.descricao = desc;
       if (item.hublaLink && typeof item.hublaLink === "string" && item.hublaLink.trim()) {
         cleaned.hublaLink = item.hublaLink.trim();
       }
@@ -298,6 +307,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           valor: targetReabilitacaoPrice,
           preco: targetReabilitacaoPrice,
           ...(hLink ? { hublaLink: hLink } : {}),
+          descricao: normalizeServiceDescription(catalogReabilitacao?.descricao),
           justificativa: sItem.justificativa || "Programa unificado abrangendo Renegociação de Dívidas, Liminar Limpa Nome e Regularização/Administração SCR/Bacen",
           status: sItem.status || "pendente"
         };
@@ -316,6 +326,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           valor: targetRatingScorePrice,
           preco: targetRatingScorePrice,
           ...(hLink ? { hublaLink: hLink } : {}),
+          descricao: normalizeServiceDescription(catalogRatingScore?.descricao),
           justificativa: sItem.justificativa || "Para elevação unificada do Rating interno bancário e Score do CPF e CNPJ nos bureaus e Banco Central",
           status: sItem.status || "pendente"
         };
@@ -342,6 +353,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           ...(sItem.titulo ? { titulo: sItem.titulo || matchedCatalog.nome } : {}),
           valor: matchedCatalog.valor,
           preco: matchedCatalog.valor,
+          descricao: normalizeServiceDescription(matchedCatalog.descricao),
           ...(hLink ? { hublaLink: hLink } : {})
         });
       } else {

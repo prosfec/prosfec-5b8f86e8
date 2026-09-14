@@ -244,13 +244,20 @@ function PropostaPublicaPage() {
                     ) : (
                       <Circle className="w-4 h-4 text-slate-300 shrink-0" />
                     )}
-                    <span
-                      className={`flex-1 min-w-[180px] text-xs font-semibold ${
-                        sub.concluida ? "line-through text-slate-400" : "text-slate-800"
-                      }`}
-                    >
-                      {sub.titulo}
-                    </span>
+                    <div className="flex-1 min-w-[180px]">
+                      <span
+                        className={`block text-xs font-semibold ${
+                          sub.concluida ? "line-through text-slate-400" : "text-slate-800"
+                        }`}
+                      >
+                        {sub.titulo}
+                      </span>
+                      {sub.descricao ? (
+                        <span className="block text-[11px] text-slate-500 mt-0.5 whitespace-pre-line">
+                          {sub.descricao}
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                       {sub.valor > 0 && (
                         <span className="text-[10px] font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
