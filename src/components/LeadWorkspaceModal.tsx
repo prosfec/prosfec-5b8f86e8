@@ -4196,6 +4196,11 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                     : "bg-transparent cursor-default"
                                 } ${sub.concluida ? "line-through text-slate-400" : "text-slate-800"}`}
                               />
+                              {typeof (sub as any).descricao === "string" && (sub as any).descricao.trim() && (
+                                <p className="text-[11px] text-slate-500 px-2 mt-0.5 whitespace-pre-line">
+                                  {(sub as any).descricao}
+                                </p>
+                              )}
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2 shrink-0">
