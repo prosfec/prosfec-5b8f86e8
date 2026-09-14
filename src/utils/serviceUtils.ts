@@ -326,6 +326,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           valor: targetRatingScorePrice,
           preco: targetRatingScorePrice,
           ...(hLink ? { hublaLink: hLink } : {}),
+          descricao: normalizeServiceDescription(catalogRatingScore?.descricao),
           justificativa: sItem.justificativa || "Para elevação unificada do Rating interno bancário e Score do CPF e CNPJ nos bureaus e Banco Central",
           status: sItem.status || "pendente"
         };
