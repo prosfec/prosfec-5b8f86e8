@@ -2875,9 +2875,18 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const rawServicos = Array.isArray(lead.servicosRecomendados) ? lead.servicosRecomendados : [];
 
       const isPagoFlag = (s: any) =>
-        String(s?.statusPagamento || "").toLowerCase() === "pago" || s?.pago === true;
+        String(s?.statusPagamento || "").toLowerCase() === "pago" ||
+        String(s?.status || "").toLowerCase() === "pago" ||
+        s?.pago === true;
 
-      const rawSubEtapasBaixa = Array.isArray(lead.subEtapasPasso6) ? lead.subEtapasPasso6 : [];
+      // Itens espelho de mensalidade/comissão são internos e nunca vão para o cliente
+      const isMensalidadeMirror = (item: any) =>
+        item?.tipo === "mensalidade" ||
+        String(item?.id || "").startsWith("sub_custom_mensalidade_");
+
+      const rawSubEtapasBaixa = (Array.isArray(lead.subEtapasPasso6) ? lead.subEtapasPasso6 : []).filter(
+        (s: any) => s && !isMensalidadeMirror(s),
+      );
       const findSubEtapaForServico = (s: any) => {
         const nome = String(s?.nome || s?.titulo || s?.servico || "").toLowerCase().trim();
         return rawSubEtapasBaixa.find(
@@ -2887,6 +2896,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
               (nome && String(sub.titulo || sub.nome || "").toLowerCase().trim() === nome)),
         );
       };
+
 
       const servicos = rawServicos
         .filter((s: any) => s && (s.nome || s.titulo || s.servico))
@@ -2945,7 +2955,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       // ---- Painel de acompanhamento (somente leitura) ----
       const rawSubEtapas = Array.isArray(lead.subEtapasPasso6) ? lead.subEtapasPasso6 : [];
       const subEtapas = rawSubEtapas
-        .filter((s: any) => s && (s.titulo || s.nome))
+        .filter((s: any) => s && (s.titulo || s.nome) && !isMensalidadeMirror(s))
+
         .map((s: any) => {
           const valor = Number(s.preco ?? s.valor ?? 0) || 0;
           const titulo = String(s.titulo || s.nome || "").slice(0, 200);
