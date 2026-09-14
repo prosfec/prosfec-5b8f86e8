@@ -307,6 +307,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           valor: targetReabilitacaoPrice,
           preco: targetReabilitacaoPrice,
           ...(hLink ? { hublaLink: hLink } : {}),
+          descricao: normalizeServiceDescription(catalogReabilitacao?.descricao),
           justificativa: sItem.justificativa || "Programa unificado abrangendo Renegociação de Dívidas, Liminar Limpa Nome e Regularização/Administração SCR/Bacen",
           status: sItem.status || "pendente"
         };
