@@ -948,6 +948,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       id: `serv_custom_${Date.now()}`,
       nome: newServNome.trim(),
       valor: val,
+      descricao: "",
       ...(newServHublaLink.trim() ? { hublaLink: newServHublaLink.trim() } : {})
     };
     setCustomServices(prev => [...prev, newServ]);
