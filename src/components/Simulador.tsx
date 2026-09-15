@@ -47,7 +47,7 @@ import {
   Copy,
   ExternalLink,
   TrendingDown,
-  PiggyBank,
+  
   Coins,
   Percent,
   Zap
