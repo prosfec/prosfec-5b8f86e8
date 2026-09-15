@@ -7,8 +7,9 @@ import { getAuth, signInWithEmailAndPassword as signInService } from "firebase/a
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc, runTransaction, deleteField } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
 import { GoogleGenAI, Type } from "@google/genai";
-import { getBankSpecificRules, GOVERNMENT_CREDIT_LINES } from "../utils/creditLineRules";
+import { getBankSpecificRules, GOVERNMENT_CREDIT_LINES, validateCreditLineConditions } from "../utils/creditLineRules";
 import { BankRulesManager } from "../utils/BankRulesManager";
+import { runCreditEngine, calcularParcela, MARKET_BENCHMARK } from "../utils/creditEligibilityEngine";
 import { optionalEnv, requireEnv, firstEnv, maskEmail, maskDoc, redact } from "../utils/env";
 import { normalizeMensalidades, DEFAULT_MENSALIDADES, normalizeAssinaturaParceiro, DEFAULT_ASSINATURA_PARCEIRO } from "../utils/serviceUtils";
 
