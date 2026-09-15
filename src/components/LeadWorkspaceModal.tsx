@@ -70,7 +70,12 @@ import {
   RefreshCw,
   ExternalLink,
   Bookmark,
-  FileCheck
+  FileCheck,
+  TrendingUp,
+  Building,
+  Gauge,
+  Wallet,
+  Percent
 } from "lucide-react";
 import LeadStepTimeline from "./LeadStepTimeline";
 import LeadConciergeTracker from "./LeadConciergeTracker";
