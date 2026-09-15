@@ -11,7 +11,7 @@
  * sozinho.
  */
 
-export type StatusFonte = "CONFIRMADO" | "PENDENTE_VALIDACAO";
+export type StatusFonte = "CONFIRMADO" | "PENDENTE_VALIDACAO" | "SUSPENSO";
 
 export interface RegistroFonteRegra {
   programa: string;
@@ -83,10 +83,11 @@ export const CREDIT_RULE_SOURCES: RegistroFonteRegra[] = [
   },
   {
     programa: "BENCHMARK_MERCADO",
-    regra: "Taxa de mercado usada no comparativo de economia",
-    valorPraticado: "38% a.a.",
-    status: "PENDENTE_VALIDACAO",
-    observacao: "Apresentado explicitamente como ESTIMATIVA enquanto não houver benchmark com fonte e data."
+    regra: "Comparativo de taxa de mercado no resultado do simulador",
+    valorPraticado: "n/a — SUSPENSO",
+    status: "SUSPENSO",
+    observacao:
+      "Comparativo de mercado suspenso. A taxa fixa de 38% a.a. foi removida, inclusive como referência aproximada. Um benchmark futuro só pode ser reintroduzido com: fonte identificável, URL, data de verificação, metodologia de cálculo e escopo da amostra."
   },
   {
     programa: "ProCred 360",

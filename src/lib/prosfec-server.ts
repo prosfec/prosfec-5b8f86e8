@@ -9,7 +9,7 @@ import firebaseConfig from "../firebase-applet-config.json";
 import { GoogleGenAI, Type } from "@google/genai";
 import { getBankSpecificRules, GOVERNMENT_CREDIT_LINES, validateCreditLineConditions } from "../utils/creditLineRules";
 import { BankRulesManager } from "../utils/BankRulesManager";
-import { runCreditEngine, calcularParcela, MARKET_BENCHMARK } from "../utils/creditEligibilityEngine";
+import { runCreditEngine, calcularParcela } from "../utils/creditEligibilityEngine";
 import { optionalEnv, requireEnv, firstEnv, maskEmail, maskDoc, redact } from "../utils/env";
 import { normalizeMensalidades, DEFAULT_MENSALIDADES, normalizeAssinaturaParceiro, DEFAULT_ASSINATURA_PARCEIRO } from "../utils/serviceUtils";
 
@@ -1333,9 +1333,9 @@ REGRAS DE RESPOSTA OBRIGATÓRIAS:
         const capTotal = !isNewCompany && valFaturamento > 0 ? valFaturamento * 0.30 : (valCapital * 0.5);
         const excedenteCap = Math.max(0, capTotal - limite);
 
-        const parcelaMercado = calcularParcela(limite, MARKET_BENCHMARK.taxaAnual, prazo);
-        const economiaMensal = Math.max(0, parcelaMercado - parcela);
-        const economiaTotal = Math.max(0, economiaMensal * prazo);
+        // Comparativo de mercado SUSPENSO: não há benchmark com fonte, URL, data,
+        // metodologia e escopo de amostra. Ver creditRuleSources.ts (BENCHMARK_MERCADO).
+
 
         const validacao = GOVERNMENT_CREDIT_LINES[linha.code]
           ? validateCreditLineConditions(
@@ -1375,13 +1375,9 @@ REGRAS DE RESPOSTA OBRIGATÓRIAS:
           bancoDetalhes: bankRules,
           capacidadeTotal: Math.round(capTotal),
           excedenteCapacidade: Math.round(excedenteCap),
-          economiaMensal: Math.round(economiaMensal * 100) / 100,
-          economiaTotal: Math.round(economiaTotal * 100) / 100,
-          taxaMercadoAnual: MARKET_BENCHMARK.taxaAnual,
-          parcelaMercado: Math.round(parcelaMercado * 100) / 100,
+          comparativoMercado: null,
           // Campos aditivos (não quebram a interface atual)
-          taxaMercadoEstimativa: MARKET_BENCHMARK.estimativa,
-          taxaMercadoObservacao: MARKET_BENCHMARK.observacao,
+
           grauAderencia: engine.aderencia,
           grauAderenciaLabel: engine.aderenciaLabel,
           aderenciaMotivos: engine.aderenciaMotivos,

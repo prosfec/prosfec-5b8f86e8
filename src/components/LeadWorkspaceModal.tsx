@@ -3020,19 +3020,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </div>
                   )}
 
-                  {Number((lead as any).economiaMensal) > 0 && (
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
-                      <span className="text-[10px] text-slate-400 uppercase font-black">Economia vs. Mercado</span>
-                      <div className="text-sm font-black text-emerald-700">
-                        {formatCurrencyBRL(Number((lead as any).economiaMensal))} / mês
-                      </div>
-                      {Number((lead as any).economiaTotal) > 0 && (
-                        <div className="text-[10px] font-bold text-slate-500">
-                          Total no contrato: {formatCurrencyBRL(Number((lead as any).economiaTotal))}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Comparativo de mercado suspenso até haver benchmark com fonte validada. */}
+
                 </div>
 
                 {((lead as any).creditLineName || (lead as any).resumoPerfil) && (
