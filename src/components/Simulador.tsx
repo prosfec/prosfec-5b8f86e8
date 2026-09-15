@@ -578,9 +578,16 @@ export default function Simulador({
           recs.push("Fale com nossos consultores para identificar os bancos parceiros que possuem taxas promocionais ativas hoje.");
         }
 
+        const scoreIA = computeScoreElegibilidade(formData);
+
         const result: SimulationResult = {
           limiteEstimado: apiResult.recommendedLimit,
           nivelPreparacao: prepScore,
+          scoreElegibilidade: scoreIA.score,
+          scoreFatores: {
+            positivos: scoreIA.positivos,
+            atencao: scoreIA.atencao
+          },
           principaisAlertas: alerts,
           recomendações: recs,
           creditLineCode: apiResult.creditLineCode,
@@ -594,8 +601,15 @@ export default function Simulador({
           documentosNecessarios: apiResult.documentosNecessarios,
           resumoPerfil: apiResult.resumoPerfil,
           fonte: apiResult.fonte,
-          bancoDetalhes: apiResult.bancoDetalhes
+          bancoDetalhes: apiResult.bancoDetalhes,
+          capacidadeTotal: apiResult.capacidadeTotal,
+          excedenteCapacidade: apiResult.excedenteCapacidade,
+          economiaMensal: apiResult.economiaMensal,
+          economiaTotal: apiResult.economiaTotal,
+          taxaMercadoAnual: apiResult.taxaMercadoAnual,
+          parcelaMercado: apiResult.parcelaMercado
         };
+
 
         setSimulationResult(result);
         setCalculating(false);
