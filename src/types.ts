@@ -111,6 +111,22 @@ export interface Lead {
   etapa?: number;
   status?: string;
   limiteEstimado?: number;
+  scoreElegibilidade?: number | null;
+  scoreFatores?: { positivos?: string[]; atencao?: string[] } | null;
+  capacidadeTotal?: number | null;
+  excedenteCapacidade?: number | null;
+  economiaMensal?: number | null;
+  economiaTotal?: number | null;
+  taxaMercadoAnual?: number | null;
+  parcelaMercado?: number | null;
+  taxaAnualSimulada?: number | null;
+  carenciaSimulada?: number | null;
+  prazoSimulado?: number | null;
+  parcelaSimulada?: number | null;
+  justificativaSimulacao?: string;
+  dataUltimaSimulacao?: string;
+  fonteSimulacao?: string;
+
   limiteEstimated?: number;
   valorAprovado?: number;
   comissaoPaga?: boolean;
