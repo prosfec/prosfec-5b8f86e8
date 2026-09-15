@@ -684,7 +684,7 @@ export default function Simulador({
         }
       }
     } else {
-      calculatedLimit = faturamento * 0.6;
+      calculatedLimit = faturamento * 0.3;
     }
 
     calculatedLimit = Math.min(calculatedLimit, 500000);
