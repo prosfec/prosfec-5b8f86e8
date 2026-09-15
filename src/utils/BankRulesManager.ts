@@ -195,7 +195,13 @@ export class BankRulesManager {
   };
 
   /**
-   * Mapeia um nome de banco e código de linha de crédito para as regras específicas
+   * Mapeia um nome de banco e código de linha de crédito para as regras específicas.
+   *
+   * IMPORTANTE: NÃO há fallback silencioso para PRONAMPE. Quando o banco não opera
+   * a linha, ou quando não existe condição cadastrada para aquela linha naquele
+   * banco, o retorno informa isso explicitamente (operaLinha / condicaoConfirmada)
+   * e os campos numéricos vêm nulos, para que o motor use os padrões do próprio
+   * programa em vez de herdar condições de outra linha.
    */
   public static getBankRules(bancoInput: string, creditLineCode: string = "PRONAMPE") {
     const b = String(bancoInput || "").toLowerCase().trim();
@@ -213,11 +219,17 @@ export class BankRulesManager {
     }
 
     if (matchedBank) {
-      const rule = matchedBank.regrasPorLinha[line] || matchedBank.regrasPorLinha["PRONAMPE"];
-      if (rule) {
+      const operaLinha = matchedBank.linhasSuportadas.includes(line);
+      const rule = matchedBank.regrasPorLinha[line];
+
+      if (operaLinha && rule) {
         return {
           bancoNormalizado: matchedBank.bancoNormalizado,
           categoria: matchedBank.categoria,
+          bancoCadastrado: true,
+          linhasSuportadas: matchedBank.linhasSuportadas,
+          operaLinha: true,
+          condicaoConfirmada: true,
           carenciaPadrao: rule.carenciaPadrao,
           carenciaMaxima: rule.carenciaMaxima,
           prazoTotalPadrao: rule.prazoTotalPadrao,
@@ -228,23 +240,46 @@ export class BankRulesManager {
           exigeAval: rule.exigeAval
         };
       }
+
+      return {
+        bancoNormalizado: matchedBank.bancoNormalizado,
+        categoria: matchedBank.categoria,
+        bancoCadastrado: true,
+        linhasSuportadas: matchedBank.linhasSuportadas,
+        operaLinha,
+        condicaoConfirmada: false,
+        carenciaPadrao: null,
+        carenciaMaxima: null,
+        prazoTotalPadrao: null,
+        prazoTotalMaximo: null,
+        taxaAnualEstimada: null,
+        destaqueEsteira: operaLinha
+          ? `${matchedBank.bancoNormalizado} opera a linha ${line}, porém as condições específicas praticadas por esta instituição para esta linha não estão cadastradas/confirmadas no sistema. Foram aplicados os parâmetros oficiais do próprio programa.`
+          : `${matchedBank.bancoNormalizado} não consta como operador da linha ${line} no cadastro do sistema. A operação pode exigir outra instituição financeira.`,
+        modalidadeAprovacao: "Condição bancária não confirmada",
+        exigeAval: true
+      };
     }
 
-    // Default Fallback se banco não cadastrado explicitamente
-    const isPronampe = line === "PRONAMPE";
+    // Banco não cadastrado: nenhuma condição bancária pode ser afirmada.
     return {
       bancoNormalizado: bancoInput && bancoInput.trim() ? bancoInput.trim() : "Banco de Relacionamento",
       categoria: "outros" as const,
-      carenciaPadrao: isPronampe ? 24 : 12,
-      carenciaMaxima: isPronampe ? 24 : 24,
-      prazoTotalPadrao: isPronampe ? 96 : 48,
-      prazoTotalMaximo: isPronampe ? 96 : 84,
-      taxaAnualEstimada: 16.5,
-      destaqueEsteira: "Análise enquadrada conforme as condições do banco selecionado para a linha solicitada.",
-      modalidadeAprovacao: "Esteira Comercial FGO/FGI",
+      bancoCadastrado: false,
+      linhasSuportadas: [],
+      operaLinha: null,
+      condicaoConfirmada: false,
+      carenciaPadrao: null,
+      carenciaMaxima: null,
+      prazoTotalPadrao: null,
+      prazoTotalMaximo: null,
+      taxaAnualEstimada: null,
+      destaqueEsteira: "A instituição informada não está cadastrada no sistema. As condições apresentadas seguem os parâmetros oficiais do programa e devem ser confirmadas junto ao banco.",
+      modalidadeAprovacao: "Condição bancária não confirmada",
       exigeAval: true
     };
   }
+
 
   /**
    * Retorna todas as instituições parceiras pré-mapeadas no sistema

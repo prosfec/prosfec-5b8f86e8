@@ -7,8 +7,9 @@ import { getAuth, signInWithEmailAndPassword as signInService } from "firebase/a
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, getDoc, runTransaction, deleteField } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
 import { GoogleGenAI, Type } from "@google/genai";
-import { getBankSpecificRules, GOVERNMENT_CREDIT_LINES } from "../utils/creditLineRules";
+import { getBankSpecificRules, GOVERNMENT_CREDIT_LINES, validateCreditLineConditions } from "../utils/creditLineRules";
 import { BankRulesManager } from "../utils/BankRulesManager";
+import { runCreditEngine, calcularParcela, MARKET_BENCHMARK } from "../utils/creditEligibilityEngine";
 import { optionalEnv, requireEnv, firstEnv, maskEmail, maskDoc, redact } from "../utils/env";
 import { normalizeMensalidades, DEFAULT_MENSALIDADES, normalizeAssinaturaParceiro, DEFAULT_ASSINATURA_PARCEIRO } from "../utils/serviceUtils";
 
@@ -1284,112 +1285,25 @@ REGRAS DE RESPOSTA OBRIGATÓRIAS:
       const valMediaReceita = parseFloat(mediaReceitaMensal) || 0;
       const isNewCompany = !!menosDe12Meses;
 
-      // Calculate base limits locally (heuristic baseline)
-      const effectiveAnnualRevenue = isNewCompany ? valMediaReceita * 12 : valFaturamento;
-      const cleanPorte = String(porte || "ME").toUpperCase();
-      
-      const cleanRamo = String(ramo || "").toLowerCase();
-      const isTourismOrEntertainment = 
-        cleanRamo.includes("turismo") || 
-        cleanRamo.includes("hotel") || 
-        cleanRamo.includes("pousada") || 
-        cleanRamo.includes("restaurante") || 
-        cleanRamo.includes("bar") || 
-        cleanRamo.includes("evento") || 
-        cleanRamo.includes("viagem");
+      // ===== CAMADAS 1 e 2: motor determinístico (elegibilidade + regras do banco) =====
+      const engine = runCreditEngine({
+        cnpj,
+        razaoSocial,
+        porte,
+        uf,
+        ramo,
+        isNewCompany,
+        valCapital,
+        valMediaReceita,
+        valFaturamento,
+        seloEmpregaMulher,
+        bancoPrincipal,
+        possuiLinhaCreditoGovernamentalAtiva,
+        linhaCreditoGovernamentalQual
+      });
 
-      const isTechOrInnovation = 
-        cleanRamo.includes("tecnologia") || 
-        cleanRamo.includes("software") || 
-        cleanRamo.includes("ti") || 
-        cleanRamo.includes("inovacao") || 
-        cleanRamo.includes("startup") || 
-        cleanRamo.includes("desenvolvimento");
-
-      const isNE_NO_CO = ["AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE", "AC", "AP", "AM", "PA", "RO", "RR", "TO", "DF", "GO", "MT", "MS"].includes(String(uf || "").toUpperCase());
-
-      // Evaluate bank-specific rules for lead's selected institution
-      const initialLineCode = (cleanPorte === "MEI" || effectiveAnnualRevenue <= 81000) ? "FAMPE" :
-                              (isTourismOrEntertainment && effectiveAnnualRevenue > 30000) ? "FUNGETUR" :
-                              (isTechOrInnovation && effectiveAnnualRevenue > 50000) ? "FINEP_INOV" :
-                              (isNE_NO_CO && effectiveAnnualRevenue > 100000) ? "FNE_FNO_FCO" :
-                              (effectiveAnnualRevenue > 4800000) ? "FGI_PEAC" : "PRONAMPE";
-
-      const bankRules = BankRulesManager.getBankRules(bancoPrincipal, initialLineCode);
-
-      let fallbackCode = initialLineCode;
-      let fallbackName = "PRONAMPE (Programa Nacional de Apoio às Microempresas)";
-      let fallbackLimit = 0;
-      let fallbackRate = bankRules.taxaAnualEstimada || 16.5;
-      let fallbackCarencia = bankRules.carenciaPadrao || 24;
-      let fallbackPrazo = bankRules.prazoTotalPadrao || 96;
-      let fallbackJustificativa = `Sua empresa foi qualificada para o PRONAMPE no ${bankRules.bancoNormalizado}. ${bankRules.destaqueEsteira}`;
-
-      if (cleanPorte === "MEI" || effectiveAnnualRevenue <= 81000) {
-        fallbackCode = "FAMPE";
-        fallbackName = "FAMPE - Fundo de Aval Sebrae (Crédito Orientado para MEI)";
-        fallbackLimit = Math.min(Math.max(effectiveAnnualRevenue * 0.6, 12500), 50000);
-        fallbackRate = 14.5;
-        fallbackCarencia = bankRules.carenciaPadrao || 12;
-        fallbackPrazo = bankRules.prazoTotalPadrao || 48;
-        fallbackJustificativa = `Elegível para o FAMPE/Sebrae com garantia de aval no ${bankRules.bancoNormalizado}, com carência de ${fallbackCarencia} meses e amortização em ${fallbackPrazo - fallbackCarencia} parcelas.`;
-      } else if (isTourismOrEntertainment && effectiveAnnualRevenue > 30000) {
-        fallbackCode = "FUNGETUR";
-        fallbackName = "FUNGETUR (Fundo Geral do Turismo / Ministério do Turismo)";
-        fallbackLimit = Math.min(effectiveAnnualRevenue * 0.45, 1500000);
-        fallbackRate = 13.5;
-        fallbackCarencia = 24;
-        fallbackPrazo = 120;
-        fallbackJustificativa = `Atuação no setor de hospitalidade/eventos qualificada para o FUNGETUR no ${bankRules.bancoNormalizado}, com carência estendida de 24 meses e parcelamento em 120 meses.`;
-      } else if (isTechOrInnovation && effectiveAnnualRevenue > 50000) {
-        fallbackCode = "FINEP_INOV";
-        fallbackName = "FINEP Inovacred (Fomento à Inovação e Tecnologia)";
-        fallbackLimit = Math.min(effectiveAnnualRevenue * 0.4, 3000000);
-        fallbackRate = 9.5;
-        fallbackCarencia = 36;
-        fallbackPrazo = 120;
-        fallbackJustificativa = "CNPJ enquadrado em inovação tecnológica e software. A FINEP provê fomento público com carência máxima de 36 meses e juros subsidiados.";
-      } else if (isNE_NO_CO && effectiveAnnualRevenue > 100000) {
-        fallbackCode = "FNE_FNO_FCO";
-        fallbackName = `Fundo Constitucional de Financiamento (${String(uf).toUpperCase() === 'BA' || String(uf).toUpperCase() === 'PE' || String(uf).toUpperCase() === 'CE' ? 'FNE' : 'FCO/FNO'})`;
-        fallbackLimit = Math.min(effectiveAnnualRevenue * 0.4, 3000000);
-        fallbackRate = 12.8;
-        fallbackCarencia = 24;
-        fallbackPrazo = 120;
-        fallbackJustificativa = `Empresa localizada em região com incentivo constitucional operada pelo ${bankRules.bancoNormalizado}. Oferece taxas fixas subsidiadas com carência de 24m.`;
-      } else if (cleanPorte === "EMP" || cleanPorte === "MÉDIO" || cleanPorte === "MEDIO" || effectiveAnnualRevenue > 4800000) {
-        if (effectiveAnnualRevenue > 300000000 || cleanPorte === "EGP" || cleanPorte === "GRANDE") {
-          fallbackCode = "LINHA_BANCARIA_CORP";
-          fallbackName = "Crédito Corporativo Estruturado (BNDES Finem / Consórcio Bancário)";
-          fallbackLimit = Math.min(effectiveAnnualRevenue * 0.2, 50000000);
-          fallbackRate = 15.5;
-          fallbackCarencia = 36;
-          fallbackPrazo = 144;
-          fallbackJustificativa = `Perfil corporativo no ${bankRules.bancoNormalizado} enquadrado em linhas de crédito bancárias corporativas e repasses BNDES.`;
-        } else {
-          fallbackCode = "FGI_PEAC";
-          fallbackName = "FGI PEAC (Fundo Garantidor BNDES para Médias Empresas)";
-          fallbackLimit = Math.min(effectiveAnnualRevenue * 0.25, 10000000);
-          fallbackRate = 17.5;
-          fallbackCarencia = 24;
-          fallbackPrazo = 84;
-          fallbackJustificativa = `Faturamento corporativo qualificado para o FGI PEAC operado pelo ${bankRules.bancoNormalizado}, com garantia de até 80% do BNDES.`;
-        }
-      } else {
-        if (isNewCompany) {
-          fallbackLimit = Math.max(valCapital * 0.5, valFaturamento * 0.3);
-        } else {
-          fallbackLimit = valFaturamento * 0.3; // Teto legal de 30% da receita bruta anual do e-CAC
-        }
-        fallbackLimit = Math.min(fallbackLimit, 500000);
-        fallbackCarencia = bankRules.carenciaPadrao;
-        fallbackPrazo = bankRules.prazoTotalPadrao;
-        fallbackJustificativa = `Empresa elegível para o PRONAMPE no ${bankRules.bancoNormalizado}. ${bankRules.destaqueEsteira}`;
-      }
-
-      if (fallbackLimit < 25000) {
-        fallbackLimit = 30000;
-      }
+      const effectiveAnnualRevenue = engine.contexto.receitaEfetiva;
+      const bankRules = engine.bankRules;
 
       const defaultDocs = [
         "Faturamento dos últimos 12 meses assinado pelo Contador (DRE)",
@@ -1399,91 +1313,180 @@ REGRAS DE RESPOSTA OBRIGATÓRIAS:
         "Compartilhamento de Dados e-CAC / Receita Federal autorizado"
       ];
 
-      // Try Gemini AI
+      // Monta a resposta final SEMPRE a partir dos números determinísticos.
+      const buildResponse = (
+        linha: any,
+        textos: {
+          creditLineName?: string;
+          justificativa?: string;
+          justificativaTecnica?: string;
+          documentosNecessarios?: string[];
+          resumoPerfil?: string;
+        },
+        fonte: string
+      ) => {
+        const limite = linha.limite;
+        const prazo = linha.prazoTotal;
+        const taxa = linha.taxaAnual;
+        const parcela = calcularParcela(limite, taxa, prazo);
+
+        const capTotal = !isNewCompany && valFaturamento > 0 ? valFaturamento * 0.30 : (valCapital * 0.5);
+        const excedenteCap = Math.max(0, capTotal - limite);
+
+        const parcelaMercado = calcularParcela(limite, MARKET_BENCHMARK.taxaAnual, prazo);
+        const economiaMensal = Math.max(0, parcelaMercado - parcela);
+        const economiaTotal = Math.max(0, economiaMensal * prazo);
+
+        const validacao = GOVERNMENT_CREDIT_LINES[linha.code]
+          ? validateCreditLineConditions(
+              linha.code,
+              limite,
+              linha.carencia,
+              Math.max(1, prazo - linha.carencia),
+              taxa,
+              "SAC"
+            )
+          : { isValid: true, errors: [], warnings: [] };
+
+        if (!validacao.isValid) {
+          console.warn(
+            `[Simulador] Condições fora da faixa oficial para ${linha.code}:`,
+            validacao.errors.join(" | ")
+          );
+        }
+
+        return {
+          success: true,
+          creditLineCode: linha.code,
+          creditLineName: textos.creditLineName || linha.name,
+          recommendedLimit: limite,
+          rate: taxa,
+          carencia: linha.carencia,
+          prazo: prazo,
+          parcela: Math.round(parcela * 100) / 100,
+          justificativa: textos.justificativa || "",
+          justificativaTecnica: textos.justificativaTecnica || "",
+          documentosNecessarios:
+            textos.documentosNecessarios && textos.documentosNecessarios.length > 0
+              ? textos.documentosNecessarios
+              : defaultDocs,
+          resumoPerfil: textos.resumoPerfil || "",
+          fonte,
+          bancoDetalhes: bankRules,
+          capacidadeTotal: Math.round(capTotal),
+          excedenteCapacidade: Math.round(excedenteCap),
+          economiaMensal: Math.round(economiaMensal * 100) / 100,
+          economiaTotal: Math.round(economiaTotal * 100) / 100,
+          taxaMercadoAnual: MARKET_BENCHMARK.taxaAnual,
+          parcelaMercado: Math.round(parcelaMercado * 100) / 100,
+          // Campos aditivos (não quebram a interface atual)
+          taxaMercadoEstimativa: MARKET_BENCHMARK.estimativa,
+          taxaMercadoObservacao: MARKET_BENCHMARK.observacao,
+          grauAderencia: engine.aderencia,
+          grauAderenciaLabel: engine.aderenciaLabel,
+          aderenciaMotivos: engine.aderenciaMotivos,
+          condicaoBancariaConfirmada: linha.condicaoBancariaConfirmada,
+          bancoOperaLinha: linha.operaNoBanco,
+          dadosInsuficientes: engine.dadosInsuficientes,
+          linhasElegiveis: engine.linhasLiberadas.map((l: any) => ({
+            code: l.code,
+            name: l.name,
+            limite: l.limite,
+            taxaAnual: l.taxaAnual,
+            carencia: l.carencia,
+            prazoTotal: l.prazoTotal,
+            operaNoBanco: l.operaNoBanco,
+            condicaoBancariaConfirmada: l.condicaoBancariaConfirmada
+          })),
+          validacaoCondicoes: validacao
+        };
+      };
+
+      const escolhidaDeterministica = engine.escolhida;
+
+      const textosDeterministicos = {
+        creditLineName: escolhidaDeterministica.name,
+        justificativa: `Enquadramento em ${escolhidaDeterministica.name} junto ao ${bankRules.bancoNormalizado}. ${bankRules.destaqueEsteira}`,
+        justificativaTecnica:
+          `Classificação: ${engine.aderenciaLabel}. ` +
+          `${escolhidaDeterministica.motivos.join(" ")} ` +
+          (escolhidaDeterministica.condicionantes.length
+            ? `Condicionantes: ${escolhidaDeterministica.condicionantes.join(" ")} `
+            : "") +
+          `Esteira: ${bankRules.modalidadeAprovacao}.`,
+        documentosNecessarios: defaultDocs,
+        resumoPerfil: `Perfil ${porte || "PJ"} no ${bankRules.bancoNormalizado} com receita considerada de R$ ${effectiveAnnualRevenue.toLocaleString("pt-BR")}.`
+      };
+
+      // Sem dados suficientes: não aciona a IA nem apresenta números como oferta.
+      if (engine.aderencia === "NECESSITA_DIAGNOSTICO") {
+        return res.json(
+          buildResponse(
+            escolhidaDeterministica,
+            {
+              ...textosDeterministicos,
+              justificativa:
+                "Os dados informados ainda não são suficientes para confirmar a elegibilidade. Os valores abaixo são uma referência preliminar e precisam de diagnóstico.",
+              justificativaTecnica:
+                `Classificação: ${engine.aderenciaLabel}. Pendências: ${engine.dadosInsuficientes.join(" ")}`
+            },
+            "PROSFEC (Motor determinístico — dados insuficientes)"
+          )
+        );
+      }
+
+      // ===== CAMADA 3: IA apenas para priorização entre linhas liberadas e redação =====
       try {
         const ai = getGeminiAI();
 
-        const prompt = `Você é um Consultor de Crédito Governamental sênior e especialista de fomento da PROSFEC IA.
-Sua missão é analisar minuciosamente os dados do CNPJ/empresa e selecionar A LINHA DE CRÉDITO GOVERNAMENTAL OU BANCÁRIA MAIS VANTAJOSA para a empresa, respeitando RIGOROSAMENTE as regras e leis vigentes de cada programa federal.
+        const opcoes = engine.linhasLiberadas.slice(0, 5);
+        const opcoesTexto = opcoes
+          .map(
+            (l: any) =>
+              `- ${l.code} | ${l.name}\n` +
+              `  Limite calculado: R$ ${l.limite.toLocaleString("pt-BR")}\n` +
+              `  Taxa: ${l.taxaAnual}% a.a. | Carência: ${l.carencia} meses | Prazo total: ${l.prazoTotal} meses\n` +
+              `  Banco opera a linha: ${l.operaNoBanco === null ? "não cadastrado" : l.operaNoBanco ? "sim" : "não"} | Condição bancária confirmada: ${l.condicaoBancariaConfirmada ? "sim" : "não"}\n` +
+              `  Fundamentos: ${l.motivos.join(" ")}\n` +
+              `  Condicionantes: ${l.condicionantes.join(" ") || "nenhuma"}`
+          )
+          .join("\n");
 
-LEGISLAÇÃO E REGRAS ATUALIZADAS DAS LINHAS DE CRÉDITO GOVERNAMENTAIS:
-1. "PRONAMPE" (Lei nº 13.999/2020 e Regulamentação Vigente):
-   - Elegibilidade: MEI, Microempresas (ME) e EPPs com receita bruta anual de até R$ 4,8M.
-   - Finalidade: Capital de giro, máquinas/equipamentos, reformas, expansão e investimentos fixos.
-   - Limite Legal: Até 30% da Receita Bruta Anual informada ao e-CAC do ano anterior, MÁXIMO RIGOROSO DE R$ 500.000,00 POR CNPJ. Para empresas com menos de 12 meses: até 50% do Capital Social OU até 50% de 12 vezes a média da receita mensal (limitado a R$ 500.000,00).
-   - Carência Legal: MÁXIMO DE 24 MESES.
-   - Amortização: MÁXIMO DE 72 PARCELAS MENSAIS após o período de carência.
-   - PRAZO TOTAL DA OPERAÇÃO: MÁXIMO DE 96 MESES (24m carência + 72m amortização).
-   - Taxa Regulada: Selic + até 6,0% a.a. (aprox. 16,5% a.a.).
-   - Garantias: Fundo Garantidor de Operações (FGO) e Aval dos sócios.
-   - OBSERVAÇÃO CRÍTICA PARA EMPRESAS COM ELEVADO FATURAMENTO: Se 30% da receita do CNPJ ultrapassar R$ 500.000,00, a linha PRONAMPE DEVE ter seu limite fixado no teto legal de R$ 500.000,00. NUNCA recomende limite superior a R$ 500.000,00 para PRONAMPE. Para necessidades superiores a R$ 500.000,00, se a empresa tiver faturamento elevado ou precisar de mais limite, sugira FGI_PEAC ou LINHA_BANCARIA_CORP.sugira FGI_PEAC ou LINHA_BANCARIA_CORP.
+        const prompt = `Você é um Consultor de Crédito Governamental sênior da PROSFEC.
 
-2. "FAMPE" (Sebrae):
-   - Elegibilidade: MEI (até R$ 12,5k), ME (até R$ 100k) e EPP (até R$ 300k).
-   - Garantia: Aval Sebrae cobrindo até 80% do crédito.
-   - Carência: MÁXIMO DE 12 MESES.
-   - PRAZO TOTAL DO CONTRATO: MÁXIMO DE 48 MESES.
+REGRA ABSOLUTA: você NÃO calcula e NÃO altera limite, taxa, carência ou prazo. Esses números já foram determinados pelo motor de elegibilidade da PROSFEC e são imutáveis. Sua função é (1) escolher UMA das linhas já liberadas abaixo e (2) redigir os textos do parecer.
 
-3. "FGI_PEAC" (BNDES):
-   - Elegibilidade: Médias empresas e MEs/EPPs de maior porte.
-   - Carência: MÁXIMO DE 24 MESES.
-   - PRAZO TOTAL DO CONTRATO: MÁXIMO DE 84 MESES (24m carência + 60m amortização).
-   - Limite: Até R$ 10.000.000 com garantia BNDES FGI de 80%.
+Nunca cite número diferente dos apresentados. Nunca recomende linha que não esteja na lista. Nunca afirme condição de banco marcada como não confirmada — nesse caso escreva que a condição específica da instituição precisa ser confirmada.
 
-4. "FUNGETUR" (MTur / CADASTUR):
-   - Exclusivo para turismo, hotéis, pousadas, eventos e gastronomia.
-   - Carência: Até 24 meses (giro) ou 36 meses (obras).
-   - PRAZO TOTAL DO CONTRATO: MÁXIMO DE 120 MESES.
-
-5. "FINEP_INOV" (FINEP):
-   - Exclusivo para tecnologia, software, startups e inovação industrial.
-   - Carência: Até 36 meses.
-   - PRAZO TOTAL DO CONTRATO: MÁXIMO DE 120 MESES. Taxa subsidiada de 5,0% a 14,0% a.a.
-
-6. "FNE_FNO_FCO":
-   - Para empresas no Nordeste (FNE), Norte (FNO) ou Centro-Oeste (FCO).
-   - Carência: Até 24 a 36 meses.
-   - PRAZO TOTAL: Até 144 meses.
-
-7. "BNDES_PEQ":
-   - Para MPMEs em geral via agentes credenciados BNDES.
-   - Carência: Até 24 meses.
-   - PRAZO TOTAL: Até 84 meses.
-
-DIRETRIZES DE AVALIAÇÃO DO BANCO DE RELACIONAMENTO (bancoPrincipal):
-Avalie com precisão a instituição financeira informada pelo cliente (${bancoPrincipal || "Não especificada / Geral"}):
-- Bancos Públicos / Estatais (Caixa Econômica Federal, Banco do Brasil, Banco do Nordeste - BNB, Banco da Amazônia - BASA): Têm plena capacidade de praticar os prazos máximos regulamentados em lei federal (até 24 meses de carência e até 96 meses de contrato total no PRONAMPE) e as menores taxas teto atrativas.
-- Bancos Privados Comerciais (Itaú, Bradesco, Santander, Banco Safra, BTG Pactual): Costumam operar esteiras automatizadas de PRONAMPE com prazos mais enxutos em suas plataformas de autoatendimento (geralmente carência de 12 meses e amortização de 36 a 48 meses), otimizando giro e classificação de risco.
-- Cooperativas de Crédito (Sicoob, Sicredi, Cresol, Ailos): Operam com política consultiva personalizada, oferecendo prazos flexíveis de 12 a 24 meses de carência e taxas competitivas para associados.
-Mencione obrigatoriamente essa adequação da esteira do ${bancoPrincipal || "banco informado"} na justificativaTecnica e na justificativa comercial do parecer final!
-
-Dados Cadastrais da Empresa Analisada:
+DADOS DA EMPRESA:
 - Razão Social: ${razaoSocial || "Não informada"}
 - CNPJ: ${cnpj || "Não informado"}
-- Porte Informado: ${porte || "ME"} (Avalie também: MEI, ME, EPP, EMP - Médio Porte, EGP - Grande Porte)
-- Estado (UF): ${uf || "SP"}
-- Ramo / Setor de atuação: ${ramo || "Geral / Comércio"}
-- Banco Principal de Relacionamento: ${bancoPrincipal || "Não especificado (Análise Geral)"}
-- Empresa aberta há menos de 12 meses? ${isNewCompany ? "Sim" : "Não"}
-- Capital Social: R$ ${valCapital.toLocaleString("pt-BR")}
-- Média de Receita Mensal (se nova): R$ ${valMediaReceita.toLocaleString("pt-BR")}
-- Faturamento Anual Acumulado: R$ ${valFaturamento.toLocaleString("pt-BR")}
-- Possui Selo Emprega + Mulher? ${seloEmpregaMulher ? "Sim" : "Não"}
-- Possui linha de crédito governamental ATIVA? ${possuiLinhaCreditoGovernamentalAtiva ? `Sim (Linha ativa: ${linhaCreditoGovernamentalQual || "Não especificada"})` : "Não"}
-*(Caso a empresa já possua a linha ${linhaCreditoGovernamentalQual || "governamental"} ativa, considere a capacidade de margem restante ou priorize uma linha de fomento complementar como FGI PEAC, FAMPE, FUNGETUR ou Fundos Regionais para evitar sobreposição do teto máximo)*
+- Porte: ${porte || "ME"}
+- UF: ${uf || "Não informada"}
+- Ramo: ${ramo || "Não informado"}
+- Banco de relacionamento: ${bancoPrincipal || "Não informado"} (${bankRules.bancoNormalizado}, categoria ${bankRules.categoria})
+- Empresa com menos de 12 meses: ${isNewCompany ? "Sim" : "Não"}
+- Capital social: R$ ${valCapital.toLocaleString("pt-BR")}
+- Média de receita mensal: R$ ${valMediaReceita.toLocaleString("pt-BR")}
+- Faturamento anual: R$ ${valFaturamento.toLocaleString("pt-BR")}
+- Receita considerada na análise: R$ ${effectiveAnnualRevenue.toLocaleString("pt-BR")}
+- Selo Emprega + Mulher: ${seloEmpregaMulher ? "Sim" : "Não"}
+- Linha governamental ativa: ${possuiLinhaCreditoGovernamentalAtiva ? `Sim (${linhaCreditoGovernamentalQual || "não especificada"})` : "Não"}
 
-Gere a análise do Consultor de Crédito Governamental em JSON estruturado com as propriedades exatas abaixo:
+CLASSIFICAÇÃO DE ADERÊNCIA JÁ DEFINIDA PELO MOTOR: ${engine.aderenciaLabel}
+Motivos: ${engine.aderenciaMotivos.join(" ") || "—"}
+
+LINHAS LIBERADAS (escolha exatamente uma destas, pelo código):
+${opcoesTexto}
+
+Responda em JSON com as propriedades exatas:
 {
-  "creditLineCode": "CÓDIGO (um destes: FAMPE, PRONAMPE, BNDES_PEQ, FGI_PEAC, LINHA_BANCARIA_CORP, FNE_FNO_FCO, FUNGETUR, FINEP_INOV ou PROGER_URBANO)",
-  "creditLineName": "Nome oficial completo da linha governamental/bancária recomendada",
-  "recommendedLimit": número com o limite máximo de crédito recomendado em Reais (number puro),
-  "rate": número com a taxa de juros anual estimada em % (ex: 16.5 para PRONAMPE),
-  "carencia": número com o teto máximo de meses de carência (ex: 12 para PRONAMPE/FAMPE, 24 para FGI_PEAC),
-  "prazo": número com o prazo total do contrato em meses (ex: 48 para PRONAMPE/FAMPE, 84 para FGI_PEAC, 120 para FUNGETUR/FINEP),
-  "justificativa": "Frase comercial de alto impacto para o lead destacando a velocidade e o fôlego financeiro dentro dos limites legais.",
-  "justificativaTecnica": "Parecer técnico detalhado do Consultor de Crédito Governamental explicando o enquadramento por Porte e Faturamento conforme as leis e portarias vigentes.",
-  "documentosNecessarios": ["array", "de", "strings", "com", "os", "documentos", "exigidos"],
-  "resumoPerfil": "Resumo da classificação de porte e faturamento"
+  "creditLineCode": "código de UMA das linhas liberadas acima",
+  "creditLineName": "nome da linha escolhida exatamente como listado",
+  "justificativa": "frase comercial de impacto para o lead, coerente com a classificação ${engine.aderenciaLabel}, sem inventar números",
+  "justificativaTecnica": "parecer técnico explicando o enquadramento por porte, faturamento, setor, região e a adequação da esteira do banco informado, citando condicionantes quando houver",
+  "documentosNecessarios": ["lista de documentos exigidos"],
+  "resumoPerfil": "resumo do porte e faturamento da empresa"
 }`;
 
         const response = await generateContentWithFallback(ai, {
@@ -1495,10 +1498,6 @@ Gere a análise do Consultor de Crédito Governamental em JSON estruturado com a
               properties: {
                 creditLineCode: { type: Type.STRING },
                 creditLineName: { type: Type.STRING },
-                recommendedLimit: { type: Type.NUMBER },
-                rate: { type: Type.NUMBER },
-                carencia: { type: Type.NUMBER },
-                prazo: { type: Type.NUMBER },
                 justificativa: { type: Type.STRING },
                 justificativaTecnica: { type: Type.STRING },
                 documentosNecessarios: { type: Type.ARRAY, items: { type: Type.STRING } },
@@ -1507,10 +1506,6 @@ Gere a análise do Consultor de Crédito Governamental em JSON estruturado com a
               required: [
                 "creditLineCode",
                 "creditLineName",
-                "recommendedLimit",
-                "rate",
-                "carencia",
-                "prazo",
                 "justificativa",
                 "justificativaTecnica",
                 "documentosNecessarios",
@@ -1523,132 +1518,45 @@ Gere a análise do Consultor de Crédito Governamental em JSON estruturado com a
         const responseText = response.text || "";
         if (responseText) {
           const parsed = JSON.parse(responseText.trim());
-          if (parsed.creditLineCode && parsed.recommendedLimit > 0) {
-            let lineCode = String(parsed.creditLineCode).toUpperCase();
-            let carencia = Number(parsed.carencia) || 12;
-            let prazo = Number(parsed.prazo) || 48;
-            let rate = Number(parsed.rate) || 16.5;
-            let limit = Number(parsed.recommendedLimit) || 100000;
+          const codigoIA = String(parsed.creditLineCode || "").toUpperCase();
+          const linhaIA = engine.linhasLiberadas.find((l: any) => l.code === codigoIA);
 
-            // Enforce strict official legislation & bank-specific boundaries
-            if (lineCode === "PRONAMPE") {
-              carencia = Math.min(carencia, bankRules.carenciaMaxima || 24);
-              prazo = Math.min(prazo, bankRules.prazoTotalMaximo || 96);
-              if (rate < 10.0 || rate > 22.0) rate = bankRules.taxaAnualEstimada || 16.5;
-              if (!isNewCompany && valFaturamento > 0) {
-                const maxLegalLimit = valFaturamento * 0.30;
-                limit = Math.min(limit, Math.max(maxLegalLimit, 30000));
-              }
-              limit = Math.min(limit, 500000);
-            } else if (lineCode === "FAMPE") {
-              carencia = Math.min(carencia, bankRules.carenciaMaxima || 12);
-              prazo = Math.min(prazo, bankRules.prazoTotalMaximo || 48);
-              limit = Math.min(limit, 300000);
-            } else if (lineCode === "FGI_PEAC") {
-              carencia = Math.min(carencia, bankRules.carenciaMaxima || 24);
-              prazo = Math.min(prazo, bankRules.prazoTotalMaximo || 84);
-              limit = Math.min(limit, 10000000);
-            }
-
-            const p = limit;
-            const r = (rate / 12) / 100;
-            const n = prazo;
-            let estimatedInstallment = 0;
-            if (r > 0) {
-              estimatedInstallment = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-            } else {
-              estimatedInstallment = p / n;
-            }
-
-            // Calculation for Capacity Excess and Interest Savings (CET vs Traditional Market)
-            const capTotal = !isNewCompany && valFaturamento > 0 ? valFaturamento * 0.30 : (valCapital * 0.5);
-            const excedenteCap = Math.max(0, capTotal - p);
-
-            const taxaMercadoAnual = 38.0; // Market benchmark without government subsidy ~38% a.a.
-            const rMercado = (taxaMercadoAnual / 12) / 100;
-            let parcelaMercado = 0;
-            if (rMercado > 0) {
-              parcelaMercado = (p * rMercado * Math.pow(1 + rMercado, n)) / (Math.pow(1 + rMercado, n) - 1);
-            } else {
-              parcelaMercado = p / n;
-            }
-            const economiaMensal = Math.max(0, parcelaMercado - estimatedInstallment);
-            const economiaTotal = Math.max(0, economiaMensal * n);
-
-            return res.json({
-              success: true,
-              creditLineCode: lineCode,
-              creditLineName: parsed.creditLineName,
-              recommendedLimit: p,
-              rate: rate,
-              carencia: carencia,
-              prazo: prazo,
-              parcela: Math.round(estimatedInstallment * 100) / 100,
-              justificativa: parsed.justificativa,
-              justificativaTecnica: parsed.justificativaTecnica,
-              documentosNecessarios: parsed.documentosNecessarios && parsed.documentosNecessarios.length > 0 ? parsed.documentosNecessarios : defaultDocs,
-              resumoPerfil: parsed.resumoPerfil,
-              fonte: `Gemini AI (Mapeamento ${bankRules.bancoNormalizado})`,
-              bancoDetalhes: bankRules,
-              capacidadeTotal: Math.round(capTotal),
-              excedenteCapacidade: Math.round(excedenteCap),
-              economiaMensal: Math.round(economiaMensal * 100) / 100,
-              economiaTotal: Math.round(economiaTotal * 100) / 100,
-              taxaMercadoAnual: taxaMercadoAnual,
-              parcelaMercado: Math.round(parcelaMercado * 100) / 100
-            });
+          if (!linhaIA) {
+            console.warn(
+              `[Simulador] IA sugeriu linha fora do conjunto liberado ("${codigoIA}"). Mantida a escolha determinística ${escolhidaDeterministica.code}.`
+            );
           }
+
+          const linhaFinal = linhaIA || escolhidaDeterministica;
+
+          return res.json(
+            buildResponse(
+              linhaFinal,
+              {
+                creditLineName: linhaFinal.name,
+                justificativa: parsed.justificativa || textosDeterministicos.justificativa,
+                justificativaTecnica:
+                  `Classificação: ${engine.aderenciaLabel}. ` +
+                  (parsed.justificativaTecnica || textosDeterministicos.justificativaTecnica),
+                documentosNecessarios: parsed.documentosNecessarios,
+                resumoPerfil: parsed.resumoPerfil || textosDeterministicos.resumoPerfil
+              },
+              `PROSFEC (Motor determinístico + redação IA — ${bankRules.bancoNormalizado})`
+            )
+          );
         }
       } catch (aiErr) {
-        console.warn("Express /api/credit/diagnostico-simulador Gemini failed, falling back to heuristics.", aiErr);
+        console.warn("Express /api/credit/diagnostico-simulador: IA indisponível, mantendo resultado determinístico.", aiErr);
       }
 
-      const p = fallbackLimit;
-      const r = (fallbackRate / 12) / 100;
-      const n = fallbackPrazo;
-      let fallbackInstallment = 0;
-      if (r > 0) {
-        fallbackInstallment = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-      } else {
-        fallbackInstallment = p / n;
-      }
+      return res.json(
+        buildResponse(
+          escolhidaDeterministica,
+          textosDeterministicos,
+          `PROSFEC (Motor determinístico — ${bankRules.bancoNormalizado})`
+        )
+      );
 
-      const capTotalFallback = !isNewCompany && valFaturamento > 0 ? valFaturamento * 0.30 : (valCapital * 0.5);
-      const excedenteCapFallback = Math.max(0, capTotalFallback - p);
-
-      const taxaMercadoFallback = 38.0;
-      const rMercadoFallback = (taxaMercadoFallback / 12) / 100;
-      let parcelaMercadoFallback = 0;
-      if (rMercadoFallback > 0) {
-        parcelaMercadoFallback = (p * rMercadoFallback * Math.pow(1 + rMercadoFallback, n)) / (Math.pow(1 + rMercadoFallback, n) - 1);
-      } else {
-        parcelaMercadoFallback = p / n;
-      }
-      const economiaMensalFallback = Math.max(0, parcelaMercadoFallback - fallbackInstallment);
-      const economiaTotalFallback = Math.max(0, economiaMensalFallback * n);
-
-      return res.json({
-        success: true,
-        creditLineCode: fallbackCode,
-        creditLineName: fallbackName,
-        recommendedLimit: fallbackLimit,
-        rate: fallbackRate,
-        carencia: fallbackCarencia,
-        prazo: fallbackPrazo,
-        parcela: Math.round(fallbackInstallment * 100) / 100,
-        justificativa: fallbackJustificativa,
-        justificativaTecnica: `Enquadramento customizado para ${bankRules.bancoNormalizado} na linha ${fallbackName}. Esteira: ${bankRules.modalidadeAprovacao}.`,
-        documentosNecessarios: defaultDocs,
-        resumoPerfil: `Perfil ${porte || 'PJ'} no ${bankRules.bancoNormalizado} avaliado com faturamento de R$ ${effectiveAnnualRevenue.toLocaleString('pt-BR')}.`,
-        fonte: `PROSFEC IA (Regra customizada ${bankRules.bancoNormalizado})`,
-        bancoDetalhes: bankRules,
-        capacidadeTotal: Math.round(capTotalFallback),
-        excedenteCapacidade: Math.round(excedenteCapFallback),
-        economiaMensal: Math.round(economiaMensalFallback * 100) / 100,
-        economiaTotal: Math.round(economiaTotalFallback * 100) / 100,
-        taxaMercadoAnual: taxaMercadoFallback,
-        parcelaMercado: Math.round(parcelaMercadoFallback * 100) / 100
-      });
 
     } catch (err: any) {
       console.error("Error in /api/credit/diagnostico-simulador:", err);
