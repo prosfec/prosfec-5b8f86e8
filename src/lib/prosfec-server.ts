@@ -393,55 +393,167 @@ export function createExpressApp() {
     return null;
   }
 
-  // Helper to auto-discover CNPJ candidate list from business name, address, website or web search
+  // Valida dígitos verificadores do CNPJ (evita consultar números inventados)
+  function isValidCnpjDigits(value: string): boolean {
+    const c = (value || "").replace(/\D/g, "");
+    if (c.length !== 14) return false;
+    if (/^(\d)\1{13}$/.test(c)) return false;
+    const b = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    let n1 = 0;
+    for (let i = 0; i < 12; i++) n1 += parseInt(c[i], 10) * b[i + 1];
+    const d12 = n1 % 11 < 2 ? 0 : 11 - (n1 % 11);
+    if (parseInt(c[12], 10) !== d12) return false;
+    let n2 = 0;
+    for (let i = 0; i < 13; i++) n2 += parseInt(c[i], 10) * b[i];
+    const d13 = n2 % 11 < 2 ? 0 : 11 - (n2 % 11);
+    return parseInt(c[13], 10) === d13;
+  }
+
+  function normalizeBusinessName(value: string): string {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toUpperCase()
+      .replace(/\b(LTDA|ME|EPP|EIRELI|S\/?A|SA|COMERCIO|COMERCIAL|E|DE|DA|DO|DOS|DAS)\b/g, " ")
+      .replace(/[^A-Z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // Confirma se o CNPJ encontrado pertence mesmo ao estabelecimento pesquisado
+  function matchesBusinessName(nomeEmpresa: string, result: any): boolean {
+    const alvo = normalizeBusinessName(nomeEmpresa);
+    if (!alvo) return false;
+    const alvoWords = alvo.split(" ").filter((w) => w.length > 2);
+    if (alvoWords.length === 0) return false;
+    const fontes = [result?.razaoSocial, result?.nomeFantasia].map(normalizeBusinessName).filter(Boolean);
+    for (const fonte of fontes) {
+      const hits = alvoWords.filter((w) => fonte.includes(w)).length;
+      if (hits / alvoWords.length >= 0.6) return true;
+    }
+    return false;
+  }
+
+  function extractCnpjDigits(text: string): string[] {
+    const matches = String(text || "").match(/\b\d{2}[.\s]?\d{3}[.\s]?\d{3}[/\s]?\d{4}[-\s]?\d{2}\b/g) || [];
+    return matches.map((m) => m.replace(/\D/g, "")).filter(isValidCnpjDigits);
+  }
+
+  // Etapa 2 — lê o site do próprio estabelecimento (rodapé / contato / sobre)
+  async function discoverCnpjFromWebsite(website?: string): Promise<string[]> {
+    if (!website) return [];
+    let base: URL;
+    try {
+      base = new URL(website.startsWith("http") ? website : `https://${website}`);
+    } catch {
+      return [];
+    }
+    const paths = ["", "/contato", "/sobre", "/institucional", "/quem-somos", "/politica-de-privacidade"];
+    const found = new Set<string>();
+    for (const path of paths) {
+      try {
+        const target = new URL(path || base.pathname || "/", base).toString();
+        const resp = await fetch(target, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+            "Accept-Language": "pt-BR,pt;q=0.9",
+          },
+          signal: AbortSignal.timeout(4000),
+        });
+        if (!resp.ok) continue;
+        const html = (await resp.text()).slice(0, 400_000);
+        extractCnpjDigits(html).forEach((c) => found.add(c));
+        if (found.size > 0) break;
+      } catch {
+        // site fora do ar / bloqueado — segue para a próxima tentativa
+      }
+    }
+    if (found.size > 0) console.log(`[CNPJ Discovery] ${found.size} candidato(s) no site do estabelecimento.`);
+    return Array.from(found);
+  }
+
+  // Etapa 3 — busca assistida por IA com pesquisa Google (somente lista de CNPJs)
+  async function discoverCnpjWithAiSearch(
+    nomeEmpresa: string,
+    cidade?: string,
+    estado?: string,
+    endereco?: string,
+  ): Promise<string[]> {
+    const apiKey = optionalEnv("GEMINI_API_KEY");
+    if (!apiKey) return [];
+    const prompt = [
+      `Encontre o CNPJ do estabelecimento abaixo usando a pesquisa Google.`,
+      `Nome: ${nomeEmpresa}`,
+      cidade ? `Cidade: ${cidade}` : "",
+      estado ? `UF: ${estado}` : "",
+      endereco ? `Endereço: ${endereco}` : "",
+      `Responda APENAS com os CNPJs encontrados, um por linha, no formato 00.000.000/0000-00.`,
+      `Não explique nada. Se não encontrar com segurança, responda exatamente NENHUM.`,
+      `Nunca invente um número.`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const models = ["gemini-3.6-flash", "gemini-flash-latest"];
+    for (const model of models) {
+      try {
+        const resp = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              tools: [{ google_search: {} }],
+            }),
+            signal: AbortSignal.timeout(20_000),
+          },
+        );
+        if (!resp.ok) {
+          console.warn(`[CNPJ Discovery] Busca IA (${model}) respondeu ${resp.status}.`);
+          continue;
+        }
+        const data: any = await resp.json();
+        const text = (data?.candidates?.[0]?.content?.parts || [])
+          .map((p: any) => p?.text || "")
+          .join("\n");
+        const candidates = extractCnpjDigits(text);
+        if (candidates.length > 0) {
+          console.log(`[CNPJ Discovery] ${candidates.length} candidato(s) via busca IA (${model}).`);
+          return candidates;
+        }
+        return [];
+      } catch (err) {
+        console.warn(`[CNPJ Discovery] Falha na busca IA (${model}):`, err);
+      }
+    }
+    return [];
+  }
+
+  // Cadeia de descoberta: dados inline -> site oficial -> busca IA
   async function discoverCnpjForBusiness(nomeEmpresa: string, cidade?: string, estado?: string, address?: string, website?: string): Promise<string[]> {
     const candidateCnpjs = new Set<string>();
     try {
-      // 1. Check if CNPJ is already embedded in address or website string
-      const searchTargets = [nomeEmpresa, address || "", website || ""].join(" ");
-      const inlineMatches = searchTargets.match(/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g);
-      if (inlineMatches && inlineMatches.length > 0) {
-        inlineMatches.forEach(m => candidateCnpjs.add(m.replace(/\D/g, "")));
-      }
+      // 1. CNPJ já visível no nome, endereço ou endereço do site
+      extractCnpjDigits([nomeEmpresa, address || "", website || ""].join(" ")).forEach((c) =>
+        candidateCnpjs.add(c),
+      );
+      if (candidateCnpjs.size > 0) return Array.from(candidateCnpjs);
 
-      // 2. Build smart search queries
-      const cleanName = nomeEmpresa.replace(/[^\w\s]/gi, " ").trim();
-      const nameWords = cleanName.split(/\s+/).filter(w => w.length > 2);
+      // 2. Site do próprio estabelecimento
+      (await discoverCnpjFromWebsite(website)).forEach((c) => candidateCnpjs.add(c));
+      if (candidateCnpjs.size > 0) return Array.from(candidateCnpjs);
 
-      const searchQueries = [
-        `${cleanName} ${cidade || ""} ${estado || ""} CNPJ`,
-        `"${cleanName}" ${cidade || ""} CNPJ`
-      ];
-
-      for (const query of searchQueries) {
-        console.log(`[CNPJ Auto-Discovery] Querying search for: "${query}"`);
-        
-        // Yahoo Search API
-        const yahooUrl = `https://search.yahoo.com/search?p=${encodeURIComponent(query)}`;
-        const yahooRes = await fetch(yahooUrl, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8"
-          },
-          signal: AbortSignal.timeout(3000)
-        }).catch(() => null);
-
-        if (yahooRes && yahooRes.ok) {
-          const html = await yahooRes.text();
-          const matches = html.match(/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g);
-          if (matches && matches.length > 0) {
-            matches.forEach(m => candidateCnpjs.add(m.replace(/\D/g, "")));
-            console.log(`[CNPJ Auto-Discovery] Found ${matches.length} candidates via Yahoo`);
-          }
-        }
-
-        if (candidateCnpjs.size > 0) break;
-      }
+      // 3. Busca assistida por IA com pesquisa Google
+      (await discoverCnpjWithAiSearch(nomeEmpresa, cidade, estado, address)).forEach((c) =>
+        candidateCnpjs.add(c),
+      );
     } catch (err) {
-      console.warn("[CNPJ Auto-Discovery] Exception during search:", err);
+      console.warn("[CNPJ Discovery] Exceção durante a descoberta:", err);
     }
     return Array.from(candidateCnpjs);
   }
+
 
   // API Route: CNPJ Search & Enrichment (BrasilAPI + ReceitaWS + MinhaReceita)
   app.post("/api/consulta-cnpj", async (req, res) => {
