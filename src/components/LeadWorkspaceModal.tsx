@@ -2932,164 +2932,341 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 </div>
               </div>
 
-              <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
-                <h4 className="font-display font-extrabold text-sm text-[#0A3D2E] uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
-                  <span>💎 Análise de Elegibilidade e Enquadramento ({advCreditLineCode})</span>
-                  <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-0.5 rounded-full font-black font-mono">
-                    {advCreditLineCode}
-                  </span>
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
-                    <span className="text-[10px] text-slate-400 uppercase font-black">Previsão de Crédito Máximo</span>
-                    <div className="text-lg font-black text-[#0A3D2E]">
-                      {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Análise"}
-                    </div>
+              {(() => {
+                const L: any = lead as any;
+                const score = typeof L.scoreElegibilidade === "number" ? L.scoreElegibilidade : null;
+                const situacao = String(L.situacaoCadastral || "").trim();
+                const situacaoRegular = situacao === "" || situacao.toLowerCase() === "ativa";
+                const situacaoLabel = situacao ? (situacaoRegular ? "Regularizada / Ativa" : situacao) : "Não informada";
+                const nivel = String(L.nivelPreparacao || "alto").toLowerCase();
+                const aderencia =
+                  String(L.classificacaoAderencia || L.aderencia || "").trim() ||
+                  (nivel === "alto" ? "ALTA ADERÊNCIA" : nivel === "medio" ? "ADERÊNCIA CONDICIONADA" : "NECESSITA DIAGNÓSTICO");
+                const aderenciaTone = /ALTA/i.test(aderencia)
+                  ? "bg-emerald-400/20 border-emerald-400/30 text-emerald-200"
+                  : /CONDICION/i.test(aderencia)
+                    ? "bg-amber-400/20 border-amber-400/30 text-amber-200"
+                    : "bg-rose-400/20 border-rose-400/30 text-rose-200";
+                const taxa = Number(L.taxaAnualSimulada) || 0;
+                const prazo = Number(L.prazoSimulado) || 0;
+                const carencia = Number(L.carenciaSimulada) || 0;
+                const parcela = Number(L.parcelaSimulada) || 0;
+                const capacidade = Number(L.capacidadeTotal) || 0;
+                const excedente = Number(L.excedenteCapacidade) || 0;
+                const alertas: string[] = Array.isArray(L.principaisAlertas) ? L.principaisAlertas : [];
+                const proximosPassos: string[] = Array.isArray(L.recomendações) ? L.recomendações : [];
+                const severidade = (texto: string) => {
+                  const t = String(texto || "").toLowerCase();
+                  if (/impedit|bloque|inadimpl|irregular|negativ|restri|pendênc|pendenc|inapt|baixad|suspens|dívida|divida/.test(t)) return "alta";
+                  if (/atenç|atenc|prazo|revis|atualiz|verific|recomend|possív|possiv|risco/.test(t)) return "media";
+                  return "ok";
+                };
+                const scoreLabel = score === null
+                  ? ""
+                  : score >= 80
+                    ? "Perfil altamente elegível"
+                    : score >= 60
+                      ? "Perfil elegível com ajustes"
+                      : "Perfil requer saneamento";
+
+                return (
+              <div className="space-y-5">
+                {/* Destaque superior */}
+                <div className="bg-brand-primary text-white p-5 sm:p-7 rounded-3xl relative overflow-hidden shadow-lg">
+                  <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
+                    <TrendingUp className="w-40 h-40 -rotate-12" />
                   </div>
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
-                    <span className="text-[10px] text-slate-400 uppercase font-black">Perfil de Aprovação</span>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-full ${
-                        lead.nivelPreparacao === "alto" ? "bg-emerald-100 text-emerald-800" :
-                        lead.nivelPreparacao === "medio" ? "bg-amber-100 text-amber-800" :
-                        "bg-rose-100 text-rose-800"
-                      }`}>
-                        {lead.nivelPreparacao || "ALTO"}
+                  <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-300 block mb-1">
+                        Análise de Elegibilidade e Enquadramento
                       </span>
+                      <p className="text-3xl md:text-4xl font-display font-extrabold tracking-tight">
+                        {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Análise"}
+                      </p>
+                      <span className="text-[11px] text-emerald-100/80 font-medium block mt-1">
+                        Previsão de crédito máximo estimada
+                      </span>
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
+                        <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full border ${aderenciaTone}`}>
+                          {aderencia}
+                        </span>
+                        <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-white">
+                          {advCreditLineCode}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${
+                          situacaoRegular
+                            ? "bg-emerald-400/15 border-emerald-400/30 text-emerald-200"
+                            : "bg-rose-400/15 border-rose-400/30 text-rose-200"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${situacaoRegular ? "bg-emerald-400" : "bg-rose-400"}`} />
+                          {situacaoLabel}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
-                    <span className="text-[10px] text-slate-400 uppercase font-black">Situação de Cadastro</span>
-                    {(() => {
-                      const sit = String((lead as any).situacaoCadastral || "").trim();
-                      const regular = sit === "" || sit.toLowerCase() === "ativa";
-                      return (
-                        <div className={`text-xs font-extrabold flex items-center gap-1 mt-0.5 ${regular ? "text-emerald-800" : "text-rose-700"}`}>
-                          <div className={`w-2 h-2 rounded-full ${regular ? "bg-emerald-500" : "bg-rose-500"}`} />
-                          {sit ? (regular ? "Regularizada / Ativa" : sit) : "Não informada"}
+
+                    {score !== null && (
+                      <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center gap-4 shrink-0">
+                        <div className="relative w-14 h-14 flex items-center justify-center rounded-full bg-slate-900/60 border border-emerald-400/40">
+                          <span className="text-lg font-black text-emerald-300 font-mono">{score}</span>
                         </div>
-                      );
-                    })()}
-                  </div>
-
-                  {typeof (lead as any).scoreElegibilidade === "number" && (
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
-                      <span className="text-[10px] text-slate-400 uppercase font-black">Score de Elegibilidade</span>
-                      <div className="flex items-baseline gap-1.5">
-                        <div className="text-lg font-black text-[#0A3D2E]">{(lead as any).scoreElegibilidade}</div>
-                        <span className="text-[10px] text-slate-400 font-bold">/ 100</span>
-                      </div>
-                      <div className="text-[10px] font-bold text-slate-500">
-                        {(lead as any).scoreElegibilidade >= 80
-                          ? "Perfil altamente elegível"
-                          : (lead as any).scoreElegibilidade >= 60
-                            ? "Perfil elegível com ajustes"
-                            : "Perfil requer saneamento"}
-                      </div>
-                    </div>
-                  )}
-
-                  {(Number((lead as any).taxaAnualSimulada) > 0 ||
-                    Number((lead as any).prazoSimulado) > 0 ||
-                    Number((lead as any).parcelaSimulada) > 0) && (
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
-                      <span className="text-[10px] text-slate-400 uppercase font-black">Condições Simuladas</span>
-                      <div className="text-[11px] text-slate-700 font-semibold leading-relaxed">
-                        {Number((lead as any).taxaAnualSimulada) > 0 && (
-                          <div>Taxa: {Number((lead as any).taxaAnualSimulada).toFixed(2).replace(".", ",")}% a.a.</div>
-                        )}
-                        {Number((lead as any).carenciaSimulada) > 0 && (
-                          <div>Carência: {(lead as any).carenciaSimulada} meses</div>
-                        )}
-                        {Number((lead as any).prazoSimulado) > 0 && (
-                          <div>Prazo total: {(lead as any).prazoSimulado} meses</div>
-                        )}
-                        {Number((lead as any).parcelaSimulada) > 0 && (
-                          <div>Parcela estimada: {formatCurrencyBRL(Number((lead as any).parcelaSimulada))}</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {Number((lead as any).capacidadeTotal) > 0 && (
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
-                      <span className="text-[10px] text-slate-400 uppercase font-black">Capacidade de Captação</span>
-                      <div className="text-sm font-black text-[#0A3D2E]">
-                        {formatCurrencyBRL(Number((lead as any).capacidadeTotal))}
-                      </div>
-                      {Number((lead as any).excedenteCapacidade) > 0 && (
-                        <div className="text-[10px] font-bold text-emerald-700">
-                          Excedente disponível: {formatCurrencyBRL(Number((lead as any).excedenteCapacidade))}
+                        <div className="min-w-0">
+                          <span className="text-[10px] uppercase font-extrabold text-emerald-300 tracking-wider block">
+                            Score de Elegibilidade
+                          </span>
+                          <span className="text-xs font-bold text-white">{scoreLabel}</span>
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Comparativo de mercado suspenso até haver benchmark com fonte validada. */}
-
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {((lead as any).creditLineName || (lead as any).resumoPerfil) && (
-                  <div className="text-[11px] text-slate-600 leading-relaxed border-t border-slate-100 pt-3 space-y-1">
-                    {(lead as any).creditLineName && (
-                      <p><strong className="text-slate-900">Linha recomendada:</strong> {(lead as any).creditLineName}</p>
-                    )}
-                    {(lead as any).resumoPerfil && (
-                      <p><strong className="text-slate-900">Perfil:</strong> {(lead as any).resumoPerfil}</p>
-                    )}
+                {/* Programa recomendado */}
+                {(L.creditLineName || L.justificativa || L.resumoPerfil) && (
+                  <div className="bg-gradient-to-r from-[#032e22] via-[#084534] to-[#043326] text-white p-5 sm:p-6 rounded-3xl relative overflow-hidden border border-emerald-800/60 shadow-xl">
+                    <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
+                      <Sparkles className="w-40 h-40 -rotate-12 text-brand-accent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="text-[10px] bg-brand-accent/20 border border-brand-accent/30 text-brand-accent font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                            Programa recomendado
+                          </span>
+                          {L.bancoPrincipal && (
+                            <span className="text-[10px] bg-emerald-400/20 border border-emerald-400/30 text-emerald-200 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Building className="w-3 h-3" />
+                              {L.bancoPrincipal}
+                            </span>
+                          )}
+                          <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border ${aderenciaTone}`}>
+                            {aderencia}
+                          </span>
+                        </div>
+                        <h3 className="font-display font-black text-lg md:text-2xl text-white tracking-tight break-words">
+                          {L.creditLineName || advCreditLineCode}
+                        </h3>
+                        {(L.justificativa || L.resumoPerfil) && (
+                          <p className="text-[11px] md:text-xs text-emerald-100/90 font-medium leading-relaxed mt-2 max-w-xl">
+                            {L.justificativa || L.resumoPerfil}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl shrink-0 w-full md:w-auto md:min-w-[210px] space-y-1.5">
+                        <div className="flex items-baseline justify-between gap-4">
+                          <span className="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Limite</span>
+                          <strong className="text-sm font-black text-brand-accent">
+                            {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob análise"}
+                          </strong>
+                        </div>
+                        {prazo > 0 && (
+                          <div className="flex items-baseline justify-between gap-4">
+                            <span className="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Prazo</span>
+                            <strong className="text-xs font-bold text-white">{prazo} meses</strong>
+                          </div>
+                        )}
+                        {carencia > 0 && (
+                          <div className="flex items-baseline justify-between gap-4">
+                            <span className="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Carência</span>
+                            <strong className="text-xs font-bold text-white">{carencia} meses</strong>
+                          </div>
+                        )}
+                        {taxa > 0 && (
+                          <div className="flex items-baseline justify-between gap-4">
+                            <span className="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Taxa</span>
+                            <strong className="text-xs font-bold text-white">
+                              {taxa.toFixed(2).replace(".", ",")}% a.a.
+                            </strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {(Array.isArray((lead as any).principaisAlertas) && (lead as any).principaisAlertas.length > 0) ||
-                (Array.isArray((lead as any).recomendações) && (lead as any).recomendações.length > 0) ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
-                    {Array.isArray((lead as any).principaisAlertas) && (lead as any).principaisAlertas.length > 0 && (
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] text-slate-400 uppercase font-black">Principais Alertas</span>
-                        <ul className="space-y-1">
-                          {(lead as any).principaisAlertas.map((a: string, i: number) => (
-                            <li key={i} className="text-[11px] text-slate-700 flex gap-1.5 leading-relaxed">
-                              <span className="text-amber-500">•</span>
-                              <span>{a}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {Array.isArray((lead as any).recomendações) && (lead as any).recomendações.length > 0 && (
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] text-slate-400 uppercase font-black">Recomendações</span>
-                        <ul className="space-y-1">
-                          {(lead as any).recomendações.map((r: string, i: number) => (
-                            <li key={i} className="text-[11px] text-slate-700 flex gap-1.5 leading-relaxed">
-                              <span className="text-emerald-500">•</span>
-                              <span>{r}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                {/* Indicadores */}
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Wallet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Crédito Máximo</span>
+                    </div>
+                    <strong className="text-base md:text-lg font-black text-[#0A3D2E] block break-words">
+                      {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Análise"}
+                    </strong>
+                    <span className="text-[9px] text-slate-500 block mt-0.5">Previsão para o CNPJ.</span>
                   </div>
-                ) : null}
 
-                {(lead as any).justificativaTecnica && (
-                  <div className="border-t border-slate-100 pt-3">
-                    <span className="text-[10px] text-slate-400 uppercase font-black">Parecer Técnico</span>
-                    <p className="text-[11px] text-slate-600 leading-relaxed mt-1 whitespace-pre-line">
-                      {(lead as any).justificativaTecnica}
+                  <div className="bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Gauge className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Perfil de Aprovação</span>
+                    </div>
+                    <span className={`inline-block px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full ${
+                      nivel === "alto" ? "bg-emerald-100 text-emerald-800" :
+                      nivel === "medio" ? "bg-amber-100 text-amber-800" :
+                      "bg-rose-100 text-rose-800"
+                    }`}>
+                      {L.nivelPreparacao || "ALTO"}
+                    </span>
+                    <span className="text-[9px] text-slate-500 block mt-1.5">Enquadramento estimado.</span>
+                  </div>
+
+                  <div className="bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Situação de Cadastro</span>
+                    </div>
+                    <div className={`text-xs font-extrabold flex items-center gap-1.5 break-words ${situacaoRegular ? "text-emerald-800" : "text-rose-700"}`}>
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${situacaoRegular ? "bg-emerald-500" : "bg-rose-500"}`} />
+                      {situacaoLabel}
+                    </div>
+                  </div>
+
+                  {score !== null && (
+                    <div className="bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Score de Elegibilidade</span>
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <strong className="text-lg font-black text-[#0A3D2E]">{score}</strong>
+                        <span className="text-[10px] text-slate-400 font-bold">/ 100</span>
+                      </div>
+                      <span className="text-[9px] text-slate-500 block mt-0.5">{scoreLabel}</span>
+                    </div>
+                  )}
+
+                  {(taxa > 0 || prazo > 0 || parcela > 0 || carencia > 0) && (
+                    <div className="bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl min-w-0 col-span-2 md:col-span-1">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Percent className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Condições Simuladas</span>
+                      </div>
+                      <div className="text-[11px] text-slate-700 font-semibold leading-relaxed">
+                        {taxa > 0 && <div>Taxa: {taxa.toFixed(2).replace(".", ",")}% a.a.</div>}
+                        {carencia > 0 && <div>Carência: {carencia} meses</div>}
+                        {prazo > 0 && <div>Prazo total: {prazo} meses</div>}
+                        {parcela > 0 && <div>Parcela estimada: {formatCurrencyBRL(parcela)}</div>}
+                      </div>
+                    </div>
+                  )}
+
+                  {capacidade > 0 && (
+                    <div className="bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Capacidade de Captação</span>
+                      </div>
+                      <strong className="text-sm md:text-base font-black text-[#0A3D2E] block break-words">
+                        {formatCurrencyBRL(capacidade)}
+                      </strong>
+                      {excedente > 0 && (
+                        <span className="text-[9px] font-bold text-emerald-700 block mt-0.5">
+                          Excedente disponível: {formatCurrencyBRL(excedente)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Alertas por severidade */}
+                {alertas.length > 0 && (
+                  <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <h4 className="font-display font-extrabold text-xs text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      Principais Alertas
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {alertas.map((a: string, i: number) => {
+                        const sev = severidade(a);
+                        const tone = sev === "alta"
+                          ? "bg-rose-50 border-rose-200 text-rose-800"
+                          : sev === "media"
+                            ? "bg-amber-50 border-amber-200 text-amber-800"
+                            : "bg-emerald-50 border-emerald-200 text-emerald-800";
+                        const Icon = sev === "alta" ? AlertCircle : sev === "media" ? AlertTriangle : CheckCircle2;
+                        return (
+                          <div key={i} className={`flex gap-2.5 items-start p-3 rounded-xl border ${tone}`}>
+                            <Icon className="w-4 h-4 mt-0.5 shrink-0" />
+                            <span className="text-[11px] font-semibold leading-relaxed break-words min-w-0">{a}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Próximos passos */}
+                <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                  <h4 className="font-display font-extrabold text-xs text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
+                    <ArrowRight className="w-4 h-4 text-emerald-600" />
+                    Próximos Passos
+                  </h4>
+                  {proximosPassos.length > 0 && (
+                    <ol className="space-y-2.5">
+                      {proximosPassos.map((r: string, i: number) => (
+                        <li key={i} className="flex gap-3 items-start">
+                          <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black flex items-center justify-center shrink-0">
+                            {i + 1}
+                          </span>
+                          <span className="text-[12px] text-slate-700 font-medium leading-relaxed break-words min-w-0">{r}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleTabClick("diagnostico")}
+                    className="w-full sm:w-auto bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold text-xs uppercase tracking-wider px-6 h-12 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                  >
+                    Iniciar Diagnóstico Financeiro PROSFEC
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Parecer técnico */}
+                {L.justificativaTecnica && (
+                  <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                      <h4 className="font-display font-extrabold text-xs text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-emerald-600" />
+                        Parecer Técnico
+                      </h4>
+                      <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                        /ALTA/i.test(aderencia)
+                          ? "bg-emerald-100 text-emerald-800"
+                          : /CONDICION/i.test(aderencia)
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-rose-100 text-rose-800"
+                      }`}>
+                        {aderencia}
+                      </span>
+                    </div>
+                    {L.resumoPerfil && (
+                      <p className="text-[12px] text-slate-800 font-semibold leading-relaxed max-w-3xl">
+                        {L.resumoPerfil}
+                      </p>
+                    )}
+                    <p className="text-[12px] text-slate-600 leading-relaxed whitespace-pre-line max-w-3xl">
+                      {L.justificativaTecnica}
                     </p>
                   </div>
                 )}
 
-                {((lead as any).dataUltimaSimulacao || (lead as any).fonteSimulacao) && (
-                  <p className="text-[10px] text-slate-400 font-semibold border-t border-slate-100 pt-2">
-                    {(lead as any).dataUltimaSimulacao
-                      ? `Simulação de ${new Date((lead as any).dataUltimaSimulacao).toLocaleString("pt-BR")}`
+                {/* Rodapé de metadados */}
+                {(L.dataUltimaSimulacao || L.fonteSimulacao) && (
+                  <p className="text-[10px] text-slate-400 font-semibold">
+                    {L.dataUltimaSimulacao
+                      ? `Simulação de ${new Date(L.dataUltimaSimulacao).toLocaleString("pt-BR")}`
                       : "Simulação registrada"}
-                    {(lead as any).fonteSimulacao ? ` — origem: ${(lead as any).fonteSimulacao}` : ""}
+                    {L.fonteSimulacao ? ` — origem: ${L.fonteSimulacao}` : ""}
                   </p>
                 )}
               </div>
+                );
+              })()}
 
 
               <div className="flex items-center justify-between pt-2">
