@@ -94,6 +94,72 @@ const initialLeadData: LeadData = {
   tempoParaCaptacao: "medio_prazo"
 };
 
+// Score PROSFEC de Elegibilidade (0 a 100) — ponto único usado tanto no
+// caminho da IA quanto no cálculo de reserva.
+function computeScoreElegibilidade(formData: LeadData): {
+  score: number;
+  positivos: string[];
+  atencao: string[];
+} {
+  let scoreCalculado = 85;
+  const fatoresPositivos: string[] = [];
+  const fatoresAtencao: string[] = [];
+
+  if (formData.situacaoCadastral === "Ativa") {
+    scoreCalculado += 5;
+    fatoresPositivos.push("CNPJ ativo e regular perante a Receita Federal");
+  } else {
+    scoreCalculado -= 30;
+    fatoresAtencao.push("Situação cadastral com restrições");
+  }
+
+  if (formData.possuiDeclaracaoFaturamento) {
+    scoreCalculado += 5;
+    fatoresPositivos.push("Declarações fiscais anuais transmitidas e atualizadas");
+  } else {
+    scoreCalculado -= 20;
+    fatoresAtencao.push("Declarações de faturamento pendentes");
+  }
+
+  if (formData.autorizaCompartilhamentoEcac) {
+    scoreCalculado += 5;
+    fatoresPositivos.push("Autorização e-CAC concedida");
+  }
+
+  if (formData.possuiRestricaoSerasa) {
+    scoreCalculado -= 25;
+    fatoresAtencao.push("Apontamento restritivo ativo");
+  } else {
+    scoreCalculado += 5;
+    fatoresPositivos.push("Sem restrições em órgãos de proteção");
+  }
+
+  if (formData.possuiDividasTributarias) {
+    scoreCalculado -= 15;
+    fatoresAtencao.push("Dívidas tributárias pendentes");
+  } else {
+    fatoresPositivos.push("Regularidade fiscal perante a Dívida Ativa");
+  }
+
+  if (formData.possuiPatrimonioVinculado === "sim") {
+    scoreCalculado += 5;
+    fatoresPositivos.push("Patrimônio registrado vinculado ao CPF/CNPJ");
+  }
+
+  if (formData.menosDe12Meses) {
+    scoreCalculado -= 10;
+    fatoresAtencao.push("Empresa com menos de 12 meses de fundação");
+  }
+
+  return {
+    score: Math.max(15, Math.min(98, scoreCalculado)),
+    positivos: fatoresPositivos,
+    atencao: fatoresAtencao,
+  };
+}
+
+
+
 export default function Simulador({ 
   onLeadCaptured, 
   referredByPartnerWhatsapp, 
@@ -512,9 +578,16 @@ export default function Simulador({
           recs.push("Fale com nossos consultores para identificar os bancos parceiros que possuem taxas promocionais ativas hoje.");
         }
 
+        const scoreIA = computeScoreElegibilidade(formData);
+
         const result: SimulationResult = {
           limiteEstimado: apiResult.recommendedLimit,
           nivelPreparacao: prepScore,
+          scoreElegibilidade: scoreIA.score,
+          scoreFatores: {
+            positivos: scoreIA.positivos,
+            atencao: scoreIA.atencao
+          },
           principaisAlertas: alerts,
           recomendações: recs,
           creditLineCode: apiResult.creditLineCode,
@@ -528,8 +601,15 @@ export default function Simulador({
           documentosNecessarios: apiResult.documentosNecessarios,
           resumoPerfil: apiResult.resumoPerfil,
           fonte: apiResult.fonte,
-          bancoDetalhes: apiResult.bancoDetalhes
+          bancoDetalhes: apiResult.bancoDetalhes,
+          capacidadeTotal: apiResult.capacidadeTotal,
+          excedenteCapacidade: apiResult.excedenteCapacidade,
+          economiaMensal: apiResult.economiaMensal,
+          economiaTotal: apiResult.economiaTotal,
+          taxaMercadoAnual: apiResult.taxaMercadoAnual,
+          parcelaMercado: apiResult.parcelaMercado
         };
+
 
         setSimulationResult(result);
         setCalculating(false);
@@ -604,7 +684,7 @@ export default function Simulador({
         }
       }
     } else {
-      calculatedLimit = faturamento * 0.6;
+      calculatedLimit = faturamento * 0.3;
     }
 
     calculatedLimit = Math.min(calculatedLimit, 500000);
@@ -674,67 +754,18 @@ export default function Simulador({
     const econMensalLocal = Math.max(0, parcelaMktLocal - parcelaSubLocal);
     const econTotalLocal = Math.max(0, econMensalLocal * nLocal);
 
-    // Score PROSFEC de Elegibilidade (0 a 100)
-    let scoreCalculado = 85;
-    const fatoresPositivos: string[] = [];
-    const fatoresAtencao: string[] = [];
-
-    if (formData.situacaoCadastral === "Ativa") {
-      scoreCalculado += 5;
-      fatoresPositivos.push("CNPJ ativo e regular perante a Receita Federal");
-    } else {
-      scoreCalculado -= 30;
-      fatoresAtencao.push("Situação cadastral com restrições");
-    }
-
-    if (formData.possuiDeclaracaoFaturamento) {
-      scoreCalculado += 5;
-      fatoresPositivos.push("Declarações fiscais anuais transmitidas e atualizadas");
-    } else {
-      scoreCalculado -= 20;
-      fatoresAtencao.push("Declarações de faturamento pendentes");
-    }
-
-    if (formData.autorizaCompartilhamentoEcac) {
-      scoreCalculado += 5;
-      fatoresPositivos.push("Autorização e-CAC concedida");
-    }
-
-    if (formData.possuiRestricaoSerasa) {
-      scoreCalculado -= 25;
-      fatoresAtencao.push("Apontamento restritivo ativo");
-    } else {
-      scoreCalculado += 5;
-      fatoresPositivos.push("Sem restrições em órgãos de proteção");
-    }
-
-    if (formData.possuiDividasTributarias) {
-      scoreCalculado -= 15;
-      fatoresAtencao.push("Dívidas tributárias pendentes");
-    } else {
-      fatoresPositivos.push("Regularidade fiscal perante a Dívida Ativa");
-    }
-
-    if (formData.possuiPatrimonioVinculado === "sim") {
-      scoreCalculado += 5;
-      fatoresPositivos.push("Patrimônio registrado vinculado ao CPF/CNPJ");
-    }
-
-    if (formData.menosDe12Meses) {
-      scoreCalculado -= 10;
-      fatoresAtencao.push("Empresa com menos de 12 meses de fundação");
-    }
-
-    scoreCalculado = Math.max(15, Math.min(98, scoreCalculado));
+    // Score PROSFEC de Elegibilidade (0 a 100) — mesma regra do caminho da IA
+    const scoreLocal = computeScoreElegibilidade(formData);
 
     const result: SimulationResult = {
       limiteEstimado: calculatedLimit,
       nivelPreparacao: prepScore,
-      scoreElegibilidade: scoreCalculado,
+      scoreElegibilidade: scoreLocal.score,
       scoreFatores: {
-        positivos: fatoresPositivos,
-        atencao: fatoresAtencao
+        positivos: scoreLocal.positivos,
+        atencao: scoreLocal.atencao
       },
+
       principaisAlertas: alerts,
       recomendações: recs,
       creditLineCode: "PRONAMPE",

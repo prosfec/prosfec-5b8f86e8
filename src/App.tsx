@@ -386,6 +386,23 @@ export default function App() {
         recomendações: refinedResult.recomendações,
         resumoPerfil: refinedResult.resumoPerfil,
         justificativaTecnica: refinedResult.justificativaTecnica,
+        // Espelho completo da simulação (lido no Passo 1 do Workspace)
+        scoreElegibilidade: refinedResult.scoreElegibilidade ?? null,
+        scoreFatores: refinedResult.scoreFatores || null,
+        capacidadeTotal: refinedResult.capacidadeTotal ?? null,
+        excedenteCapacidade: refinedResult.excedenteCapacidade ?? null,
+        economiaMensal: refinedResult.economiaMensal ?? null,
+        economiaTotal: refinedResult.economiaTotal ?? null,
+        taxaMercadoAnual: refinedResult.taxaMercadoAnual ?? null,
+        parcelaMercado: refinedResult.parcelaMercado ?? null,
+        taxaAnualSimulada: refinedResult.rate ?? null,
+        carenciaSimulada: refinedResult.carencia ?? null,
+        prazoSimulado: refinedResult.prazo ?? null,
+        parcelaSimulada: refinedResult.parcela ?? null,
+        justificativaSimulacao: refinedResult.justificativa || "",
+        dataUltimaSimulacao: new Date().toISOString(),
+        fonteSimulacao: refinedResult.fonte || "PROSFEC IA",
+
         analiseRiscoPreliminar: {
           dataAnalise: new Date().toISOString(),
           nivel: refinedResult.nivelPreparacao,
