@@ -317,8 +317,8 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
         result.push(mergedReabilitacaoItem);
       }
       // Se houver múltiplos registros legados de renegociação/bacen, o primeiro unifica com R$ 2.000
-    } else if (itemId === "serv_rating" || itemId === "serv_score" || itemId === "serv_rating_score" ||
-      itemNameLower.includes("rating") || itemNameLower.includes("score")) {
+    } else if (!exactCatalogMatch && (itemId === "serv_rating" || itemId === "serv_score" || itemId === "serv_rating_score" ||
+      itemNameLower.includes("rating") || itemNameLower.includes("score"))) {
       if (!mergedRatingScoreItem) {
         const hLink = catalogRatingScore?.hublaLink || sItem.hublaLink || HUBLA_SERVICE_LINKS.serv_rating_score || null;
         mergedRatingScoreItem = {
