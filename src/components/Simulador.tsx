@@ -603,11 +603,8 @@ export default function Simulador({
           fonte: apiResult.fonte,
           bancoDetalhes: apiResult.bancoDetalhes,
           capacidadeTotal: apiResult.capacidadeTotal,
-          excedenteCapacidade: apiResult.excedenteCapacidade,
-          economiaMensal: apiResult.economiaMensal,
-          economiaTotal: apiResult.economiaTotal,
-          taxaMercadoAnual: apiResult.taxaMercadoAnual,
-          parcelaMercado: apiResult.parcelaMercado
+          excedenteCapacidade: apiResult.excedenteCapacidade
+
         };
 
 
@@ -749,10 +746,8 @@ export default function Simulador({
     const nLocal = 48;
     const rSubLocal = (16.5 / 12) / 100;
     const parcelaSubLocal = pLocal > 0 ? (pLocal * rSubLocal * Math.pow(1 + rSubLocal, nLocal)) / (Math.pow(1 + rSubLocal, nLocal) - 1) : 0;
-    const rMktLocal = (38.0 / 12) / 100;
-    const parcelaMktLocal = pLocal > 0 ? (pLocal * rMktLocal * Math.pow(1 + rMktLocal, nLocal)) / (Math.pow(1 + rMktLocal, nLocal) - 1) : 0;
-    const econMensalLocal = Math.max(0, parcelaMktLocal - parcelaSubLocal);
-    const econTotalLocal = Math.max(0, econMensalLocal * nLocal);
+    // Comparativo de mercado suspenso: sem benchmark com fonte validada.
+
 
     // Score PROSFEC de Elegibilidade (0 a 100) — mesma regra do caminho da IA
     const scoreLocal = computeScoreElegibilidade(formData);
