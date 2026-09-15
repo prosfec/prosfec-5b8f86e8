@@ -378,11 +378,9 @@ export function calcularParcela(valor: number, taxaAnual: number, meses: number)
 }
 
 /**
- * Benchmark de mercado: NÃO é um fato oficial. Enquanto não houver fonte e data
- * registradas em creditRuleSources.ts, é apresentado explicitamente como estimativa.
+ * Comparativo de mercado SUSPENSO.
+ * Não existe benchmark vigente. Um benchmark futuro só pode ser reintroduzido com:
+ * fonte identificável, URL, data de verificação, metodologia de cálculo e escopo da amostra.
+ * Até lá, nenhuma taxa de mercado é calculada ou exibida.
  */
-export const MARKET_BENCHMARK = {
-  taxaAnual: 38.0,
-  estimativa: true,
-  observacao: "Estimativa interna de custo de crédito PJ sem garantia governamental. Não é taxa oficial nem oferta; serve apenas como referência comparativa."
-};
+
