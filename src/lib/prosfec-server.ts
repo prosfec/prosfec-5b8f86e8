@@ -574,46 +574,72 @@ export function createExpressApp() {
 
       // If CNPJ is provided directly
       if (cnpj && cnpj.length === 14) {
+        if (!isValidCnpjDigits(cnpj)) {
+          return res.json({
+            success: false,
+            needManualInput: true,
+            error: "O CNPJ informado é inválido (dígitos verificadores não conferem). Confira o número e tente novamente.",
+          });
+        }
         const result = await fetchCnpjFromPublicApis(cnpj);
         if (result) {
           cnpjCache.set(cnpj, { timestamp: Date.now(), data: result });
           return res.json({ success: true, ...result });
         }
-      }
-
-      // If CNPJ was NOT directly provided or failed, run Auto-Discovery using company name & location
-      if (nomeEmpresa) {
-        console.log(`[CNPJ Auto-Discovery] Initiating lookup for "${nomeEmpresa}" in "${cidade || "BR"}"...`);
-        const candidateCnpjs = await discoverCnpjForBusiness(nomeEmpresa, cidade, estado, endereco, website);
-        
-        for (const candidate of candidateCnpjs) {
-          if (candidate.length !== 14) continue;
-
-          if (cnpjCache.has(candidate)) {
-            const cached = cnpjCache.get(candidate)!;
-            if (Date.now() - cached.timestamp < 3600000) {
-              return res.json({ success: true, autoDiscovered: true, cached: true, ...cached.data });
-            }
-          }
-
-          const result = await fetchCnpjFromPublicApis(candidate);
-          if (result) {
-            console.log(`[CNPJ Auto-Discovery] Successfully matched & verified CNPJ ${candidate} for "${nomeEmpresa}"!`);
-            cnpjCache.set(candidate, { timestamp: Date.now(), data: result });
-            return res.json({ success: true, autoDiscovered: true, ...result });
-          }
-        }
-      }
-
-      if (nomeEmpresa) {
         return res.json({
           success: false,
           needManualInput: true,
-          error: "Não localizamos automaticamente o CNPJ público para este estabelecimento. Digite o CNPJ para buscar a Ficha Oficial da Receita Federal."
+          error: "O CNPJ informado não foi localizado na base oficial da Receita Federal. Confira o número e tente novamente.",
+        });
+      }
+
+      // If CNPJ was NOT directly provided, run discovery using company name, website & location
+      if (nomeEmpresa) {
+        const negativeKey = `neg:${normalizeBusinessName(nomeEmpresa)}|${(cidade || "").toUpperCase()}`;
+        const negative = cnpjCache.get(negativeKey);
+        if (negative && Date.now() - negative.timestamp < 600000) {
+          return res.json({
+            success: false,
+            needManualInput: true,
+            error: "Não localizamos automaticamente o CNPJ deste estabelecimento. Digite o CNPJ e a Ficha Oficial da Receita Federal é carregada na hora.",
+          });
+        }
+
+        console.log(`[CNPJ Discovery] Iniciando busca para "${nomeEmpresa}" em "${cidade || "BR"}"...`);
+        const candidateCnpjs = await discoverCnpjForBusiness(nomeEmpresa, cidade, estado, endereco, website);
+
+        for (const candidate of candidateCnpjs) {
+          if (!isValidCnpjDigits(candidate)) continue;
+
+          const cached = cnpjCache.get(candidate);
+          const result =
+            cached && Date.now() - cached.timestamp < 3600000
+              ? cached.data
+              : await fetchCnpjFromPublicApis(candidate);
+          if (!result) continue;
+
+          cnpjCache.set(candidate, { timestamp: Date.now(), data: result });
+
+          // Só aceita o candidato se a razão social / nome fantasia bater com o estabelecimento
+          if (!matchesBusinessName(nomeEmpresa, result)) {
+            console.log(`[CNPJ Discovery] Candidato ${candidate} descartado: nome não confere com "${nomeEmpresa}".`);
+            continue;
+          }
+
+          console.log(`[CNPJ Discovery] CNPJ ${candidate} confirmado para "${nomeEmpresa}".`);
+          return res.json({ success: true, autoDiscovered: true, ...result });
+        }
+
+        cnpjCache.set(negativeKey, { timestamp: Date.now(), data: null });
+        return res.json({
+          success: false,
+          needManualInput: true,
+          error: "Não localizamos automaticamente o CNPJ deste estabelecimento. Digite o CNPJ e a Ficha Oficial da Receita Federal é carregada na hora.",
         });
       }
 
       return res.status(400).json({ success: false, error: "Informe o CNPJ ou o nome da empresa para consulta." });
+
 
     } catch (err: any) {
       console.error("Error in /api/consulta-cnpj:", err);
