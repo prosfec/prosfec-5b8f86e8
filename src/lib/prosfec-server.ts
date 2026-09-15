@@ -1375,13 +1375,9 @@ REGRAS DE RESPOSTA OBRIGATÓRIAS:
           bancoDetalhes: bankRules,
           capacidadeTotal: Math.round(capTotal),
           excedenteCapacidade: Math.round(excedenteCap),
-          economiaMensal: Math.round(economiaMensal * 100) / 100,
-          economiaTotal: Math.round(economiaTotal * 100) / 100,
-          taxaMercadoAnual: MARKET_BENCHMARK.taxaAnual,
-          parcelaMercado: Math.round(parcelaMercado * 100) / 100,
+          comparativoMercado: null,
           // Campos aditivos (não quebram a interface atual)
-          taxaMercadoEstimativa: MARKET_BENCHMARK.estimativa,
-          taxaMercadoObservacao: MARKET_BENCHMARK.observacao,
+
           grauAderencia: engine.aderencia,
           grauAderenciaLabel: engine.aderenciaLabel,
           aderenciaMotivos: engine.aderenciaMotivos,
