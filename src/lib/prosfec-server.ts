@@ -616,6 +616,7 @@ export function createExpressApp() {
 
         console.log(`[CNPJ Discovery] Iniciando busca para "${nomeEmpresa}" em "${cidade || "BR"}"...`);
         const candidateCnpjs = await discoverCnpjForBusiness(nomeEmpresa, cidade, estado, endereco, website);
+        let sugestao: { cnpj: string; razaoSocial: string } | null = null;
 
         for (const candidate of candidateCnpjs) {
           if (!isValidCnpjDigits(candidate)) continue;
@@ -629,14 +630,29 @@ export function createExpressApp() {
 
           cnpjCache.set(candidate, { timestamp: Date.now(), data: result });
 
-          // Só aceita o candidato se a razão social / nome fantasia bater com o estabelecimento
+          // Só aceita automaticamente se a razão social / nome fantasia bater com o estabelecimento
           if (!matchesBusinessName(nomeEmpresa, result)) {
-            console.log(`[CNPJ Discovery] Candidato ${candidate} descartado: nome não confere com "${nomeEmpresa}".`);
+            console.log(`[CNPJ Discovery] Candidato ${candidate} não confere com "${nomeEmpresa}" — vira sugestão para confirmação.`);
+            if (!sugestao) {
+              sugestao = {
+                cnpj: candidate,
+                razaoSocial: result.razaoSocial || result.nomeFantasia || "",
+              };
+            }
             continue;
           }
 
           console.log(`[CNPJ Discovery] CNPJ ${candidate} confirmado para "${nomeEmpresa}".`);
           return res.json({ success: true, autoDiscovered: true, ...result });
+        }
+
+        if (sugestao) {
+          return res.json({
+            success: false,
+            needManualInput: true,
+            sugestaoCnpj: sugestao.cnpj,
+            error: `Encontramos um CNPJ possível para este estabelecimento: ${sugestao.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")}${sugestao.razaoSocial ? ` (${sugestao.razaoSocial})` : ""}. Confira e confirme para carregar a Ficha Oficial da Receita Federal.`,
+          });
         }
 
         cnpjCache.set(negativeKey, { timestamp: Date.now(), data: null });
@@ -645,6 +661,7 @@ export function createExpressApp() {
           needManualInput: true,
           error: "Não localizamos automaticamente o CNPJ deste estabelecimento. Digite o CNPJ e a Ficha Oficial da Receita Federal é carregada na hora.",
         });
+
       }
 
       return res.status(400).json({ success: false, error: "Informe o CNPJ ou o nome da empresa para consulta." });
