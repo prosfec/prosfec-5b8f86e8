@@ -391,10 +391,8 @@ export default function App() {
         scoreFatores: refinedResult.scoreFatores || null,
         capacidadeTotal: refinedResult.capacidadeTotal ?? null,
         excedenteCapacidade: refinedResult.excedenteCapacidade ?? null,
-        economiaMensal: refinedResult.economiaMensal ?? null,
-        economiaTotal: refinedResult.economiaTotal ?? null,
-        taxaMercadoAnual: refinedResult.taxaMercadoAnual ?? null,
-        parcelaMercado: refinedResult.parcelaMercado ?? null,
+        // Comparativo de mercado suspenso: nenhum campo de economia/taxa de mercado é gravado.
+
         taxaAnualSimulada: refinedResult.rate ?? null,
         carenciaSimulada: refinedResult.carencia ?? null,
         prazoSimulado: refinedResult.prazo ?? null,
