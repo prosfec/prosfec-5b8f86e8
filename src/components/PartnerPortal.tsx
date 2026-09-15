@@ -2929,7 +2929,7 @@ export default function PartnerPortal({
         if (data.needManualInput) {
           setCnpjInputModal({
             place,
-            inputCnpj: "",
+            inputCnpj: cnpjInput || "",
             error: data.error || "Não encontramos o CNPJ automaticamente para este local. Informe o CNPJ manualmente para visualizar a Ficha Oficial."
           });
           return;
