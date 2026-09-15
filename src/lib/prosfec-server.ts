@@ -1333,9 +1333,9 @@ REGRAS DE RESPOSTA OBRIGATÓRIAS:
         const capTotal = !isNewCompany && valFaturamento > 0 ? valFaturamento * 0.30 : (valCapital * 0.5);
         const excedenteCap = Math.max(0, capTotal - limite);
 
-        const parcelaMercado = calcularParcela(limite, MARKET_BENCHMARK.taxaAnual, prazo);
-        const economiaMensal = Math.max(0, parcelaMercado - parcela);
-        const economiaTotal = Math.max(0, economiaMensal * prazo);
+        // Comparativo de mercado SUSPENSO: não há benchmark com fonte, URL, data,
+        // metodologia e escopo de amostra. Ver creditRuleSources.ts (BENCHMARK_MERCADO).
+
 
         const validacao = GOVERNMENT_CREDIT_LINES[linha.code]
           ? validateCreditLineConditions(
