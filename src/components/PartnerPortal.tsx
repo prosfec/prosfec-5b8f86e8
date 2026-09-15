@@ -2888,7 +2888,20 @@ export default function PartnerPortal({
 
     const cleanCnpj = cnpjInput ? cnpjInput.replace(/\D/g, "") : (place.cnpj ? place.cnpj.replace(/\D/g, "") : "");
 
+    // Se o parceiro digitou o CNPJ, valida antes de consultar (evita ida e volta inútil)
+    if (cnpjInput && (cleanCnpj.length !== 14 || !validateCNPJ(cleanCnpj))) {
+      setCnpjInputModal({
+        place,
+        inputCnpj: cnpjInput,
+        error: cleanCnpj.length !== 14
+          ? "Digite os 14 dígitos do CNPJ."
+          : "CNPJ inválido (dígitos verificadores não conferem). Confira o número digitado.",
+      });
+      return;
+    }
+
     setCnpjQueryLoading(prev => ({ ...prev, [placeId]: true }));
+
     try {
       const response = await fetch("/api/consulta-cnpj", {
         method: "POST",
