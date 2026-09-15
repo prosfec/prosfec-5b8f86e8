@@ -772,11 +772,7 @@ export default function Simulador({
       justificativa: "Sua empresa foi qualificada no enquadramento automático federal do Pronampe devido ao faturamento e porte compatível.",
       fonte: "Heuristic Engine",
       capacidadeTotal: Math.round(capTotalLocal),
-      excedenteCapacidade: Math.round(excedenteLocal),
-      economiaMensal: Math.round(econMensalLocal * 100) / 100,
-      economiaTotal: Math.round(econTotalLocal * 100) / 100,
-      taxaMercadoAnual: 38.0,
-      parcelaMercado: Math.round(parcelaMktLocal * 100) / 100
+      excedenteCapacidade: Math.round(excedenteLocal)
     };
 
     setSimulationResult(result);
