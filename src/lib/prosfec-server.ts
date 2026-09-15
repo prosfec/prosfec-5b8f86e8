@@ -426,13 +426,22 @@ export function createExpressApp() {
     if (!alvo) return false;
     const alvoWords = alvo.split(" ").filter((w) => w.length > 2);
     if (alvoWords.length === 0) return false;
+    const alvoCompacto = alvo.replace(/\s/g, "");
     const fontes = [result?.razaoSocial, result?.nomeFantasia].map(normalizeBusinessName).filter(Boolean);
     for (const fonte of fontes) {
+      const fonteCompacta = fonte.replace(/\s/g, "");
+      if (fonteCompacta.includes(alvoCompacto) || alvoCompacto.includes(fonteCompacta)) return true;
       const hits = alvoWords.filter((w) => fonte.includes(w)).length;
       if (hits / alvoWords.length >= 0.6) return true;
+      const fonteWords = fonte.split(" ").filter((w) => w.length > 2);
+      if (fonteWords.length > 0) {
+        const inverso = fonteWords.filter((w) => alvo.includes(w)).length;
+        if (inverso / fonteWords.length >= 0.6) return true;
+      }
     }
     return false;
   }
+
 
   function extractCnpjDigits(text: string): string[] {
     const matches = String(text || "").match(/\b\d{2}[.\s]?\d{3}[.\s]?\d{3}[/\s]?\d{4}[-\s]?\d{2}\b/g) || [];
