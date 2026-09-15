@@ -2955,13 +2955,148 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   </div>
                   <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
                     <span className="text-[10px] text-slate-400 uppercase font-black">Situação de Cadastro</span>
-                    <div className="text-xs font-extrabold text-emerald-800 flex items-center gap-1 mt-0.5">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                      Regularizada / Ativa
-                    </div>
+                    {(() => {
+                      const sit = String((lead as any).situacaoCadastral || "").trim();
+                      const regular = sit === "" || sit.toLowerCase() === "ativa";
+                      return (
+                        <div className={`text-xs font-extrabold flex items-center gap-1 mt-0.5 ${regular ? "text-emerald-800" : "text-rose-700"}`}>
+                          <div className={`w-2 h-2 rounded-full ${regular ? "bg-emerald-500" : "bg-rose-500"}`} />
+                          {sit ? (regular ? "Regularizada / Ativa" : sit) : "Não informada"}
+                        </div>
+                      );
+                    })()}
                   </div>
+
+                  {typeof (lead as any).scoreElegibilidade === "number" && (
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-black">Score de Elegibilidade</span>
+                      <div className="flex items-baseline gap-1.5">
+                        <div className="text-lg font-black text-[#0A3D2E]">{(lead as any).scoreElegibilidade}</div>
+                        <span className="text-[10px] text-slate-400 font-bold">/ 100</span>
+                      </div>
+                      <div className="text-[10px] font-bold text-slate-500">
+                        {(lead as any).scoreElegibilidade >= 80
+                          ? "Perfil altamente elegível"
+                          : (lead as any).scoreElegibilidade >= 60
+                            ? "Perfil elegível com ajustes"
+                            : "Perfil requer saneamento"}
+                      </div>
+                    </div>
+                  )}
+
+                  {(Number((lead as any).taxaAnualSimulada) > 0 ||
+                    Number((lead as any).prazoSimulado) > 0 ||
+                    Number((lead as any).parcelaSimulada) > 0) && (
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-black">Condições Simuladas</span>
+                      <div className="text-[11px] text-slate-700 font-semibold leading-relaxed">
+                        {Number((lead as any).taxaAnualSimulada) > 0 && (
+                          <div>Taxa: {Number((lead as any).taxaAnualSimulada).toFixed(2).replace(".", ",")}% a.a.</div>
+                        )}
+                        {Number((lead as any).carenciaSimulada) > 0 && (
+                          <div>Carência: {(lead as any).carenciaSimulada} meses</div>
+                        )}
+                        {Number((lead as any).prazoSimulado) > 0 && (
+                          <div>Prazo total: {(lead as any).prazoSimulado} meses</div>
+                        )}
+                        {Number((lead as any).parcelaSimulada) > 0 && (
+                          <div>Parcela estimada: {formatCurrencyBRL(Number((lead as any).parcelaSimulada))}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {Number((lead as any).capacidadeTotal) > 0 && (
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-black">Capacidade de Captação</span>
+                      <div className="text-sm font-black text-[#0A3D2E]">
+                        {formatCurrencyBRL(Number((lead as any).capacidadeTotal))}
+                      </div>
+                      {Number((lead as any).excedenteCapacidade) > 0 && (
+                        <div className="text-[10px] font-bold text-emerald-700">
+                          Excedente disponível: {formatCurrencyBRL(Number((lead as any).excedenteCapacidade))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {Number((lead as any).economiaMensal) > 0 && (
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-black">Economia vs. Mercado</span>
+                      <div className="text-sm font-black text-emerald-700">
+                        {formatCurrencyBRL(Number((lead as any).economiaMensal))} / mês
+                      </div>
+                      {Number((lead as any).economiaTotal) > 0 && (
+                        <div className="text-[10px] font-bold text-slate-500">
+                          Total no contrato: {formatCurrencyBRL(Number((lead as any).economiaTotal))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {((lead as any).creditLineName || (lead as any).resumoPerfil) && (
+                  <div className="text-[11px] text-slate-600 leading-relaxed border-t border-slate-100 pt-3 space-y-1">
+                    {(lead as any).creditLineName && (
+                      <p><strong className="text-slate-900">Linha recomendada:</strong> {(lead as any).creditLineName}</p>
+                    )}
+                    {(lead as any).resumoPerfil && (
+                      <p><strong className="text-slate-900">Perfil:</strong> {(lead as any).resumoPerfil}</p>
+                    )}
+                  </div>
+                )}
+
+                {(Array.isArray((lead as any).principaisAlertas) && (lead as any).principaisAlertas.length > 0) ||
+                (Array.isArray((lead as any).recomendações) && (lead as any).recomendações.length > 0) ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
+                    {Array.isArray((lead as any).principaisAlertas) && (lead as any).principaisAlertas.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] text-slate-400 uppercase font-black">Principais Alertas</span>
+                        <ul className="space-y-1">
+                          {(lead as any).principaisAlertas.map((a: string, i: number) => (
+                            <li key={i} className="text-[11px] text-slate-700 flex gap-1.5 leading-relaxed">
+                              <span className="text-amber-500">•</span>
+                              <span>{a}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {Array.isArray((lead as any).recomendações) && (lead as any).recomendações.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] text-slate-400 uppercase font-black">Recomendações</span>
+                        <ul className="space-y-1">
+                          {(lead as any).recomendações.map((r: string, i: number) => (
+                            <li key={i} className="text-[11px] text-slate-700 flex gap-1.5 leading-relaxed">
+                              <span className="text-emerald-500">•</span>
+                              <span>{r}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
+                {(lead as any).justificativaTecnica && (
+                  <div className="border-t border-slate-100 pt-3">
+                    <span className="text-[10px] text-slate-400 uppercase font-black">Parecer Técnico</span>
+                    <p className="text-[11px] text-slate-600 leading-relaxed mt-1 whitespace-pre-line">
+                      {(lead as any).justificativaTecnica}
+                    </p>
+                  </div>
+                )}
+
+                {((lead as any).dataUltimaSimulacao || (lead as any).fonteSimulacao) && (
+                  <p className="text-[10px] text-slate-400 font-semibold border-t border-slate-100 pt-2">
+                    {(lead as any).dataUltimaSimulacao
+                      ? `Simulação de ${new Date((lead as any).dataUltimaSimulacao).toLocaleString("pt-BR")}`
+                      : "Simulação registrada"}
+                    {(lead as any).fonteSimulacao ? ` — origem: ${(lead as any).fonteSimulacao}` : ""}
+                  </p>
+                )}
               </div>
+
 
               <div className="flex items-center justify-between pt-2">
                 <button
