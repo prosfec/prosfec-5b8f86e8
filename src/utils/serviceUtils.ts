@@ -280,14 +280,24 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
     const itemNameLower = itemName.toLowerCase();
     const itemId = (sItem.id || "").toString();
 
-    // 1. Unificar Reabilitação / Renegociação / BACEN avulso legado
-    const isReabilitacao = itemId === "serv_reabilitacao" || itemId === "serv_renegociacao" ||
+    // 0. Correspondência direta com o catálogo atual: serviço válido, nunca unificado
+    const exactCatalogMatch = activeCatalog.find(c => {
+      if (!c) return false;
+      if (c.id && itemId && c.id === itemId) return true;
+      const cNameLower = (c.nome || "").toString().toLowerCase().trim();
+      return !!cNameLower && !!itemNameLower && cNameLower === itemNameLower.trim();
+    });
+
+    // 1. Unificar Reabilitação / Renegociação / BACEN avulso legado (somente itens sem match no catálogo)
+    const isReabilitacao = !exactCatalogMatch && (
+      itemId === "serv_reabilitacao" || itemId === "serv_renegociacao" ||
       itemNameLower.includes("reabilitação") || itemNameLower.includes("reabilitacao") ||
       itemNameLower.includes("renegociação") || itemNameLower.includes("renegociacao") ||
-      itemNameLower.includes("limpa nome");
+      itemNameLower.includes("limpa nome"));
 
     // 2. Se for BACEN avulso legado e não temos ainda o programa de reabilitação adicionado, fundir ou migrar
-    const isBacenAvulso = itemId === "serv_bacen" || (itemNameLower.includes("bacen") && itemNameLower.includes("administrativa"));
+    const isBacenAvulso = !exactCatalogMatch && (
+      itemId === "serv_bacen" || (itemNameLower.includes("bacen") && itemNameLower.includes("administrativa")));
 
     if (isReabilitacao || isBacenAvulso) {
       if (!mergedReabilitacaoItem) {
