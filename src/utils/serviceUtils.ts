@@ -6,6 +6,12 @@ export interface ServiceCatalogItem {
   descricao?: string;
   hublaLink?: string;
   semCustoInicial?: boolean;
+  /** Texto jurídico das cláusulas específicas deste serviço (Contrato Avulso) */
+  clausulas?: string;
+  /** Identificador do template contratual, ex.: AVULSO_REABILITACAO */
+  templateId?: string;
+  /** Versão do conjunto de cláusulas; incrementa a cada alteração salva */
+  templateVersao?: number;
 }
 
 /** Normaliza a descrição padronizada do serviço definida pelo ADM no catálogo */
@@ -13,6 +19,43 @@ export function normalizeServiceDescription(value: any): string {
   if (typeof value !== "string") return "";
   return value.trim().slice(0, 600);
 }
+
+/** Normaliza o texto das cláusulas contratuais específicas do serviço */
+export function normalizeServiceClauses(value: any): string {
+  if (typeof value !== "string") return "";
+  return value.replace(/\r\n/g, "\n").trim().slice(0, 12000);
+}
+
+/** Gera um templateId estável a partir do nome do serviço */
+export function buildServiceTemplateId(nome: any, id?: any): string {
+  const base = String(nome || id || "SERVICO")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .split("_")
+    .filter(Boolean)
+    .slice(0, 3)
+    .join("_");
+  return `AVULSO_${base || "SERVICO"}`;
+}
+
+/** Rótulo de versão exibido no Admin e congelado no contrato, ex.: AVULSO_RTB_V1 */
+export function formatTemplateLabel(item: any): string {
+  const tid = item?.templateId || buildServiceTemplateId(item?.nome, item?.id);
+  const ver = Number(item?.templateVersao || 1);
+  return `${tid}_V${ver > 0 ? ver : 1}`;
+}
+
+/** Bloco de cláusulas usado quando o serviço ainda não tem texto próprio no catálogo */
+export const CLAUSULA_GENERICA_AVULSO = `Objeto específico: prestação do serviço ora contratado, conforme escopo técnico definido pela CONTRATADA e aceito pela CONTRATANTE.
+Atividades incluídas: diagnóstico inicial, execução técnica do serviço, acompanhamento e entrega de relatório ou orientação final.
+Condições específicas: a execução depende do envio, pela CONTRATANTE, de documentos e informações verídicos e completos.
+Prazo: até 30 (trinta) dias úteis contados do recebimento integral da documentação.
+Remuneração: valor indicado para este serviço no quadro de valores deste contrato.
+Limitações: a CONTRATADA assume obrigação de meio, não de resultado, não respondendo por decisões de terceiros, instituições financeiras ou órgãos públicos.
+Responsabilidades específicas: a CONTRATANTE responde pela veracidade das informações prestadas e pela adoção das providências recomendadas.`;
 
 export const HUBLA_SERVICE_LINKS: Record<string, string> = {
   serv_reabilitacao: "https://pay.hub.la/Es0EOCsgpzskcqccirFb",
@@ -22,30 +65,86 @@ export const HUBLA_SERVICE_LINKS: Record<string, string> = {
   serv_contabil: "https://pay.hub.la/1cJOgeOHRKpac7VNPowK"
 };
 
+/** Cláusulas específicas V1 redigidas para os serviços padrão do catálogo */
+export const DEFAULT_SERVICE_CLAUSES: Record<string, string> = {
+  serv_rating_score: `Objeto específico: execução de programa técnico de melhoria e adequação de rating e score comercial e bancário da CONTRATANTE junto a bureaus de crédito e instituições financeiras.
+Atividades incluídas: (i) leitura e interpretação dos indicadores cadastrais e financeiros; (ii) identificação dos fatores que rebaixam a pontuação; (iii) plano de ação de correção cadastral, fiscal e de relacionamento bancário; (iv) orientação sobre boas práticas de movimentação e endividamento; (v) reavaliação dos indicadores ao final do período.
+Condições específicas: a CONTRATANTE deverá fornecer acesso às informações cadastrais solicitadas e implementar as providências indicadas no plano de ação.
+Prazo: acompanhamento por até 90 (noventa) dias contados do início da execução.
+Remuneração: valor indicado para este serviço no quadro de valores deste contrato, devido na contratação.
+Limitações: a pontuação é atribuída por terceiros (bureaus e instituições financeiras) segundo critérios próprios e sigilosos. A CONTRATADA não garante índice, faixa ou pontuação específica, tampouco aprovação de crédito.
+Responsabilidades específicas: a não implementação das recomendações pela CONTRATANTE exonera a CONTRATADA de qualquer responsabilidade quanto à evolução dos indicadores.`,
+
+  serv_contabil: `Objeto específico: prestação de serviços contábeis destinados à regularização e adequação cadastral e fiscal do CNPJ da CONTRATANTE.
+Atividades incluídas: (i) levantamento da situação cadastral e fiscal nos órgãos competentes; (ii) identificação de pendências, omissões e divergências declaratórias; (iii) elaboração e transmissão das obrigações acessórias necessárias à regularização; (iv) orientação sobre enquadramento e conformidade.
+Condições específicas: depende do fornecimento integral de documentos contábeis, fiscais e societários pela CONTRATANTE, bem como de procuração eletrônica quando exigida.
+Prazo: até 45 (quarenta e cinco) dias úteis contados do recebimento completo da documentação, ressalvados prazos próprios dos órgãos públicos.
+Remuneração: valor indicado para este serviço no quadro de valores deste contrato. Tributos, multas, juros e taxas oficiais não estão incluídos e são de responsabilidade exclusiva da CONTRATANTE.
+Limitações: não estão incluídos serviços de defesa administrativa ou judicial, perícias, nem escrituração contábil mensal continuada, que dependem de contratação própria.
+Responsabilidades específicas: a CONTRATANTE responde pela veracidade e integralidade dos documentos entregues e pelo pagamento dos tributos apurados.`,
+
+  serv_rtb: `Objeto específico: análise técnica de contratos bancários e de Cédulas de Crédito Bancário (CCB) da CONTRATANTE, com o fim de identificar tarifas, encargos e cobranças passíveis de revisão ou recuperação (RTB — Perícia CCB).
+Atividades incluídas: (i) recebimento e conferência dos contratos e extratos; (ii) perícia técnica de cálculo sobre encargos, tarifas e capitalização; (iii) emissão de laudo técnico com o montante identificado; (iv) orientação sobre os caminhos administrativos de recuperação.
+Condições específicas: a CONTRATANTE deverá fornecer os contratos, aditivos, extratos e planilhas de evolução da dívida.
+Prazo: até 30 (trinta) dias úteis contados do recebimento integral dos documentos.
+Remuneração: este serviço é prestado sem custo inicial. Havendo êxito na recuperação ou no abatimento dos valores, a CONTRATADA fará jus aos honorários de êxito ajustados no quadro de valores deste contrato.
+Limitações: o serviço é de natureza técnica e pericial, não constituindo atuação advocatícia. Eventual medida judicial depende de contratação autônoma de advogado pela CONTRATANTE.
+Responsabilidades específicas: a decisão sobre aceitar acordo, renegociar ou litigar é exclusiva da CONTRATANTE.`,
+
+  serv_dossie_projeto: `Objeto específico: elaboração de dossiê bancário e de projeto estruturado de crédito da CONTRATANTE para apresentação a instituições financeiras e agentes de fomento.
+Atividades incluídas: (i) coleta e organização documental; (ii) elaboração de memorial descritivo da empresa e do projeto; (iii) montagem das projeções e da capacidade de pagamento; (iv) formatação do dossiê no padrão exigido pelas instituições; (v) orientação no protocolo e acompanhamento administrativo do pleito.
+Condições específicas: depende da entrega de balanços, faturamento, documentos societários e informações de garantias pela CONTRATANTE.
+Prazo: até 30 (trinta) dias úteis contados do recebimento integral da documentação.
+Remuneração: este serviço é prestado sem custo inicial, remunerado por honorários de êxito conforme quadro de valores deste contrato.
+Limitações: a aprovação, o limite, a taxa, o prazo e as garantias são decisões soberanas e exclusivas da instituição financeira. A CONTRATADA assume obrigação de meio.
+Responsabilidades específicas: a CONTRATANTE responde pela veracidade das informações e documentos que compõem o dossiê.`,
+
+  serv_reabilitacao: `Objeto específico: execução do Programa de Reabilitação Financeira e Creditícia da CONTRATANTE, compreendendo diagnóstico, plano de regularização e acompanhamento do restabelecimento da capacidade de crédito.
+Atividades incluídas: (i) diagnóstico cadastral e financeiro do CNPJ e dos sócios; (ii) mapeamento de negativações, protestos, pendências e restrições; (iii) plano de regularização com priorização por impacto; (iv) orientação e acompanhamento das tratativas de baixa e regularização; (v) reavaliação da situação ao final do programa.
+Condições específicas: depende do fornecimento de documentos, do acesso às informações solicitadas e da adoção, pela CONTRATANTE, das providências indicadas.
+Prazo: acompanhamento por até 120 (cento e vinte) dias contados do início da execução.
+Remuneração: valor indicado para este serviço no quadro de valores deste contrato, devido na contratação.
+Limitações: a baixa de apontamentos depende de credores e órgãos terceiros. A CONTRATADA não garante remoção de registros legítimos, prazo de baixa ou aprovação futura de crédito.
+Responsabilidades específicas: o pagamento de dívidas, acordos, custas e emolumentos é de responsabilidade exclusiva da CONTRATANTE.`,
+};
+
+
 export const DEFAULT_SERVICES_CATALOG: ServiceCatalogItem[] = [
-  { 
-    id: "serv_rating_score", 
-    nome: "Melhoria e Adequação de Rating e Score", 
-    valor: 1100, 
-    hublaLink: HUBLA_SERVICE_LINKS.serv_rating_score 
+  {
+    id: "serv_rating_score",
+    nome: "Melhoria e Adequação de Rating e Score",
+    valor: 1100,
+    hublaLink: HUBLA_SERVICE_LINKS.serv_rating_score,
+    clausulas: DEFAULT_SERVICE_CLAUSES.serv_rating_score,
+    templateId: "AVULSO_RATING_SCORE",
+    templateVersao: 1
   },
-  { 
-    id: "serv_contabil", 
-    nome: "Serviços Contábeis p/ Regularização/Adequação CNPJ", 
-    valor: 700, 
-    hublaLink: HUBLA_SERVICE_LINKS.serv_contabil 
+  {
+    id: "serv_contabil",
+    nome: "Serviços Contábeis p/ Regularização/Adequação CNPJ",
+    valor: 700,
+    hublaLink: HUBLA_SERVICE_LINKS.serv_contabil,
+    clausulas: DEFAULT_SERVICE_CLAUSES.serv_contabil,
+    templateId: "AVULSO_CONTABIL",
+    templateVersao: 1
   },
-  { 
-    id: "serv_rtb", 
-    nome: "Recuperação de Tarifas Bancárias (RTB - Perícia CCB)", 
-    valor: 0, 
-    semCustoInicial: true 
+  {
+    id: "serv_rtb",
+    nome: "Recuperação de Tarifas Bancárias (RTB - Perícia CCB)",
+    valor: 0,
+    semCustoInicial: true,
+    clausulas: DEFAULT_SERVICE_CLAUSES.serv_rtb,
+    templateId: "AVULSO_RTB",
+    templateVersao: 1
   },
-  { 
-    id: "serv_dossie_projeto", 
-    nome: "Dossiê Bancário & Projeto Estruturado de Crédito", 
-    valor: 0, 
-    semCustoInicial: true 
+  {
+    id: "serv_dossie_projeto",
+    nome: "Dossiê Bancário & Projeto Estruturado de Crédito",
+    valor: 0,
+    semCustoInicial: true,
+    clausulas: DEFAULT_SERVICE_CLAUSES.serv_dossie_projeto,
+    templateId: "AVULSO_DOSSIE_PROJETO",
+    templateVersao: 1
   }
 ];
 
@@ -223,8 +322,12 @@ export function cleanForFirestore<T = any>(obj: T): T {
 /**
  * Sanitiza rigorosamente a lista de serviços do catálogo para gravação no Firestore
  */
-export function sanitizeServiceCatalogForFirestore(catalog: ServiceCatalogItem[]): any[] {
+export function sanitizeServiceCatalogForFirestore(
+  catalog: ServiceCatalogItem[],
+  previousCatalog?: ServiceCatalogItem[]
+): any[] {
   if (!Array.isArray(catalog)) return [];
+  const prevList = Array.isArray(previousCatalog) ? previousCatalog : [];
   return catalog
     .filter(item => item && typeof item === "object")
     .map(item => {
@@ -241,6 +344,20 @@ export function sanitizeServiceCatalogForFirestore(catalog: ServiceCatalogItem[]
       if (item.semCustoInicial !== undefined && item.semCustoInicial !== null) {
         cleaned.semCustoInicial = Boolean(item.semCustoInicial);
       }
+
+      // Cláusulas contratuais específicas (Contrato Avulso) + versionamento
+      cleaned.clausulas = normalizeServiceClauses((item as any).clausulas);
+      cleaned.templateId =
+        String((item as any).templateId || "").trim() || buildServiceTemplateId(cleaned.nome, cleaned.id);
+
+      const prev = prevList.find(p => p && String(p.id) === cleaned.id);
+      const prevVersao = Number(prev?.templateVersao || (item as any).templateVersao || 0);
+      const prevClausulas = normalizeServiceClauses(prev?.clausulas);
+      const mudou = Boolean(prev) && prevClausulas !== cleaned.clausulas;
+      cleaned.templateVersao = mudou
+        ? (prevVersao > 0 ? prevVersao + 1 : 2)
+        : (prevVersao > 0 ? prevVersao : 1);
+
       return cleaned;
     });
 }

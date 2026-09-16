@@ -310,6 +310,20 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
+    // 9.1 CONTRATOS AVULSOS E TERMOS ADITIVOS
+    // Somente equipe autenticada (ou o serviço) manipula contratos.
+    // O cliente acessa exclusivamente pelos endpoints públicos do backend.
+    // Contrato assinado é imutável: nenhuma atualização é permitida.
+    // ---------------------------------------------------------------------
+    match /contratos/{contratoId} {
+      allow read:   if isStaff() || isServico();
+      allow create: if isStaff() || isServico();
+      allow update: if (isStaff() || isServico()) && resource.data.status != "assinado";
+      allow delete: if isAdmin() && resource.data.status != "assinado";
+    }
+
+
+    // ---------------------------------------------------------------------
     // 10. HISTORICO DE BUSCAS DO CACA-LEADS
     // ---------------------------------------------------------------------
     match /historico_buscas_caca_leads/{historyId} {
