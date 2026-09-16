@@ -814,14 +814,21 @@ export function createExpressApp() {
       const partnerPrice = Number((origPrice * 1.4).toFixed(2));
       const produtoNome = catalogItem.name;
 
-      await createDocAtPathRest(operationPath, {
+      const operationDoc = {
         requestId, leadId: String(leadId || ""), partnerId,
         partnerNome: partnerNome || partnerData?.nome || "Mesa de Operações",
         produto_code: codeToUse, produto_nome: produtoNome,
         documento: cleanDoc, preco_original: origPrice,
         preco_parceiro: isAdminUser ? 0 : partnerPrice,
         status: "processando", dataCriacao: new Date().toISOString(),
-      });
+      };
+      if (prior) {
+        // Retentativa de uma tentativa anterior que falhou/foi estornada:
+        // sobrescreve o registro existente em vez de tentar criar de novo.
+        await putDocRest(operationPath, { ...operationDoc, erroCodigo: "", debitado: false });
+      } else {
+        await createDocAtPathRest(operationPath, operationDoc);
+      }
 
       let newBalance = Number(partnerData?.saldoGeral || 0);
       let debited = false;

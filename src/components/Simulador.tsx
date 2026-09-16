@@ -2026,14 +2026,27 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                         <Shield className="w-3.5 h-3.5 text-brand-accent" />
                         Esteira: {simulationResult.bancoDetalhes.modalidadeAprovacao}
                       </span>
-                      <span className="bg-emerald-900/60 border border-emerald-700/50 text-emerald-200 px-3 py-1 rounded-lg font-semibold flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-brand-accent" />
-                        Carência Padrão: {simulationResult.bancoDetalhes.carenciaPadrao} meses (Máx: {simulationResult.bancoDetalhes.carenciaMaxima}m)
-                      </span>
-                      <span className="bg-emerald-900/60 border border-emerald-700/50 text-emerald-200 px-3 py-1 rounded-lg font-semibold flex items-center gap-1.5">
-                        <TrendingUp className="w-3.5 h-3.5 text-brand-accent" />
-                        Taxa Estimada no Banco: {simulationResult.bancoDetalhes.taxaAnualEstimada}% a.a.
-                      </span>
+                      {typeof simulationResult.bancoDetalhes.carenciaPadrao === "number" && (
+                        <span className="bg-emerald-900/60 border border-emerald-700/50 text-emerald-200 px-3 py-1 rounded-lg font-semibold flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-brand-accent" />
+                          Carência Padrão: {simulationResult.bancoDetalhes.carenciaPadrao} meses
+                          {typeof simulationResult.bancoDetalhes.carenciaMaxima === "number"
+                            ? ` (Máx: ${simulationResult.bancoDetalhes.carenciaMaxima}m)`
+                            : ""}
+                        </span>
+                      )}
+                      {typeof simulationResult.bancoDetalhes.taxaAnualEstimada === "number" && (
+                        <span className="bg-emerald-900/60 border border-emerald-700/50 text-emerald-200 px-3 py-1 rounded-lg font-semibold flex items-center gap-1.5">
+                          <TrendingUp className="w-3.5 h-3.5 text-brand-accent" />
+                          Taxa Estimada no Banco: {simulationResult.bancoDetalhes.taxaAnualEstimada}% a.a.
+                        </span>
+                      )}
+                      {simulationResult.bancoDetalhes.condicaoConfirmada === false && (
+                        <span className="bg-amber-900/40 border border-amber-600/40 text-amber-200 px-3 py-1 rounded-lg font-semibold flex items-center gap-1.5">
+                          <Shield className="w-3.5 h-3.5 text-amber-300" />
+                          Condições específicas deste banco a confirmar — valem os parâmetros oficiais do programa.
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}

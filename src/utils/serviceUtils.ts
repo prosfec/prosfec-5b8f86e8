@@ -301,16 +301,26 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
 
     if (isReabilitacao || isBacenAvulso) {
       if (!mergedReabilitacaoItem) {
-        const hLink = catalogReabilitacao?.hublaLink || sItem.hublaLink || HUBLA_SERVICE_LINKS.serv_reabilitacao || null;
+        // Sem item correspondente no catálogo atual, o registro do lead é preservado
+        // como está (preço, link e descrição próprios) — nada é zerado nem reescrito.
+        const itemPrice = typeof sItem.valor === "number" && !isNaN(sItem.valor)
+          ? sItem.valor
+          : (typeof sItem.preco === "number" && !isNaN(sItem.preco) ? sItem.preco : 0);
+        const finalPrice = catalogReabilitacao ? targetReabilitacaoPrice : itemPrice;
+        const finalName = catalogReabilitacao ? targetReabilitacaoName : (itemName || targetReabilitacaoName);
+        const hLink = catalogReabilitacao?.hublaLink || sItem.hublaLink || null;
+        const finalDescricao = catalogReabilitacao
+          ? normalizeServiceDescription(catalogReabilitacao?.descricao)
+          : normalizeServiceDescription(sItem.descricao);
         mergedReabilitacaoItem = {
           ...sItem,
           id: "serv_reabilitacao",
-          nome: targetReabilitacaoName,
-          ...(sItem.titulo ? { titulo: sItem.titulo || targetReabilitacaoName } : {}),
-          valor: targetReabilitacaoPrice,
-          preco: targetReabilitacaoPrice,
+          nome: finalName,
+          ...(sItem.titulo ? { titulo: sItem.titulo || finalName } : {}),
+          valor: finalPrice,
+          preco: finalPrice,
           ...(hLink ? { hublaLink: hLink } : {}),
-          descricao: normalizeServiceDescription(catalogReabilitacao?.descricao),
+          descricao: finalDescricao,
           justificativa: sItem.justificativa || "Programa unificado abrangendo Renegociação de Dívidas, Liminar Limpa Nome e Regularização/Administração SCR/Bacen",
           status: sItem.status || "pendente"
         };
