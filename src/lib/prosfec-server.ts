@@ -11,7 +11,7 @@ import { getBankSpecificRules, GOVERNMENT_CREDIT_LINES, validateCreditLineCondit
 import { BankRulesManager } from "../utils/BankRulesManager";
 import { runCreditEngine, calcularParcela } from "../utils/creditEligibilityEngine";
 import { optionalEnv, requireEnv, firstEnv, maskEmail, maskDoc, redact } from "../utils/env";
-import { normalizeMensalidades, DEFAULT_MENSALIDADES, normalizeAssinaturaParceiro, DEFAULT_ASSINATURA_PARCEIRO } from "../utils/serviceUtils";
+import { normalizeMensalidades, DEFAULT_MENSALIDADES, normalizeAssinaturaParceiro, DEFAULT_ASSINATURA_PARCEIRO, normalizeServiceClauses, buildServiceTemplateId, CLAUSULA_GENERICA_AVULSO } from "../utils/serviceUtils";
 
 export function cleanForFirestore<T = any>(obj: T): T {
   if (obj === undefined) return null as any;
@@ -2573,8 +2573,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
   };
 
-  /** Contratos avulsos/aditivos do lead prontos para o cliente (rascunho e cancelado ficam de fora). */
-  const listContratosPublicos = async (leadId: string): Promise<any[]> => {
+  /** Contratos avulsos/aditivos já assinados do lead (documentos imutáveis). */
+  const listContratosAssinados = async (leadId: string): Promise<any[]> => {
     let rows: any[] = [];
     try {
       rows = await runQueryRest("contratos", {
@@ -2591,27 +2591,116 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
     return rows
       .map((row) => ({ id: row.id, ...(row.data || {}) }))
-      .filter((c: any) => c.status === "aguardando_assinatura" || c.status === "assinado")
-      .sort((a: any, b: any) => String(a.dataCriacao || "").localeCompare(String(b.dataCriacao || "")))
-      .map((c: any) => ({
-        id: c.id,
-        tipo: c.tipo === "aditivo" ? "aditivo" : "avulso",
-        titulo:
-          c.tipo === "aditivo"
-            ? "Termo Aditivo de Inclusão de Serviço Avulso"
-            : "Contrato de Prestação de Serviços Avulsos",
-        status: c.status,
-        servicos: Array.isArray(c.servicos) ? c.servicos : [],
-        valorTotal: Number(c.valorTotal || 0),
-        contratoOrigemId: c.contratoOrigemId || null,
-        dataCriacao: c.dataCriacao || null,
-        assinado: c.status === "assinado",
-        assinaturaNome: c.assinaturaNome || null,
-        assinaturaCpf: maskCpfPublic(c.assinaturaCpf),
-        assinaturaData: c.assinaturaData || null,
-        assinaturaIp: c.assinaturaIp || null,
-        assinaturaDispositivo: c.assinaturaDispositivo || null,
-      }));
+      .filter((c: any) => c.status === "assinado")
+      .sort((a: any, b: any) => String(a.assinaturaData || a.dataCriacao || "").localeCompare(String(b.assinaturaData || b.dataCriacao || "")));
+  };
+
+  const publicContratoView = (c: any) => ({
+    id: c.id,
+    tipo: c.tipo === "aditivo" ? "aditivo" : "avulso",
+    titulo:
+      c.tipo === "aditivo"
+        ? "Termo Aditivo de Inclusão de Serviço Avulso"
+        : "Contrato de Prestação de Serviços Avulsos",
+    status: c.status,
+    servicos: Array.isArray(c.servicos) ? c.servicos : [],
+    valorTotal: Number(c.valorTotal || 0),
+    contratoOrigemId: c.contratoOrigemId || null,
+    contratoOrigemData: c.contratoOrigemData || null,
+    dataCriacao: c.dataCriacao || null,
+    assinado: c.status === "assinado",
+    assinaturaNome: c.assinaturaNome || null,
+    assinaturaCpf: maskCpfPublic(c.assinaturaCpf),
+    assinaturaData: c.assinaturaData || null,
+    assinaturaIp: c.assinaturaIp || null,
+    assinaturaDispositivo: c.assinaturaDispositivo || null,
+  });
+
+  /** Catálogo de serviços vigente (cláusulas escritas em "Preços e Serviços"). */
+  const getCatalogoServicos = async (): Promise<any[]> => {
+    try {
+      const cfg: any = await getDocRest("configuracoes/precos_consultas");
+      return Array.isArray(cfg?.servicos) ? cfg.servicos : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const chaveServico = (s: any) =>
+    String(s?.id || "").trim() || String(s?.nome || s?.titulo || "").trim().toLowerCase();
+
+  /**
+   * Monta o documento pendente do cliente a partir dos serviços que o ADM
+   * adicionou no Passo 3. Sem contrato avulso assinado, gera o contrato avulso
+   * com todos os serviços; com contrato assinado, gera o termo aditivo apenas
+   * com os serviços que ainda não constam em nenhum documento assinado.
+   */
+  const derivarDocumentoPendente = async (lead: any, assinados: any[]): Promise<any | null> => {
+    const catalogo = await getCatalogoServicos();
+    const lista = Array.isArray(lead?.servicosRecomendados) ? lead.servicosRecomendados : [];
+
+    const contratoBase = assinados.find((c: any) => c.tipo !== "aditivo") || null;
+    const jaContratados = new Set<string>();
+    for (const c of assinados) {
+      for (const s of Array.isArray(c.servicos) ? c.servicos : []) {
+        const k = chaveServico(s);
+        if (k) jaContratados.add(k);
+      }
+    }
+
+    const servicos = lista
+      .filter((s: any) => {
+        if (!s) return false;
+        const valor = Number(s.valor ?? s.preco ?? 0);
+        if (!(valor > 0)) return false;
+        const k = chaveServico(s);
+        return !!k && !jaContratados.has(k);
+      })
+      .map((s: any) => {
+        const cat = catalogo.find((c: any) => {
+          if (!c) return false;
+          if (c.id && s.id && String(c.id) === String(s.id)) return true;
+          const cn = String(c.nome || "").trim().toLowerCase();
+          const sn = String(s.nome || s.titulo || "").trim().toLowerCase();
+          return !!cn && cn === sn;
+        });
+        const nome = String(cat?.nome || s.nome || s.titulo || "Serviço");
+        return {
+          id: String(s.id || cat?.id || ""),
+          nome,
+          valor: Number(s.valor ?? s.preco ?? 0),
+          descricao: String(cat?.descricao || s.descricao || ""),
+          clausulas:
+            normalizeServiceClauses(cat?.clausulas) ||
+            normalizeServiceClauses(s.clausulas) ||
+            CLAUSULA_GENERICA_AVULSO,
+          templateId: String(cat?.templateId || s.templateId || buildServiceTemplateId(nome, s.id)),
+          templateVersao: Number(cat?.templateVersao || s.templateVersao || 1),
+        };
+      });
+
+    if (servicos.length === 0) return null;
+
+    const isAditivo = Boolean(contratoBase);
+    return {
+      id: isAditivo ? "aditivo_auto" : "avulso_auto",
+      tipo: isAditivo ? "aditivo" : "avulso",
+      titulo: isAditivo
+        ? "Termo Aditivo de Inclusão de Serviço Avulso"
+        : "Contrato de Prestação de Serviços Avulsos",
+      status: "aguardando_assinatura",
+      assinado: false,
+      servicos,
+      valorTotal: servicos.reduce((acc: number, s: any) => acc + Number(s.valor || 0), 0),
+      contratoOrigemId: contratoBase?.id || null,
+      contratoOrigemData: contratoBase?.assinaturaData || null,
+      dataCriacao: null,
+      assinaturaNome: null,
+      assinaturaCpf: "",
+      assinaturaData: null,
+      assinaturaIp: null,
+      assinaturaDispositivo: null,
+    };
   };
 
   app.get("/api/public/contrato/:leadId", async (req, res) => {
@@ -2622,7 +2711,9 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const lead = await getDocRest(`leads/${leadId}`);
       if (!lead) return res.status(404).json({ error: "Contrato não encontrado." });
 
-      const documentosAvulsos = await listContratosPublicos(leadId);
+      const assinados = await listContratosAssinados(leadId);
+      const pendente = await derivarDocumentoPendente(lead, assinados);
+      const documentosAvulsos = [...assinados.map(publicContratoView), ...(pendente ? [pendente] : [])];
 
       if (!lead.modeloContratacao && documentosAvulsos.length === 0) {
         return res.status(404).json({ error: "Contrato ainda não disponibilizado para assinatura." });
@@ -2902,6 +2993,72 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
       // Assinatura de um Contrato Avulso ou Termo Aditivo específico
       const contratoId = String(body.contratoId || "").trim().replace(/[^A-Za-z0-9_-]/g, "");
+
+      // Documento derivado automaticamente dos serviços do Passo 3
+      if (contratoId === "avulso_auto" || contratoId === "aditivo_auto") {
+        const leadAuto = await getDocRest(`leads/${leadId}`);
+        if (!leadAuto) return res.status(404).json({ error: "Contrato não encontrado." });
+
+        const assinadosAuto = await listContratosAssinados(leadId);
+        const derivado = await derivarDocumentoPendente(leadAuto, assinadosAuto);
+        if (!derivado) {
+          return res.status(409).json({ error: "Não há serviços pendentes de contratação." });
+        }
+
+        const nowIsoAuto = new Date().toISOString();
+        const socio = Array.isArray(leadAuto.socios) && leadAuto.socios.length > 0 ? leadAuto.socios[0] : null;
+        const novoContrato: Record<string, any> = cleanForFirestore({
+          leadId,
+          tipo: derivado.tipo,
+          status: "assinado",
+          servicos: derivado.servicos,
+          valorTotal: Number(derivado.valorTotal || 0),
+          contratoOrigemId: derivado.contratoOrigemId || null,
+          contratoOrigemData: derivado.contratoOrigemData || null,
+          cliente: {
+            razaoSocial: leadAuto.nomeEmpresa || leadAuto.razaoSocial || "",
+            cnpj: leadAuto.cnpj || "",
+            endereco: [leadAuto.endereco, leadAuto.cidade, leadAuto.uf || leadAuto.estado]
+              .filter(Boolean)
+              .join(", "),
+            representante: socio?.nome || leadAuto.nomeContato || leadAuto.nome || "",
+            representanteCpf: socio?.cpf || leadAuto.cpf || "",
+          },
+          dataCriacao: nowIsoAuto,
+          assinaturaNome: nome,
+          assinaturaCpf: cpf,
+          assinaturaData: nowIsoAuto,
+          assinaturaIp: ip,
+          assinaturaDispositivo: dispositivo,
+          assinaturaDesenho: assinatura,
+        });
+
+        const criado = await createDocRest("contratos", novoContrato);
+
+        try {
+          await createDocRest("notificacoes", {
+            recipientId: "admin",
+            recipientType: "admin",
+            titulo: derivado.tipo === "aditivo" ? "Termo aditivo assinado" : "Contrato avulso assinado",
+            mensagem: `${leadAuto.nomeEmpresa || leadAuto.razaoSocial || leadId} assinou ${
+              derivado.tipo === "aditivo" ? "um termo aditivo" : "o contrato avulso"
+            } no valor de R$ ${Number(derivado.valorTotal || 0).toFixed(2)}.`,
+            tipo: "success",
+            lida: false,
+            leadId,
+            dataCriacao: nowIsoAuto,
+          });
+        } catch (notifErr: any) {
+          console.error("Falha ao notificar assinatura de contrato avulso:", notifErr?.message || notifErr);
+        }
+
+        return res.json({
+          success: true,
+          contratoId: (criado as any)?.id || contratoId,
+          registro: { nome, cpf, data: nowIsoAuto, ip, dispositivo },
+        });
+      }
+
       if (contratoId && contratoId !== "principal") {
         const contrato = await getDocRest(`contratos/${contratoId}`);
         if (!contrato || String(contrato.leadId || "") !== leadId) {

@@ -78,7 +78,7 @@ import {
   Percent
 } from "lucide-react";
 import LeadStepTimeline from "./LeadStepTimeline";
-import ContratosAvulsosPanel from "./ContratosAvulsosPanel";
+import ContratosAssinadosResumo from "./ContratosAssinadosResumo";
 import LeadConciergeTracker from "./LeadConciergeTracker";
 import FichaRatingAdmViewer from "./FichaRatingAdmViewer";
 import FichaRatingCreditoForm from "./FichaRatingCreditoForm";
@@ -3392,7 +3392,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 )}
               </div>
 
-              <ContratosAvulsosPanel lead={lead} catalogServices={catalogServices} />
+              <ContratosAssinadosResumo lead={lead} />
 
 
 
