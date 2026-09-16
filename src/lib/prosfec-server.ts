@@ -2566,6 +2566,54 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     return /^[A-Za-z0-9_-]{6,80}$/.test(id) ? id : "";
   };
 
+  /** Mascara o CPF para exibição no recibo público. */
+  const maskCpfPublic = (raw: any): string => {
+    const d = String(raw || "").replace(/\D/g, "");
+    if (d.length !== 11) return "";
+    return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
+  };
+
+  /** Contratos avulsos/aditivos do lead prontos para o cliente (rascunho e cancelado ficam de fora). */
+  const listContratosPublicos = async (leadId: string): Promise<any[]> => {
+    let rows: any[] = [];
+    try {
+      rows = await runQueryRest("contratos", {
+        fieldFilter: {
+          field: { fieldPath: "leadId" },
+          op: "EQUAL",
+          value: { stringValue: leadId },
+        },
+      }, 50);
+    } catch (err: any) {
+      console.error("Erro ao listar contratos do lead:", err?.message || err);
+      return [];
+    }
+
+    return rows
+      .map((row) => ({ id: row.id, ...(row.data || {}) }))
+      .filter((c: any) => c.status === "aguardando_assinatura" || c.status === "assinado")
+      .sort((a: any, b: any) => String(a.dataCriacao || "").localeCompare(String(b.dataCriacao || "")))
+      .map((c: any) => ({
+        id: c.id,
+        tipo: c.tipo === "aditivo" ? "aditivo" : "avulso",
+        titulo:
+          c.tipo === "aditivo"
+            ? "Termo Aditivo de Inclusão de Serviço Avulso"
+            : "Contrato de Prestação de Serviços Avulsos",
+        status: c.status,
+        servicos: Array.isArray(c.servicos) ? c.servicos : [],
+        valorTotal: Number(c.valorTotal || 0),
+        contratoOrigemId: c.contratoOrigemId || null,
+        dataCriacao: c.dataCriacao || null,
+        assinado: c.status === "assinado",
+        assinaturaNome: c.assinaturaNome || null,
+        assinaturaCpf: maskCpfPublic(c.assinaturaCpf),
+        assinaturaData: c.assinaturaData || null,
+        assinaturaIp: c.assinaturaIp || null,
+        assinaturaDispositivo: c.assinaturaDispositivo || null,
+      }));
+  };
+
   app.get("/api/public/contrato/:leadId", async (req, res) => {
     try {
       const leadId = sanitizeLeadId(req.params?.leadId);
@@ -2574,33 +2622,65 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const lead = await getDocRest(`leads/${leadId}`);
       if (!lead) return res.status(404).json({ error: "Contrato não encontrado." });
 
-      if (!lead.modeloContratacao) {
+      const documentosAvulsos = await listContratosPublicos(leadId);
+
+      if (!lead.modeloContratacao && documentosAvulsos.length === 0) {
         return res.status(404).json({ error: "Contrato ainda não disponibilizado para assinatura." });
       }
 
+      const cliente = {
+        leadId,
+        nomeEmpresa: lead.nomeEmpresa || lead.razaoSocial || "",
+        cnpj: lead.cnpj || "",
+        endereco:
+          [(lead as any).endereco, lead.cidade, (lead as any).uf || (lead as any).estado]
+            .filter(Boolean)
+            .join(", ") || "",
+        nomeContato: lead.nomeContato || lead.nome || "",
+      };
+
+      const documentos: any[] = [];
+
+      if (lead.modeloContratacao) {
+        documentos.push({
+          id: "principal",
+          tipo: String(lead.modeloContratacao).toLowerCase() === "avulso" ? "principal_avulso" : "assessoria",
+          titulo:
+            String(lead.modeloContratacao).toLowerCase() === "avulso"
+              ? "Contrato de Consultoria e Assessoria em Crédito Empresarial"
+              : `Contrato de Assessoria — ${lead.planoEscolhido || "Assessoria"}`,
+          status: lead.contratoAssinado ? "assinado" : "aguardando_assinatura",
+          assinado: !!lead.contratoAssinado,
+          assinaturaNome: lead.contratoAssinadoNome || null,
+          assinaturaCpf: maskCpfPublic(lead.contratoAssinadoCpf),
+          assinaturaData: lead.contratoAssinadoData || null,
+          assinaturaIp: lead.contratoAssinadoIp || null,
+          assinaturaDispositivo: lead.contratoAssinadoDispositivo || null,
+        });
+      }
+
+      documentos.push(...documentosAvulsos);
+
       return res.json({
         success: true,
+        // Mantido por compatibilidade com a página atual
         contrato: {
-          leadId,
-          nomeEmpresa: lead.nomeEmpresa || lead.razaoSocial || "",
-          cnpj: lead.cnpj || "",
-          endereco:
-            [(lead as any).endereco, lead.cidade, (lead as any).uf || (lead as any).estado]
-              .filter(Boolean)
-              .join(", ") || "",
-          nomeContato: lead.nomeContato || lead.nome || "",
-          modeloContratacao: lead.modeloContratacao,
+          ...cliente,
+          modeloContratacao: lead.modeloContratacao || "",
           planoEscolhido: lead.planoEscolhido || "",
           valorMensalidade: Number(lead.valorMensalidade || 0),
           contratoAssinado: !!lead.contratoAssinado,
           contratoAssinadoData: lead.contratoAssinadoData || null,
         },
+        cliente,
+        documentos,
       });
     } catch (err: any) {
       console.error("Erro ao carregar contrato público:", err?.message || err);
       return res.status(500).json({ error: "Erro ao carregar o contrato." });
     }
   });
+
 
   // =====================================================================
   // Simulador público da Home — upsert de lead por CNPJ
@@ -2819,6 +2899,57 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       if (assinatura.length > 900000) {
         return res.status(400).json({ error: "Assinatura muito grande. Tente novamente." });
       }
+
+      // Assinatura de um Contrato Avulso ou Termo Aditivo específico
+      const contratoId = String(body.contratoId || "").trim().replace(/[^A-Za-z0-9_-]/g, "");
+      if (contratoId && contratoId !== "principal") {
+        const contrato = await getDocRest(`contratos/${contratoId}`);
+        if (!contrato || String(contrato.leadId || "") !== leadId) {
+          return res.status(404).json({ error: "Contrato não encontrado." });
+        }
+        if (contrato.status === "assinado") {
+          return res.status(409).json({ error: "Este contrato já foi assinado." });
+        }
+        if (contrato.status !== "aguardando_assinatura") {
+          return res.status(409).json({ error: "Este contrato ainda não está disponível para assinatura." });
+        }
+
+        const nowIsoDoc = new Date().toISOString();
+        await patchDocRest(`contratos/${contratoId}`, {
+          status: "assinado",
+          assinaturaNome: nome,
+          assinaturaCpf: cpf,
+          assinaturaData: nowIsoDoc,
+          assinaturaIp: ip,
+          assinaturaDispositivo: dispositivo,
+          assinaturaDesenho: assinatura,
+        });
+
+        try {
+          const leadDoc = await getDocRest(`leads/${leadId}`);
+          await createDocRest("notificacoes", {
+            recipientId: "admin",
+            recipientType: "admin",
+            titulo: contrato.tipo === "aditivo" ? "Termo aditivo assinado" : "Contrato avulso assinado",
+            mensagem: `${leadDoc?.nomeEmpresa || leadDoc?.razaoSocial || leadId} assinou ${
+              contrato.tipo === "aditivo" ? "um termo aditivo" : "o contrato avulso"
+            } no valor de R$ ${Number(contrato.valorTotal || 0).toFixed(2)}.`,
+            tipo: "success",
+            lida: false,
+            leadId,
+            dataCriacao: nowIsoDoc,
+          });
+        } catch (notifErr: any) {
+          console.error("Falha ao notificar assinatura de contrato avulso:", notifErr?.message || notifErr);
+        }
+
+        return res.json({
+          success: true,
+          contratoId,
+          registro: { nome, cpf, data: nowIsoDoc, ip, dispositivo },
+        });
+      }
+
 
       const lead = await getDocRest(`leads/${leadId}`);
       if (!lead || !lead.modeloContratacao) {

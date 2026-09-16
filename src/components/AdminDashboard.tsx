@@ -377,6 +377,7 @@ import {
   isDemandAccountingService,
   cleanForFirestore,
   sanitizeServiceCatalogForFirestore,
+  formatTemplateLabel,
   DEFAULT_MENSALIDADES,
   normalizeMensalidades,
   DEFAULT_ASSINATURA_PARCEIRO,
@@ -418,6 +419,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [customBasePrices, setCustomBasePrices] = useState<Record<string, number>>({});
   const [editPrices, setEditPrices] = useState<Record<string, number>>({});
   const [customServices, setCustomServices] = useState<ServiceCatalogItem[]>(DEFAULT_SERVICES_CATALOG);
+  // Snapshot do catálogo como está salvo, usado para versionar as cláusulas contratuais
+  const catalogSnapshotRef = useRef<ServiceCatalogItem[]>(DEFAULT_SERVICES_CATALOG);
   const [newServNome, setNewServNome] = useState("");
   const [newServValor, setNewServValor] = useState<number | "">("");
   const [newServHublaLink, setNewServHublaLink] = useState("");
@@ -833,7 +836,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
     try {
       setLoading(true);
-      const sanitizedServices = sanitizeServiceCatalogForFirestore(customServices);
+      const sanitizedServices = sanitizeServiceCatalogForFirestore(customServices, catalogSnapshotRef.current);
       const count = await syncAllExistingLeadsWithCatalog(sanitizedServices);
       alert(`Sincronização concluída com sucesso! ${count} lead(s) foram atualizados com a tabela de preços vigente.`);
       await fetchData();
@@ -855,7 +858,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setLoading(true);
       const configRef = doc(db, "configuracoes", "precos_consultas");
 
-      const sanitizedServices = sanitizeServiceCatalogForFirestore(customServices);
+      const sanitizedServices = sanitizeServiceCatalogForFirestore(customServices, catalogSnapshotRef.current);
+      catalogSnapshotRef.current = sanitizedServices as ServiceCatalogItem[];
       const sanitizedPrices: Record<string, number> = {};
       if (editPrices && typeof editPrices === "object") {
         for (const [k, v] of Object.entries(editPrices)) {
@@ -1506,8 +1510,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             });
 
             setCustomServices(processedCatalog);
+            catalogSnapshotRef.current = processedCatalog;
           } else {
             setCustomServices(DEFAULT_SERVICES_CATALOG);
+            catalogSnapshotRef.current = DEFAULT_SERVICES_CATALOG;
           }
         } else {
           setCustomBasePrices({});
@@ -5417,6 +5423,30 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   <p className="text-[10px] text-slate-400 mt-1">
                                     {((serv as any).descricao || "").length}/600 caracteres
                                   </p>
+
+                                  <div className="flex items-center justify-between mt-3 mb-1 gap-2">
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                      Cláusulas contratuais (Contrato Avulso)
+                                    </label>
+                                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[9px] font-black tracking-wider whitespace-nowrap">
+                                      {formatTemplateLabel(serv)}
+                                    </span>
+                                  </div>
+                                  <textarea
+                                    rows={5}
+                                    maxLength={12000}
+                                    value={(serv as any).clausulas || ""}
+                                    placeholder={"Objeto específico: ...\nAtividades incluídas: ...\nCondições específicas: ...\nPrazo: ...\nRemuneração: ...\nLimitações: ...\nResponsabilidades específicas: ..."}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setCustomServices(prev => prev.map((item, idx) => idx === sIdx ? { ...item, clausulas: val } : item));
+                                    }}
+                                    className="w-full min-w-[220px] rounded-lg border border-slate-200 bg-slate-50/50 focus:bg-white p-2 text-[11px] text-slate-700 leading-relaxed focus:border-emerald-500 focus:outline-none resize-y font-mono"
+                                  />
+                                  <p className="text-[10px] text-slate-400 mt-1">
+                                    {((serv as any).clausulas || "").length}/12000 caracteres — ao salvar uma alteração nas cláusulas, a versão do template é incrementada. Contratos já assinados não mudam.
+                                  </p>
+
                                 </td>
                                 <td className="py-3 px-4">
                                   <div className="relative rounded-lg shadow-xs max-w-[130px]">

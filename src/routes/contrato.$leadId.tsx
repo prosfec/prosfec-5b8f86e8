@@ -6,12 +6,14 @@
  * Página pública de assinatura de contrato (Avulso ou Assessoria 12 meses).
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import SignaturePad from "../components/SignaturePad";
 import AssessoriaContractText from "../components/AssessoriaContractText";
 import AvulsoContractText from "../components/AvulsoContractText";
-import { Loader2, CheckCircle2, FileText, AlertTriangle } from "lucide-react";
+import AvulsoServicoContractText from "../components/AvulsoServicoContractText";
+import AditivoContractText from "../components/AditivoContractText";
+import { Loader2, CheckCircle2, FileText, AlertTriangle, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/contrato/$leadId")({
   head: () => ({
@@ -50,6 +52,8 @@ function ContratoPublicoPage() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [contrato, setContrato] = useState<any>(null);
+  const [documentos, setDocumentos] = useState<any[]>([]);
+  const [docSelecionadoId, setDocSelecionadoId] = useState<string>("principal");
 
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
@@ -69,8 +73,11 @@ function ContratoPublicoPage() {
         if (!r.ok) {
           setErro(json?.error || "Contrato não encontrado.");
         } else {
+          const lista = Array.isArray(json.documentos) ? json.documentos : [];
           setContrato(json.contrato);
-          setConcluido(!!json.contrato?.contratoAssinado);
+          setDocumentos(lista);
+          const pendente = lista.find((d: any) => !d.assinado);
+          setDocSelecionadoId(String((pendente || lista[0])?.id || "principal"));
           setNome(json.contrato?.nomeContato || "");
         }
       } catch {
@@ -83,6 +90,19 @@ function ContratoPublicoPage() {
       ativo = false;
     };
   }, [leadId]);
+
+  const docAtual = useMemo(
+    () => documentos.find((d) => String(d.id) === String(docSelecionadoId)) || documentos[0] || null,
+    [documentos, docSelecionadoId]
+  );
+
+  // Sempre que o documento selecionado muda, o formulário volta ao estado inicial.
+  useEffect(() => {
+    setAssinatura("");
+    setFormErro(null);
+    setRegistro(null);
+    setConcluido(!!docAtual?.assinado);
+  }, [docSelecionadoId, docAtual?.assinado]);
 
   const handleAssinar = async () => {
     setFormErro(null);
@@ -109,6 +129,7 @@ function ContratoPublicoPage() {
           cpf: cpf.replace(/\D/g, ""),
           assinatura,
           ip,
+          contratoId: String(docAtual?.id || "principal"),
           dispositivo: typeof navigator !== "undefined" ? navigator.userAgent : "",
         }),
       });
@@ -116,8 +137,23 @@ function ContratoPublicoPage() {
       if (!r.ok) {
         setFormErro(json?.error || "Não foi possível registrar a assinatura.");
       } else {
-        setRegistro(json?.registro || null);
+        const reg = json?.registro || null;
+        setRegistro(reg);
         setConcluido(true);
+        setDocumentos((prev) =>
+          prev.map((d) =>
+            String(d.id) === String(docAtual?.id)
+              ? {
+                  ...d,
+                  assinado: true,
+                  status: "assinado",
+                  assinaturaNome: reg?.nome,
+                  assinaturaData: reg?.data,
+                  assinaturaIp: reg?.ip,
+                }
+              : d
+          )
+        );
       }
     } catch {
       setFormErro("Erro de conexão ao registrar a assinatura.");
@@ -147,6 +183,19 @@ function ContratoPublicoPage() {
   }
 
   const isAvulso = String(contrato?.modeloContratacao || "").toLowerCase() === "avulso";
+  const tipoDoc = String(docAtual?.tipo || (isAvulso ? "principal_avulso" : "assessoria"));
+  const isPrincipal = tipoDoc === "principal_avulso" || tipoDoc === "assessoria";
+  const recibo =
+    registro ||
+    (docAtual?.assinado
+      ? {
+          nome: docAtual.assinaturaNome,
+          cpf: docAtual.assinaturaCpf,
+          data: docAtual.assinaturaData,
+          ip: docAtual.assinaturaIp,
+          dispositivo: docAtual.assinaturaDispositivo,
+        }
+      : null);
 
   return (
     <main className="min-h-screen bg-slate-50 py-10 px-4">
@@ -159,29 +208,110 @@ function ContratoPublicoPage() {
           </p>
         </header>
 
+        {documentos.length > 1 && (
+          <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Documentos para assinatura
+            </p>
+            <div className="space-y-2">
+              {documentos.map((d) => {
+                const ativo = String(d.id) === String(docAtual?.id);
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setDocSelecionadoId(String(d.id))}
+                    className={`w-full text-left px-4 py-3 rounded-lg border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                      ativo ? "border-[#0A3D2E] bg-emerald-50/50" : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold text-slate-900 truncate">{d.titulo}</span>
+                      {Number(d.valorTotal || 0) > 0 && (
+                        <span className="block text-xs text-slate-500">{formatBRL(d.valorTotal)}</span>
+                      )}
+                    </span>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${
+                        d.assinado ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {d.assinado ? "Assinado" : "Pendente"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Modelo</p>
-              <p className="text-sm font-medium text-slate-900">{isAvulso ? "Avulso" : "Assessoria Mensal"}</p>
+          {isPrincipal ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Modelo</p>
+                <p className="text-sm font-medium text-slate-900">{isAvulso ? "Avulso" : "Assessoria Mensal"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Plano</p>
+                <p className="text-sm font-medium text-slate-900">{contrato?.planoEscolhido || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Investimento</p>
+                <p className="text-sm font-medium text-slate-900">
+                  {isAvulso ? "Sob consulta" : `${formatBRL(contrato?.valorMensalidade)}/mês`}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Plano</p>
-              <p className="text-sm font-medium text-slate-900">{contrato?.planoEscolhido || "—"}</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Documento</p>
+                <p className="text-sm font-medium text-slate-900">
+                  {tipoDoc === "aditivo" ? "Termo Aditivo" : "Contrato Avulso"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Serviços</p>
+                <p className="text-sm font-medium text-slate-900">{(docAtual?.servicos || []).length}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total</p>
+                <p className="text-sm font-medium text-slate-900">{formatBRL(docAtual?.valorTotal)}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Investimento</p>
-              <p className="text-sm font-medium text-slate-900">
-                {isAvulso ? "Sob consulta" : `${formatBRL(contrato?.valorMensalidade)}/mês`}
-              </p>
-            </div>
-          </div>
+          )}
 
           <div className="border-t border-slate-100 pt-4 space-y-3 text-sm text-slate-600 leading-relaxed">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
               <FileText className="w-4 h-4" /> Termos
             </p>
-            {isAvulso ? (
+            {tipoDoc === "avulso" ? (
+              <AvulsoServicoContractText
+                razaoSocial={contrato?.nomeEmpresa}
+                cnpj={contrato?.cnpj}
+                endereco={contrato?.endereco}
+                representante={nome}
+                representanteCpf={cpf}
+                servicos={docAtual?.servicos}
+                valorTotal={docAtual?.valorTotal}
+                numeroContrato={docAtual?.id}
+                dataGeracao={docAtual?.dataCriacao}
+              />
+            ) : tipoDoc === "aditivo" ? (
+              <AditivoContractText
+                razaoSocial={contrato?.nomeEmpresa}
+                cnpj={contrato?.cnpj}
+                endereco={contrato?.endereco}
+                representante={nome}
+                representanteCpf={cpf}
+                servicos={docAtual?.servicos}
+                valorTotal={docAtual?.valorTotal}
+                numeroContrato={docAtual?.id}
+                contratoOrigemId={docAtual?.contratoOrigemId}
+                dataGeracao={docAtual?.dataCriacao}
+              />
+            ) : isAvulso ? (
               <AvulsoContractText
                 razaoSocial={contrato?.nomeEmpresa}
                 cnpj={contrato?.cnpj}
@@ -207,37 +337,43 @@ function ContratoPublicoPage() {
           </div>
         </section>
 
+
         {concluido ? (
           <section className="bg-white rounded-xl shadow-sm border border-emerald-200 p-8 text-center space-y-3">
             <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
             <h2 className="text-lg font-extrabold text-slate-900">Contrato assinado com sucesso</h2>
-            <p className="text-sm text-slate-500">Aguarde o contato da nossa equipe.</p>
-            {registro && (
+            <p className="text-sm text-slate-500">
+              {documentos.some((d) => !d.assinado)
+                ? "Ainda há documento(s) pendente(s) de assinatura na lista acima."
+                : "Aguarde o contato da nossa equipe."}
+            </p>
+            {recibo && (
               <div className="mt-4 text-left bg-slate-50 border border-slate-200 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Signatário</p>
-                  <p className="text-sm font-medium text-slate-900">{registro.nome || "—"}</p>
+                  <p className="text-sm font-medium text-slate-900">{recibo.nome || "—"}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">CPF</p>
-                  <p className="text-sm font-medium text-slate-900 font-mono">{maskCpf(registro.cpf)}</p>
+                  <p className="text-sm font-medium text-slate-900 font-mono">{maskCpf(recibo.cpf)}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data / Hora</p>
                   <p className="text-sm font-medium text-slate-900">
-                    {registro.data ? new Date(registro.data).toLocaleString("pt-BR") : "—"}
+                    {recibo.data ? new Date(recibo.data).toLocaleString("pt-BR") : "—"}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">IP capturado</p>
-                  <p className="text-sm font-medium text-slate-900 font-mono">{registro.ip || "não capturado"}</p>
+                  <p className="text-sm font-medium text-slate-900 font-mono">{recibo.ip || "não capturado"}</p>
                 </div>
                 <div className="sm:col-span-2">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Dispositivo</p>
-                  <p className="text-xs text-slate-600 break-all">{registro.dispositivo || "—"}</p>
+                  <p className="text-xs text-slate-600 break-all">{recibo.dispositivo || "—"}</p>
                 </div>
               </div>
             )}
+
           </section>
         ) : (
           <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-5">
