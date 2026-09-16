@@ -2993,6 +2993,72 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
       // Assinatura de um Contrato Avulso ou Termo Aditivo específico
       const contratoId = String(body.contratoId || "").trim().replace(/[^A-Za-z0-9_-]/g, "");
+
+      // Documento derivado automaticamente dos serviços do Passo 3
+      if (contratoId === "avulso_auto" || contratoId === "aditivo_auto") {
+        const leadAuto = await getDocRest(`leads/${leadId}`);
+        if (!leadAuto) return res.status(404).json({ error: "Contrato não encontrado." });
+
+        const assinadosAuto = await listContratosAssinados(leadId);
+        const derivado = await derivarDocumentoPendente(leadAuto, assinadosAuto);
+        if (!derivado) {
+          return res.status(409).json({ error: "Não há serviços pendentes de contratação." });
+        }
+
+        const nowIsoAuto = new Date().toISOString();
+        const socio = Array.isArray(leadAuto.socios) && leadAuto.socios.length > 0 ? leadAuto.socios[0] : null;
+        const novoContrato: Record<string, any> = cleanForFirestore({
+          leadId,
+          tipo: derivado.tipo,
+          status: "assinado",
+          servicos: derivado.servicos,
+          valorTotal: Number(derivado.valorTotal || 0),
+          contratoOrigemId: derivado.contratoOrigemId || null,
+          contratoOrigemData: derivado.contratoOrigemData || null,
+          cliente: {
+            razaoSocial: leadAuto.nomeEmpresa || leadAuto.razaoSocial || "",
+            cnpj: leadAuto.cnpj || "",
+            endereco: [leadAuto.endereco, leadAuto.cidade, leadAuto.uf || leadAuto.estado]
+              .filter(Boolean)
+              .join(", "),
+            representante: socio?.nome || leadAuto.nomeContato || leadAuto.nome || "",
+            representanteCpf: socio?.cpf || leadAuto.cpf || "",
+          },
+          dataCriacao: nowIsoAuto,
+          assinaturaNome: nome,
+          assinaturaCpf: cpf,
+          assinaturaData: nowIsoAuto,
+          assinaturaIp: ip,
+          assinaturaDispositivo: dispositivo,
+          assinaturaDesenho: assinatura,
+        });
+
+        const criado = await createDocRest("contratos", novoContrato);
+
+        try {
+          await createDocRest("notificacoes", {
+            recipientId: "admin",
+            recipientType: "admin",
+            titulo: derivado.tipo === "aditivo" ? "Termo aditivo assinado" : "Contrato avulso assinado",
+            mensagem: `${leadAuto.nomeEmpresa || leadAuto.razaoSocial || leadId} assinou ${
+              derivado.tipo === "aditivo" ? "um termo aditivo" : "o contrato avulso"
+            } no valor de R$ ${Number(derivado.valorTotal || 0).toFixed(2)}.`,
+            tipo: "success",
+            lida: false,
+            leadId,
+            dataCriacao: nowIsoAuto,
+          });
+        } catch (notifErr: any) {
+          console.error("Falha ao notificar assinatura de contrato avulso:", notifErr?.message || notifErr);
+        }
+
+        return res.json({
+          success: true,
+          contratoId: (criado as any)?.id || contratoId,
+          registro: { nome, cpf, data: nowIsoAuto, ip, dispositivo },
+        });
+      }
+
       if (contratoId && contratoId !== "principal") {
         const contrato = await getDocRest(`contratos/${contratoId}`);
         if (!contrato || String(contrato.leadId || "") !== leadId) {
