@@ -1339,29 +1339,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
       // 2. Fetch Partners
       const partnersQuery = query(collection(db, "parceiros"), orderBy("dataCriacao", "desc"));
-      let partnersSnapshot = await getDocs(partnersQuery);
-      
-      // Se a coleção de parceiros estiver vazia, cria um parceiro exemplo de boas-vindas
-      if (partnersSnapshot.empty) {
-        try {
-          const examplePartner = {
-            nome: "Parceiro Oficial de Demonstração",
-            whatsapp: "(11) 99999-9999",
-            email: "parceiro.teste@prosfec.com.br",
-            cidade: "São Paulo - SP",
-            interesse: "ser parceiro",
-            status: "aprovado",
-            dataCriacao: new Date().toISOString(),
-            plano: "premium",
-            aceitouTermos: true,
-            chavePix: "prosfec.tesouraria@gmail.com"
-          };
-          await addDoc(collection(db, "parceiros"), examplePartner);
-          partnersSnapshot = await getDocs(partnersQuery);
-        } catch (errInitPartner) {
-          console.warn("Could not auto-initialize partners collection:", errInitPartner);
-        }
-      }
+      const partnersSnapshot = await getDocs(partnersQuery);
+
 
       const partnersList = partnersSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -1374,27 +1353,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       // 3. Fetch Announcements
       try {
         const announcementsQuery = query(collection(db, "comunicados"), orderBy("dataCriacao", "desc"));
-        let announcementsSnapshot = await getDocs(announcementsQuery);
-        
-        // Se a coleção de comunicados estiver vazia, cria o primeiro comunicado de boas-vindas automaticamente
-        if (announcementsSnapshot.empty) {
-          try {
-            const welcomeAnnouncement = {
-              titulo: "Bem-vindo ao Portal de Parceiros PROSFEC!",
-              mensagem: "Este é o seu portal oficial de comunicados, campanhas de incentivo e avisos importantes. Fique atento às nossas postagens!",
-              imagemUrl: null,
-              linkUrl: null,
-              linkTexto: null,
-              publicoAlvo: "todos",
-              ativo: true,
-              dataCriacao: new Date().toISOString()
-            };
-            await addDoc(collection(db, "comunicados"), welcomeAnnouncement);
-            announcementsSnapshot = await getDocs(announcementsQuery);
-          } catch (errInitAnn) {
-            console.warn("Could not auto-initialize announcements collection:", errInitAnn);
-          }
-        }
+        const announcementsSnapshot = await getDocs(announcementsQuery);
+
+
 
         const announcementsList = announcementsSnapshot.docs.map(doc => ({
           id: doc.id,
