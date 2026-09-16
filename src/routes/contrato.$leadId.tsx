@@ -118,7 +118,11 @@ function ContratoPublicoPage() {
     setFormErro(null);
     if (nome.trim().length < 5) return setFormErro("Informe o nome completo do responsável.");
     if (cpf.replace(/\D/g, "").length !== 11) return setFormErro("Informe um CPF válido.");
+    if (!todosLidos)
+      return setFormErro("Abra e confirme a leitura de todos os documentos para assinar.");
     if (!assinatura) return setFormErro("Desenhe sua assinatura no quadro abaixo.");
+
+    const idsPendentes = pendentes.map((d) => String(d.id));
 
     setEnviando(true);
     try {
@@ -139,7 +143,7 @@ function ContratoPublicoPage() {
           cpf: cpf.replace(/\D/g, ""),
           assinatura,
           ip,
-          contratoId: String(docAtual?.id || "principal"),
+          contratoIds: idsPendentes.length > 0 ? idsPendentes : ["principal"],
           dispositivo: typeof navigator !== "undefined" ? navigator.userAgent : "",
         }),
       });
@@ -152,7 +156,7 @@ function ContratoPublicoPage() {
         setConcluido(true);
         setDocumentos((prev) =>
           prev.map((d) =>
-            String(d.id) === String(docAtual?.id)
+            idsPendentes.includes(String(d.id))
               ? {
                   ...d,
                   assinado: true,
