@@ -1353,27 +1353,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       // 3. Fetch Announcements
       try {
         const announcementsQuery = query(collection(db, "comunicados"), orderBy("dataCriacao", "desc"));
-        let announcementsSnapshot = await getDocs(announcementsQuery);
-        
-        // Se a coleção de comunicados estiver vazia, cria o primeiro comunicado de boas-vindas automaticamente
-        if (announcementsSnapshot.empty) {
-          try {
-            const welcomeAnnouncement = {
-              titulo: "Bem-vindo ao Portal de Parceiros PROSFEC!",
-              mensagem: "Este é o seu portal oficial de comunicados, campanhas de incentivo e avisos importantes. Fique atento às nossas postagens!",
-              imagemUrl: null,
-              linkUrl: null,
-              linkTexto: null,
-              publicoAlvo: "todos",
-              ativo: true,
-              dataCriacao: new Date().toISOString()
-            };
-            await addDoc(collection(db, "comunicados"), welcomeAnnouncement);
-            announcementsSnapshot = await getDocs(announcementsQuery);
-          } catch (errInitAnn) {
-            console.warn("Could not auto-initialize announcements collection:", errInitAnn);
-          }
-        }
+        const announcementsSnapshot = await getDocs(announcementsQuery);
+
+
 
         const announcementsList = announcementsSnapshot.docs.map(doc => ({
           id: doc.id,
