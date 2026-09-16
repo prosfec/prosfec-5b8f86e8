@@ -331,8 +331,16 @@ function ContratoPublicoPage() {
           <section className="bg-white rounded-xl shadow-sm border border-emerald-200 p-8 text-center space-y-3">
             <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
             <h2 className="text-lg font-extrabold text-slate-900">Contrato assinado com sucesso</h2>
-            <p className="text-sm text-slate-500">Aguarde o contato da nossa equipe.</p>
-            {registro && (
+            <p className="text-sm text-slate-500">
+              {documentos.some((d) => !d.assinado)
+                ? "Ainda há documento(s) pendente(s) de assinatura na lista acima."
+                : "Aguarde o contato da nossa equipe."}
+            </p>
+            {(registro ||
+              (docAtual?.assinado && (
+                <span />
+              ))) && (
+
               <div className="mt-4 text-left bg-slate-50 border border-slate-200 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Signatário</p>
