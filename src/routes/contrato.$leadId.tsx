@@ -62,6 +62,7 @@ function ContratoPublicoPage() {
   const [concluido, setConcluido] = useState(false);
   const [formErro, setFormErro] = useState<string | null>(null);
   const [registro, setRegistro] = useState<any>(null);
+  const [lidos, setLidos] = useState<string[]>([]);
 
   useEffect(() => {
     let ativo = true;
@@ -96,19 +97,32 @@ function ContratoPublicoPage() {
     [documentos, docSelecionadoId]
   );
 
-  // Sempre que o documento selecionado muda, o formulário volta ao estado inicial.
+  const pendentes = useMemo(() => documentos.filter((d) => !d.assinado), [documentos]);
+  const todosLidos = useMemo(
+    () => pendentes.length > 0 && pendentes.every((d) => lidos.includes(String(d.id))),
+    [pendentes, lidos]
+  );
+  const docAtualLido = !!docAtual && lidos.includes(String(docAtual.id));
+
+  // Quando não há mais documentos pendentes, a tela mostra o recibo.
   useEffect(() => {
-    setAssinatura("");
-    setFormErro(null);
-    setRegistro(null);
-    setConcluido(!!docAtual?.assinado);
-  }, [docSelecionadoId, docAtual?.assinado]);
+    if (documentos.length > 0 && pendentes.length === 0) setConcluido(true);
+  }, [documentos.length, pendentes.length]);
+
+  const marcarLeitura = (id: string, marcado: boolean) => {
+    setLidos((prev) => (marcado ? Array.from(new Set([...prev, id])) : prev.filter((x) => x !== id)));
+  };
+
 
   const handleAssinar = async () => {
     setFormErro(null);
     if (nome.trim().length < 5) return setFormErro("Informe o nome completo do responsável.");
     if (cpf.replace(/\D/g, "").length !== 11) return setFormErro("Informe um CPF válido.");
+    if (!todosLidos)
+      return setFormErro("Abra e confirme a leitura de todos os documentos para assinar.");
     if (!assinatura) return setFormErro("Desenhe sua assinatura no quadro abaixo.");
+
+    const idsPendentes = pendentes.map((d) => String(d.id));
 
     setEnviando(true);
     try {
@@ -129,7 +143,7 @@ function ContratoPublicoPage() {
           cpf: cpf.replace(/\D/g, ""),
           assinatura,
           ip,
-          contratoId: String(docAtual?.id || "principal"),
+          contratoIds: idsPendentes.length > 0 ? idsPendentes : ["principal"],
           dispositivo: typeof navigator !== "undefined" ? navigator.userAgent : "",
         }),
       });
@@ -142,7 +156,7 @@ function ContratoPublicoPage() {
         setConcluido(true);
         setDocumentos((prev) =>
           prev.map((d) =>
-            String(d.id) === String(docAtual?.id)
+            idsPendentes.includes(String(d.id))
               ? {
                   ...d,
                   assinado: true,
@@ -213,9 +227,13 @@ function ContratoPublicoPage() {
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Documentos para assinatura
             </p>
+            <p className="text-xs text-slate-500">
+              Abra cada documento, confirme a leitura e assine uma única vez no final da página.
+            </p>
             <div className="space-y-2">
               {documentos.map((d) => {
                 const ativo = String(d.id) === String(docAtual?.id);
+                const lido = lidos.includes(String(d.id));
                 return (
                   <button
                     key={d.id}
@@ -231,12 +249,23 @@ function ContratoPublicoPage() {
                         <span className="block text-xs text-slate-500">{formatBRL(d.valorTotal)}</span>
                       )}
                     </span>
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${
-                        d.assinado ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-                      }`}
-                    >
-                      {d.assinado ? "Assinado" : "Pendente"}
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      {!d.assinado && (
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${
+                            lido ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {lido ? "Lido" : "Não lido"}
+                        </span>
+                      )}
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${
+                          d.assinado ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                        }`}
+                      >
+                        {d.assinado ? "Assinado" : "Pendente"}
+                      </span>
                     </span>
                   </button>
                 );
@@ -244,6 +273,7 @@ function ContratoPublicoPage() {
             </div>
           </section>
         )}
+
 
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
           {isPrincipal ? (
@@ -335,18 +365,39 @@ function ContratoPublicoPage() {
               />
             )}
           </div>
+
+          {docAtual && !docAtual.assinado && (
+            <label className="flex items-start gap-3 border-t border-slate-100 pt-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={docAtualLido}
+                onChange={(e) => marcarLeitura(String(docAtual.id), e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-[#0A3D2E] cursor-pointer"
+              />
+              <span className="text-sm font-semibold text-slate-700">
+                Li e concordo com este documento
+              </span>
+            </label>
+          )}
         </section>
 
 
-        {concluido ? (
+
+        {concluido && pendentes.length === 0 ? (
           <section className="bg-white rounded-xl shadow-sm border border-emerald-200 p-8 text-center space-y-3">
             <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-            <h2 className="text-lg font-extrabold text-slate-900">Contrato assinado com sucesso</h2>
-            <p className="text-sm text-slate-500">
-              {documentos.some((d) => !d.assinado)
-                ? "Ainda há documento(s) pendente(s) de assinatura na lista acima."
-                : "Aguarde o contato da nossa equipe."}
-            </p>
+            <h2 className="text-lg font-extrabold text-slate-900">
+              {documentos.length > 1 ? "Documentos assinados com sucesso" : "Contrato assinado com sucesso"}
+            </h2>
+            <p className="text-sm text-slate-500">Aguarde o contato da nossa equipe.</p>
+            {documentos.length > 1 && (
+              <ul className="text-sm text-slate-600 space-y-1">
+                {documentos.map((d) => (
+                  <li key={d.id}>• {d.titulo}</li>
+                ))}
+              </ul>
+            )}
+
             {recibo && (
               <div className="mt-4 text-left bg-slate-50 border border-slate-200 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -407,6 +458,12 @@ function ContratoPublicoPage() {
               <SignaturePad onSave={(data: string) => setAssinatura(data)} onClear={() => setAssinatura("")} />
             </div>
 
+            {!todosLidos && (
+              <p className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                Abra e confirme a leitura de todos os documentos para assinar.
+              </p>
+            )}
+
             {formErro && (
               <p className="text-xs font-semibold text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                 {formErro}
@@ -416,12 +473,17 @@ function ContratoPublicoPage() {
             <button
               type="button"
               onClick={handleAssinar}
-              disabled={enviando}
-              className="w-full px-4 py-3 rounded-lg bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-60 text-white text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
+              disabled={enviando || !todosLidos}
+              className="w-full px-4 py-3 rounded-lg bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               {enviando ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-              {enviando ? "Registrando assinatura..." : "Assinar contrato"}
+              {enviando
+                ? "Registrando assinatura..."
+                : pendentes.length > 1
+                  ? `Assinar todos os documentos (${pendentes.length})`
+                  : "Assinar contrato"}
             </button>
+
           </section>
         )}
       </div>
