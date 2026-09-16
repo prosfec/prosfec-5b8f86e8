@@ -174,6 +174,10 @@ export interface Lead {
   contratosAssinadosAtualizadoEm?: string;
 
   analiseRTB?: AnaliseRTB;
+  /** Selo de aptidão direta para a mesa de crédito (Passo 3, definido pelo ADM) */
+  aptoMesaCredito?: boolean;
+  aptoMesaCreditoData?: string;
+  aptoMesaCreditoPor?: string;
   pagamentoConfirmado?: boolean;
   pagamentoServicosConfirmado?: boolean;
   liberarFichaRating?: boolean;

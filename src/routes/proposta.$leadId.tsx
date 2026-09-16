@@ -199,6 +199,35 @@ function PropostaPublicaPage() {
           </div>
         </div>
 
+        {/* Selo — Apto para Mesa de Crédito */}
+        {proposta?.aptoMesaCredito === true && (
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0A3D2E] via-[#0d5240] to-[#00A86B] p-5 sm:p-6 text-white shadow-lg">
+            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+            <div className="relative flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-7 h-7 text-emerald-200" />
+              </div>
+              <div className="min-w-0 space-y-1.5">
+                <span className="text-[10px] bg-white/15 border border-white/25 px-2.5 py-0.5 rounded-full font-black uppercase tracking-widest text-emerald-100 inline-block">
+                  Parabéns
+                </span>
+                <h2 className="font-display font-extrabold text-base sm:text-lg leading-tight">
+                  Sua empresa está apta para a análise de crédito bancária
+                </h2>
+                <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+                  A estrutura da sua empresa está em conformidade e pronta para iniciar na mesa de
+                  crédito assim que as documentações forem recolhidas.
+                </p>
+                {proposta?.aptoMesaCreditoData && (
+                  <span className="text-[10px] text-emerald-200/70 font-bold uppercase tracking-wider block pt-1">
+                    Confirmado em {new Date(proposta.aptoMesaCreditoData).toLocaleDateString("pt-BR")}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Bloco 1 — Acompanhamento (somente leitura) */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">

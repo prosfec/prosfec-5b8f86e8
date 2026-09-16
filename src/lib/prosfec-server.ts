@@ -3401,6 +3401,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
             etapasLabels,
           },
           cadastroCampos: cadastroFaltante,
+          aptoMesaCredito: lead.aptoMesaCredito === true,
+          aptoMesaCreditoData: lead.aptoMesaCredito === true ? lead.aptoMesaCreditoData || null : null,
           documentosCampos: DOCUMENTOS_PROPOSTA,
           documentosCliente: docsEnviados,
           documentosClienteAtualizadoEm: lead.documentosClienteAtualizadoEm || null,
