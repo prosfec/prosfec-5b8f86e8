@@ -336,36 +336,33 @@ function ContratoPublicoPage() {
                 ? "Ainda há documento(s) pendente(s) de assinatura na lista acima."
                 : "Aguarde o contato da nossa equipe."}
             </p>
-            {(registro ||
-              (docAtual?.assinado && (
-                <span />
-              ))) && (
-
+            {recibo && (
               <div className="mt-4 text-left bg-slate-50 border border-slate-200 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Signatário</p>
-                  <p className="text-sm font-medium text-slate-900">{registro.nome || "—"}</p>
+                  <p className="text-sm font-medium text-slate-900">{recibo.nome || "—"}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">CPF</p>
-                  <p className="text-sm font-medium text-slate-900 font-mono">{maskCpf(registro.cpf)}</p>
+                  <p className="text-sm font-medium text-slate-900 font-mono">{maskCpf(recibo.cpf)}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data / Hora</p>
                   <p className="text-sm font-medium text-slate-900">
-                    {registro.data ? new Date(registro.data).toLocaleString("pt-BR") : "—"}
+                    {recibo.data ? new Date(recibo.data).toLocaleString("pt-BR") : "—"}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">IP capturado</p>
-                  <p className="text-sm font-medium text-slate-900 font-mono">{registro.ip || "não capturado"}</p>
+                  <p className="text-sm font-medium text-slate-900 font-mono">{recibo.ip || "não capturado"}</p>
                 </div>
                 <div className="sm:col-span-2">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Dispositivo</p>
-                  <p className="text-xs text-slate-600 break-all">{registro.dispositivo || "—"}</p>
+                  <p className="text-xs text-slate-600 break-all">{recibo.dispositivo || "—"}</p>
                 </div>
               </div>
             )}
+
           </section>
         ) : (
           <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-5">
