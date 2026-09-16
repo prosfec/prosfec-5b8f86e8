@@ -2991,178 +2991,197 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         return res.status(400).json({ error: "Assinatura muito grande. Tente novamente." });
       }
 
-      // Assinatura de um Contrato Avulso ou Termo Aditivo específico
-      const contratoId = String(body.contratoId || "").trim().replace(/[^A-Za-z0-9_-]/g, "");
+      // Assinatura única aplicada a todos os documentos pendentes enviados
+      const sanitizeContratoId = (v: any) =>
+        String(v || "").trim().replace(/[^A-Za-z0-9_-]/g, "");
 
-      // Documento derivado automaticamente dos serviços do Passo 3
-      if (contratoId === "avulso_auto" || contratoId === "aditivo_auto") {
-        const leadAuto = await getDocRest(`leads/${leadId}`);
-        if (!leadAuto) return res.status(404).json({ error: "Contrato não encontrado." });
-
-        const assinadosAuto = await listContratosAssinados(leadId);
-        const derivado = await derivarDocumentoPendente(leadAuto, assinadosAuto);
-        if (!derivado) {
-          return res.status(409).json({ error: "Não há serviços pendentes de contratação." });
-        }
-
-        const nowIsoAuto = new Date().toISOString();
-        const socio = Array.isArray(leadAuto.socios) && leadAuto.socios.length > 0 ? leadAuto.socios[0] : null;
-        const novoContrato: Record<string, any> = cleanForFirestore({
-          leadId,
-          tipo: derivado.tipo,
-          status: "assinado",
-          servicos: derivado.servicos,
-          valorTotal: Number(derivado.valorTotal || 0),
-          contratoOrigemId: derivado.contratoOrigemId || null,
-          contratoOrigemData: derivado.contratoOrigemData || null,
-          cliente: {
-            razaoSocial: leadAuto.nomeEmpresa || leadAuto.razaoSocial || "",
-            cnpj: leadAuto.cnpj || "",
-            endereco: [leadAuto.endereco, leadAuto.cidade, leadAuto.uf || leadAuto.estado]
-              .filter(Boolean)
-              .join(", "),
-            representante: socio?.nome || leadAuto.nomeContato || leadAuto.nome || "",
-            representanteCpf: socio?.cpf || leadAuto.cpf || "",
-          },
-          dataCriacao: nowIsoAuto,
-          assinaturaNome: nome,
-          assinaturaCpf: cpf,
-          assinaturaData: nowIsoAuto,
-          assinaturaIp: ip,
-          assinaturaDispositivo: dispositivo,
-          assinaturaDesenho: assinatura,
-        });
-
-        const criado = await createDocRest("contratos", novoContrato);
-
-        try {
-          await createDocRest("notificacoes", {
-            recipientId: "admin",
-            recipientType: "admin",
-            titulo: derivado.tipo === "aditivo" ? "Termo aditivo assinado" : "Contrato avulso assinado",
-            mensagem: `${leadAuto.nomeEmpresa || leadAuto.razaoSocial || leadId} assinou ${
-              derivado.tipo === "aditivo" ? "um termo aditivo" : "o contrato avulso"
-            } no valor de R$ ${Number(derivado.valorTotal || 0).toFixed(2)}.`,
-            tipo: "success",
-            lida: false,
-            leadId,
-            dataCriacao: nowIsoAuto,
-          });
-        } catch (notifErr: any) {
-          console.error("Falha ao notificar assinatura de contrato avulso:", notifErr?.message || notifErr);
-        }
-
-        return res.json({
-          success: true,
-          contratoId: (criado as any)?.id || contratoId,
-          registro: { nome, cpf, data: nowIsoAuto, ip, dispositivo },
-        });
-      }
-
-      if (contratoId && contratoId !== "principal") {
-        const contrato = await getDocRest(`contratos/${contratoId}`);
-        if (!contrato || String(contrato.leadId || "") !== leadId) {
-          return res.status(404).json({ error: "Contrato não encontrado." });
-        }
-        if (contrato.status === "assinado") {
-          return res.status(409).json({ error: "Este contrato já foi assinado." });
-        }
-        if (contrato.status !== "aguardando_assinatura") {
-          return res.status(409).json({ error: "Este contrato ainda não está disponível para assinatura." });
-        }
-
-        const nowIsoDoc = new Date().toISOString();
-        await patchDocRest(`contratos/${contratoId}`, {
-          status: "assinado",
-          assinaturaNome: nome,
-          assinaturaCpf: cpf,
-          assinaturaData: nowIsoDoc,
-          assinaturaIp: ip,
-          assinaturaDispositivo: dispositivo,
-          assinaturaDesenho: assinatura,
-        });
-
-        try {
-          const leadDoc = await getDocRest(`leads/${leadId}`);
-          await createDocRest("notificacoes", {
-            recipientId: "admin",
-            recipientType: "admin",
-            titulo: contrato.tipo === "aditivo" ? "Termo aditivo assinado" : "Contrato avulso assinado",
-            mensagem: `${leadDoc?.nomeEmpresa || leadDoc?.razaoSocial || leadId} assinou ${
-              contrato.tipo === "aditivo" ? "um termo aditivo" : "o contrato avulso"
-            } no valor de R$ ${Number(contrato.valorTotal || 0).toFixed(2)}.`,
-            tipo: "success",
-            lida: false,
-            leadId,
-            dataCriacao: nowIsoDoc,
-          });
-        } catch (notifErr: any) {
-          console.error("Falha ao notificar assinatura de contrato avulso:", notifErr?.message || notifErr);
-        }
-
-        return res.json({
-          success: true,
-          contratoId,
-          registro: { nome, cpf, data: nowIsoDoc, ip, dispositivo },
-        });
-      }
-
-
-      const lead = await getDocRest(`leads/${leadId}`);
-      if (!lead || !lead.modeloContratacao) {
-        return res.status(404).json({ error: "Contrato não encontrado." });
-      }
-      if (lead.contratoAssinado) {
-        return res.status(409).json({ error: "Este contrato já foi assinado." });
-      }
+      const contratoId = sanitizeContratoId(body.contratoId);
+      const listaIds = Array.isArray(body.contratoIds)
+        ? body.contratoIds.map(sanitizeContratoId).filter(Boolean)
+        : [];
+      const alvos: string[] = listaIds.length > 0 ? Array.from(new Set(listaIds)) : [contratoId || "principal"];
+      const multiplos = alvos.length > 1;
 
       const nowIso = new Date().toISOString();
-      const currentEtapa = Number(lead.etapa || 1);
-      const nextEtapa = Math.max(currentEtapa, 5);
+      const assinados: Array<{ id: string; tipo: string; titulo: string; valorTotal: number }> = [];
 
-      const payload: Record<string, any> = {
-        contratoAssinado: true,
-        contratoAssinadoData: nowIso,
-        contratoAssinadoIp: ip,
-        contratoAssinadoNome: nome,
-        contratoAssinadoCpf: cpf,
-        contratoAssinadoDispositivo: dispositivo,
-        contratoAssinadoDesenho: assinatura,
-      };
-
-      if (nextEtapa !== currentEtapa) {
-        const historyItem = {
-          data: nowIso,
-          etapaAnterior: currentEtapa,
-          etapaNova: nextEtapa,
-          autor: "Cliente (Assinatura Digital)",
-          detalhes: `Contrato ${lead.planoEscolhido || lead.modeloContratacao} assinado digitalmente via link público.`,
-        };
-        payload.etapa = nextEtapa;
-        payload.historicoEtapas = Array.isArray(lead.historicoEtapas)
-          ? [...lead.historicoEtapas, historyItem]
-          : [historyItem];
+      class AssinaturaErro extends Error {
+        status: number;
+        constructor(status: number, message: string) {
+          super(message);
+          this.status = status;
+        }
       }
 
-      await patchDocRest(`leads/${leadId}`, payload);
+      const assinarDocumento = async (alvo: string) => {
+        // Documento derivado automaticamente dos serviços do Passo 3
+        if (alvo === "avulso_auto" || alvo === "aditivo_auto") {
+          const leadAuto = await getDocRest(`leads/${leadId}`);
+          if (!leadAuto) throw new AssinaturaErro(404, "Contrato não encontrado.");
+
+          const assinadosAuto = await listContratosAssinados(leadId);
+          const derivado = await derivarDocumentoPendente(leadAuto, assinadosAuto);
+          if (!derivado) {
+            if (multiplos) return;
+            throw new AssinaturaErro(409, "Não há serviços pendentes de contratação.");
+          }
+
+          const socio = Array.isArray(leadAuto.socios) && leadAuto.socios.length > 0 ? leadAuto.socios[0] : null;
+          const novoContrato: Record<string, any> = cleanForFirestore({
+            leadId,
+            tipo: derivado.tipo,
+            status: "assinado",
+            servicos: derivado.servicos,
+            valorTotal: Number(derivado.valorTotal || 0),
+            contratoOrigemId: derivado.contratoOrigemId || null,
+            contratoOrigemData: derivado.contratoOrigemData || null,
+            cliente: {
+              razaoSocial: leadAuto.nomeEmpresa || leadAuto.razaoSocial || "",
+              cnpj: leadAuto.cnpj || "",
+              endereco: [leadAuto.endereco, leadAuto.cidade, leadAuto.uf || leadAuto.estado]
+                .filter(Boolean)
+                .join(", "),
+              representante: socio?.nome || leadAuto.nomeContato || leadAuto.nome || "",
+              representanteCpf: socio?.cpf || leadAuto.cpf || "",
+            },
+            dataCriacao: nowIso,
+            assinaturaNome: nome,
+            assinaturaCpf: cpf,
+            assinaturaData: nowIso,
+            assinaturaIp: ip,
+            assinaturaDispositivo: dispositivo,
+            assinaturaDesenho: assinatura,
+          });
+
+          const criado = await createDocRest("contratos", novoContrato);
+
+          assinados.push({
+            id: (criado as any)?.id || alvo,
+            tipo: derivado.tipo,
+            titulo: derivado.tipo === "aditivo" ? "Termo Aditivo" : "Contrato Avulso de Serviços",
+            valorTotal: Number(derivado.valorTotal || 0),
+          });
+          return;
+        }
+
+        if (alvo && alvo !== "principal") {
+          const contrato = await getDocRest(`contratos/${alvo}`);
+          if (!contrato || String(contrato.leadId || "") !== leadId) {
+            if (multiplos) return;
+            throw new AssinaturaErro(404, "Contrato não encontrado.");
+          }
+          if (contrato.status === "assinado") {
+            if (multiplos) return;
+            throw new AssinaturaErro(409, "Este contrato já foi assinado.");
+          }
+          if (contrato.status !== "aguardando_assinatura") {
+            if (multiplos) return;
+            throw new AssinaturaErro(409, "Este contrato ainda não está disponível para assinatura.");
+          }
+
+          await patchDocRest(`contratos/${alvo}`, {
+            status: "assinado",
+            assinaturaNome: nome,
+            assinaturaCpf: cpf,
+            assinaturaData: nowIso,
+            assinaturaIp: ip,
+            assinaturaDispositivo: dispositivo,
+            assinaturaDesenho: assinatura,
+          });
+
+          assinados.push({
+            id: alvo,
+            tipo: String(contrato.tipo || "avulso"),
+            titulo: contrato.tipo === "aditivo" ? "Termo Aditivo" : "Contrato Avulso de Serviços",
+            valorTotal: Number(contrato.valorTotal || 0),
+          });
+          return;
+        }
+
+        // Documento principal (assessoria mensal ou avulso do lead)
+        const lead = await getDocRest(`leads/${leadId}`);
+        if (!lead || !lead.modeloContratacao) {
+          if (multiplos) return;
+          throw new AssinaturaErro(404, "Contrato não encontrado.");
+        }
+        if (lead.contratoAssinado) {
+          if (multiplos) return;
+          throw new AssinaturaErro(409, "Este contrato já foi assinado.");
+        }
+
+        const currentEtapa = Number(lead.etapa || 1);
+        const nextEtapa = Math.max(currentEtapa, 5);
+
+        const payload: Record<string, any> = {
+          contratoAssinado: true,
+          contratoAssinadoData: nowIso,
+          contratoAssinadoIp: ip,
+          contratoAssinadoNome: nome,
+          contratoAssinadoCpf: cpf,
+          contratoAssinadoDispositivo: dispositivo,
+          contratoAssinadoDesenho: assinatura,
+        };
+
+        if (nextEtapa !== currentEtapa) {
+          const historyItem = {
+            data: nowIso,
+            etapaAnterior: currentEtapa,
+            etapaNova: nextEtapa,
+            autor: "Cliente (Assinatura Digital)",
+            detalhes: `Contrato ${lead.planoEscolhido || lead.modeloContratacao} assinado digitalmente via link público.`,
+          };
+          payload.etapa = nextEtapa;
+          payload.historicoEtapas = Array.isArray(lead.historicoEtapas)
+            ? [...lead.historicoEtapas, historyItem]
+            : [historyItem];
+        }
+
+        await patchDocRest(`leads/${leadId}`, payload);
+
+        assinados.push({
+          id: "principal",
+          tipo: "principal",
+          titulo: `Contrato ${lead.planoEscolhido || lead.modeloContratacao}`,
+          valorTotal: Number(lead.valorMensalidade || 0),
+        });
+      };
 
       try {
+        for (const alvo of alvos) {
+          await assinarDocumento(alvo);
+        }
+      } catch (assErr: any) {
+        if (assErr instanceof AssinaturaErro) {
+          return res.status(assErr.status).json({ error: assErr.message });
+        }
+        throw assErr;
+      }
+
+      if (assinados.length === 0) {
+        return res.status(409).json({ error: "Nenhum documento pendente de assinatura." });
+      }
+
+      try {
+        const leadDoc = await getDocRest(`leads/${leadId}`);
+        const nomeCliente = leadDoc?.nomeEmpresa || leadDoc?.razaoSocial || leadId;
         await createDocRest("notificacoes", {
           recipientId: "admin",
           recipientType: "admin",
-          titulo: "Novo contrato assinado",
-          mensagem: `Novo contrato assinado: ${lead.nomeEmpresa || lead.razaoSocial || leadId} — ${lead.planoEscolhido || lead.modeloContratacao}. Gere o link de cobrança (InfinitePay) para prosseguir.`,
+          titulo: assinados.length > 1 ? "Documentos assinados pelo cliente" : "Novo contrato assinado",
+          mensagem: `${nomeCliente} assinou: ${assinados.map((d) => d.titulo).join(", ")}.`,
           tipo: "success",
           lida: false,
           leadId,
           dataCriacao: nowIso,
         });
       } catch (notifErr: any) {
-        console.error("Falha ao notificar contrato assinado:", notifErr?.message || notifErr);
+        console.error("Falha ao notificar assinatura de contrato:", notifErr?.message || notifErr);
       }
 
       return res.json({
         success: true,
+        assinados: assinados.map((d) => ({ id: d.id, tipo: d.tipo })),
+        contratoId: assinados.find((d) => d.id !== "principal")?.id || undefined,
         registro: { nome, cpf, data: nowIso, ip, dispositivo },
       });
     } catch (err: any) {
