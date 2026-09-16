@@ -3392,7 +3392,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 )}
               </div>
 
-              <ContratosAvulsosPanel lead={lead} catalogServices={catalogServices} />
+              <ContratosAssinadosResumo lead={lead} />
 
 
 
