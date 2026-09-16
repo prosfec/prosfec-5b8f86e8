@@ -458,6 +458,12 @@ function ContratoPublicoPage() {
               <SignaturePad onSave={(data: string) => setAssinatura(data)} onClear={() => setAssinatura("")} />
             </div>
 
+            {!todosLidos && (
+              <p className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                Abra e confirme a leitura de todos os documentos para assinar.
+              </p>
+            )}
+
             {formErro && (
               <p className="text-xs font-semibold text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                 {formErro}
@@ -467,12 +473,17 @@ function ContratoPublicoPage() {
             <button
               type="button"
               onClick={handleAssinar}
-              disabled={enviando}
-              className="w-full px-4 py-3 rounded-lg bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-60 text-white text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
+              disabled={enviando || !todosLidos}
+              className="w-full px-4 py-3 rounded-lg bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               {enviando ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-              {enviando ? "Registrando assinatura..." : "Assinar contrato"}
+              {enviando
+                ? "Registrando assinatura..."
+                : pendentes.length > 1
+                  ? `Assinar todos os documentos (${pendentes.length})`
+                  : "Assinar contrato"}
             </button>
+
           </section>
         )}
       </div>
