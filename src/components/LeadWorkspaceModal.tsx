@@ -570,6 +570,7 @@ export default function LeadWorkspaceModal({
       const docRef = doc(db, "leads", lead.id);
       await updateDoc(docRef, cleanForFirestore(payload));
       setAptoMesaCredito(novo);
+      setAptoMesaCreditoData(payload.aptoMesaCreditoData || null);
       setWorkspaceSuccess(
         novo
           ? "Lead marcado como apto para iniciar a análise de crédito bancária!"
@@ -4089,9 +4090,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                   <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
                                     A estrutura da empresa está em conformidade e pronta para iniciar na mesa de crédito após o recolhimento das documentações.
                                   </p>
-                                  {(lead as any).aptoMesaCreditoData && (
+                                  {aptoMesaCreditoData && (
                                     <span className="text-[10px] text-emerald-200/70 font-bold uppercase tracking-wider block pt-1">
-                                      Confirmado em {new Date((lead as any).aptoMesaCreditoData).toLocaleDateString("pt-BR")}
+                                      Confirmado em {new Date(aptoMesaCreditoData).toLocaleDateString("pt-BR")}
                                     </span>
                                   )}
                                 </div>
