@@ -185,6 +185,17 @@ function ContratoPublicoPage() {
   const isAvulso = String(contrato?.modeloContratacao || "").toLowerCase() === "avulso";
   const tipoDoc = String(docAtual?.tipo || (isAvulso ? "principal_avulso" : "assessoria"));
   const isPrincipal = tipoDoc === "principal_avulso" || tipoDoc === "assessoria";
+  const recibo =
+    registro ||
+    (docAtual?.assinado
+      ? {
+          nome: docAtual.assinaturaNome,
+          cpf: docAtual.assinaturaCpf,
+          data: docAtual.assinaturaData,
+          ip: docAtual.assinaturaIp,
+          dispositivo: docAtual.assinaturaDispositivo,
+        }
+      : null);
 
   return (
     <main className="min-h-screen bg-slate-50 py-10 px-4">
