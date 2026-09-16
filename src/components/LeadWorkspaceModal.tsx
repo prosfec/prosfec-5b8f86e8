@@ -551,6 +551,7 @@ export default function LeadWorkspaceModal({
   };
 
   const [aptoMesaCredito, setAptoMesaCredito] = useState<boolean>(() => (lead as any).aptoMesaCredito === true);
+  const [aptoMesaCreditoData, setAptoMesaCreditoData] = useState<string | null>(() => (lead as any).aptoMesaCreditoData || null);
   const [savingAptoMesa, setSavingAptoMesa] = useState(false);
 
   const handleToggleAptoMesaCredito = async () => {
