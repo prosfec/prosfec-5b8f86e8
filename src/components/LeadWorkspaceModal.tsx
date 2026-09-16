@@ -550,7 +550,40 @@ export default function LeadWorkspaceModal({
     }
   };
 
-  // Sub-etapas do Passo 6 (Checklist de Estruturação)
+  const [aptoMesaCredito, setAptoMesaCredito] = useState<boolean>(() => (lead as any).aptoMesaCredito === true);
+  const [savingAptoMesa, setSavingAptoMesa] = useState(false);
+
+  const handleToggleAptoMesaCredito = async () => {
+    if (!isAdminUser) return;
+    const novo = !aptoMesaCredito;
+    setSavingAptoMesa(true);
+    setWorkspaceError(null);
+    try {
+      const payload: any = novo
+        ? {
+            aptoMesaCredito: true,
+            aptoMesaCreditoData: new Date().toISOString(),
+            aptoMesaCreditoPor: "Equipe PROSFEC",
+          }
+        : { aptoMesaCredito: false, aptoMesaCreditoData: null, aptoMesaCreditoPor: null };
+      const docRef = doc(db, "leads", lead.id);
+      await updateDoc(docRef, cleanForFirestore(payload));
+      setAptoMesaCredito(novo);
+      setWorkspaceSuccess(
+        novo
+          ? "Lead marcado como apto para iniciar a análise de crédito bancária!"
+          : "Aptidão para mesa de crédito removida."
+      );
+      safeRefreshLeads();
+      onLeadUpdated?.({ ...lead, ...payload });
+    } catch (err: any) {
+      console.error("Erro ao atualizar aptidão:", err);
+      setWorkspaceError("Erro ao atualizar aptidão: " + (err?.message || ""));
+    } finally {
+      setSavingAptoMesa(false);
+    }
+  };
+
   const getInitialSubEtapasPasso6 = () => {
     const servs = (lead as any).servicosRecomendados || [];
     const existingList = Array.isArray((lead as any).subEtapasPasso6) ? (lead as any).subEtapasPasso6 : [];
