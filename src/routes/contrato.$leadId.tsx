@@ -96,13 +96,22 @@ function ContratoPublicoPage() {
     [documentos, docSelecionadoId]
   );
 
-  // Sempre que o documento selecionado muda, o formulário volta ao estado inicial.
+  const pendentes = useMemo(() => documentos.filter((d) => !d.assinado), [documentos]);
+  const todosLidos = useMemo(
+    () => pendentes.length > 0 && pendentes.every((d) => lidos.includes(String(d.id))),
+    [pendentes, lidos]
+  );
+  const docAtualLido = !!docAtual && lidos.includes(String(docAtual.id));
+
+  // Quando não há mais documentos pendentes, a tela mostra o recibo.
   useEffect(() => {
-    setAssinatura("");
-    setFormErro(null);
-    setRegistro(null);
-    setConcluido(!!docAtual?.assinado);
-  }, [docSelecionadoId, docAtual?.assinado]);
+    if (documentos.length > 0 && pendentes.length === 0) setConcluido(true);
+  }, [documentos.length, pendentes.length]);
+
+  const marcarLeitura = (id: string, marcado: boolean) => {
+    setLidos((prev) => (marcado ? Array.from(new Set([...prev, id])) : prev.filter((x) => x !== id)));
+  };
+
 
   const handleAssinar = async () => {
     setFormErro(null);
