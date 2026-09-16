@@ -11,7 +11,7 @@ import { getBankSpecificRules, GOVERNMENT_CREDIT_LINES, validateCreditLineCondit
 import { BankRulesManager } from "../utils/BankRulesManager";
 import { runCreditEngine, calcularParcela } from "../utils/creditEligibilityEngine";
 import { optionalEnv, requireEnv, firstEnv, maskEmail, maskDoc, redact } from "../utils/env";
-import { normalizeMensalidades, DEFAULT_MENSALIDADES, normalizeAssinaturaParceiro, DEFAULT_ASSINATURA_PARCEIRO } from "../utils/serviceUtils";
+import { normalizeMensalidades, DEFAULT_MENSALIDADES, normalizeAssinaturaParceiro, DEFAULT_ASSINATURA_PARCEIRO, normalizeServiceClauses, buildServiceTemplateId, CLAUSULA_GENERICA_AVULSO } from "../utils/serviceUtils";
 
 export function cleanForFirestore<T = any>(obj: T): T {
   if (obj === undefined) return null as any;
