@@ -4068,6 +4068,59 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         </div>
                       </div>
 
+                      {/* Selo — Apto para Mesa de Crédito */}
+                      {(aptoMesaCredito || isAdminUser) && (
+                        <div className="space-y-3">
+                          {aptoMesaCredito && (
+                            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0A3D2E] via-[#0d5240] to-[#00A86B] p-5 sm:p-6 text-white shadow-lg">
+                              <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+                              <div className="relative flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+                                  <Sparkles className="w-6 h-6 text-emerald-200" />
+                                </div>
+                                <div className="min-w-0 space-y-1.5">
+                                  <span className="text-[10px] bg-white/15 border border-white/25 px-2.5 py-0.5 rounded-full font-black uppercase tracking-widest text-emerald-100 inline-block">
+                                    Parabéns
+                                  </span>
+                                  <h4 className="font-display font-extrabold text-base sm:text-lg leading-tight">
+                                    Empresa apta para análise de crédito bancária
+                                  </h4>
+                                  <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+                                    A estrutura da empresa está em conformidade e pronta para iniciar na mesa de crédito após o recolhimento das documentações.
+                                  </p>
+                                  {(lead as any).aptoMesaCreditoData && (
+                                    <span className="text-[10px] text-emerald-200/70 font-bold uppercase tracking-wider block pt-1">
+                                      Confirmado em {new Date((lead as any).aptoMesaCreditoData).toLocaleDateString("pt-BR")}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {isAdminUser && (
+                            <button
+                              type="button"
+                              onClick={handleToggleAptoMesaCredito}
+                              disabled={savingAptoMesa}
+                              className={`w-full sm:w-auto px-4 py-2 text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50 ${
+                                aptoMesaCredito
+                                  ? "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50"
+                                  : "bg-[#0A3D2E] hover:bg-[#00A86B] text-white"
+                              }`}
+                            >
+                              {savingAptoMesa ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : aptoMesaCredito ? (
+                                <X className="w-3.5 h-3.5" />
+                              ) : (
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              )}
+                              {aptoMesaCredito ? "Remover aptidão para mesa de crédito" : "Marcar como Apto para Mesa de Crédito"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+
                       {/* Admin notice banner */}
                       <div className={`p-3 rounded-xl text-xs flex items-center gap-2.5 ${isAdminUser ? "bg-emerald-50 text-emerald-800 border border-emerald-150" : "bg-slate-50 text-slate-600 border border-slate-200"}`}>
                         <ShieldCheck className={`w-4 h-4 shrink-0 ${isAdminUser ? "text-emerald-600" : "text-slate-400"}`} />
