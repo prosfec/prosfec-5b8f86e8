@@ -365,7 +365,22 @@ function ContratoPublicoPage() {
               />
             )}
           </div>
+
+          {docAtual && !docAtual.assinado && (
+            <label className="flex items-start gap-3 border-t border-slate-100 pt-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={docAtualLido}
+                onChange={(e) => marcarLeitura(String(docAtual.id), e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-[#0A3D2E] cursor-pointer"
+              />
+              <span className="text-sm font-semibold text-slate-700">
+                Li e concordo com este documento
+              </span>
+            </label>
+          )}
         </section>
+
 
 
         {concluido ? (
