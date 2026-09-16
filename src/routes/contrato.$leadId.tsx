@@ -227,9 +227,13 @@ function ContratoPublicoPage() {
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Documentos para assinatura
             </p>
+            <p className="text-xs text-slate-500">
+              Abra cada documento, confirme a leitura e assine uma única vez no final da página.
+            </p>
             <div className="space-y-2">
               {documentos.map((d) => {
                 const ativo = String(d.id) === String(docAtual?.id);
+                const lido = lidos.includes(String(d.id));
                 return (
                   <button
                     key={d.id}
@@ -245,12 +249,23 @@ function ContratoPublicoPage() {
                         <span className="block text-xs text-slate-500">{formatBRL(d.valorTotal)}</span>
                       )}
                     </span>
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${
-                        d.assinado ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-                      }`}
-                    >
-                      {d.assinado ? "Assinado" : "Pendente"}
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      {!d.assinado && (
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${
+                            lido ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {lido ? "Lido" : "Não lido"}
+                        </span>
+                      )}
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${
+                          d.assinado ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                        }`}
+                      >
+                        {d.assinado ? "Assinado" : "Pendente"}
+                      </span>
                     </span>
                   </button>
                 );
@@ -258,6 +273,7 @@ function ContratoPublicoPage() {
             </div>
           </section>
         )}
+
 
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
           {isPrincipal ? (
