@@ -62,6 +62,7 @@ function ContratoPublicoPage() {
   const [concluido, setConcluido] = useState(false);
   const [formErro, setFormErro] = useState<string | null>(null);
   const [registro, setRegistro] = useState<any>(null);
+  const [lidos, setLidos] = useState<string[]>([]);
 
   useEffect(() => {
     let ativo = true;
