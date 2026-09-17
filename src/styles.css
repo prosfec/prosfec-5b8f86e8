@@ -637,3 +637,133 @@ select option {
     font-size: 0.875rem;
   }
 }
+
+/* ============================================================
+   Aparência Tecnológica (Dark Mode) — escopo do Painel do Parceiro
+   Somente estético: superfícies, texto, bordas e campos.
+   ============================================================ */
+.dark .soft-ui,
+.dark .soft-ui [class*="bg-slate-50"],
+.dark .soft-ui [class*="bg-slate-100"],
+.dark .soft-ui [class*="bg-white"] {
+  background-color: #020617;
+}
+
+.dark .soft-ui [class*="bg-white"],
+.dark .soft-ui [class*="bg-slate-50"],
+.dark .soft-ui [class*="bg-slate-100"] {
+  background-color: #0f172a;
+  box-shadow: none;
+}
+
+.dark .soft-ui [class*="bg-white"]:not(.soft-nav-item-active),
+.dark .soft-ui [class*="bg-slate-50"]:not(.soft-nav-item-active),
+.dark .soft-ui [class*="bg-slate-100"]:not(.soft-nav-item-active) {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .soft-ui [class*="border-slate-"],
+.dark .soft-ui [class*="border-gray-"],
+.dark .soft-ui [class*="divide-slate-"] {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .soft-ui [class*="shadow-"] {
+  box-shadow: none;
+}
+
+.dark .soft-ui [class*="text-slate-9"],
+.dark .soft-ui [class*="text-slate-8"],
+.dark .soft-ui [class*="text-slate-7"],
+.dark .soft-ui [class*="text-gray-9"],
+.dark .soft-ui [class*="text-gray-8"] {
+  color: #f8fafc;
+}
+
+.dark .soft-ui [class*="text-slate-6"],
+.dark .soft-ui [class*="text-slate-5"],
+.dark .soft-ui [class*="text-gray-6"],
+.dark .soft-ui [class*="text-gray-5"] {
+  color: #94a3b8;
+}
+
+.dark .soft-ui [class*="text-slate-4"],
+.dark .soft-ui [class*="text-slate-3"] {
+  color: #64748b;
+}
+
+/* Sidebar e cabeçalho do painel */
+.dark .soft-ui aside {
+  background-color: #0b1120;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .soft-ui .soft-nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark .soft-ui .soft-nav-item-active {
+  background-color: #059669;
+  color: #ffffff;
+}
+
+/* Botões verdes brilham um pouco mais no escuro */
+.dark .soft-ui [class*="bg-emerald-6"],
+.dark .soft-ui [class*="bg-emerald-7"] {
+  background-color: #10b981;
+}
+
+.dark .soft-ui [class*="bg-emerald-6"]:hover,
+.dark .soft-ui [class*="bg-emerald-7"]:hover {
+  background-color: #34d399;
+}
+
+/* Tonalidades claras de destaque viram vidro escuro */
+.dark .soft-ui [class*="bg-emerald-50"] {
+  background-color: rgba(16, 185, 129, 0.12);
+}
+.dark .soft-ui [class*="bg-amber-50"] {
+  background-color: rgba(245, 158, 11, 0.12);
+}
+.dark .soft-ui [class*="bg-rose-50"],
+.dark .soft-ui [class*="bg-red-50"] {
+  background-color: rgba(244, 63, 94, 0.12);
+}
+.dark .soft-ui [class*="bg-blue-50"],
+.dark .soft-ui [class*="bg-teal-50"],
+.dark .soft-ui [class*="bg-indigo-50"] {
+  background-color: rgba(59, 130, 246, 0.12);
+}
+
+/* Cartões que já são escuros no modo claro ganham halo tecnológico */
+.dark .soft-ui [class*="from-emerald-900"],
+.dark .soft-ui [class*="bg-[#0A3D2E]"],
+.dark .soft-ui [class*="bg-[#02241A]"] {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3), 0 18px 50px -24px rgba(16, 185, 129, 0.35);
+}
+
+/* Campos de formulário */
+.dark .soft-ui input:not([type="checkbox"]):not([type="radio"]),
+.dark .soft-ui select,
+.dark .soft-ui textarea {
+  background-color: #020617 !important;
+  border-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+.dark .soft-ui input::placeholder,
+.dark .soft-ui textarea::placeholder {
+  color: #64748b;
+}
+
+.dark .soft-ui option {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+.dark .soft-ui input:-webkit-autofill,
+.dark .soft-ui input:-webkit-autofill:hover,
+.dark .soft-ui input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px #020617 inset !important;
+}
