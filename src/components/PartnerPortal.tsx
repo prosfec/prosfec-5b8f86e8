@@ -790,7 +790,7 @@ export default function PartnerPortal({
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
   // Aparência (Claro / Tecnológico) — apenas visual, persistida no navegador
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
     try {
@@ -4121,13 +4121,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   );
 
   const renderProfileCard = (
-    <div className="bg-gradient-to-br from-emerald-900 to-slate-900 text-white p-3.5 rounded-xl relative overflow-hidden shadow-[0_18px_40px_-20px_rgba(2,44,34,0.65)] flex flex-col justify-between ring-1 ring-white/10">
+    <div className="bg-gradient-to-br from-emerald-900 to-slate-900 text-white p-3.5 rounded-2xl relative overflow-hidden shadow-[0_18px_40px_-20px_rgba(2,44,34,0.65)] flex flex-col justify-between ring-1 ring-emerald-400/20">
 
       <div className="absolute right-[-30px] top-[-30px] w-28 h-28 rounded-full bg-emerald-500/10 pointer-events-none" />
       <div className="space-y-2 relative z-10">
         <div className="flex items-center justify-between gap-2">
-          <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-500/30">
-            Área do Parceiro
+          <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-500/30 truncate max-w-[70%]" title={currentPartner?.plano || "Área do Parceiro"}>
+            {currentPartner?.plano || "Área do Parceiro"}
           </span>
           <div className="w-7 h-7 rounded-lg bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300 shrink-0">
             <Handshake className="w-4 h-4 text-emerald-300" />
@@ -4247,7 +4247,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         </button>
       )}
 
-      <span className="soft-nav-group-label">Ferramentas</span>
+      <span className="soft-nav-group-label">Financeiro</span>
 
       <button
         onClick={() => { handleTabClick("servicos-contabilidade"); setMobileMenuOpen(false); }}
@@ -4927,7 +4927,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 <div className="max-w-6xl mx-auto space-y-6">
                 {/* Unique Indicator Link Card */}
-                <div className="soft-card bg-white text-slate-800 px-4 py-3 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div className="pf-tool bg-white text-slate-800 px-4 py-3 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                   <div className="flex flex-col lg:flex-row lg:items-center gap-3 relative z-10">
                     <div className="flex items-center gap-2.5 min-w-0 lg:w-[290px] shrink-0">
                       <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600 border border-emerald-100 shrink-0">
@@ -5154,7 +5154,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       <div className="flex flex-col gap-3">
                         {/* LINHA 1: Quick Metrics Grid (secundárias) */}
                         <div className="order-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                          <div className="pf-mini bg-white p-3.5 rounded-xl border border-slate-100/50 flex items-center gap-3 relative overflow-hidden min-w-0">
                             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
                               <Users className="w-4 h-4" />
                             </div>
@@ -5165,7 +5165,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
                           </div>
 
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                          <div className="pf-mini bg-white p-3.5 rounded-xl border border-slate-100/50 flex items-center gap-3 relative overflow-hidden min-w-0">
                             <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100/60 flex items-center justify-center shrink-0">
                               <RefreshCw className="w-4 h-4" />
                             </div>
@@ -5178,7 +5178,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
                           </div>
 
-                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                          <div className="pf-hero bg-white p-3.5 rounded-xl border border-slate-100/50 flex items-center gap-3 relative overflow-hidden min-w-0">
                             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
                               <CheckCircle2 className="w-4 h-4" />
                             </div>
@@ -5198,7 +5198,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {/* LINHA 2: Saldos + Comissões (cockpit em 3 colunas) */}
                         <div className="order-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-left">
                           {/* Saldo Geral (Consultas e Serviços) */}
-                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5 relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                          <div className="pf-hero bg-white p-3.5 rounded-xl border border-slate-100/50 flex flex-col justify-between gap-2.5 relative overflow-hidden">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
 
@@ -5241,7 +5241,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Saldo Painel de Oportunidade (buscas) */}
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5 relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                          <div className="pf-mini bg-white p-3.5 rounded-xl border border-slate-100/50 flex flex-col justify-between gap-2.5 relative overflow-hidden">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-700 ring-1 ring-teal-100/60 flex items-center justify-center shrink-0">
 
@@ -5294,7 +5294,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Comissões & Repasses */}
-                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col justify-between gap-2.5 transition-all duration-300 hover:shadow-md md:col-span-2 lg:col-span-1">
+                          <div className="pf-hero bg-white p-3.5 rounded-xl border border-slate-100/50 relative overflow-hidden flex flex-col justify-between gap-2.5 md:col-span-2 lg:col-span-1">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-emerald-50 ring-1 ring-emerald-100/60 flex items-center justify-center text-emerald-600 shrink-0">
                                 <Coins className="w-4 h-4 text-emerald-600" />
@@ -5346,7 +5346,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   {(() => {
                     if (!precosCarregados) {
                       return (
-                        <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
                           <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                             <div className="p-2.5 bg-emerald-50 text-[#00A86B] rounded-xl border border-emerald-100 shrink-0">
                               <Receipt className="w-5 h-5" />
@@ -5720,7 +5720,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     });
 
                     return (
-                      <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
+                      <div className="pf-panel bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
                         {/* Section Header */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                           <div className="flex items-start sm:items-center gap-3">
@@ -6459,7 +6459,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </div>
 
                     {/* Quick CRM View */}
-                    <div className="lg:col-span-7 bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between">
+                    <div className="pf-panel lg:col-span-7 bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between">
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -6486,15 +6486,23 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <p>Divulgue seu link para começar a receber comissões!</p>
                           </div>
                         ) : (
-                          <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto pr-1">
+                          <div className="pf-list max-h-60 overflow-y-auto pr-1">
                             {leads.slice(0, 4).map(lead => (
-                              <div key={lead.id} className="py-3 flex items-center justify-between text-xs">
-                                <div>
-                                  <span className="font-bold text-slate-900 block truncate max-w-xs">{lead.nome}</span>
-                                  <span className="text-[11px] text-slate-400 font-mono block mt-0.5">{lead.cnpj || "CPF/CNPJ sob consulta"}</span>
+                              <div key={lead.id} className="pf-row py-2.5 px-2 -mx-2 rounded-lg flex items-center justify-between gap-3 text-xs">
+                                <div className="min-w-0 flex items-center gap-2.5">
+                                  <span className="w-7 h-7 rounded-lg bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center text-[11px] font-extrabold shrink-0">
+                                    {(lead.nome || "?").trim().charAt(0).toUpperCase()}
+                                  </span>
+                                  <div className="min-w-0">
+                                    <span className="font-bold text-slate-900 block truncate max-w-[14rem]">{lead.nome}</span>
+                                    <span className="text-[11px] text-slate-400 font-mono block mt-0.5 truncate">
+                                      {lead.cnpj || "CPF/CNPJ sob consulta"}
+                                      {lead.etapa ? ` · Etapa ${lead.etapa}` : ""}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="text-right">
-                                  <span className="font-bold font-mono text-[#0A3D2E] block">{lead.limiteEstimated ? formatCurrencyBRL(lead.limiteEstimated) : (lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Consulta")}</span>
+                                <div className="text-right shrink-0">
+                                  <span className="font-extrabold font-mono text-[#0A3D2E] block tabular-nums">{lead.limiteEstimated ? formatCurrencyBRL(lead.limiteEstimated) : (lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Consulta")}</span>
                                   <span className={`inline-block text-[10px] uppercase font-bold px-2 py-0.5 rounded-md mt-0.5 ${
                                     lead.status === "concluido" ? "bg-emerald-50 text-[#00A86B] border border-emerald-200" :
                                     lead.status === "em atendimento" ? "bg-amber-50 text-amber-700 border border-amber-200" :
@@ -6523,7 +6531,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-5 sm:p-6 space-y-5 text-left"
+                  className="pf-panel bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-5 sm:p-6 space-y-5 text-left"
                 >
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
@@ -6806,7 +6814,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           const directCommissionValue = (lead.valorAprovado || lead.limiteEstimado || 0) * getDirectCommissionMultiplier(currentPartner?.plano);
                           
                           return (
-                            <div key={lead.id} className="bg-white/75 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                            <div key={lead.id} className="pf-panel bg-white/75 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                               {/* Header: Date & Status Badge */}
                               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                                 <span className="text-xs text-slate-500 font-mono flex items-center gap-1.5">
@@ -7294,7 +7302,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-6 text-left"
+                  className="pf-panel bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-6 text-left"
                 >
                   {currentPartner && getSubscriptionStatus(currentPartner).status === "vencida" ? (
                     /* Locked View */
@@ -8551,7 +8559,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-4 text-left max-w-4xl mx-auto"
+                  className="pf-panel bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-4 text-left max-w-4xl mx-auto"
                 >
                   <h3 className="font-display font-extrabold text-base text-slate-800">Contrato de Credenciamento e Parceria Comercial</h3>
                   <p className="text-xs text-slate-500">Abaixo constam as regras normativas aceitas em ambiente seguro no momento da criação do cadastro.</p>
@@ -8589,7 +8597,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 md:p-8 space-y-6 text-left max-w-4xl mx-auto"
+                  className="pf-panel bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 md:p-8 space-y-6 text-left max-w-4xl mx-auto"
                 >
                   <div className="border-b border-slate-100 pb-4">
                     <h3 className="font-display font-black text-xl text-slate-800 flex items-center gap-2">
@@ -8864,7 +8872,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     const inactiveCount = teamMembers.length - activeCount;
 
                     return (
-                      <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
+                      <div className="pf-panel bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
                         {/* Header with quick stats and toggle button */}
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                           <div className="flex items-center gap-3">
@@ -9214,7 +9222,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     });
 
                     return (
-                      <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
+                      <div className="pf-panel bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
                         {/* Header with summary and toggle */}
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                           <div className="flex items-center gap-3">
@@ -9504,12 +9512,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     return (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 p-5 rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                          <div className="pf-panel bg-white/75 backdrop-blur-xl border border-slate-200/80 p-5 rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                             <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Total de Indicados</span>
                             <span className="text-2xl font-black text-slate-800 block mt-1">{totalAffiliates}</span>
                             <span className="text-[10px] text-slate-400 block mt-1">Parceiros que utilizaram seu link</span>
                           </div>
-                          <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 p-5 rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                          <div className="pf-panel bg-white/75 backdrop-blur-xl border border-slate-200/80 p-5 rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                             <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Assinantes Ativos</span>
                             <span className="text-2xl font-black text-emerald-800 block mt-1">
                               {affiliateStats.activeCount} <span className="text-xs text-slate-400 font-medium">de {totalAffiliates}</span>
@@ -9537,7 +9545,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
 
                         {/* Affiliates List */}
-                        <div className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] overflow-hidden">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] overflow-hidden">
                           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                             <span className="font-display font-extrabold text-sm text-slate-800">Parceiros Cadastrados ({referredPartners.length})</span>
                             <button 
@@ -9688,7 +9696,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* Controls Column */}
-                    <div className="lg:col-span-5 bg-white/75 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-5">
+                    <div className="pf-panel lg:col-span-5 bg-white/75 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-5">
                       <h4 className="font-display font-extrabold text-sm text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">
                         Parâmetros do Financiamento
                       </h4>
@@ -9906,25 +9914,25 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                       {/* Stat Metrics Grid */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Prazo Total</span>
                           <strong className="text-sm text-slate-800 font-extrabold">{advCarencia + advPrazoAmortizacao} meses</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5">{advCarencia} car. + {advPrazoAmortizacao} amort.</span>
                         </div>
 
-                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Total de Juros</span>
                           <strong className="text-sm text-emerald-800 font-extrabold">{formatCurrencyBRL(calculateSchedule().totalJuros)}</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5 font-mono">Custo do capital</span>
                         </div>
 
-                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Parcela Inicial</span>
                           <strong className="text-sm text-[#0A3D2E] font-extrabold">{formatCurrencyBRL(calculateSchedule().parcelaInicial)}</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5 font-mono">Mes 1 de amortiz.</span>
                         </div>
 
-                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Parcela Final</span>
                           <strong className="text-sm text-slate-700 font-extrabold">{formatCurrencyBRL(calculateSchedule().parcelaFinal)}</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5 font-mono font-mono">Ultimo mes</span>
@@ -9949,7 +9957,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       </div>
 
                       {/* Detailed schedule list */}
-                      <div className="bg-white/75 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-3">
+                      <div className="pf-panel bg-white/75 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                           <h5 className="font-display font-extrabold text-sm text-slate-800">Tabela de Amortização Projetada</h5>
                           <span className="text-[10px] text-slate-400 font-bold">Total: {calculateSchedule().rows.length} meses</span>
@@ -10457,7 +10465,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl p-6 max-w-md w-full max-h-[88vh] overflow-y-auto md:max-h-none shadow-xl border border-slate-100 space-y-4 text-left"
+            className="pf-modal bg-white rounded-t-3xl rounded-b-none md:rounded-3xl p-6 max-w-md w-full max-h-[88vh] overflow-y-auto md:max-h-none shadow-xl border border-slate-100 space-y-4 text-left"
           >
             <div className="flex justify-between items-start">
               <div>
@@ -10526,7 +10534,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-lg w-full max-h-[88vh] md:max-h-none shadow-2xl border border-slate-100 flex flex-col text-left"
+            className="pf-modal bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-lg w-full max-h-[88vh] md:max-h-none shadow-2xl border border-slate-100 flex flex-col text-left"
           >
             {/* Header / Banner Image */}
             {currentAnnouncementShow.imagemUrl ? (
@@ -10622,7 +10630,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-y-auto max-w-md w-full max-h-[88vh] md:max-h-none shadow-2xl border border-slate-100 p-6 space-y-4 text-left"
+            className="pf-modal bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-y-auto max-w-md w-full max-h-[88vh] md:max-h-none shadow-2xl border border-slate-100 p-6 space-y-4 text-left"
           >
             <div className="flex justify-between items-start">
               <div>
@@ -10693,7 +10701,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-2xl w-full my-0 md:my-8 text-left shadow-2xl border border-slate-100"
+            className="pf-modal bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-2xl w-full my-0 md:my-8 text-left shadow-2xl border border-slate-100"
           >
             {/* Header */}
             <div className="bg-[#0A3D2E] p-6 text-white flex justify-between items-start">
@@ -10815,7 +10823,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-4xl w-full my-0 md:my-8 text-left relative shadow-2xl border border-slate-100"
+            className="pf-modal bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-4xl w-full my-0 md:my-8 text-left relative shadow-2xl border border-slate-100"
           >
             <div className="p-5 md:p-6 bg-[#0A3D2E] text-white flex justify-between items-center border-b border-emerald-800/40">
               <div className="flex items-center gap-3">
@@ -10856,7 +10864,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       {/* CONSULTANT CAÇA-LEADS INSPECTION MODAL */}
       {selectedConsultantForInspection && (
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 lg:p-6 animate-fade-in overflow-y-auto">
-          <div className="bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-0 md:my-auto max-h-[88vh] md:max-h-[90vh] flex flex-col text-left">
+          <div className="pf-modal bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-0 md:my-auto max-h-[88vh] md:max-h-[90vh] flex flex-col text-left">
             {/* Modal Header */}
             <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
@@ -11168,7 +11176,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       {/* INDIVIDUAL LEAD REDIRECTION MODAL */}
       {leadToReassign && (
         <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
-          <div className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-md w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
+          <div className="pf-modal bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-md w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-indigo-700">
                 <ArrowRightLeft className="w-5 h-5" />
@@ -11271,7 +11279,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       {/* BULK PORTFOLIO TRANSFER MODAL */}
       {bulkReassignConsultantSource && (
         <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
-          <div className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-md w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
+          <div className="pf-modal bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-md w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-indigo-700">
                 <ArrowRightLeft className="w-5 h-5" />
@@ -11411,7 +11419,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       {/* MODAL SOLICITAR COMISSÃO */}
       {showCommissionPayoutModal && (
         <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
-          <div className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-lg w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
+          <div className="pf-modal bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-lg w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-emerald-800">
                 <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-200/70">
@@ -11754,7 +11762,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh] md:max-h-[90vh]"
+            className="pf-modal bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh] md:max-h-[90vh]"
           >
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-3 bg-gradient-to-br from-slate-50 to-emerald-50/30">
@@ -12081,7 +12089,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh] md:max-h-[90vh]"
+            className="pf-modal bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh] md:max-h-[90vh]"
           >
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-3 bg-gradient-to-br from-slate-50 to-emerald-50/30">

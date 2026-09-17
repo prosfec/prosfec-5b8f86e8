@@ -1,103 +1,86 @@
 # Redesign Fintech Premium — Portal do Parceiro PROSFEC
 
-Objetivo: o portal deixa de parecer painel administrativo e passa a parecer uma plataforma financeira PROSFEC. Mudança 100% visual, nos dois temas (Claro e Tecnológico), cobrindo o portal inteiro em etapas.
+## Por que o redesign anterior quase não apareceu
 
-Identidade: verde/teal PROSFEC como destaque, cinza-chumbo e branco para hierarquia, Sora nos títulos e Manrope no texto (já usados). Glow apenas onde faz sentido; nada de neon ou amarelo.
+A auditoria do código mostra a causa, e ela não é falta de estilos:
 
-## 1. Componentes principais envolvidos
+1. Cada bloco do portal carrega a aparência escrita diretamente no próprio elemento (fundo branco, texto escuro, borda cinza, sombra e arredondamento fixos, um a um). As regras premium criadas antes foram escritas como ajustes gerais por fora e, na prática, quase sempre perdem para o que está escrito no elemento — sobrou apenas uma diferença sutil de borda e sombra.
+2. As classes premium foram aplicadas em pouquíssimos pontos (menu lateral, topo, cartão do link e três cartões). Todo o resto do painel — cartão do parceiro, funil, leads recentes, Passo 6, comissões, tabelas, abas e janelas — continuou com a aparência antiga.
+3. A estrutura (a ordem e o tamanho dos blocos) não mudou. Sem mudar composição e hierarquia, trocar tom de cinza não muda a percepção.
 
-- Casca do portal: sidebar, cabeçalho, área de conteúdo.
-- Cartão de identidade do parceiro.
-- Cartões de métrica: Total Indicados, Em Atendimento, Crédito Aprovado Real, Saldo Geral, Saldo do Painel de Oportunidade, Comissões & Repasses.
-- Link exclusivo de indicação.
-- Funil de conversão e lista de leads recentes.
-- Passo 6 (Desempenho & Controle Financeiro de Serviços): totais, filtros, busca, linhas de cliente, detalhes.
-- Abas: Funil Kanban Vendas, Painel de Oportunidade, serviços, equipe, perfil.
-- Modais: Adicionar Saldo, Recarga, Solicitar Comissão, Ficha do Lead.
+Conclusão: a correção exige reescrever a aparência dentro dos blocos, e não acrescentar mais regras gerais.
 
-## 2. Arquivos alterados
+## O que será feito
 
-- `src/styles.css` — camada de estilo do portal (tokens, utilitárias `soft-*`, bloco do tema escuro).
-- `src/components/PartnerPortal.tsx` — apenas classes de estilo e agrupamento visual de blocos já existentes.
+Reconstrução visual do Portal do Parceiro inteiro, em tema escuro premium como padrão (o botão "Aparência" continua alternando para o claro, que permanece coerente), mantendo a densidade compacta atual.
 
-Nenhum outro arquivo é tocado.
+Nada de lógica muda: dados, cálculos, comissões, pagamentos, rotas, consultas e permissões ficam exatamente como estão.
 
-## 3. O que é reutilizado
+### 1. Base do tema
 
-Utilitárias existentes `soft-card`, `soft-nav-item`, `soft-btn`, `soft-btn-primary`, `soft-field`, `soft-badge`; ícones lucide já importados; grid, breakpoints e padrões de modal atuais; a variante `dark` já existente. Nenhum design system paralelo é criado — as utilitárias atuais são evoluídas.
+- O portal passa a abrir no visual escuro; a preferência salva do usuário continua respeitada.
+- Superfícies: fundo preto-grafite, cartões chumbo com borda finíssima, verde PROSFEC para positivo, âmbar/vermelho apenas para status. Sem amarelo, sem neon exagerado.
+- Um conjunto pequeno de estilos de bloco (cartão, cartão-destaque, painel, linha de lista, rótulo, valor, faixa de status) usado por todos os blocos, para que a aparência pare de ser escrita elemento a elemento.
 
-## 4. Estrutura visual proposta
+### 2. Menu lateral
 
-```text
-┌───────────────┬──────────────────────────────────────────┐
-│ LOGO PROSFEC  │ Header: saudação + status + ações        │
-│ Identity Card ├──────────────────────────────────────────┤
-│ OPERAÇÃO      │ [Crédito Aprovado] [Comissões] [Saldo]   │  métricas principais
-│  Dashboard    │ [Indicados] [Atendimento] [Consultas]    │  métricas secundárias
-│  Funil        ├──────────────────────────────────────────┤
-│ FINANCEIRO    │ Funil de conversão (barra segmentada)    │
-│  ...          ├──────────────────────────────────────────┤
-│ FERRAMENTAS   │ Link de indicação (card comercial)       │
-│  ...          ├──────────────────────────────────────────┤
-│ ── ações ──   │ Passo 6 — painel de controle financeiro  │
-│ Sair / Tema   │ Leads recentes (lista operacional)       │
-└───────────────┴──────────────────────────────────────────┘
-```
+Logo, identidade do parceiro e grupos: OPERAÇÃO (Dashboard, Funil Kanban Vendas, Painel de Oportunidade, Minha Equipe quando houver), FINANCEIRO (Serviços Contábeis, Controle de Serviços), CONTA (Meu Perfil, Contrato de Parceria) e, no rodapé, Aparência, Voltar ao Site e Sair. Item ativo com fundo verde translúcido, borda sutil, indicador lateral e ícone destacado. Nenhum destino de link muda.
 
-## 5. Sidebar
+### 3. Topo
 
-Fundo escuro nos dois temas (mantém o caráter de produto financeiro), logo PROSFEC no topo, Partner Identity Card logo abaixo, navegação agrupada por seções com rótulos discretos (Operação, Financeiro, Ferramentas), ícones lucide, item ativo com faixa verde sutil e barra indicadora à esquerda, e uma divisória clara separando navegação das ações secundárias (Aparência, Voltar ao Site, Sair).
+Barra tipo terminal financeiro: saudação e nome, código do parceiro, selo de status e as ações atuais, com mais respiro e contraste.
 
-## 6. Header
+### 4. Cartão de identidade do parceiro
 
-Faixa superior com saudação em Sora, nome/código do parceiro, selo de status da conta e as ações rápidas já existentes alinhadas à direita; borda inferior finíssima e fundo levemente translúcido ao rolar.
+Nome, empresa, plano, código e status em um cartão premium com selo de nível, em vez do bloco administrativo atual.
 
-## 7. Novo padrão dos cards
+### 5. Métricas financeiras
 
-Bordas de 1px translúcidas, cantos amplos, profundidade discreta, respiro interno maior. Cada card: caixinha de ícone, rótulo pequeno em maiúsculas, número grande em Sora com tabular numbers, selo de status e microtexto de contexto. Hover eleva levemente e acende a borda em verde.
+- Primeiro nível, em destaque: Crédito Aprovado Real, Comissões & Repasses, Saldo Disponível — número grande, rótulo pequeno, ícone, microtexto e leve brilho verde.
+- Segundo nível, discreto: Total Indicados, Em Atendimento, Consultas e Buscas.
+- Nenhuma métrica nova; só os dados que já existem.
 
-Hierarquia: Crédito Aprovado, Comissões e Saldo Disponível ganham cards maiores, número em destaque e leve halo verde; leads, atendimento, buscas e consultas ficam em cards compactos de segunda linha.
+### 6. Link de indicação
 
-## 8. Passo 6
+Vira ferramenta comercial: título, descrição, URL em destaque, botão copiar, status de afiliação e o QR Code caso já exista hoje.
 
-Vira o bloco de maior peso da tela: cabeçalho próprio com título, sincronizar e controles "Todos os detalhes / Recolher" (comportamento atual preservado); faixa de totais em destaque (pendentes, pagos, repasses, comissão, saldo disponível); filtros e busca em barra própria; lista de clientes em linhas de extrato, com valores em fonte tabular, selos de status muito legíveis e detalhes expansíveis. Regras de liquidação continuam exibidas como estão.
+### 7. Funil e leads recentes
 
-## 9. Comissões e repasses
+Funil com estágio, quantidade, percentual e barra segmentada de progressão (mesmos estágios e cálculos). Leads recentes viram lista operacional: identificação, empresa, estágio, status, data e ação, em linhas de altura uniforme.
 
-Apresentação de extrato resumido: comissão conquistada, pendente, repasses pagos, valores em processamento e saldo disponível em linhas alinhadas com valores à direita, separadores finos e destaque do saldo sacável, com o botão de saque atual preservado.
+### 8. Passo 6 — Desempenho & Controle Financeiro de Serviços
 
-## 10. Funil
+Reorganizado como extrato financeiro: cabeçalho, totais, indicadores, filtros e busca em uma faixa de controle, depois a lista de clientes com detalhes expansíveis. Os botões "Todos os detalhes"/"Recolher" e todos os filtros continuam funcionando igual.
 
-Barra segmentada moderna com proporção por estágio, contagem e percentual, legenda compacta e tooltip no hover. Mesmos estágios e mesmos cálculos.
+### 9. Comissões
 
-Leads recentes: lista com ícone/inicial, nome, empresa, estágio, data, selo de status e ação — mesmos dados.
+Aparência de carteira: saldo disponível em destaque, conquistada/pendente/paga/em processamento com status claros, valores alinhados à direita e o botão Solicitar Comissão preservado.
 
-## 11. Mobile e tablet
+### 10. Janelas e abas
 
-Sidebar em gaveta (como hoje), cards empilhados com texto legível (sem encolher fontes), métricas principais primeiro, tabelas e kanban com rolagem lateral por cartão, modais subindo da base, alvos de toque de 44px, sem overflow horizontal. Tablet reorganiza os cards em 2 colunas.
+Adicionar Saldo, Recarga, Solicitar Comissão, Ficha do Lead e demais janelas recebem o mesmo padrão (cabeçalho, corpo e rodapé), mantendo o comportamento e a rolagem no celular já corrigida.
 
-## 12. Microinterações
+### 11. Responsivo e performance
 
-Hover com elevação leve e borda acesa, transições de 150–250ms, feedback visual ao copiar o link, brilho sutil nos cards principais, indicador de atualização ao sincronizar. Sem animações pesadas; respeita redução de movimento.
+Desktop com menu fixo, tablet em duas colunas, celular com gaveta, cartões empilhados, sem corte lateral e alvos de toque grandes. Transições curtas (150–250ms), sem efeitos pesados, respeitando redução de movimento.
 
-## 13. Confirmação
+## Detalhes técnicos
 
-Nenhuma regra de negócio muda: autenticação, permissões, Firestore, APIs, comissões, saldos, leads, buscas, consultas, serviços, Passo 6, links de indicação, contratos, pagamentos e rotas permanecem exatamente como estão. Nada é removido.
-
-## Ordem de execução
-
-1. Tokens e utilitárias premium em `src/styles.css` (claro + escuro).
-2. Sidebar, header e Partner Identity Card.
-3. Cards financeiros e hierarquia de métricas.
-4. Funil, leads recentes e link de indicação.
-5. Passo 6 e bloco de comissões.
-6. Demais abas e modais.
-
-Ao final de cada etapa: typecheck e build.  
-
-
-Antes de executar, garanta que as novas classes/tokens visuais criados em src/styles.css sejam escopados ao Portal do Parceiro sempre que possível.
-
-Não alterar visualmente páginas, componentes ou áreas fora do Portal do Parceiro.
-
-Após cada etapa, verificar se o restante da aplicação permanece visualmente inalterado.
+- Arquivos: `src/components/PartnerPortal.tsx` (principal) e `src/styles.css` (escopo `.soft-ui`, sem afetar Home, ADM e páginas públicas); componentes filhos do portal só se controlarem a aparência de um bloco.
+- Substituir as classes de aparência espalhadas nos blocos por um conjunto único de classes de superfície, evitando o conflito que anulou o trabalho anterior.
+- Tema escuro como padrão inicial do portal, mantendo a persistência da escolha do usuário.
+- Execução em 5 etapas (base+menu+topo / identidade+métricas / link+funil+leads / Passo 6+comissões / janelas+responsivo), com typecheck e build ao final de cada uma.
+- Validação visual por captura de tela dos blocos no desktop, tablet e celular, nos dois temas; o login de parceiro não está disponível no ambiente de testes, então o usuário confirma no acesso dele ao final.  
+  
+Antes de executar, mantenha a hierarquia visual entre os diferentes tipos de bloco.
+  Não aplicar uma única aparência idêntica a todos os cards.
+  Devem existir níveis visuais distintos para:
+  1. Métricas financeiras principais;
+  2. Métricas secundárias;
+  3. Ferramentas comerciais;
+  4. Painéis operacionais;
+  5. Listas/tabelas;
+  6. Alertas/status;
+  7. Modais.
+  Todos devem pertencer ao mesmo design system PROSFEC, porém com diferentes pesos visuais, tamanhos, espaçamentos e níveis de destaque.
+  A referência principal é uma FINTECH PREMIUM, não um dashboard formado por vários cards idênticos.
