@@ -790,7 +790,7 @@ export default function PartnerPortal({
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
   // Aparência (Claro / Tecnológico) — apenas visual, persistida no navegador
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
     try {
@@ -4927,7 +4927,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 <div className="max-w-6xl mx-auto space-y-6">
                 {/* Unique Indicator Link Card */}
-                <div className="soft-card bg-white text-slate-800 px-4 py-3 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div className="pf-tool bg-white text-slate-800 px-4 py-3 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                   <div className="flex flex-col lg:flex-row lg:items-center gap-3 relative z-10">
                     <div className="flex items-center gap-2.5 min-w-0 lg:w-[290px] shrink-0">
                       <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600 border border-emerald-100 shrink-0">
@@ -5154,7 +5154,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       <div className="flex flex-col gap-3">
                         {/* LINHA 1: Quick Metrics Grid (secundárias) */}
                         <div className="order-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                          <div className="pf-mini bg-white p-3.5 rounded-xl border border-slate-100/50 flex items-center gap-3 relative overflow-hidden min-w-0">
                             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
                               <Users className="w-4 h-4" />
                             </div>
@@ -5165,7 +5165,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
                           </div>
 
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                          <div className="pf-mini bg-white p-3.5 rounded-xl border border-slate-100/50 flex items-center gap-3 relative overflow-hidden min-w-0">
                             <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100/60 flex items-center justify-center shrink-0">
                               <RefreshCw className="w-4 h-4" />
                             </div>
@@ -5178,7 +5178,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
                           </div>
 
-                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                          <div className="pf-hero bg-white p-3.5 rounded-xl border border-slate-100/50 flex items-center gap-3 relative overflow-hidden min-w-0">
                             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
                               <CheckCircle2 className="w-4 h-4" />
                             </div>
@@ -5198,7 +5198,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {/* LINHA 2: Saldos + Comissões (cockpit em 3 colunas) */}
                         <div className="order-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-left">
                           {/* Saldo Geral (Consultas e Serviços) */}
-                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5 relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                          <div className="pf-hero bg-white p-3.5 rounded-xl border border-slate-100/50 flex flex-col justify-between gap-2.5 relative overflow-hidden">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
 
@@ -5241,7 +5241,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Saldo Painel de Oportunidade (buscas) */}
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5 relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                          <div className="pf-mini bg-white p-3.5 rounded-xl border border-slate-100/50 flex flex-col justify-between gap-2.5 relative overflow-hidden">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-700 ring-1 ring-teal-100/60 flex items-center justify-center shrink-0">
 
@@ -5294,7 +5294,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Comissões & Repasses */}
-                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col justify-between gap-2.5 transition-all duration-300 hover:shadow-md md:col-span-2 lg:col-span-1">
+                          <div className="pf-hero bg-white p-3.5 rounded-xl border border-slate-100/50 relative overflow-hidden flex flex-col justify-between gap-2.5 md:col-span-2 lg:col-span-1">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-emerald-50 ring-1 ring-emerald-100/60 flex items-center justify-center text-emerald-600 shrink-0">
                                 <Coins className="w-4 h-4 text-emerald-600" />
