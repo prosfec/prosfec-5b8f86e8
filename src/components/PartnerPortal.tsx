@@ -1006,7 +1006,15 @@ export default function PartnerPortal({
   // Step 6 Services Performance & Financial Control states
   const [dashboardServiceFilter, setDashboardServiceFilter] = useState<"todos" | "pendente" | "pago" | "cancelado">("todos");
   const [dashboardServiceSearch, setDashboardServiceSearch] = useState("");
-  const [expandedServiceLeadId, setExpandedServiceLeadId] = useState<string | null>(null);
+  const [expandedServiceLeadIds, setExpandedServiceLeadIds] = useState<Set<string>>(new Set());
+  const toggleExpandedServiceLead = (leadId: string) => {
+    setExpandedServiceLeadIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(leadId)) next.delete(leadId);
+      else next.add(leadId);
+      return next;
+    });
+  };
   const [solicitacoesComissao, setSolicitacoesComissao] = useState<SolicitacaoComissao[]>([]);
   // Origem da caixa de saque: "vendas" (comissões de planos/vendas) ou "servicos" (Passo 6)
   const [payoutModalOrigin, setPayoutModalOrigin] = useState<null | "vendas" | "servicos">(null);
@@ -5970,7 +5978,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   </div>
 
                                   {filteredGroups.map((group) => {
-                                    const isExpanded = expandedServiceLeadId === group.leadId;
+                                    const isExpanded = expandedServiceLeadIds.has(group.leadId);
 
                                     return (
                                       <div key={group.leadId} className="hover:bg-slate-50/50 transition-colors">
