@@ -6090,7 +6090,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                           <div className="col-span-2 flex items-center justify-center gap-2">
                                             <button
                                               type="button"
-                                              onClick={() => setExpandedServiceLeadId(isExpanded ? null : group.leadId)}
+                                              onClick={() => toggleExpandedServiceLead(group.leadId)}
                                               className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 border h-9 whitespace-nowrap shrink-0 ${
                                                 isExpanded
                                                   ? "bg-slate-800 text-white border-slate-800"
