@@ -10382,7 +10382,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl border border-slate-100 space-y-4 text-left"
+            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl p-6 max-w-md w-full max-h-[88vh] overflow-y-auto md:max-h-none shadow-xl border border-slate-100 space-y-4 text-left"
           >
             <div className="flex justify-between items-start">
               <div>
@@ -10451,7 +10451,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl overflow-hidden max-w-lg w-full shadow-2xl border border-slate-100 flex flex-col text-left"
+            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-lg w-full max-h-[88vh] md:max-h-none shadow-2xl border border-slate-100 flex flex-col text-left"
           >
             {/* Header / Banner Image */}
             {currentAnnouncementShow.imagemUrl ? (
@@ -10547,7 +10547,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl overflow-hidden max-w-md w-full shadow-2xl border border-slate-100 p-6 space-y-4 text-left"
+            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-y-auto max-w-md w-full max-h-[88vh] md:max-h-none shadow-2xl border border-slate-100 p-6 space-y-4 text-left"
           >
             <div className="flex justify-between items-start">
               <div>
@@ -10618,7 +10618,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl overflow-hidden max-w-2xl w-full shadow-2xl border border-slate-100 my-8 text-left"
+            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-2xl w-full my-0 md:my-8 text-left shadow-2xl border border-slate-100"
           >
             {/* Header */}
             <div className="bg-[#0A3D2E] p-6 text-white flex justify-between items-start">
@@ -10740,7 +10740,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl overflow-hidden max-w-4xl w-full shadow-2xl border border-slate-100 my-8 text-left relative"
+            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-4xl w-full my-0 md:my-8 text-left relative shadow-2xl border border-slate-100"
           >
             <div className="p-5 md:p-6 bg-[#0A3D2E] text-white flex justify-between items-center border-b border-emerald-800/40">
               <div className="flex items-center gap-3">
@@ -10781,7 +10781,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       {/* CONSULTANT CAÇA-LEADS INSPECTION MODAL */}
       {selectedConsultantForInspection && (
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 lg:p-6 animate-fade-in overflow-y-auto">
-          <div className="bg-white/75 backdrop-blur-xl rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col text-left">
+          <div className="bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-0 md:my-auto max-h-[88vh] md:max-h-[90vh] flex flex-col text-left">
             {/* Modal Header */}
             <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
@@ -11093,7 +11093,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       {/* INDIVIDUAL LEAD REDIRECTION MODAL */}
       {leadToReassign && (
         <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
+          <div className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-md w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-indigo-700">
                 <ArrowRightLeft className="w-5 h-5" />
@@ -11196,7 +11196,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       {/* BULK PORTFOLIO TRANSFER MODAL */}
       {bulkReassignConsultantSource && (
         <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
+          <div className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-md w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-indigo-700">
                 <ArrowRightLeft className="w-5 h-5" />
@@ -11336,7 +11336,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       {/* MODAL SOLICITAR COMISSÃO */}
       {showCommissionPayoutModal && (
         <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
+          <div className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-lg w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-emerald-800">
                 <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-200/70">
@@ -11679,7 +11679,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+            className="bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh] md:max-h-[90vh]"
           >
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-3 bg-gradient-to-br from-slate-50 to-emerald-50/30">
@@ -12006,7 +12006,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+            className="bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh] md:max-h-[90vh]"
           >
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-3 bg-gradient-to-br from-slate-50 to-emerald-50/30">
