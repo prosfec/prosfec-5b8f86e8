@@ -4224,38 +4224,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                           <ExternalLink className="w-3 h-3" />
                                         </a>
                                       )}
-                                      {isAdminUser && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const updated = [...servicosRecomendados];
-                                            if (isPaid) {
-                                              updated[sIdx] = {
-                                                ...updated[sIdx],
-                                                statusPagamento: "pendente",
-                                                formaPagamento: undefined,
-                                                dataPagamento: undefined
-                                              };
-                                            } else {
-                                              updated[sIdx] = {
-                                                ...updated[sIdx],
-                                                statusPagamento: "pago",
-                                                formaPagamento: "manual",
-                                                dataPagamento: new Date().toISOString()
-                                              };
-                                            }
-                                            setServicosRecomendados(updated);
-                                            handleSaveServicos(updated);
-                                          }}
-                                          className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all cursor-pointer ${
-                                            isPaid 
-                                              ? "bg-slate-200 text-slate-700 hover:bg-slate-300" 
-                                              : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-                                          }`}
-                                          title={isPaid ? "Reverter pagamento para pendente" : "Confirmar pagamento manual deste serviço"}
+                                      {isAdminUser && !isPaid && (
+                                        <span
+                                          className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-500 border border-slate-200"
+                                          title="A confirmação de pagamento é feita no Passo 6 (Estruturação), escolhendo Pix ou Cartão"
                                         >
-                                          {isPaid ? "Estornar" : "✓ Confirmar Pgt Manual"}
-                                        </button>
+                                          Confirmação no Passo 6
+                                        </span>
                                       )}
                                     </div>
                                   );
