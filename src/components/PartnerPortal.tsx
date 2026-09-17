@@ -6486,15 +6486,23 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <p>Divulgue seu link para começar a receber comissões!</p>
                           </div>
                         ) : (
-                          <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto pr-1">
+                          <div className="pf-list max-h-60 overflow-y-auto pr-1">
                             {leads.slice(0, 4).map(lead => (
-                              <div key={lead.id} className="py-3 flex items-center justify-between text-xs">
-                                <div>
-                                  <span className="font-bold text-slate-900 block truncate max-w-xs">{lead.nome}</span>
-                                  <span className="text-[11px] text-slate-400 font-mono block mt-0.5">{lead.cnpj || "CPF/CNPJ sob consulta"}</span>
+                              <div key={lead.id} className="pf-row py-2.5 px-2 -mx-2 rounded-lg flex items-center justify-between gap-3 text-xs">
+                                <div className="min-w-0 flex items-center gap-2.5">
+                                  <span className="w-7 h-7 rounded-lg bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center text-[11px] font-extrabold shrink-0">
+                                    {(lead.nome || "?").trim().charAt(0).toUpperCase()}
+                                  </span>
+                                  <div className="min-w-0">
+                                    <span className="font-bold text-slate-900 block truncate max-w-[14rem]">{lead.nome}</span>
+                                    <span className="text-[11px] text-slate-400 font-mono block mt-0.5 truncate">
+                                      {lead.cnpj || "CPF/CNPJ sob consulta"}
+                                      {lead.etapa ? ` · Etapa ${lead.etapa}` : ""}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="text-right">
-                                  <span className="font-bold font-mono text-[#0A3D2E] block">{lead.limiteEstimated ? formatCurrencyBRL(lead.limiteEstimated) : (lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Consulta")}</span>
+                                <div className="text-right shrink-0">
+                                  <span className="font-extrabold font-mono text-[#0A3D2E] block tabular-nums">{lead.limiteEstimated ? formatCurrencyBRL(lead.limiteEstimated) : (lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Consulta")}</span>
                                   <span className={`inline-block text-[10px] uppercase font-bold px-2 py-0.5 rounded-md mt-0.5 ${
                                     lead.status === "concluido" ? "bg-emerald-50 text-[#00A86B] border border-emerald-200" :
                                     lead.status === "em atendimento" ? "bg-amber-50 text-amber-700 border border-amber-200" :
