@@ -6957,8 +6957,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   ) : (
                     /* Render Kanban View */
                     <div className="space-y-4 pt-2">
-                      <div className="overflow-x-auto pb-6 -mx-6 px-6">
-                        <div className="flex gap-4 min-w-[1500px]">
+                      <div className="overflow-x-auto snap-x snap-mandatory scroll-smooth pb-6 -mx-6 px-6">
+                        <div className="flex gap-4 lg:min-w-[1500px]">
                           {[
                             { id: 1, name: "1. Ficha Cadastral", color: "bg-slate-50 border-slate-200/80 text-slate-700", dot: "bg-slate-400" },
                             { id: 2, name: "2. Coleta Sócios", color: "bg-sky-50 border-sky-200/80 text-sky-700", dot: "bg-sky-400" },
