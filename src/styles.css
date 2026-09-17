@@ -1,6 +1,10 @@
 @import "tailwindcss" source(none);
 @source "../src";
 
+/* Dark mode acionado por classe (.dark), usado pelo Painel do Parceiro */
+@custom-variant dark (&:where(.dark, .dark *));
+
+
 @theme {
   --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
   --font-display: 'Sora', system-ui, -apple-system, sans-serif;
