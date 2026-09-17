@@ -5346,7 +5346,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   {(() => {
                     if (!precosCarregados) {
                       return (
-                        <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
                           <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                             <div className="p-2.5 bg-emerald-50 text-[#00A86B] rounded-xl border border-emerald-100 shrink-0">
                               <Receipt className="w-5 h-5" />
@@ -5720,7 +5720,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     });
 
                     return (
-                      <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
+                      <div className="pf-panel bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-6 text-left">
                         {/* Section Header */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                           <div className="flex items-start sm:items-center gap-3">
@@ -6459,7 +6459,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </div>
 
                     {/* Quick CRM View */}
-                    <div className="lg:col-span-7 bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between">
+                    <div className="pf-panel lg:col-span-7 bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between">
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -6523,7 +6523,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-5 sm:p-6 space-y-5 text-left"
+                  className="pf-panel bg-white/75 backdrop-blur-xl rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-5 sm:p-6 space-y-5 text-left"
                 >
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
@@ -6806,7 +6806,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           const directCommissionValue = (lead.valorAprovado || lead.limiteEstimado || 0) * getDirectCommissionMultiplier(currentPartner?.plano);
                           
                           return (
-                            <div key={lead.id} className="bg-white/75 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                            <div key={lead.id} className="pf-panel bg-white/75 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                               {/* Header: Date & Status Badge */}
                               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                                 <span className="text-xs text-slate-500 font-mono flex items-center gap-1.5">
@@ -7294,7 +7294,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-6 text-left"
+                  className="pf-panel bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-6 text-left"
                 >
                   {currentPartner && getSubscriptionStatus(currentPartner).status === "vencida" ? (
                     /* Locked View */
@@ -8551,7 +8551,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-4 text-left max-w-4xl mx-auto"
+                  className="pf-panel bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 space-y-4 text-left max-w-4xl mx-auto"
                 >
                   <h3 className="font-display font-extrabold text-base text-slate-800">Contrato de Credenciamento e Parceria Comercial</h3>
                   <p className="text-xs text-slate-500">Abaixo constam as regras normativas aceitas em ambiente seguro no momento da criação do cadastro.</p>
@@ -8589,7 +8589,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 md:p-8 space-y-6 text-left max-w-4xl mx-auto"
+                  className="pf-panel bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] p-6 md:p-8 space-y-6 text-left max-w-4xl mx-auto"
                 >
                   <div className="border-b border-slate-100 pb-4">
                     <h3 className="font-display font-black text-xl text-slate-800 flex items-center gap-2">
@@ -8864,7 +8864,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     const inactiveCount = teamMembers.length - activeCount;
 
                     return (
-                      <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
+                      <div className="pf-panel bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
                         {/* Header with quick stats and toggle button */}
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                           <div className="flex items-center gap-3">
@@ -9214,7 +9214,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     });
 
                     return (
-                      <div className="bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
+                      <div className="pf-panel bg-white/75 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-4">
                         {/* Header with summary and toggle */}
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                           <div className="flex items-center gap-3">
@@ -9504,12 +9504,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     return (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 p-5 rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                          <div className="pf-panel bg-white/75 backdrop-blur-xl border border-slate-200/80 p-5 rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                             <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Total de Indicados</span>
                             <span className="text-2xl font-black text-slate-800 block mt-1">{totalAffiliates}</span>
                             <span className="text-[10px] text-slate-400 block mt-1">Parceiros que utilizaram seu link</span>
                           </div>
-                          <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 p-5 rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                          <div className="pf-panel bg-white/75 backdrop-blur-xl border border-slate-200/80 p-5 rounded-2xl shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                             <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Assinantes Ativos</span>
                             <span className="text-2xl font-black text-emerald-800 block mt-1">
                               {affiliateStats.activeCount} <span className="text-xs text-slate-400 font-medium">de {totalAffiliates}</span>
@@ -9537,7 +9537,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
 
                         {/* Affiliates List */}
-                        <div className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] overflow-hidden">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] overflow-hidden">
                           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                             <span className="font-display font-extrabold text-sm text-slate-800">Parceiros Cadastrados ({referredPartners.length})</span>
                             <button 
@@ -9688,7 +9688,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* Controls Column */}
-                    <div className="lg:col-span-5 bg-white/75 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-5">
+                    <div className="pf-panel lg:col-span-5 bg-white/75 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-5">
                       <h4 className="font-display font-extrabold text-sm text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">
                         Parâmetros do Financiamento
                       </h4>
@@ -9906,25 +9906,25 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                       {/* Stat Metrics Grid */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Prazo Total</span>
                           <strong className="text-sm text-slate-800 font-extrabold">{advCarencia + advPrazoAmortizacao} meses</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5">{advCarencia} car. + {advPrazoAmortizacao} amort.</span>
                         </div>
 
-                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Total de Juros</span>
                           <strong className="text-sm text-emerald-800 font-extrabold">{formatCurrencyBRL(calculateSchedule().totalJuros)}</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5 font-mono">Custo do capital</span>
                         </div>
 
-                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Parcela Inicial</span>
                           <strong className="text-sm text-[#0A3D2E] font-extrabold">{formatCurrencyBRL(calculateSchedule().parcelaInicial)}</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5 font-mono">Mes 1 de amortiz.</span>
                         </div>
 
-                        <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
+                        <div className="pf-panel bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
                           <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Parcela Final</span>
                           <strong className="text-sm text-slate-700 font-extrabold">{formatCurrencyBRL(calculateSchedule().parcelaFinal)}</strong>
                           <span className="text-[8px] text-slate-400 block mt-0.5 font-mono font-mono">Ultimo mes</span>
@@ -9949,7 +9949,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       </div>
 
                       {/* Detailed schedule list */}
-                      <div className="bg-white/75 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-3">
+                      <div className="pf-panel bg-white/75 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                           <h5 className="font-display font-extrabold text-sm text-slate-800">Tabela de Amortização Projetada</h5>
                           <span className="text-[10px] text-slate-400 font-bold">Total: {calculateSchedule().rows.length} meses</span>
