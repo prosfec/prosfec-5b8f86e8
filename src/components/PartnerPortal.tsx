@@ -4087,7 +4087,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   );
 
   const renderProfileCard = (
-    <div className="bg-[#0A3D2E] text-white p-3.5 rounded-xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20">
+    <div className="bg-gradient-to-br from-emerald-900 to-slate-900 text-white p-3.5 rounded-xl relative overflow-hidden shadow-[0_18px_40px_-20px_rgba(2,44,34,0.65)] flex flex-col justify-between ring-1 ring-white/10">
 
       <div className="absolute right-[-30px] top-[-30px] w-28 h-28 rounded-full bg-emerald-500/10 pointer-events-none" />
       <div className="space-y-2 relative z-10">
@@ -5103,37 +5103,37 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       <div className="space-y-3">
                         {/* LINHA 1: Quick Metrics Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-xl border border-slate-200/90 shadow-[0_10px_26px_-14px_rgba(2,36,26,0.2)] flex items-center gap-3 relative overflow-hidden hover:border-emerald-500/40 transition-all min-w-0">
-                            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
+                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
                               <Users className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <span className="text-[10px] text-slate-500 uppercase block font-bold tracking-wide truncate">Total Indicados</span>
-                              <span className="text-2xl font-extrabold font-mono text-slate-900 block leading-tight truncate">{leads.length}</span>
+                              <span className="text-[10px] text-slate-500 uppercase block font-semibold tracking-wider truncate">Total Indicados</span>
+                              <span className="text-2xl font-bold tracking-tight font-mono text-slate-900 block leading-tight truncate">{leads.length}</span>
                               <span className="text-[10px] text-slate-400 font-medium block truncate">Empresas cadastradas</span>
                             </div>
                           </div>
 
-                          <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-xl border border-slate-200/90 shadow-[0_10px_26px_-14px_rgba(2,36,26,0.2)] flex items-center gap-3 relative overflow-hidden hover:border-amber-500/40 transition-all min-w-0">
-                            <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0">
+                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100/60 flex items-center justify-center shrink-0">
                               <RefreshCw className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <span className="text-[10px] text-slate-500 uppercase block font-bold tracking-wide truncate">Em Atendimento</span>
-                              <span className="text-2xl font-extrabold font-mono text-slate-900 block leading-tight truncate">
+                              <span className="text-[10px] text-slate-500 uppercase block font-semibold tracking-wider truncate">Em Atendimento</span>
+                              <span className="text-2xl font-bold tracking-tight font-mono text-slate-900 block leading-tight truncate">
                                 {leads.filter(l => l.status === "em atendimento" || l.status === "novo").length}
                               </span>
                               <span className="text-[10px] text-slate-400 font-medium block truncate">Esteira em andamento</span>
                             </div>
                           </div>
 
-                          <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-xl border border-slate-200/90 shadow-[0_10px_26px_-14px_rgba(2,36,26,0.2)] flex items-center gap-3 relative overflow-hidden hover:border-emerald-500/40 transition-all min-w-0">
-                            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
+                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
                               <CheckCircle2 className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <span className="text-[10px] text-slate-500 uppercase block font-bold tracking-wide truncate">Crédito Aprovado Real</span>
-                              <span className="text-xl font-extrabold font-mono text-[#00A86B] block leading-tight truncate" title={formatCurrencyBRL(totalApprovedCredit)}>
+                              <span className="text-[10px] text-slate-500 uppercase block font-semibold tracking-wider truncate">Crédito Aprovado Real</span>
+                              <span className="text-xl font-bold tracking-tight font-mono text-emerald-600 block leading-tight truncate" title={formatCurrencyBRL(totalApprovedCredit)}>
                                 {formatCurrencyBRL(totalApprovedCredit)}
                               </span>
                               <span className="text-[10px] text-slate-400 font-medium block truncate">
@@ -5142,6 +5142,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
                           </div>
                         </div>
+
 
                         {/* LINHA 2: Saldos + Comissões (cockpit em 3 colunas) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-left">
