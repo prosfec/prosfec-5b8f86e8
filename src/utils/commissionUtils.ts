@@ -393,7 +393,8 @@ export function augmentServiceItemsWithCommission(
 
     if (dataPagamento) item.dataPagamento = dataPagamento;
     if (dataLiberacaoSaque) item.dataLiberacaoSaque = dataLiberacaoSaque;
-    if (s.hublaLink) item.hublaLink = s.hublaLink;
+    const linkPg = s.linkPagamento || s.hublaLink;
+    if (linkPg) item.linkPagamento = linkPg;
 
     return item;
   });

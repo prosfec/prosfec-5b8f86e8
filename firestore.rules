@@ -368,17 +368,13 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
-    // 14. LOGS DE WEBHOOK — escrita só pelo servidor/staff, leitura só ADM
+    // 14. LOGS DE WEBHOOK DE PAGAMENTO — escrita só pelo servidor/staff, leitura só ADM
     // ---------------------------------------------------------------------
-    match /webhook_logs_lastlink/{logId} {
+    match /webhook_logs_pagamento/{logId} {
       allow read: if isAdmin();
       allow write: if isStaff();
     }
 
-    match /hubla_events/{eventId} {
-      allow read: if isAdmin();
-      allow write: if isStaff();
-    }
 
     // ---------------------------------------------------------------------
     // 15. TESTE DE CONEXAO

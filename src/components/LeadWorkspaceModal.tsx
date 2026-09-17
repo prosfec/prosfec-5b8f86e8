@@ -9,7 +9,8 @@ import {
   isServiceWithoutUpfrontCost, 
   isDemandAccountingService,
   getApplicableContracts,
-  getHublaLinkForService,
+  getPaymentLinkForService,
+  readPaymentLink,
   cleanForFirestore,
   ServiceCatalogItem,
   DEFAULT_MENSALIDADES,
@@ -521,8 +522,8 @@ export default function LeadWorkspaceModal({
           statusPagamento: existing?.statusPagamento || (s.status === "concluido" ? "pago" : "pendente"),
           descricao: typeof s.descricao === "string" ? s.descricao : (existing as any)?.descricao || "",
         };
-        const hLink = s.hublaLink || existing?.hublaLink;
-        if (hLink) item.hublaLink = hLink;
+        const hLink = readPaymentLink(s) || readPaymentLink(existing);
+        if (hLink) item.linkPagamento = hLink;
         const forma = existing?.formaPagamento || s.formaPagamento;
         if (forma) item.formaPagamento = forma;
         const dataP = existing?.dataPagamento || s.dataPagamento;
@@ -621,8 +622,8 @@ export default function LeadWorkspaceModal({
         if (forma) item.formaPagamento = forma;
         const dataP = existing?.dataPagamento || s.dataPagamento;
         if (dataP) item.dataPagamento = dataP;
-        const hLink = s.hublaLink || existing?.hublaLink;
-        if (hLink) item.hublaLink = hLink;
+        const hLink = readPaymentLink(s) || readPaymentLink(existing);
+        if (hLink) item.linkPagamento = hLink;
         return item;
       });
       const extraCustom = existingList.filter((sub: any) => !servs.some((s: any) => s.id === sub.id || s.nome === sub.titulo));
@@ -691,7 +692,8 @@ export default function LeadWorkspaceModal({
             valor: sub.preco,
             status: sub.concluida ? "concluido" : ((sub as any).statusPagamento === "pago" ? "pago" : "pendente")
           };
-          if ((sub as any).hublaLink) item.hublaLink = (sub as any).hublaLink;
+          const linkPg = readPaymentLink(sub);
+          if (linkPg) item.linkPagamento = linkPg;
           return item;
         });
 
@@ -4229,7 +4231,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                   }
 
                                   const isPaid = serv.statusPagamento === "pago" || serv.pago === true;
-                                  const hublaUrl = !isPaid ? getHublaLinkForService(serv, lead, catalogServices) : null;
+                                  const pagamentoUrl = !isPaid ? getPaymentLinkForService(serv, lead, catalogServices) : null;
                                   return (
                                     <div className="flex items-center gap-1.5">
                                       {isDemand && (
@@ -4242,15 +4244,15 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                           ? "bg-emerald-100 text-emerald-800 border-emerald-300" 
                                           : "bg-amber-50 text-amber-800 border-amber-200"
                                       }`}>
-                                        {isPaid ? `✓ Pago (${serv.formaPagamento === "manual" ? "Manual" : "Hubla"})` : "⏳ Pendente"}
+                                        {isPaid ? "✓ Pago" : "⏳ Pendente"}
                                       </span>
-                                      {hublaUrl && (
+                                      {pagamentoUrl && (
                                         <a
-                                          href={hublaUrl}
+                                          href={pagamentoUrl}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-[#00A86B] hover:bg-[#0A3D2E] text-white px-2.5 py-1 rounded-lg transition-all shadow-xs cursor-pointer shrink-0"
-                                          title="Contratar via Hubla"
+                                          title="Abrir link de pagamento"
                                         >
                                           <span>Contratar Serviço</span>
                                           <ExternalLink className="w-3 h-3" />
@@ -4353,7 +4355,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                 descricao: typeof catalogMatch?.descricao === "string" ? catalogMatch.descricao : "",
                                 status: "pendente"
                               };
-                              if (catalogMatch?.hublaLink) newServ.hublaLink = catalogMatch.hublaLink;
+                              const catalogLink = readPaymentLink(catalogMatch);
+                              if (catalogLink) newServ.linkPagamento = catalogLink;
                               const updated = [...servicosRecomendados, newServ];
                               setServicosRecomendados(updated);
                               handleSaveServicos(updated);
@@ -4576,7 +4579,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         const hasCost = !isNaN(rawPrice) && rawPrice > 0;
                         const isZeroCost = isServiceWithoutUpfrontCost(sub) || !hasCost;
                         const isPaid = (sub as any).statusPagamento === "pago" || (sub as any).pago === true;
-                        const hublaUrl = (!isZeroCost && !isPaid) ? getHublaLinkForService(sub, lead, catalogServices) : null;
+                        const pagamentoUrl = (!isZeroCost && !isPaid) ? getPaymentLinkForService(sub, lead, catalogServices) : null;
                         return (
                           <div
                             key={sub.id || idx}
@@ -4680,13 +4683,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                       📋 Serviços Contratados por demanda
                                     </span>
                                   )}
-                                  {hublaUrl && (
+                                  {pagamentoUrl && (
                                     <a
-                                      href={hublaUrl}
+                                      href={pagamentoUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-[#00A86B] hover:bg-[#0A3D2E] text-white px-2.5 py-1 rounded-lg transition-all shadow-xs cursor-pointer shrink-0"
-                                      title="Contratar via Hubla com confirmação em tempo real"
+                                      title="Abrir link de pagamento"
                                     >
                                       <span>Contratar Serviço</span>
                                       <ExternalLink className="w-3 h-3" />
@@ -4701,7 +4704,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                         ? "Pix"
                                         : forma === "MANUAL"
                                           ? "Manual"
-                                          : "Hubla";
+                                          : "Confirmado";
                                     const liberacao = (sub as any).dataLiberacaoSaque
                                       ? new Date((sub as any).dataLiberacaoSaque).toLocaleDateString("pt-BR")
                                       : null;
@@ -4801,7 +4804,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                   id: serv.id, 
                                   nome: serv.nome, 
                                   valor: serv.valor, 
-                                  hublaLink: serv.hublaLink || "" 
+                                  linkPagamento: readPaymentLink(serv) 
                                 })}
                               >
                                 {serv.nome} ({formatCurrencyBRL(serv.valor)})
@@ -4821,7 +4824,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                   titulo: parsed.nome,
                                   concluida: false,
                                   preco: typeof parsed.valor === "number" ? parsed.valor : 0,
-                                  hublaLink: parsed.hublaLink || undefined,
+                                  linkPagamento: parsed.linkPagamento || undefined,
                                   statusPagamento: "pendente"
                                 };
                                 const updated = [...subEtapasPasso6, newSub];

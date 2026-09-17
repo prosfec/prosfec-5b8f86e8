@@ -4,6 +4,9 @@ export interface ServiceCatalogItem {
   nome: string;
   valor: number;
   descricao?: string;
+  /** Link de pagamento/checkout cadastrado pelo ADM */
+  linkPagamento?: string;
+  /** @deprecated campo legado de links de checkout antigos; lido apenas para compatibilidade */
   hublaLink?: string;
   semCustoInicial?: boolean;
   /** Texto jurídico das cláusulas específicas deste serviço (Contrato Avulso) */
@@ -57,13 +60,12 @@ Remuneração: valor indicado para este serviço no quadro de valores deste cont
 Limitações: a CONTRATADA assume obrigação de meio, não de resultado, não respondendo por decisões de terceiros, instituições financeiras ou órgãos públicos.
 Responsabilidades específicas: a CONTRATANTE responde pela veracidade das informações prestadas e pela adoção das providências recomendadas.`;
 
-export const HUBLA_SERVICE_LINKS: Record<string, string> = {
-  serv_reabilitacao: "https://pay.hub.la/Es0EOCsgpzskcqccirFb",
-  serv_renegociacao: "https://pay.hub.la/Es0EOCsgpzskcqccirFb",
-  serv_rating_score: "https://pay.hub.la/jPGT1i0rasCFQukOCgTG",
-  serv_bacen: "https://pay.hub.la/i8q6VxUnLOVxTiZS2ZuI",
-  serv_contabil: "https://pay.hub.la/1cJOgeOHRKpac7VNPowK"
-};
+/** Lê o link de pagamento do item, aceitando o campo legado */
+export function readPaymentLink(item: any): string {
+  const v = item?.linkPagamento ?? item?.hublaLink;
+  return typeof v === "string" && v.trim() ? v.trim() : "";
+}
+
 
 /** Cláusulas específicas V1 redigidas para os serviços padrão do catálogo */
 export const DEFAULT_SERVICE_CLAUSES: Record<string, string> = {
@@ -114,7 +116,7 @@ export const DEFAULT_SERVICES_CATALOG: ServiceCatalogItem[] = [
     id: "serv_rating_score",
     nome: "Melhoria e Adequação de Rating e Score",
     valor: 1100,
-    hublaLink: HUBLA_SERVICE_LINKS.serv_rating_score,
+    
     clausulas: DEFAULT_SERVICE_CLAUSES.serv_rating_score,
     templateId: "AVULSO_RATING_SCORE",
     templateVersao: 1
@@ -123,7 +125,7 @@ export const DEFAULT_SERVICES_CATALOG: ServiceCatalogItem[] = [
     id: "serv_contabil",
     nome: "Serviços Contábeis p/ Regularização/Adequação CNPJ",
     valor: 700,
-    hublaLink: HUBLA_SERVICE_LINKS.serv_contabil,
+    
     clausulas: DEFAULT_SERVICE_CLAUSES.serv_contabil,
     templateId: "AVULSO_CONTABIL",
     templateVersao: 1
@@ -224,53 +226,42 @@ export function isServiceWithoutUpfrontCost(serv: any): boolean {
   );
 }
 
-export function getHublaLinkForService(serv: any, lead?: any, catalog?: any[]): string | null {
+/**
+ * Retorna o link de pagamento cadastrado para o serviço (catálogo ou item do lead).
+ * Não existe mais nenhum link padrão embutido no código.
+ */
+export function getPaymentLinkForService(serv: any, lead?: any, catalog?: any[]): string | null {
   if (!serv) return null;
 
-  // Se o serviço não tem custo inicial (ex: RTB, Dossiê/Projeto ou valor 0), nunca gera link do Hubla
+  // Serviços sem custo inicial (RTB, Dossiê/Projeto ou valor 0) nunca geram link de pagamento
   if (isServiceWithoutUpfrontCost(serv)) {
     return null;
   }
 
-  // 1. Se o próprio objeto já possui um hublaLink configurado
-  if (serv.hublaLink && typeof serv.hublaLink === "string" && serv.hublaLink.trim().startsWith("http")) {
-    return attachLeadParamsToHublaUrl(serv.hublaLink.trim(), lead);
+  const own = readPaymentLink(serv);
+  if (own.startsWith("http")) {
+    return attachLeadParamsToPaymentUrl(own, lead);
   }
 
-  const id = (serv.id || "").toString().toLowerCase();
   const nome = (serv.nome || serv.titulo || serv.servico || "").toString().toLowerCase();
 
-  // 2. Se foi passado um catálogo e houver correspondência com hublaLink cadastrado
   if (catalog && Array.isArray(catalog)) {
-    const matched = catalog.find(c => 
+    const matched = catalog.find(c =>
       c && (
         (c.id && serv.id && c.id === serv.id) ||
         (c.nome && nome && c.nome.toLowerCase().trim() === nome.trim())
       )
     );
-    if (matched && matched.hublaLink && typeof matched.hublaLink === "string" && matched.hublaLink.trim().startsWith("http")) {
-      return attachLeadParamsToHublaUrl(matched.hublaLink.trim(), lead);
+    const matchedLink = readPaymentLink(matched);
+    if (matchedLink.startsWith("http")) {
+      return attachLeadParamsToPaymentUrl(matchedLink, lead);
     }
   }
 
-  let baseUrl: string | null = null;
-
-  if (id === "serv_reabilitacao" || id === "serv_renegociacao" || nome.includes("reabilita") || nome.includes("renegocia") || nome.includes("limpa nome") || nome.includes("restriç") || nome.includes("restric")) {
-    baseUrl = HUBLA_SERVICE_LINKS.serv_reabilitacao || HUBLA_SERVICE_LINKS.serv_renegociacao;
-  } else if (id === "serv_rating_score" || id === "serv_rating" || id === "serv_score" || nome.includes("rating") || nome.includes("score") || nome.includes("proposta")) {
-    baseUrl = HUBLA_SERVICE_LINKS.serv_rating_score;
-  } else if (id === "serv_bacen" || nome.includes("bacen") || nome.includes("scr") || nome.includes("banco central")) {
-    baseUrl = HUBLA_SERVICE_LINKS.serv_bacen;
-  } else if (id === "serv_contabil" || nome.includes("contáb") || nome.includes("contab") || nome.includes("cnpj") || nome.includes("receita federal") || nome.includes("cnd") || nome.includes("e-cac")) {
-    baseUrl = HUBLA_SERVICE_LINKS.serv_contabil;
-  }
-
-  if (!baseUrl) return null;
-
-  return attachLeadParamsToHublaUrl(baseUrl, lead);
+  return null;
 }
 
-function attachLeadParamsToHublaUrl(url: string, lead?: any): string {
+function attachLeadParamsToPaymentUrl(url: string, lead?: any): string {
   if (!lead) return url;
   const params = new URLSearchParams();
   if (lead.email) params.set("email", lead.email.trim());
@@ -338,8 +329,9 @@ export function sanitizeServiceCatalogForFirestore(
       };
       const desc = normalizeServiceDescription((item as any).descricao);
       cleaned.descricao = desc;
-      if (item.hublaLink && typeof item.hublaLink === "string" && item.hublaLink.trim()) {
-        cleaned.hublaLink = item.hublaLink.trim();
+      const linkPg = readPaymentLink(item);
+      if (linkPg) {
+        cleaned.linkPagamento = linkPg;
       }
       if (item.semCustoInicial !== undefined && item.semCustoInicial !== null) {
         cleaned.semCustoInicial = Boolean(item.semCustoInicial);
@@ -425,7 +417,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           : (typeof sItem.preco === "number" && !isNaN(sItem.preco) ? sItem.preco : 0);
         const finalPrice = catalogReabilitacao ? targetReabilitacaoPrice : itemPrice;
         const finalName = catalogReabilitacao ? targetReabilitacaoName : (itemName || targetReabilitacaoName);
-        const hLink = catalogReabilitacao?.hublaLink || sItem.hublaLink || null;
+        const hLink = readPaymentLink(catalogReabilitacao) || readPaymentLink(sItem) || null;
         const finalDescricao = catalogReabilitacao
           ? normalizeServiceDescription(catalogReabilitacao?.descricao)
           : normalizeServiceDescription(sItem.descricao);
@@ -436,7 +428,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           ...(sItem.titulo ? { titulo: sItem.titulo || finalName } : {}),
           valor: finalPrice,
           preco: finalPrice,
-          ...(hLink ? { hublaLink: hLink } : {}),
+          ...(hLink ? { linkPagamento: hLink } : {}),
           descricao: finalDescricao,
           justificativa: sItem.justificativa || "Programa unificado abrangendo Renegociação de Dívidas, Liminar Limpa Nome e Regularização/Administração SCR/Bacen",
           status: sItem.status || "pendente"
@@ -447,7 +439,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
     } else if (!exactCatalogMatch && (itemId === "serv_rating" || itemId === "serv_score" || itemId === "serv_rating_score" ||
       itemNameLower.includes("rating") || itemNameLower.includes("score"))) {
       if (!mergedRatingScoreItem) {
-        const hLink = catalogRatingScore?.hublaLink || sItem.hublaLink || HUBLA_SERVICE_LINKS.serv_rating_score || null;
+        const hLink = readPaymentLink(catalogRatingScore) || readPaymentLink(sItem) || null;
         mergedRatingScoreItem = {
           ...sItem,
           id: "serv_rating_score",
@@ -455,7 +447,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           ...(sItem.titulo ? { titulo: sItem.titulo || targetRatingScoreName } : {}),
           valor: targetRatingScorePrice,
           preco: targetRatingScorePrice,
-          ...(hLink ? { hublaLink: hLink } : {}),
+          ...(hLink ? { linkPagamento: hLink } : {}),
           descricao: normalizeServiceDescription(catalogRatingScore?.descricao),
           justificativa: sItem.justificativa || "Para elevação unificada do Rating interno bancário e Score do CPF e CNPJ nos bureaus e Banco Central",
           status: sItem.status || "pendente"
@@ -475,7 +467,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
       });
 
       if (matchedCatalog && typeof matchedCatalog.valor === "number") {
-        const hLink = matchedCatalog.hublaLink || sItem.hublaLink || (matchedCatalog.id ? HUBLA_SERVICE_LINKS[matchedCatalog.id] : null);
+        const hLink = readPaymentLink(matchedCatalog) || readPaymentLink(sItem) || null;
         result.push({
           ...sItem,
           id: matchedCatalog.id || sItem.id,
@@ -484,10 +476,10 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           valor: matchedCatalog.valor,
           preco: matchedCatalog.valor,
           descricao: normalizeServiceDescription(matchedCatalog.descricao),
-          ...(hLink ? { hublaLink: hLink } : {})
+          ...(hLink ? { linkPagamento: hLink } : {})
         });
       } else {
-        const hLink = sItem.hublaLink || null;
+        const hLink = readPaymentLink(sItem) || null;
         const finalVal = typeof sItem.valor === "number" ? sItem.valor : typeof sItem.preco === "number" ? sItem.preco : (parseFloat(sItem.valor || sItem.preco) || 0);
         result.push({
           ...sItem,
@@ -495,7 +487,7 @@ export function sanitizeAndSyncServicosList(rawList: any[], catalog?: any[]): an
           ...(sItem.titulo ? { titulo: sItem.titulo } : {}),
           valor: finalVal,
           preco: finalVal,
-          ...(hLink ? { hublaLink: hLink } : {})
+          ...(hLink ? { linkPagamento: hLink } : {})
         });
       }
     }

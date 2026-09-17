@@ -257,9 +257,6 @@ export interface Partner {
   dataReativacao?: string;
   hotmartLink?: string;
   hotmartCode?: string;
-  hublaCodeStarter?: string;
-  hublaCodeExecutive?: string;
-  hublaCodeMaster?: string;
   saldoGeral?: number; // Saldo geral unificado em reais (R$)
   saldoConsultas?: number; // Saldo de consultas de crédito (legado, mantido em paralelo)
   cacaLeadsCredits?: number; // Créditos para buscas no Caça-Leads (não alterado)
@@ -448,6 +445,8 @@ export interface ServicoContabilidade {
   dica: string;
   preco: number;
   ativo: boolean;
+  linkPagamento?: string;
+  /** @deprecated campo legado de checkout antigo */
   hublaLink?: string;
   createdAt?: string;
   updatedAt?: string;

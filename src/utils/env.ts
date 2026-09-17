@@ -16,7 +16,9 @@ export type EnvName =
   | "PLACES_API_KEY"
   | "MIGRATION_ADMIN_TOKEN"
   | "FIREBASE_API_KEY"
-  | "GOOGLE_API_KEY";
+  | "GOOGLE_API_KEY"
+  /** Segredo do webhook da InfinityPay (integração ainda não configurada) */
+  | "INFINITYPAY_WEBHOOK_SECRET";
 
 const read = (name: string): string => {
   try {

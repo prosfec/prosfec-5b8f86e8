@@ -39,13 +39,6 @@ const extractHotmartCode = (input: string): string => {
   return trimmed.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
 };
 
-const extractHublaCode = (input: string): string => {
-  const trimmed = input.trim();
-  if (!trimmed) return "";
-  const parts = trimmed.split('/');
-  const lastPart = parts[parts.length - 1].split('?')[0];
-  return lastPart.replace(/[^A-Za-z0-9_-]/g, "");
-};
 
 export interface AnaliseRiscoInput {
   creditScore?: number;
@@ -292,23 +285,6 @@ export default function App() {
               } else {
                 localStorage.removeItem("lca_referred_by_hotmart_code");
               }
-
-              // Capture Hubla codes for custom checkouts
-              if (data.hublaCodeStarter) {
-                localStorage.setItem("lca_referred_by_hubla_starter", extractHublaCode(data.hublaCodeStarter));
-              } else {
-                localStorage.removeItem("lca_referred_by_hubla_starter");
-              }
-              if (data.hublaCodeExecutive) {
-                localStorage.setItem("lca_referred_by_hubla_executive", extractHublaCode(data.hublaCodeExecutive));
-              } else {
-                localStorage.removeItem("lca_referred_by_hubla_executive");
-              }
-              if (data.hublaCodeMaster) {
-                localStorage.setItem("lca_referred_by_hubla_master", extractHublaCode(data.hublaCodeMaster));
-              } else {
-                localStorage.removeItem("lca_referred_by_hubla_master");
-              }
             }
           }
         } catch (err) {
@@ -322,9 +298,6 @@ export default function App() {
       localStorage.removeItem("lca_referred_by_nome");
       localStorage.removeItem("lca_referred_by_whatsapp");
       localStorage.removeItem("lca_referred_by_hotmart_code");
-      localStorage.removeItem("lca_referred_by_hubla_starter");
-      localStorage.removeItem("lca_referred_by_hubla_executive");
-      localStorage.removeItem("lca_referred_by_hubla_master");
       setReferredByPartnerId(null);
       setReferredByPartnerNome(null);
       setReferredByPartnerWhatsapp(null);

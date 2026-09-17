@@ -204,9 +204,6 @@ interface Partner {
   dataAtualizacaoStatus?: string;
   hotmartLink?: string;
   hotmartCode?: string;
-  hublaCodeStarter?: string;
-  hublaCodeExecutive?: string;
-  hublaCodeMaster?: string;
 }
 
 export const getInactivityDetails = (partner: {
@@ -290,13 +287,6 @@ const extractHotmartCode = (input: string): string => {
   return trimmed.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
 };
 
-const extractHublaCode = (input: string): string => {
-  const trimmed = input.trim();
-  if (!trimmed) return "";
-  const parts = trimmed.split('/');
-  const lastPart = parts[parts.length - 1].split('?')[0];
-  return lastPart.replace(/[^A-Za-z0-9_-]/g, "");
-};
 
 const getSubscriptionStatus = (partner: Partner) => {
   const isTeamMember = partner.isTeamMember === true || (partner.plano && (partner.plano.toUpperCase().includes("CONSULTOR") || partner.plano.toUpperCase().includes("EQUIPE")));
@@ -950,126 +940,8 @@ export default function PartnerPortal({
     }
   };
 
-  // Hubla custom affiliate states
-  const [hublaCodeStarter, setHublaCodeStarter] = useState("");
-  const [hublaCodeExecutive, setHublaCodeExecutive] = useState("");
-  const [hublaCodeMaster, setHublaCodeMaster] = useState("");
-  const [savingLinks, setSavingLinks] = useState(false);
-  const [saveLinksSuccess, setSaveLinksSuccess] = useState(false);
-  
   // Registration checkout flow states
   const [registeredPartnerPlan, setRegisteredPartnerPlan] = useState<string | null>(null);
-
-  // Parent Hubla codes for active logged-in partner paying their own renewal
-  const [parentHublaCodes, setParentHublaCodes] = useState<{ starter?: string; executive?: string; master?: string } | null>(null);
-
-  React.useEffect(() => {
-    if (currentPartner) {
-      setHublaCodeStarter(currentPartner.hublaCodeStarter || "");
-      setHublaCodeExecutive(currentPartner.hublaCodeExecutive || "");
-      setHublaCodeMaster(currentPartner.hublaCodeMaster || "");
-    }
-  }, [currentPartner]);
-
-  React.useEffect(() => {
-    if (currentPartner && currentPartner.parentPartnerId) {
-      const fetchParentDetails = async () => {
-        try {
-          const parentSnap = await getDoc(doc(db, "parceiros", currentPartner.parentPartnerId!));
-          if (parentSnap.exists()) {
-            const data = parentSnap.data();
-            if (data) {
-              setParentHublaCodes({
-                starter: data.hublaCodeStarter || undefined,
-                executive: data.hublaCodeExecutive || undefined,
-                master: data.hublaCodeMaster || undefined
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Error fetching parent hubla codes for payment:", err);
-        }
-      };
-      fetchParentDetails();
-    }
-  }, [currentPartner]);
-
-  const handleSaveAffiliateLinks = async () => {
-    if (!currentPartner) return;
-    setSavingLinks(true);
-    setSaveLinksSuccess(false);
-    try {
-      const extStarter = extractHublaCode(hublaCodeStarter);
-      const extExecutive = extractHublaCode(hublaCodeExecutive);
-      const extMaster = extractHublaCode(hublaCodeMaster);
-
-      const partnerDocRef = doc(db, "parceiros", currentPartner.id);
-      await updateDoc(partnerDocRef, {
-        hublaCodeStarter: extStarter,
-        hublaCodeExecutive: extExecutive,
-        hublaCodeMaster: extMaster
-      });
-      
-      const updatedPartner = {
-        ...currentPartner,
-        hublaCodeStarter: extStarter,
-        hublaCodeExecutive: extExecutive,
-        hublaCodeMaster: extMaster
-      };
-      setCurrentPartner(updatedPartner);
-      sessionStorage.setItem("partner_data", JSON.stringify(updatedPartner));
-      setHublaCodeStarter(extStarter);
-      setHublaCodeExecutive(extExecutive);
-      setHublaCodeMaster(extMaster);
-      setSaveLinksSuccess(true);
-      setTimeout(() => setSaveLinksSuccess(false), 3000);
-    } catch (err) {
-      console.error("Error saving affiliate codes:", err);
-      alert("Ocorreu um erro ao salvar as configurações de checkout. Tente novamente.");
-    } finally {
-      setSavingLinks(false);
-    }
-  };
-
-  const getPaymentLinkForPlan = (plan: string) => {
-    const defaultLinks = {
-      starter: "https://pay.hub.la/sSn9gIMlvXPt1ESeJJ4A",
-      executive: "https://pay.hub.la/UQLcJNaQrlNRsBl1bc2Y",
-      franquia: "https://pay.hub.la/UZOZ2DtEyahRALjFN3ra"
-    };
-
-    const planLower = plan.toLowerCase();
-    const isStarter = planLower.includes("starter");
-    const isExecutive = planLower.includes("executive");
-    const isFranquia = planLower.includes("franquia") || planLower.includes("digital") || planLower.includes("master");
-
-    let planKey: 'starter' | 'executive' | 'franquia' = 'starter';
-    if (isExecutive) planKey = 'executive';
-    if (isFranquia) planKey = 'franquia';
-
-    const defaultLink = defaultLinks[planKey];
-
-    // 1. If there is an active parent partner with a custom Hubla affiliate link, apply it
-    if (currentPartner && currentPartner.parentPartnerId && parentHublaCodes) {
-      const customCode = planKey === 'starter' ? parentHublaCodes.starter 
-                       : planKey === 'executive' ? parentHublaCodes.executive 
-                       : parentHublaCodes.master;
-      if (customCode) {
-        return `https://pay.hub.la/${customCode}`;
-      }
-    }
-
-    // 2. Check if the current user landed on the site using a referral's Hubla codes
-    const storageKey = planKey === 'starter' ? 'lca_referred_by_hubla_starter'
-                     : planKey === 'executive' ? 'lca_referred_by_hubla_executive'
-                     : 'lca_referred_by_hubla_master';
-    const savedReferralCode = localStorage.getItem(storageKey);
-    if (savedReferralCode) {
-      return `https://pay.hub.la/${savedReferralCode}`;
-    }
-
-    return defaultLink;
-  };
 
   // Referred Partners states
   const [referredPartners, setReferredPartners] = useState<Partner[]>([]);
@@ -1571,7 +1443,7 @@ export default function PartnerPortal({
     return 0.025; // 3.0% - 0.5% = 2.5% for Starter / others
   };
 
-  // ===== Saldo de COMISSÕES DE VENDAS (planos / Lastlink-Hubla) — usado no card e na caixa de saque "vendas"
+  // ===== Saldo de COMISSÕES DE VENDAS (planos) — usado no card e na caixa de saque "vendas"
   const salesCommissionStats = (() => {
     const directMultiplier = getDirectCommissionMultiplier(currentPartner?.plano);
     const isPaidLead = (l: any) => l.comissaoPaga === true || l.servicoPago === true || l.comissaoMultinivel?.statusGeral === "pago";

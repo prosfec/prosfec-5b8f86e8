@@ -2815,6 +2815,68 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // ---------------------------------------------------------------------------
+  // WEBHOOK INFINITYPAY — caminho preparado, integração ainda DESLIGADA.
+  // Hoje todos os pagamentos são confirmados manualmente no Passo 6 pelo ADM.
+  // Quando a InfinityPay for configurada, basta definir INFINITYPAY_WEBHOOK_SECRET
+  // e preencher o bloco marcado abaixo com o processamento do evento.
+  // ---------------------------------------------------------------------------
+  app.get("/api/public/webhooks/infinitypay", async (_req, res) => {
+    const configurado = Boolean(optionalEnv("INFINITYPAY_WEBHOOK_SECRET"));
+    return res.json({
+      success: true,
+      provider: "infinitypay",
+      configurado,
+      mensagem: configurado
+        ? "Endpoint disponível."
+        : "Endpoint disponível, porém a integração ainda não foi configurada.",
+    });
+  });
+
+  app.post("/api/public/webhooks/infinitypay", async (req, res) => {
+    const secret = optionalEnv("INFINITYPAY_WEBHOOK_SECRET");
+    if (!secret) {
+      return res.status(503).json({
+        success: false,
+        error: "Integração de pagamentos não configurada. Confirmação de pagamento permanece manual.",
+      });
+    }
+
+    // Verificação de assinatura do provedor (comparação de tempo constante)
+    const assinatura = String(
+      req.headers?.["x-infinitypay-signature"] || req.headers?.["x-signature"] || "",
+    ).trim();
+    let bodyRaw = "";
+    try {
+      bodyRaw = typeof req.body === "string" ? req.body : JSON.stringify(req.body || {});
+    } catch {
+      bodyRaw = "";
+    }
+
+    let esperado = "";
+    try {
+      const { createHmac } = await import("crypto");
+      esperado = createHmac("sha256", secret).update(bodyRaw).digest("hex");
+    } catch (err: any) {
+      console.error("[InfinityPay] Falha ao calcular assinatura:", err?.message || err);
+      return res.status(500).json({ success: false, error: "Falha na verificação do webhook." });
+    }
+
+    const igual =
+      assinatura.length === esperado.length &&
+      assinatura.length > 0 &&
+      assinatura.split("").every((c, i) => c === esperado[i]);
+
+    if (!igual) {
+      return res.status(401).json({ success: false, error: "Assinatura inválida." });
+    }
+
+    // TODO (InfinityPay): processar o evento confirmado aqui.
+    // Nenhuma gravação automática é feita enquanto a integração não estiver ativa.
+    return res.json({ success: true, processado: false });
+  });
+
+
   app.post("/api/public/leads/simulacao", async (req, res) => {
     try {
       const body = req.body || {};
@@ -3232,7 +3294,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   const resolveCheckoutLink = (serv: any, catalog: any[]): string => {
     const pick = (v: any) =>
       typeof v === "string" && v.trim().startsWith("http") ? v.trim() : "";
-    const own = pick(serv?.hublaLink) || pick(serv?.linkPagamento) || pick(serv?.checkoutUrl);
+    const own = pick(serv?.linkPagamento) || pick(serv?.hublaLink) || pick(serv?.checkoutUrl);
     if (own) return own;
 
     const nome = String(serv?.nome || serv?.titulo || serv?.servico || "").toLowerCase().trim();
@@ -3242,7 +3304,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         ((c.id && serv?.id && c.id === serv.id) ||
           (c.nome && nome && String(c.nome).toLowerCase().trim() === nome)),
     );
-    return match ? pick(match.hublaLink) : "";
+    return match ? (pick(match.linkPagamento) || pick(match.hublaLink)) : "";
   };
 
   app.get("/api/public/proposta/:leadId", async (req, res) => {

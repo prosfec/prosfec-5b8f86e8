@@ -371,8 +371,7 @@ import {
   DEFAULT_SERVICES_CATALOG, 
   sanitizeAndSyncServicosList, 
   ServiceCatalogItem, 
-  HUBLA_SERVICE_LINKS, 
-  getHublaLinkForService, 
+  readPaymentLink, 
   isServiceWithoutUpfrontCost,
   isDemandAccountingService,
   cleanForFirestore,
@@ -423,7 +422,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const catalogSnapshotRef = useRef<ServiceCatalogItem[]>(DEFAULT_SERVICES_CATALOG);
   const [newServNome, setNewServNome] = useState("");
   const [newServValor, setNewServValor] = useState<number | "">("");
-  const [newServHublaLink, setNewServHublaLink] = useState("");
+  const [newServLinkPagamento, setNewServLinkPagamento] = useState("");
   const [editMensalidades, setEditMensalidades] = useState<MensalidadesAssessoria>(DEFAULT_MENSALIDADES);
   const [editAssinaturaParceiro, setEditAssinaturaParceiro] = useState<AssinaturaParceiro>(DEFAULT_ASSINATURA_PARCEIRO);
 
@@ -953,12 +952,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       nome: newServNome.trim(),
       valor: val,
       descricao: "",
-      ...(newServHublaLink.trim() ? { hublaLink: newServHublaLink.trim() } : {})
+      ...(newServLinkPagamento.trim() ? { linkPagamento: newServLinkPagamento.trim() } : {})
     };
     setCustomServices(prev => [...prev, newServ]);
     setNewServNome("");
     setNewServValor("");
-    setNewServHublaLink("");
+    setNewServLinkPagamento("");
   };
 
   const handleRemoveCustomService = (id: string) => {
@@ -1454,21 +1453,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 filtered.splice(1, 0, {
                   id: "serv_rating_score",
                   nome: "Melhoria e Adequação de Rating e Score",
-                  valor: scoreVal + ratingVal,
-                  hublaLink: HUBLA_SERVICE_LINKS.serv_rating_score
+                  valor: scoreVal + ratingVal
                 });
               }
               processedCatalog = filtered;
             }
 
-            // Atribuir links padrão para serviços pré-definidos caso não tenham link customizado
-            processedCatalog = processedCatalog.map((s: any) => {
-              if (s.id === "serv_reabilitacao" || s.id === "serv_renegociacao") return s;
-              if (!s.hublaLink && s.id && (HUBLA_SERVICE_LINKS as any)[s.id]) {
-                return { ...s, hublaLink: (HUBLA_SERVICE_LINKS as any)[s.id] };
-              }
-              return s;
-            });
 
             setCustomServices(processedCatalog);
             catalogSnapshotRef.current = processedCatalog;
@@ -1955,7 +1945,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           statusPagamento: existing?.statusPagamento || (s.status === "concluido" ? "pago" : "pendente"),
           descricao: typeof s.descricao === "string" ? s.descricao : (existing as any)?.descricao || "",
         };
-        if (s.hublaLink || existing?.hublaLink) item.hublaLink = s.hublaLink || existing?.hublaLink;
+        const linkPg = readPaymentLink(s) || readPaymentLink(existing);
+        if (linkPg) item.linkPagamento = linkPg;
         if (existing?.formaPagamento || s.formaPagamento) item.formaPagamento = existing?.formaPagamento || s.formaPagamento;
         if (existing?.dataPagamento || s.dataPagamento) item.dataPagamento = existing?.dataPagamento || s.dataPagamento;
         return item;
@@ -4732,7 +4723,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         Desempenho &amp; Controle Financeiro de Comissões
                       </h2>
                       <p className="text-slate-500 text-xs mt-1 leading-relaxed">
-                        Gerencie todas as solicitações de saque de comissões enviadas pelos parceiros, acompanhe a liquidação da Hubla (Pix 48h / Cartão 15 dias) e controle os pagamentos manuais via Pix.
+                        Gerencie todas as solicitações de saque de comissões enviadas pelos parceiros, acompanhe a compensação dos pagamentos (Pix 48h / Cartão 15 dias) e controle os pagamentos manuais via Pix.
                       </p>
                     </div>
 
@@ -4750,16 +4741,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     // Global calculations based on all leads in base with tiered and multilevel commission logic
                     let totalVolumeServicosGeral = 0;
                     let totalComissoesGeradasGeral = 0;
-                    let totalComissoesLiquidadasHubla = 0;
-                    let totalComissoesAguardandoHubla = 0;
+                    let totalComissoesLiquidadas = 0;
+                    let totalComissoesAguardando = 0;
                     let totalComissoesPendentesCliente = 0;
 
                     leads.forEach((l) => {
                       const summary = calculateLeadMultilevelCommissions(l, partners);
                       totalVolumeServicosGeral += summary.valorTotalServicos;
                       totalComissoesGeradasGeral += summary.valorTotalComissao;
-                      totalComissoesLiquidadasHubla += summary.valorComissaoLiberadaSaque;
-                      totalComissoesAguardandoHubla += summary.valorAguardandoCompensacao;
+                      totalComissoesLiquidadas += summary.valorComissaoLiberadaSaque;
+                      totalComissoesAguardando += summary.valorAguardandoCompensacao;
                       totalComissoesPendentesCliente += summary.valorComissaoPendente;
                     });
 
@@ -4805,11 +4796,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           {/* Card 3 */}
                           <div className="bg-white/75 backdrop-blur-xl p-4 rounded-2xl border border-slate-200 shadow-2xs">
                             <div className="flex items-center justify-between text-blue-800 mb-1">
-                              <span className="text-[11px] font-black uppercase tracking-wider font-mono">Aguardando Hubla</span>
+                              <span className="text-[11px] font-black uppercase tracking-wider font-mono">Aguardando Compensação</span>
                               <Clock className="w-4 h-4 text-blue-600" />
                             </div>
                             <div className="text-xl font-black text-blue-950 font-display">
-                              {formatCurrencyBRL(totalComissoesAguardandoHubla)}
+                              {formatCurrencyBRL(totalComissoesAguardando)}
                             </div>
                             <p className="text-[10px] text-blue-700 font-semibold mt-1">
                               Em compensação (Pix 48h / Cartão 15d)
@@ -4831,12 +4822,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
                         </div>
 
-                        {/* Hubla Policy Banner */}
+                        {/* Política de compensação */}
                         <div className="bg-slate-50 border border-slate-200/90 p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                           <div className="flex items-center gap-2.5">
                             <Info className="w-4 h-4 text-emerald-700 shrink-0" />
                             <div className="text-slate-700">
-                              <strong className="text-slate-900">Regra de Saque Hubla &amp; Execução dos Serviços:</strong> Pix liberado após <strong>48h úteis</strong> e Cartão de Crédito após <strong>15 dias corridos</strong>. Os serviços só devem ser iniciados após o dinheiro estar disponível.
+                              <strong className="text-slate-900">Regra de Saque &amp; Execução dos Serviços:</strong> Pix liberado após <strong>48h úteis</strong> e Cartão de Crédito após <strong>15 dias corridos</strong>. Os serviços só devem ser iniciados após o dinheiro estar disponível.
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0 text-[11px] font-mono">
@@ -5234,13 +5225,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           />
                         </div>
                         <div className="sm:col-span-4">
-                          <label className="block text-[11px] font-bold text-slate-600 mb-1">Link de Checkout LastLink (Opcional)</label>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">Link de Pagamento (Opcional)</label>
                           <div className="relative">
                             <input
                               type="url"
-                              value={newServHublaLink}
-                              onChange={(e) => setNewServHublaLink(e.target.value)}
-                              placeholder="https://lastlink.com/p/..."
+                              value={newServLinkPagamento}
+                              onChange={(e) => setNewServLinkPagamento(e.target.value)}
+                              placeholder="https://..."
                               className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 font-mono"
                             />
                             <Link2 className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -5265,7 +5256,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           <tr className="bg-slate-50 text-[11px] font-bold tracking-wider text-slate-500 uppercase border-b border-slate-100">
                             <th className="py-3 px-4">Nome do Serviço</th>
                             <th className="py-3 px-4 w-36">Valor (R$)</th>
-                            <th className="py-3 px-4">Link Checkout LastLink</th>
+                            <th className="py-3 px-4">Link de Pagamento</th>
                             <th className="py-3 px-4 w-20 text-center">Ações</th>
                           </tr>
                         </thead>
@@ -5354,17 +5345,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     <div className="relative flex-1">
                                       <input
                                         type="url"
-                                        value={serv.hublaLink || ""}
-                                        placeholder="https://lastlink.com/p/..."
+                                        value={readPaymentLink(serv)}
+                                        placeholder="https://..."
                                         onChange={(e) => {
                                           const val = e.target.value;
                                           setCustomServices(prev => prev.map((item, idx) => {
                                             if (idx !== sIdx) return item;
-                                            const updated = { ...item };
+                                            const updated: any = { ...item };
+                                            
                                             if (val.trim()) {
-                                              updated.hublaLink = val.trim();
+                                              updated.linkPagamento = val.trim();
                                             } else {
-                                              delete updated.hublaLink;
+                                              delete updated.linkPagamento;
                                             }
                                             return updated;
                                           }));
@@ -5373,13 +5365,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                       />
                                       <Link2 className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" />
                                     </div>
-                                    {serv.hublaLink && serv.hublaLink.startsWith("http") && (
+                                    {readPaymentLink(serv).startsWith("http") && (
                                       <a
-                                        href={serv.hublaLink}
+                                        href={readPaymentLink(serv)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="p-1.5 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 rounded-lg transition-colors shrink-0"
-                                        title="Testar Link de Checkout"
+                                        title="Testar Link de Pagamento"
                                       >
                                         <ExternalLink className="w-3.5 h-3.5" />
                                       </a>
@@ -7311,7 +7303,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               <div className="space-y-3">
                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
                   <span>🔐 Controle de Acesso do Parceiro</span>
-                  <span className="text-[10px] text-emerald-600 font-mono font-bold">Gestão Anual (Hubla) & Teste Grátis</span>
+                  <span className="text-[10px] text-emerald-600 font-mono font-bold">Gestão de Assinatura & Teste Grátis</span>
                 </h4>
                 <div className="border border-slate-100 p-4 rounded-xl bg-white shadow-xs space-y-4">
                   {(() => {
