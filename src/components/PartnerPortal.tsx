@@ -5553,7 +5553,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       if (rawServices.length === 0) return;
 
                       // Synchronize with active catalog prices and names dynamically
-                      const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
+                      const syncedServices = withoutMensalidades(sanitizeAndSyncServicosList(rawServices, catalogServices));
 
                       const parsedServices: ServiceItem[] = syncedServices.map((s: any, idx: number) => {
                         const precoNum = typeof s.preco === "number" 
