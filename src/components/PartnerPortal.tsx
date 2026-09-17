@@ -4902,7 +4902,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
             {/* Right Column */}
             <div className="flex-1 flex flex-col min-w-0 h-full">
-              <header className="shrink-0 bg-white/85 backdrop-blur-xl border-b border-slate-200 px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+              <header className="soft-topbar shrink-0 px-4 md:px-6 py-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <button
                     onClick={() => setMobileMenuOpen(true)}
@@ -4913,8 +4913,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   </button>
                   <div className="min-w-0">
                     <h2 className="font-extrabold text-sm text-slate-900 truncate">Olá, {currentPartner?.nome?.split(" ")[0]}</h2>
-                    <p className="text-[11px] text-slate-500 font-medium truncate">Painel do Parceiro PROSFEC</p>
+                    <p className="text-[11px] text-slate-500 font-medium truncate">Plataforma Financeira PROSFEC</p>
                   </div>
+                  <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider text-emerald-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {isProfileComplete(currentPartner) ? "Conta ativa" : "Cadastro pendente"}
+                  </span>
                 </div>
                 {renderNotificationsBell("relative")}
               </header>
