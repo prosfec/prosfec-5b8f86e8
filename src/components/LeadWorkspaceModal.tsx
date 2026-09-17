@@ -393,7 +393,7 @@ export default function LeadWorkspaceModal({
   const persistParcelas = async (novasParcelas: any[], novasMensalidades: any[], mensagem: string) => {
     const commissionPayload = buildLeadMultilevelFirestorePayload(
       lead,
-      [],
+      hierarchyPartners,
       currentPartner,
       [...withoutMensalidades(subEtapasPasso6), ...novasMensalidades]
     );
@@ -533,7 +533,7 @@ export default function LeadWorkspaceModal({
       // Calculate multilevel commission snapshot
       const commissionPayload = buildLeadMultilevelFirestorePayload(
         { ...lead, servicosRecomendados: listToSave },
-        [],
+        hierarchyPartners,
         currentPartner,
         [...syncedSubEtapas, ...mensalidadeItems]
       );
@@ -644,7 +644,7 @@ export default function LeadWorkspaceModal({
     try {
       const commissionPayload = buildLeadMultilevelFirestorePayload(
         lead,
-        [],
+        hierarchyPartners,
         currentPartner,
         [...withoutMensalidades(listToSave), ...mensalidadeItems]
       );
