@@ -4864,7 +4864,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             {mobileMenuOpen && (
               <div className="fixed inset-0 z-50 lg:hidden">
                 <div className="absolute inset-0 bg-slate-900/50" onClick={() => setMobileMenuOpen(false)} />
-                <aside className="relative w-72 max-w-[85vw] h-full bg-white border-r border-gray-200 flex flex-col animate-in slide-in-from-left duration-200">
+                <aside className="soft-sidebar-premium relative w-72 max-w-[85vw] h-full flex flex-col animate-in slide-in-from-left duration-200">
                   <div className="p-4 border-b border-slate-100 shrink-0">
                     {renderProfileCard}
                   </div>
@@ -4879,7 +4879,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             )}
 
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex w-72 h-full bg-white border-r border-gray-200 flex-col shrink-0">
+            <aside className="soft-sidebar-premium hidden lg:flex w-72 h-full flex-col shrink-0">
               <div className="p-5 border-b border-slate-100 flex items-center gap-3 shrink-0">
                 <div className="bg-[#0A3D2E] p-2.5 rounded-xl text-emerald-300 shrink-0">
                   <Handshake className="w-5 h-5" />
