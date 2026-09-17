@@ -114,17 +114,17 @@ export const LeadConciergeTracker: React.FC<LeadConciergeTrackerProps> = ({ lead
   }
 
   const statusColors = {
-    success: "bg-[#00A86B]/10 text-[#00A86B] border-[#00A86B]/25",
-    warning: "bg-[#d98207]/10 text-[#d98207] border-[#d98207]/25",
-    danger: "bg-[#d64545]/10 text-[#d64545] border-[#d64545]/25",
-    info: "bg-[#2f7fb8]/10 text-[#2f7fb8] border-[#2f7fb8]/25",
-    neutral: "bg-[#eef2f0] text-[#5b6f68] border-[#cfd9d5]",
+    success: "pf-badge pf-badge-success",
+    warning: "pf-badge pf-badge-warning",
+    danger: "pf-badge pf-badge-danger",
+    info: "pf-badge pf-badge-info",
+    neutral: "pf-badge pf-badge-neutral",
   };
 
   return (
     <div className="space-y-6">
       {/* Header card */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+      <div className="pf-workspace-section bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] md:items-center gap-4">
           <div className="min-w-0 space-y-1">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#5b6f68]">
@@ -171,7 +171,7 @@ export const LeadConciergeTracker: React.FC<LeadConciergeTrackerProps> = ({ lead
       </div>
 
       {/* Timeline */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+      <div className="pf-workspace-section bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
         <h3 className="font-display font-extrabold text-sm text-[#0b1f18] uppercase tracking-wider mb-6">
           Etapas da Jornada de Crédito
         </h3>
@@ -183,32 +183,32 @@ export const LeadConciergeTracker: React.FC<LeadConciergeTrackerProps> = ({ lead
             const isActive = status === "active";
             const isAttention = status === "attention";
 
-            let circleClass = "bg-[#eef2f0] text-[#5b6f68] border-[#e3e9e6]";
+            let circleClass = "pf-badge-neutral";
             let icon = <Lock className="w-4 h-4" />;
             let badgeText = "Pendente";
-            let badgeClass = "bg-[#eef2f0] text-[#5b6f68] border-[#cfd9d5]";
+            let badgeClass = "pf-badge pf-badge-neutral";
 
             if (isCompleted) {
-              circleClass = "bg-[#00A86B]/12 text-[#00A86B] border-[#00A86B]/30";
+              circleClass = "pf-badge-success";
               icon = <CheckCircle2 className="w-5 h-5" />;
               badgeText = "Concluído";
-              badgeClass = "bg-[#00A86B]/10 text-[#00A86B] border-[#00A86B]/20";
+              badgeClass = "pf-badge pf-badge-success";
             } else if (isActive) {
-              circleClass = "bg-[#02241a] text-white border-[#00A86B]/40 animate-pulse";
+              circleClass = "pf-badge-success animate-pulse";
               icon = <Clock className="w-4 h-4" />;
               badgeText = "Em Andamento";
-              badgeClass = "bg-[#00A86B] text-white border-[#00A86B]";
+              badgeClass = "pf-badge pf-badge-success";
             } else if (isAttention) {
-              circleClass = "bg-[#d64545]/10 text-[#d64545] border-[#d64545]/25";
+              circleClass = "pf-badge-danger";
               icon = <AlertTriangle className="w-5 h-5" />;
               badgeText = step.number === 8 ? "Recusado" : "Atenção";
-              badgeClass = "bg-[#d64545]/10 text-[#d64545] border-[#d64545]/20";
+              badgeClass = "pf-badge pf-badge-danger";
             }
 
             return (
               <div key={step.number} className="relative">
                 <div
-                  className={`absolute -left-[35px] top-0.5 rounded-full p-1.5 border-4 border-white flex items-center justify-center ${circleClass}`}
+                  className={`pf-timeline-marker absolute -left-[35px] top-0.5 rounded-full p-1.5 border-4 border-white flex items-center justify-center ${circleClass}`}
                 >
                   {icon}
                 </div>

@@ -4560,7 +4560,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
 
                 {/* SEÇÃO 1: CHECKLIST DA ETAPA 6 (ESTRUTURAÇÃO) — PROSFEC IA */}
-                <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                <div className="pf-workspace-section bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                     <div className="space-y-0.5">
                       <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
@@ -4923,7 +4923,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* Coluna Esquerda: Parâmetros Editáveis */}
-                    <div className="lg:col-span-5 bg-slate-50 p-5 rounded-2xl border border-slate-200/80 space-y-4">
+                    <div className="pf-workspace-subtle lg:col-span-5 bg-slate-50 p-5 rounded-2xl border border-slate-200/80 space-y-4">
                       
                       {/* Linha de Crédito Governamental */}
                       <div className="space-y-1.5 pb-3 border-b border-slate-200/60">
@@ -4931,7 +4931,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           <label className="text-[11px] font-black text-emerald-900 uppercase block tracking-wider">
                             Linha de Crédito Governamental
                           </label>
-                          <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                          <span className="pf-badge pf-badge-success text-[9px] font-black px-2 py-0.5 rounded-full">
                             {currentRule.badge}
                           </span>
                         </div>
@@ -5119,7 +5119,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       </div>
 
                       {/* Checkbox Juros na Carência */}
-                      <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
+                      <div className="pf-workspace-subtle p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                           <input
                             type="checkbox"
@@ -5137,7 +5137,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       {/* Validação de Regras */}
                       <div className="pt-1">
                         {!validation.isValid ? (
-                          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl space-y-2 text-left animate-fade-in">
+                          <div className="pf-workspace-subtle p-3.5 bg-rose-50 border border-rose-200 rounded-2xl space-y-2 text-left animate-fade-in">
                             <div className="flex items-center gap-2 text-rose-800 font-extrabold text-xs">
                               <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                               <span>Inconformidade com Regras Governamentais</span>
@@ -5157,7 +5157,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                             </button>
                           </div>
                         ) : (
-                          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1 text-left">
+                          <div className="pf-workspace-subtle p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1 text-left">
                             <div className="flex items-center gap-2 text-emerald-900 font-extrabold text-xs">
                               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                               <span>Parâmetros em Conformidade ({currentRule.code})</span>
@@ -5193,7 +5193,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         </div>
                       </div>
 
-                      <div className="bg-white p-4 rounded-2xl border border-slate-200 max-h-56 overflow-y-auto">
+                      <div className="pf-workspace-subtle bg-white p-4 rounded-2xl border border-slate-200 max-h-56 overflow-y-auto">
                         <table className="w-full text-[10px]">
                           <thead>
                             <tr className="bg-slate-50 border-b border-slate-100 font-bold uppercase text-slate-500">
@@ -5209,8 +5209,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               <tr key={row.mes} className="hover:bg-slate-50 border-b border-slate-100/50">
                                 <td className="p-2 font-mono">Mês {row.mes}</td>
                                 <td className="p-2">
-                                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
-                                    row.tipo === "Carência" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                                  <span className={`pf-badge px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
+                                    row.tipo === "Carência" ? "pf-badge-warning" : "pf-badge-success"
                                   }`}>
                                     {row.tipo}
                                   </span>
@@ -5253,7 +5253,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 </div>
 
                 {/* SEÇÃO 3: LINHA DO TEMPO & HISTÓRICO AUDITÁVEL DA OPERAÇÃO */}
-                <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div className="pf-workspace-section bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <div className="space-y-0.5">
                       <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
@@ -5264,13 +5264,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         Registro cronológico com todas as transições de etapas, validações e eventos deste lead.
                       </p>
                     </div>
-                    <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200">
+                    <span className="pf-badge pf-badge-neutral text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
                       {lead.historicoEtapas?.length || 0} evento(s)
                     </span>
                   </div>
 
                   {!lead.historicoEtapas || lead.historicoEtapas.length === 0 ? (
-                    <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <div className="pf-workspace-subtle text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                       Nenhum registro de alteração de etapa para este lead ainda.
                     </div>
                   ) : (
@@ -5279,13 +5279,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         const isMesa = hist.autor === "admin" || hist.autor === "Mesa de Operações";
                         return (
                           <div key={idx} className="relative">
-                            <div className="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs" />
-                            <div className="bg-slate-50/70 hover:bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-1 transition-all">
+                            <div className="pf-timeline-marker absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs" />
+                            <div className="pf-workspace-subtle bg-slate-50/70 hover:bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-1 transition-all">
                               <div className="flex items-center justify-between gap-2">
-                                <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
+                                <span className={`pf-badge text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
                                   isMesa
-                                    ? "bg-amber-100 text-amber-900 border border-amber-200"
-                                    : "bg-emerald-100 text-emerald-900 border border-emerald-200"
+                                    ? "pf-badge-warning"
+                                    : "pf-badge-success"
                                 }`}>
                                   {isMesa ? "🏛️ Mesa de Operações" : hist.autor ? `👤 ${hist.autor}` : "⚡ Sistema"}
                                 </span>
