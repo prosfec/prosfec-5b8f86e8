@@ -937,18 +937,24 @@ select option {
   border-color: rgba(16, 185, 129, 0.2);
 }
 
-/* Botões principais (verde) */
-.dark .soft-ui [class*="bg-emerald-5"],
-.dark .soft-ui [class*="bg-emerald-6"],
-.dark .soft-ui [class*="bg-emerald-7"] {
+/* Botões principais (verde). Restrito a controles para não solidificar badges. */
+.dark .soft-ui button[class*="bg-emerald-5"],
+.dark .soft-ui button[class*="bg-emerald-6"],
+.dark .soft-ui button[class*="bg-emerald-7"],
+.dark .soft-ui a[class*="bg-emerald-5"],
+.dark .soft-ui a[class*="bg-emerald-6"],
+.dark .soft-ui a[class*="bg-emerald-7"] {
   background-color: #10b981;
   color: #ffffff;
   border-color: transparent;
 }
 
-.dark .soft-ui [class*="bg-emerald-5"]:hover,
-.dark .soft-ui [class*="bg-emerald-6"]:hover,
-.dark .soft-ui [class*="bg-emerald-7"]:hover {
+.dark .soft-ui button[class*="bg-emerald-5"]:hover,
+.dark .soft-ui button[class*="bg-emerald-6"]:hover,
+.dark .soft-ui button[class*="bg-emerald-7"]:hover,
+.dark .soft-ui a[class*="bg-emerald-5"]:hover,
+.dark .soft-ui a[class*="bg-emerald-6"]:hover,
+.dark .soft-ui a[class*="bg-emerald-7"]:hover {
   background-color: #34d399;
 }
 
