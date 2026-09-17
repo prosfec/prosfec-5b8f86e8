@@ -5352,7 +5352,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                           setCustomServices(prev => prev.map((item, idx) => {
                                             if (idx !== sIdx) return item;
                                             const updated: any = { ...item };
-                                            delete updated.hublaLink;
+                                            
                                             if (val.trim()) {
                                               updated.linkPagamento = val.trim();
                                             } else {
