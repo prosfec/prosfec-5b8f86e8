@@ -4892,7 +4892,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       </div>
                       <button
                         onClick={copyReferralLink}
-                        className={`px-3 h-9 rounded-lg text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0 ${
+                        className={`px-3 min-h-[44px] lg:min-h-0 lg:h-9 rounded-lg text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0 ${
                           copiedLink
                             ? "bg-emerald-400 text-slate-950 font-bold font-mono"
                             : "bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold shadow-sm"
@@ -5172,7 +5172,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <button
                                 type="button"
                                 onClick={() => setShowRechargeModal(true)}
-                                className="px-3 h-9 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                                className="px-3 min-h-[44px] lg:min-h-0 lg:h-9 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
                               >
                                 <Coins className="w-3.5 h-3.5 text-emerald-300" />
                                 <span>Adicionar</span>
@@ -5208,7 +5208,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </div>
                               {isSubMember ? (
                                 <div
-                                  className="px-2.5 h-9 bg-slate-100 border border-slate-200 text-slate-400 text-[10px] font-bold rounded-lg flex items-center gap-1.5 shrink-0 cursor-not-allowed select-none"
+                                  className="px-2.5 min-h-[44px] lg:min-h-0 lg:h-9 bg-slate-100 border border-slate-200 text-slate-400 text-[10px] font-bold rounded-lg flex items-center gap-1.5 shrink-0 cursor-not-allowed select-none"
                                   title="Seus créditos de busca são gerenciados e distribuídos pelo seu Líder/Master de equipe."
                                 >
                                   <Lock className="w-3.5 h-3.5 text-slate-400" />
@@ -5223,7 +5223,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     setRefillCopiedPix(false);
                                     setShowRefillModal(true);
                                   }}
-                                  className="px-3 h-9 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                                  className="px-3 min-h-[44px] lg:min-h-0 lg:h-9 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
                                 >
                                   <Coins className="w-3.5 h-3.5 text-amber-300" />
                                   <span>Recarregar</span>
@@ -5268,7 +5268,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 setCommissionPayoutSuccess(null);
                                 setPayoutModalOrigin("vendas");
                               }}
-                              className="bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold px-3 h-9 rounded-lg text-[11px] transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer w-full"
+                              className="bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold px-3 min-h-[44px] lg:min-h-0 lg:h-9 rounded-lg text-[11px] transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer w-full"
                               title="Solicitar saque das comissões de vendas/planos"
                             >
                               <Coins className="w-3.5 h-3.5 text-slate-950 shrink-0" />
