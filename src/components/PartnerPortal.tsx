@@ -38,6 +38,13 @@ import { calculateLeadStepStatus } from "../utils/stepValidation";
 import { TeamPerformanceChart } from "./TeamPerformanceChart";
 import PartnerServicosContabilidadeTab from "./PartnerServicosContabilidadeTab";
 import { sanitizeAndSyncServicosList, ServiceCatalogItem } from "../utils/serviceUtils";
+import {
+  getServiceCommissionRate,
+  getMasterTeamServiceOverrideRate,
+  getPlanServiceLabel,
+  isFranquiaDigital,
+  withoutMensalidades
+} from "../utils/commissionUtils";
 import { 
   Handshake, 
   Copy, 
@@ -1316,33 +1323,8 @@ export default function PartnerPortal({
     return 0.005; // Default fallback
   };
 
-  // Percentual de Comissão sobre Serviços de Estruturação Técnica (Passo 6)
-  // Starter: 10% | Executive: 20% | Master: 30%
-  const getServiceCommissionRate = (plan?: string): number => {
-    const p = plan?.toUpperCase() || "";
-    if (p.includes("STARTER")) return 0.10; // Starter: 10%
-    if (p.includes("FRANQUIA") || p.includes("DIGITAL") || p.includes("MASTER")) return 0.30; // Master: 30%
-    if (p.includes("EXEC")) return 0.20; // Executive: 20%
-    return 0.20; // Default fallback (Executive)
-  };
-
-  // Ganhos sobre Equipe para Master Partner (Override/Spread sobre Serviços de Estruturação)
-  // Master ganha 30%. Se o consultor for Executive (20%), Master ganha 10%. Se o consultor for Starter (10%), Master ganha 20%.
-  const getMasterTeamServiceOverrideRate = (consultantPlan?: string): number => {
-    const cp = consultantPlan?.toUpperCase() || "";
-    if (cp.includes("STARTER")) return 0.20; // 30% Master - 10% Starter = 20% spread
-    if (cp.includes("EXEC")) return 0.10; // 30% Master - 20% Executive = 10% spread
-    if (cp.includes("FRANQUIA") || cp.includes("DIGITAL") || cp.includes("MASTER")) return 0.00;
-    return 0.10; // Default fallback para consultor da equipe (10% spread)
-  };
-
-  const getPlanServiceLabel = (plan?: string): string => {
-    const p = plan?.toUpperCase() || "";
-    if (p.includes("STARTER")) return "10% (Starter)";
-    if (p.includes("FRANQUIA") || p.includes("DIGITAL") || p.includes("MASTER")) return "30% Direta / Repasse de Equipe (Teto 30%)";
-    if (p.includes("EXEC")) return "20% (Executive)";
-    return "20% (Executive)";
-  };
+  // Percentuais de comissão de serviços: fonte única em utils/commissionUtils.ts
+  // Starter: 10% | Executive: 20% | Master: 30% | Repasse de equipe = diferença até 30%
 
   const getPlanDisplayName = (plan?: string) => {
     if (!plan) return "STARTER";
@@ -1351,10 +1333,6 @@ export default function PartnerPortal({
     return plan;
   };
 
-  const isFranquiaDigital = (plan?: string) => {
-    const p = plan?.toUpperCase() || "";
-    return p.includes("FRANQUIA") || p.includes("DIGITAL") || p.includes("MASTER");
-  };
 
   const isEligibleForAffiliates = (_plan?: string, _partnerObj?: Partner | null) => {
     return false;
@@ -5575,7 +5553,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       if (rawServices.length === 0) return;
 
                       // Synchronize with active catalog prices and names dynamically
-                      const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
+                      const syncedServices = withoutMensalidades(sanitizeAndSyncServicosList(rawServices, catalogServices));
 
                       const parsedServices: ServiceItem[] = syncedServices.map((s: any, idx: number) => {
                         const precoNum = typeof s.preco === "number" 
@@ -5692,7 +5670,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         const teamOverrideRate = getMasterTeamServiceOverrideRate(consultantPlan);
 
                         // Synchronize with active catalog prices and names dynamically
-                        const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
+                        const syncedServices = withoutMensalidades(sanitizeAndSyncServicosList(rawServices, catalogServices));
 
                         const parsedServices: ServiceItem[] = syncedServices.map((s: any, idx: number) => {
                           const precoNum = typeof s.preco === "number" 
@@ -11615,7 +11593,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   rawServices = (l as any).servicosRecomendados;
                 }
 
-                const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
+                const syncedServices = withoutMensalidades(sanitizeAndSyncServicosList(rawServices, catalogServices));
 
                 syncedServices.forEach((s: any) => {
                   const precoNum = typeof s.preco === "number" ? s.preco : typeof s.valor === "number" ? s.valor : parseFloat(s.preco || s.valor || 0) || 0;
@@ -11656,7 +11634,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   const consultantPlan = member?.plano || "Executive Partner PROSFEC";
                   const teamOverrideRate = getMasterTeamServiceOverrideRate(consultantPlan);
 
-                  const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
+                  const syncedServices = withoutMensalidades(sanitizeAndSyncServicosList(rawServices, catalogServices));
 
                   syncedServices.forEach((s: any) => {
                     const precoNum = typeof s.preco === "number" ? s.preco : typeof s.valor === "number" ? s.valor : parseFloat(s.preco || s.valor || 0) || 0;

@@ -371,13 +371,29 @@ export default function LeadWorkspaceModal({
     });
   };
 
+  // Lista mínima de hierarquia: o próprio parceiro + o Master vinculado (quando houver),
+  // para que o registro de comissão do lead já nasça com consultor + Master corretos.
+  const hierarchyPartners = React.useMemo(() => {
+    if (!currentPartner?.id) return [] as any[];
+    const list: any[] = [currentPartner];
+    const masterId = (currentPartner as any).parentPartnerId;
+    if (masterId) {
+      list.push({
+        id: masterId,
+        nome: (currentPartner as any).parentPartnerNome || "Master Partner PROSFEC",
+        plano: "Franquia Digital PROSFEC"
+      });
+    }
+    return list;
+  }, [currentPartner]);
+
   const [parcelasAssessoria, setParcelasAssessoria] = useState<any[]>(() => buildParcelasAssessoria(lead));
   const [savingParcela, setSavingParcela] = useState<number | null>(null);
 
   const persistParcelas = async (novasParcelas: any[], novasMensalidades: any[], mensagem: string) => {
     const commissionPayload = buildLeadMultilevelFirestorePayload(
       lead,
-      [],
+      hierarchyPartners,
       currentPartner,
       [...withoutMensalidades(subEtapasPasso6), ...novasMensalidades]
     );
@@ -517,7 +533,7 @@ export default function LeadWorkspaceModal({
       // Calculate multilevel commission snapshot
       const commissionPayload = buildLeadMultilevelFirestorePayload(
         { ...lead, servicosRecomendados: listToSave },
-        [],
+        hierarchyPartners,
         currentPartner,
         [...syncedSubEtapas, ...mensalidadeItems]
       );
@@ -628,7 +644,7 @@ export default function LeadWorkspaceModal({
     try {
       const commissionPayload = buildLeadMultilevelFirestorePayload(
         lead,
-        [],
+        hierarchyPartners,
         currentPartner,
         [...withoutMensalidades(listToSave), ...mensalidadeItems]
       );

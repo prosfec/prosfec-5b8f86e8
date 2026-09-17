@@ -42,7 +42,7 @@ export function normalizePartnerPlan(plan?: string): PartnerPlanType {
   if (p.includes("FRANQUIA") || p.includes("DIGITAL") || p.includes("MASTER")) return "MASTER";
   if (p.includes("EXEC")) return "EXECUTIVE";
   if (p.includes("STARTER") || p.includes("INICIANTE") || p.includes("BASICO")) return "STARTER";
-  return "EXECUTIVE"; // Default fallback
+  return "STARTER"; // Fallback conservador: plano não reconhecido = menor taxa direta (10%)
 }
 
 /**
@@ -175,7 +175,8 @@ export function calculateMultilevelCommission(
 
   if (options.hasMasterParent) {
     const masterPlanNorm = normalizePartnerPlan(options.masterPlan || "MASTER");
-    const masterOverrideRate = consultantPlanNorm === "STARTER" ? 0.20 : 0.10;
+    // Teto de 30%: o Master recebe exatamente a diferença até 30%
+    const masterOverrideRate = Math.max(0, SERVICE_COMMISSION_RATES.MASTER - consultantDirectRate);
     const totalRate = consultantDirectRate + masterOverrideRate; // Always 30% total pool under Master
 
     const consultantAmount = cleanAmount * consultantDirectRate;

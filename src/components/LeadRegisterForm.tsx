@@ -383,9 +383,23 @@ export default function LeadRegisterForm({
       };
 
       // Calculate multilevel commission snapshot based on partner hierarchy
+      const masterVinculadoId = (currentPartner as any)?.parentPartnerId;
+      const hierarchyPartners: any[] = currentPartner
+        ? [
+            currentPartner,
+            ...(masterVinculadoId
+              ? [{
+                  id: masterVinculadoId,
+                  nome: (currentPartner as any).parentPartnerNome || "Master Partner PROSFEC",
+                  plano: "Franquia Digital PROSFEC"
+                }]
+              : [])
+          ]
+        : [];
+
       const commissionPayload = buildLeadMultilevelFirestorePayload(
         newLeadDoc,
-        [],
+        hierarchyPartners,
         currentPartner
       );
 
