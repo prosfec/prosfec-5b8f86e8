@@ -962,6 +962,17 @@ export default function LeadWorkspaceModal({
 
   const hasAnyConsulta = leadConsultas.length > 0;
 
+  // Documentos que já possuem consulta neste lead (histórico + sessão atual)
+  const documentosConsultados = new Set<string>([
+    ...leadConsultas.map((c: any) => String(c.documento || "").replace(/\D/g, "")).filter(Boolean),
+    ...documentosConsultadosSessao,
+  ]);
+  const documentoSelecionadoDigits = String(selectedQueryDocument || "").replace(/\D/g, "");
+  const documentoJaConsultado = documentoSelecionadoDigits.length > 0 && documentosConsultados.has(documentoSelecionadoDigits);
+  const consultaExistenteDoDocumento = leadConsultas.find(
+    (c: any) => String(c.documento || "").replace(/\D/g, "") === documentoSelecionadoDigits
+  );
+
   function parseBoldText(text: string) {
     const parts = text.split(/\*\*([^*]+)\*\*/g);
     return parts.map((part, index) => {
