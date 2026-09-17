@@ -4316,9 +4316,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         <span>{theme === "dark" ? "Aparência: Tecnológica" : "Aparência: Clara"}</span>
       </button>
       <button
-
         onClick={handleLogout}
-        className="w-full bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-700 hover:text-rose-600 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px]"
+        className="w-full bg-slate-100 hover:bg-rose-50 dark:bg-slate-900 dark:hover:bg-rose-950/40 border border-slate-200 hover:border-rose-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:text-rose-600 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px]"
+
         title="Sair do Portal"
       >
         <LogOut className="w-3.5 h-3.5" />
@@ -4326,7 +4326,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       </button>
       <button
         onClick={onBackToHome}
-        className="w-full bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[40px]"
+        className="w-full bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[40px]"
       >
         Voltar ao Site
       </button>
@@ -4334,7 +4334,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   );
 
   return (
-    <div className={`soft-ui font-sans bg-slate-50 text-slate-900 ${isAuthenticated && currentPartner ? "h-screen overflow-hidden flex flex-col" : "min-h-screen flex flex-col"}`}>
+    <div className={`soft-ui font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 ${isAuthenticated && currentPartner ? "h-screen overflow-hidden flex flex-col" : "min-h-screen flex flex-col"}`}>
       {/* Dynamic Header (somente telas públicas/login) */}
       {!(isAuthenticated && currentPartner) && (
       <header className="bg-[#0A3D2E] text-slate-100 py-3.5 px-4 sm:px-6 border-b border-emerald-800/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
