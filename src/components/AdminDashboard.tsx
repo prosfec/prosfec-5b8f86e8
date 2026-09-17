@@ -1865,84 +1865,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
-  const handleToggleServicoPago = async (id: string, marcarComoPago: boolean) => {
-    try {
-      const leadToUpdate = leads.find(l => l.id === id);
-      if (!leadToUpdate) return;
-
-      // Verificação de Integridade: Pagamento de serviços é exclusivo do Passo 6
-      if ((leadToUpdate.etapa || 1) < 6) {
-        alert("Verificação de Integridade: O status de pagamento de serviços só pode ser alterado quando o lead estiver no Passo 6 (Melhoria do Perfil de Crédito).");
-        return;
-      }
-
-      const rawDiagnosticoServices = leadToUpdate.servicosRecomendados || [];
-      const verifiedServices = sanitizeAndSyncServicosList(rawDiagnosticoServices, customServices);
-
-      const currentSubEtapas = Array.isArray(leadToUpdate.subEtapasPasso6) && leadToUpdate.subEtapasPasso6.length > 0
-        ? leadToUpdate.subEtapasPasso6
-        : (editingSubEtapasPasso6.length > 0 
-            ? editingSubEtapasPasso6 
-            : verifiedServices.map((s: any, idx: number) => ({
-                id: s.id || `sub_${Date.now()}_${idx + 1}`,
-                titulo: s.nome || s.servico || `Serviço ${idx + 1}`,
-                concluida: s.status === "concluido" || s.concluida || false,
-                preco: typeof s.valor === "number" ? s.valor : (parseFloat(s.valor) || 0),
-                statusPagamento: "pendente"
-              }))
-          );
-
-      const updatedSubEtapas = currentSubEtapas.map((sub: any) => isMensalidadeItem(sub) ? sub : ({
-        ...sub,
-        statusPagamento: marcarComoPago ? "pago" : "pendente",
-        dataPagamento: marcarComoPago ? (sub.dataPagamento || new Date().toISOString()) : null
-      }));
-
-      const commissionPayload = buildLeadMultilevelFirestorePayload(
-        leadToUpdate,
-        partners,
-        null,
-        updatedSubEtapas
-      );
-
-      const updateData: any = {
-        servicoPago: marcarComoPago,
-        subEtapasPasso6: commissionPayload.subEtapasPasso6,
-        comissaoMultinivel: commissionPayload.comissaoMultinivel,
-        dataConfirmacaoPagamentoServico: marcarComoPago ? new Date().toISOString() : null
-      };
-
-      const docRef = doc(db, "leads", id);
-      await updateDoc(docRef, updateData);
-
-      setLeads(prev => prev.map(item => item.id === id ? { ...item, ...updateData } : item));
-      if (selectedLead?.id === id) {
-        setSelectedLead(prev => prev ? { ...prev, ...updateData } : null);
-      }
-      if (updatedSubEtapas.length > 0) {
-        setEditingSubEtapasPasso6(withoutMensalidades(commissionPayload.subEtapasPasso6));
-      }
-
-      // Notify partner
-      if (leadToUpdate.parceiroId) {
-        await createNotification(
-          leadToUpdate.parceiroId,
-          "parceiro",
-          marcarComoPago ? "Serviço Pago pelo Cliente!" : "Status de Serviço Atualizado",
-          marcarComoPago 
-            ? `O pagamento do serviço pelo cliente "${leadToUpdate.nome}" foi confirmado pelo ADM! As comissões já constam como pagas/em liquidação.`
-            : `O status de pagamento do serviço do lead "${leadToUpdate.nome}" foi alterado para pendente.`,
-          marcarComoPago ? "success" : "info"
-        );
-      }
-
-      alert(marcarComoPago ? "Serviço marcado como PAGO com sucesso! Comissões e sub-etapas sincronizadas." : "Serviço marcado como PENDENTE com sucesso.");
-    } catch (err) {
-      console.error("Error toggling servicoPago:", err);
-      alert("Falha ao atualizar o status de pagamento do serviço no Firestore.");
-    }
-  };
-
   const handleUpdateComissaoPaga = async (id: string, paga: boolean) => {
     try {
       const docRef = doc(db, "leads", id);
@@ -5978,17 +5900,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         </span>
                       </button>
 
-                      {/* Botão de Status Pagamento do Serviço PROSFEC (Apenas no Passo 6) */}
+                      {/* Indicador de Pagamento dos Serviços (confirmação é feita serviço a serviço no Passo 6) */}
                       {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleServicoPago(selectedLead.id, !selectedLead.servicoPago)}
-                          className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
+                        <div
+                          className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase flex items-center justify-center gap-1.5 shadow-xs ${
                             selectedLead.servicoPago
-                              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                              : "bg-white hover:bg-amber-50 text-amber-800 border border-amber-300"
+                              ? "bg-emerald-50 text-emerald-800 border border-emerald-300"
+                              : "bg-white text-amber-800 border border-amber-300"
                           }`}
-                          title="Alternar se o cliente já realizou o pagamento dos serviços do Passo 6 ou se está pendente"
+                          title="A confirmação de pagamento é feita serviço a serviço no Passo 6, escolhendo Pix ou Cartão"
                         >
                           {selectedLead.servicoPago ? (
                             <>
@@ -6001,7 +5921,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               <span>Serviço Pendente ⏳</span>
                             </>
                           )}
-                        </button>
+                        </div>
                       )}
                     </div>
 
