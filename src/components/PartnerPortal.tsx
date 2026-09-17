@@ -954,7 +954,7 @@ export default function PartnerPortal({
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const [workspaceSuccess, setWorkspaceSuccess] = useState<string | null>(null);
 
-  // Caça Leads (Apify Google Places) states
+  // Painel de Oportunidade (Apify Google Places) states
   const [huntKeyword, setHuntKeyword] = useState("");
   const [huntState, setHuntState] = useState("");
   const [huntCitySelect, setHuntCitySelect] = useState("");
@@ -968,7 +968,7 @@ export default function PartnerPortal({
   const [cacaLeadsCount, setCacaLeadsCount] = useState<number>(0);
   const [cacaLeadsLastDate, setCacaLeadsLastDate] = useState<string>("");
 
-  // Caça Leads Search History states (Max 5 items)
+  // Painel de Oportunidade Search History states (Max 5 items)
   const [cacaLeadsHistory, setCacaLeadsHistory] = useState<CacaLeadsSearchHistoryItem[]>([]);
   const [showHistoryDrawer, setShowHistoryDrawer] = useState<boolean>(false);
   const [huntHistoryLoading, setHuntHistoryLoading] = useState<boolean>(false);
@@ -994,7 +994,7 @@ export default function PartnerPortal({
   const [addingNoteForLeadId, setAddingNoteForLeadId] = useState<string | null>(null);
   const [expandedNotesLeadId, setExpandedNotesLeadId] = useState<string | null>(null);
   
-  // Refill search limit states (Caça-Leads)
+  // Refill search limit states (Painel de Oportunidade)
   const [showRefillModal, setShowRefillModal] = useState(false);
   const [refillStep, setRefillStep] = useState<1 | 2>(1);
   const [refillPackage, setRefillPackage] = useState<"Bronze" | "Prata" | "Ouro">("Bronze");
@@ -1006,7 +1006,15 @@ export default function PartnerPortal({
   // Step 6 Services Performance & Financial Control states
   const [dashboardServiceFilter, setDashboardServiceFilter] = useState<"todos" | "pendente" | "pago" | "cancelado">("todos");
   const [dashboardServiceSearch, setDashboardServiceSearch] = useState("");
-  const [expandedServiceLeadId, setExpandedServiceLeadId] = useState<string | null>(null);
+  const [expandedServiceLeadIds, setExpandedServiceLeadIds] = useState<Set<string>>(new Set());
+  const toggleExpandedServiceLead = (leadId: string) => {
+    setExpandedServiceLeadIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(leadId)) next.delete(leadId);
+      else next.add(leadId);
+      return next;
+    });
+  };
   const [solicitacoesComissao, setSolicitacoesComissao] = useState<SolicitacaoComissao[]>([]);
   // Origem da caixa de saque: "vendas" (comissões de planos/vendas) ou "servicos" (Passo 6)
   const [payoutModalOrigin, setPayoutModalOrigin] = useState<null | "vendas" | "servicos">(null);
@@ -2265,7 +2273,7 @@ export default function PartnerPortal({
       setRefillNotifySuccess(true);
       fetchPartnerRefills(currentPartner.id);
     } catch (err) {
-      console.error("Erro ao solicitar recarga do Caça-Leads:", err);
+      console.error("Erro ao solicitar recarga do Painel de Oportunidade:", err);
       alert("Erro ao enviar notificação de recarga.");
     } finally {
       setRefillSubmitting(false);
@@ -2374,7 +2382,7 @@ export default function PartnerPortal({
     }
   };
 
-  // Fetch search history for Caça-Leads (limited to 5)
+  // Fetch search history for Painel de Oportunidade (limited to 5)
   const fetchHuntSearchHistory = async (partnerId: string) => {
     if (!partnerId) return;
     try {
@@ -2410,7 +2418,7 @@ export default function PartnerPortal({
         localStorage.setItem(`caca_leads_history_${partnerId}`, JSON.stringify(list.slice(0, 5)));
       }
     } catch (err) {
-      console.error("Erro ao carregar histórico de buscas do Caça-Leads:", err);
+      console.error("Erro ao carregar histórico de buscas do Painel de Oportunidade:", err);
     } finally {
       setHuntHistoryLoading(false);
     }
@@ -2472,7 +2480,7 @@ export default function PartnerPortal({
         await deleteDoc(d.ref);
       }
     } catch (err) {
-      console.error("Erro ao limpar histórico do Caça-Leads:", err);
+      console.error("Erro ao limpar histórico do Painel de Oportunidade:", err);
     }
   };
 
@@ -2510,7 +2518,7 @@ export default function PartnerPortal({
     const credits = currentPartner?.cacaLeadsCredits || 0;
 
     if (credits <= 0) {
-      setHuntError("Você não possui saldo de buscas no Caça-Leads. Adquira um pacote de recargas (Bronze, Prata ou Ouro) para realizar pesquisas em tempo real.");
+      setHuntError("Você não possui saldo de buscas no Painel de Oportunidade. Adquira um pacote de recargas (Bronze, Prata ou Ouro) para realizar pesquisas em tempo real.");
       return;
     }
 
@@ -4152,7 +4160,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       >
         <span className="flex items-center gap-2.5">
           <ClipboardList className={`w-5 h-5 ${activeTab === "leads" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
-          Meus Leads ({leads.length})
+          Funil Kanban Vendas ({leads.length})
         </span>
         {!isProfileComplete(currentPartner) ? (
           <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
@@ -4172,10 +4180,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         >
           <span className="flex items-center gap-2.5">
             <Search className={`w-5 h-5 ${activeTab === "caca-leads" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
-            <span className="flex items-center gap-1">
-              Caça Leads
-              <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
-            </span>
+            Painel de Oportunidade
           </span>
           {!isProfileComplete(currentPartner) ? (
             <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
@@ -4216,10 +4221,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       >
         <span className="flex items-center gap-2.5">
           <Calculator className={`w-5 h-5 ${activeTab === "servicos-contabilidade" ? "text-white" : "text-emerald-600"}`} strokeWidth={2} />
-          <span className="flex items-center gap-1">
-            Serviços Contábeis
-            <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
-          </span>
+          Serviços Contábeis
         </span>
         {!isProfileComplete(currentPartner) ? (
           <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
@@ -4767,7 +4769,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       <p className="text-sm text-slate-500 leading-relaxed">
                         Olá, <strong className="text-slate-700">{currentPartner.nome}</strong>. 
                         {sub.isTrial ? (
-                          " Seu período de teste gratuito de 3 dias chegou ao fim. Para liberar o seu acesso por 1 ano completo e continuar indicando empresas, acompanhando seus ganhos e usando o Caça-Leads, efetue o pagamento do seu plano."
+                          " Seu período de teste gratuito de 3 dias chegou ao fim. Para liberar o seu acesso por 1 ano completo e continuar indicando empresas, acompanhando seus ganhos e usando o Painel de Oportunidade, efetue o pagamento do seu plano."
                         ) : (
                           " A sua licença anual do Portal de Parceiros expirou. Regularize o seu pagamento para garantir acesso completo e irrestrito por mais 1 ano."
                         )}
@@ -4969,7 +4971,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         onClick={() => setActiveTab("leads")}
                         className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
                       >
-                        Ver Meus Leads
+                        Ver Funil Kanban Vendas
                       </button>
                     </div>
                   )}
@@ -5157,7 +5159,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
                         </div>
 
-                        {/* LINHA 2: Dedicated Saldos Grid (Recargas e Saldos: Saldo Geral vs. Saldo Caça-Leads) */}
+                        {/* LINHA 2: Dedicated Saldos Grid (Recargas e Saldos: Saldo Geral vs. Saldo Painel de Oportunidade) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 text-left">
                           {/* Saldo Geral (Consultas e Serviços) */}
                           <div className="bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
@@ -5204,7 +5206,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
                           </div>
 
-                          {/* Saldo Caça Leads (buscas) */}
+                          {/* Saldo Painel de Oportunidade (buscas) */}
                           <div className="bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-center gap-3 min-w-0">
@@ -5213,7 +5215,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 </div>
                                 <div className="min-w-0">
                                   <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide">
-                                    Saldo Caça Leads (buscas)
+                                    Saldo Painel de Oportunidade (buscas)
                                   </span>
                                   <p className="text-[10px] text-slate-400 font-medium mt-0.5">
                                     Buscas de empresas e sócios ativas em tempo real
@@ -5935,19 +5937,41 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </button>
                             </div>
 
-                            <div className="relative w-full sm:w-64">
-                              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                              <button
+                                type="button"
+                                onClick={() => setExpandedServiceLeadIds(new Set(filteredGroups.map((g) => g.leadId)))}
+                                disabled={filteredGroups.length === 0 || expandedServiceLeadIds.size >= filteredGroups.length}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
+                                title="Abrir o detalhamento de serviços de todos os clientes listados"
+                              >
+                                <ChevronRight className="w-3.5 h-3.5" />
+                                Todos os detalhes
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setExpandedServiceLeadIds(new Set())}
+                                disabled={expandedServiceLeadIds.size === 0}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
+                                title="Recolher todos os detalhamentos e limpar a tela"
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                                Recolher
+                              </button>
+                              <div className="relative w-full sm:w-56">
+                                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                               <input
                                 type="text"
                                 placeholder="Buscar cliente, consultor ou serviço..."
                                 value={dashboardServiceSearch}
                                 onChange={(e) => setDashboardServiceSearch(e.target.value)}
                                 className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 font-medium placeholder:text-slate-400 outline-hidden focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all"
-                              />
-                            </div>
-                          </div>
+                               />
+                               </div>
+                             </div>
+                           </div>
 
-                          {/* Grouped Lead Cards or Empty State */}
+                           {/* Grouped Lead Cards or Empty State */}
                           {filteredGroups.length === 0 ? (
                             <div className="py-8 px-4 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 space-y-2">
                               <Receipt className="w-8 h-8 text-slate-300 mx-auto" />
@@ -5976,7 +6000,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   </div>
 
                                   {filteredGroups.map((group) => {
-                                    const isExpanded = expandedServiceLeadId === group.leadId;
+                                    const isExpanded = expandedServiceLeadIds.has(group.leadId);
 
                                     return (
                                       <div key={group.leadId} className="hover:bg-slate-50/50 transition-colors">
@@ -6067,7 +6091,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                           <div className="col-span-2 flex items-center justify-center gap-2">
                                             <button
                                               type="button"
-                                              onClick={() => setExpandedServiceLeadId(isExpanded ? null : group.leadId)}
+                                              onClick={() => toggleExpandedServiceLead(group.leadId)}
                                               className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 border h-9 whitespace-nowrap shrink-0 ${
                                                 isExpanded
                                                   ? "bg-slate-800 text-white border-slate-800"
@@ -7252,7 +7276,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           Recurso de Prospecção Bloqueado
                         </h2>
                         <p className="text-xs text-slate-500 leading-relaxed">
-                          Olá, <strong className="text-slate-700">{currentPartner?.nome}</strong>. Sua conta de Parceiro está com pagamento do plano pendente ou vencido. Ative seu plano para liberar o acesso ao Caça-Leads e demais recursos operacionais do sistema.
+                          Olá, <strong className="text-slate-700">{currentPartner?.nome}</strong>. Sua conta de Parceiro está com pagamento do plano pendente ou vencido. Ative seu plano para liberar o acesso ao Painel de Oportunidade e demais recursos operacionais do sistema.
                         </p>
                       </div>
 
@@ -7273,7 +7297,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         <a
 
                           href={`https://api.whatsapp.com/send?phone=5598987353253&text=${encodeURIComponent(
-                            `Olá! Sou o parceiro ${currentPartner?.nome} (ID: ${currentPartner?.id}) e gostaria de regularizar ou ativar meu plano para liberar a ferramenta Caça Leads.`
+                            `Olá! Sou o parceiro ${currentPartner?.nome} (ID: ${currentPartner?.id}) e gostaria de regularizar ou ativar meu plano para liberar a ferramenta Painel de Oportunidade.`
                           )}`}
                           target="_blank"
                           referrerPolicy="no-referrer"
@@ -7700,7 +7724,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         <div>
                           <h2 className="font-display font-black text-xl text-slate-800 flex items-center gap-2">
                             <Search className="w-6 h-6 text-emerald-600" />
-                            Painel Ativo: Caça Leads
+                            Painel Ativo: Painel de Oportunidade
                           </h2>
                           <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
                             Utilize nossa tecnologia para buscar empresas em qualquer segmento comercial e cidade em tempo real. Identifique oportunidades qualificadas e faça prospecção ativa via WhatsApp.
@@ -7746,7 +7770,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         <div className="space-y-1">
                           <h3 className="font-extrabold text-sm text-emerald-900 flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-                            Saldo de Buscas do Caça-Leads (Por Recargas)
+                            Saldo de Buscas do Painel de Oportunidade (Por Recargas)
                           </h3>
                           <p className="text-xs text-emerald-700 leading-relaxed">
                             Não há limite diário fixo. Todas as consultas são realizadas através das suas recargas e cada busca retorna até <strong>60 empresas/leads em tempo real</strong>.
@@ -7958,7 +7982,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           ) : (
                             <>
                               <Search className="w-3.5 h-3.5" />
-                              Caçar Leads
+                              Buscar Oportunidades
                             </>
                           )}
                         </button>
@@ -7974,7 +7998,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </div>
                   </form>
 
-                  {/* Caça-Leads Search History Section (Up to 5 searches) */}
+                  {/* Painel de Oportunidade Search History Section (Up to 5 searches) */}
                   {cacaLeadsHistory.length > 0 && (
                     <div className="bg-white/75 backdrop-blur-xl border border-slate-200/80 rounded-2xl p-4 shadow-2xs space-y-3">
                       <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-2.5">
@@ -8479,7 +8503,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       <div className="space-y-1">
                         <p className="text-sm font-black text-slate-700">O seu funil ativo está aguardando você</p>
                         <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
-                          Escolha um segmento de mercado (ex: Restaurantes, Dentistas, Padarias, Transportadoras) e uma cidade, e clique em "Caçar Leads" para iniciar a prospecção ativa de Pronampe.
+                          Escolha um segmento de mercado (ex: Restaurantes, Dentistas, Padarias, Transportadoras) e uma cidade, e clique em "Buscar Oportunidades" para iniciar a prospecção ativa de Pronampe.
                         </p>
                       </div>
                     </div>
@@ -8551,7 +8575,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       <div className="space-y-1">
                         <p className="font-extrabold text-amber-950 text-sm">Preenchimento Obrigatório do Perfil</p>
                         <p className="text-amber-800 font-medium leading-relaxed">
-                          Para liberar o acesso a todas as funções do sistema (Caça-Leads, cadastro de indicações, simulador e consultas), é obrigatório preencher e salvar os dados cadastrais marcados com asterisco (*) abaixo: <strong>Nome Completo / Razão Social</strong>, <strong>CPF / CNPJ</strong>, <strong>WhatsApp</strong>, <strong>Cidade - UF</strong> e <strong>Chave Pix</strong>.
+                          Para liberar o acesso a todas as funções do sistema (Painel de Oportunidade, cadastro de indicações, simulador e consultas), é obrigatório preencher e salvar os dados cadastrais marcados com asterisco (*) abaixo: <strong>Nome Completo / Razão Social</strong>, <strong>CPF / CNPJ</strong>, <strong>WhatsApp</strong>, <strong>Cidade - UF</strong> e <strong>Chave Pix</strong>.
                         </p>
                       </div>
                     </div>
@@ -9088,7 +9112,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                           >
                                             <div className="flex items-center gap-1.5 truncate">
                                               <Search className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
-                                              <span className="truncate">Caça-Leads</span>
+                                              <span className="truncate">Painel de Oportunidade</span>
                                             </div>
                                             <span className="bg-emerald-900/80 text-emerald-200 text-[9px] px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ml-1">
                                               {distLeadsForMember.length} leads
@@ -9113,7 +9137,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                             </button>
 
                                             <a
-                                              href={buildWhatsAppUrl(member.whatsapp, `Olá ${member.nome}, sou a Franquia Master PROSFEC. Gostaria de acompanhar como estão suas abordagens aos leads que direcionamos no Caça-Leads.`)}
+                                              href={buildWhatsAppUrl(member.whatsapp, `Olá ${member.nome}, sou a Franquia Master PROSFEC. Gostaria de acompanhar como estão suas abordagens aos leads que direcionamos no Painel de Oportunidade.`)}
                                               target="_blank"
                                               rel="noopener noreferrer"
                                               className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-xl text-[9.5px] font-bold flex items-center justify-center gap-1 transition-all shrink-0"
@@ -10812,7 +10836,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     Acompanhamento de Prospecção Ativa
                   </span>
                   <h3 className="font-display font-extrabold text-lg text-white">
-                    Caça-Leads: {selectedConsultantForInspection.nome}
+                    Painel de Oportunidade: {selectedConsultantForInspection.nome}
                   </h3>
                 </div>
               </div>
@@ -10947,7 +10971,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
                         <p className="text-xs text-slate-500 font-bold max-w-sm mx-auto">
                           {totalCount === 0
-                            ? `Nenhum lead do "Caça-Leads" foi direcionado para ${selectedConsultantForInspection.nome} ainda.`
+                            ? `Nenhum lead do "Painel de Oportunidade" foi direcionado para ${selectedConsultantForInspection.nome} ainda.`
                             : "Nenhum lead encontrado com os filtros selecionados."}
                         </p>
                         {totalCount === 0 && (
@@ -10959,7 +10983,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             }}
                             className="px-4 py-2 bg-[#00A86B] hover:bg-[#008f5a] text-white text-xs font-extrabold rounded-xl transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                           >
-                            Direcionar Leads no Caça-Leads Agora
+                            Direcionar Leads no Painel de Oportunidade Agora
                           </button>
                         )}
                       </div>
@@ -11235,7 +11259,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             <div className="bg-amber-50/70 border border-amber-200/80 p-3.5 rounded-2xl space-y-1.5 text-xs text-amber-900">
               <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 block">Atenção Master</span>
               <p className="font-medium leading-relaxed">
-                Você está prestes a transferir <strong>todos os leads ativos do Caça-Leads</strong> de{" "}
+                Você está prestes a transferir <strong>todos os leads ativos do Painel de Oportunidade</strong> de{" "}
                 <strong>{bulkReassignConsultantSource.nome}</strong>.
               </p>
               <div className="text-[11px] text-amber-800 font-bold mt-1">
@@ -12018,7 +12042,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         </div>
       )}
 
-      {/* Modal de Recarga do Caça-Leads (Passo 1: Pacote -> Passo 2: Pix & Confirmação) */}
+      {/* Modal de Recarga do Painel de Oportunidade (Passo 1: Pacote -> Passo 2: Pix & Confirmação) */}
       {showRefillModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs text-left">
           <motion.div
@@ -12038,7 +12062,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     {refillNotifySuccess
                       ? "Notificação Registrada"
                       : refillStep === 1
-                      ? "Adicionar Recarga Caça-Leads"
+                      ? "Adicionar Recarga Painel de Oportunidade"
                       : "Pagamento via Pix"}
                   </h3>
                   <p className="text-[11px] text-slate-500 font-medium">
@@ -12102,7 +12126,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   <div className="bg-emerald-50/70 border border-emerald-100 p-3 rounded-2xl text-[11px] text-emerald-900 leading-relaxed flex items-center gap-2 text-left">
                     <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>
-                      Você pode acompanhar o status desta solicitação a qualquer momento no histórico da aba Caça-Leads.
+                      Você pode acompanhar o status desta solicitação a qualquer momento no histórico da aba Painel de Oportunidade.
                     </span>
                   </div>
 
@@ -12235,7 +12259,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   {/* Information block */}
                   <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-2xl space-y-1.5">
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
-                      Como funciona o Caça-Leads?
+                      Como funciona o Painel de Oportunidade?
                     </span>
                     <p className="text-xs text-slate-600 leading-relaxed">
                       Cada busca varre em tempo real a base nacional de empresas e retorna até 20 estabelecimentos com telefones, e-mails, endereço e quadro societário (QSA). Os créditos de busca não expiram.
@@ -12302,7 +12326,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             Tipo
                           </span>
                           <span className="text-xs font-black text-slate-900 block">
-                            Caça-Leads
+                            Painel de Oportunidade
                           </span>
                         </div>
                       </div>

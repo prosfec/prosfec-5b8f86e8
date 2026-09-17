@@ -1419,7 +1419,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           setEditMensalidades(normalizeMensalidades(data.mensalidades));
           setEditAssinaturaParceiro(normalizeAssinaturaParceiro(data.assinaturaParceiro));
           if (data.servicos && Array.isArray(data.servicos) && data.servicos.length > 0) {
-            // Remove obsolete items: "Diagnóstico de Crédito — CPF ou CNPJ", "Recarga do Caça-Leads" e BACEN avulso legado
+            // Remove obsolete items: "Diagnóstico de Crédito — CPF ou CNPJ", "Recarga do Painel de Oportunidade" e BACEN avulso legado
             const rawServs = data.servicos.filter((s: any) => 
               s.id !== "serv_diagnostico" && 
               s.id !== "serv_caca_leads" && 
@@ -4070,7 +4070,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </div>
                             </div>
 
-                            {/* Balances Strip: Saldo Geral & Caça-Leads */}
+                            {/* Balances Strip: Saldo Geral & Painel de Oportunidade */}
                             <div className="grid grid-cols-2 gap-2 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100/90 text-left">
                               <div>
                                 <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider block">Saldo Geral</span>
@@ -4083,7 +4083,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </span>
                               </div>
                               <div>
-                                <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider block">Caça-Leads</span>
+                                <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider block">Painel de Oportunidade</span>
                                 <span className="text-xs font-mono font-extrabold text-slate-700 block truncate">
                                   {partner.cacaLeadsCredits || 0} <span className="text-[9px] font-normal text-slate-500">buscas</span>
                                 </span>
@@ -4597,7 +4597,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <div>
                       <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
                         <Coins className="w-5 h-5 text-emerald-600" />
-                        Aprovação de Recargas (Saldo Geral &amp; Caça-Leads)
+                        Aprovação de Recargas (Saldo Geral &amp; Painel de Oportunidade)
                       </h2>
                       <p className="text-slate-500 text-xs mt-1">
                         Aprove ou cancele as solicitações de recarga enviadas manualmente pelos parceiros.
@@ -7132,7 +7132,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   <div className="bg-teal-50/60 border border-teal-100 p-3.5 rounded-xl text-left">
                     <div className="flex items-center gap-2 text-teal-800">
                       <Search className="w-4 h-4" />
-                      <span className="text-xs font-bold uppercase tracking-wide">Saldo Caça Leads (buscas)</span>
+                      <span className="text-xs font-bold uppercase tracking-wide">Saldo Painel de Oportunidade (buscas)</span>
                     </div>
                     <span className="text-2xl font-black font-mono text-teal-950 block mt-1.5">
                       {selectedPartner.cacaLeadsCredits || 0}{" "}
