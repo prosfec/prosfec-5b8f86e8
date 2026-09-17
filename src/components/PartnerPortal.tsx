@@ -5945,7 +5945,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
                           ) : (
                             <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white/75 backdrop-blur-xl shadow-2xs">
-                              <div className="overflow-x-auto">
+                              <div className="overflow-x-auto snap-x scroll-smooth">
                                 <div className="min-w-[920px] divide-y divide-slate-100">
                                   {/* Table Header */}
                                   <div className="grid grid-cols-12 gap-3 px-5 py-3 bg-slate-50/90 text-[11px] font-bold uppercase tracking-wider text-slate-500 font-mono items-center border-b border-slate-200/70">
@@ -6172,7 +6172,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </p>
                             </div>
                           ) : (
-                            <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                            <div className="overflow-x-auto snap-x scroll-smooth rounded-2xl border border-slate-200">
                               <table className="w-full text-left text-xs border-collapse">
                                 <thead>
                                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-mono text-[10px] uppercase tracking-wider">
@@ -9494,7 +9494,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </button>
                             </div>
                           ) : (
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto snap-x scroll-smooth">
                               <table className="w-full text-left border-collapse text-xs">
                                 <thead>
                                   <tr className="bg-slate-50 text-slate-400 font-bold border-b border-slate-100 uppercase tracking-wider text-[9px]">
