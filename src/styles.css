@@ -1200,3 +1200,184 @@ select option {
 .dark .soft-ui .pf-modal {
   background: #131316 !important;
 }
+
+/* ============================================================
+   TIPOGRAFIA ADAPTATIVA — Portal do Parceiro (.soft-ui)
+   Corrige contraste de textos, ícones e campos nos dois temas.
+   Somente apresentação: nenhuma regra de negócio depende daqui.
+   ============================================================ */
+
+/* ---- Hierarquia semântica reutilizável ---- */
+.soft-ui .pf-title {
+  color: #0f172a;
+  font-family: var(--font-display, inherit);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.soft-ui .pf-subtitle { color: #334155; }
+.soft-ui .pf-text { color: #1e293b; }
+.soft-ui .pf-text-secondary { color: #475569; }
+.soft-ui .pf-label {
+  color: #64748b;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.soft-ui .pf-micro { color: #64748b; font-size: 0.72rem; }
+.soft-ui .pf-money {
+  color: #062e22;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+.soft-ui .pf-ok { color: #047857; }
+.soft-ui .pf-warn { color: #b45309; }
+.soft-ui .pf-error { color: #be123c; }
+
+.dark .soft-ui .pf-title { color: #fafafa; }
+.dark .soft-ui .pf-subtitle { color: #d4d4d8; }
+.dark .soft-ui .pf-text { color: #e4e4e7; }
+.dark .soft-ui .pf-text-secondary { color: #a1a1aa; }
+.dark .soft-ui .pf-label { color: #a1a1aa; }
+.dark .soft-ui .pf-micro { color: #8b8b94; }
+.dark .soft-ui .pf-money { color: #ffffff; }
+.dark .soft-ui .pf-ok { color: #34d399; }
+.dark .soft-ui .pf-warn { color: #fbbf24; }
+.dark .soft-ui .pf-error { color: #fb7185; }
+
+/* ---- Cores fixas da marca usadas como TEXTO/ÍCONE ---- */
+/* Verde institucional escuro: ilegível sobre fundo escuro */
+.dark .soft-ui [class*="text-[#0A3D2E]"],
+.dark .soft-ui [class*="text-[#0a3d2e]"],
+.dark .soft-ui [class*="text-[#02241A]"],
+.dark .soft-ui [class*="text-[#02241a]"],
+.dark .soft-ui [class*="text-[#0B4A37]"],
+.dark .soft-ui [class*="text-[#064E3B]"],
+.dark .soft-ui [class*="text-[#064e3b]"],
+.dark .soft-ui [class*="text-[#043326]"],
+.dark .soft-ui [class*="text-[#032e22]"],
+.dark .soft-ui [class*="text-[#084534]"] {
+  color: #f4f4f5 !important;
+}
+
+/* Verde de acento e variantes */
+.dark .soft-ui [class*="text-[#00A86B]"],
+.dark .soft-ui [class*="text-[#00a86b]"],
+.dark .soft-ui [class*="text-[#008f5a]"],
+.dark .soft-ui [class*="text-[#008F5A]"],
+.dark .soft-ui [class*="text-[#008f5b]"],
+.dark .soft-ui [class*="text-[#047857]"],
+.dark .soft-ui [class*="text-[#25D366]"],
+.dark .soft-ui [class*="text-[#128C7E]"] {
+  color: #34d399 !important;
+}
+
+/* Âmbar / alerta fixo */
+.dark .soft-ui [class*="text-[#D97706]"],
+.dark .soft-ui [class*="text-[#d97706]"],
+.dark .soft-ui [class*="text-[#B45309]"] {
+  color: #fbbf24 !important;
+}
+
+/* Preto e cinzas fora da escala já tratada */
+.dark .soft-ui .text-black,
+.dark .soft-ui [class*="text-neutral-9"],
+.dark .soft-ui [class*="text-neutral-8"],
+.dark .soft-ui [class*="text-neutral-7"],
+.dark .soft-ui [class*="text-stone-9"],
+.dark .soft-ui [class*="text-stone-8"],
+.dark .soft-ui [class*="text-stone-7"] {
+  color: #fafafa !important;
+}
+.dark .soft-ui [class*="text-neutral-6"],
+.dark .soft-ui [class*="text-neutral-5"],
+.dark .soft-ui [class*="text-stone-6"],
+.dark .soft-ui [class*="text-stone-5"] {
+  color: #a1a1aa !important;
+}
+
+/* ---- Textos dentro de superfícies escuras/coloridas da marca ---- */
+.soft-ui [class*="bg-[#0A3D2E]"] [class*="text-slate-9"],
+.soft-ui [class*="bg-[#0A3D2E]"] [class*="text-slate-8"],
+.soft-ui [class*="bg-[#0A3D2E]"] [class*="text-slate-7"],
+.soft-ui [class*="bg-[#02241A]"] [class*="text-slate-9"],
+.soft-ui [class*="bg-[#02241A]"] [class*="text-slate-8"],
+.soft-ui [class*="bg-[#02241A]"] [class*="text-slate-7"],
+.soft-ui [class*="bg-[#00A86B]"] [class*="text-slate-9"],
+.soft-ui [class*="bg-[#00A86B]"] [class*="text-slate-8"],
+.soft-ui [class*="bg-[#00A86B]"] [class*="text-slate-7"],
+.soft-ui [class*="bg-[#0A3D2E]"] [class*="text-[#0A3D2E]"],
+.soft-ui [class*="bg-[#02241A]"] [class*="text-[#0A3D2E]"],
+.soft-ui [class*="bg-[#00A86B]"] [class*="text-[#0A3D2E]"],
+.soft-ui .pf-hero [class*="text-[#0A3D2E]"],
+.soft-ui .pf-tool [class*="text-[#0A3D2E]"] {
+  color: #ffffff !important;
+}
+
+.soft-ui .pf-hero [class*="text-[#00A86B]"],
+.soft-ui .pf-tool [class*="text-[#00A86B]"] {
+  color: #34d399 !important;
+}
+
+/* ---- Ícones herdam a cor do bloco quando não têm cor própria ---- */
+.dark .soft-ui svg:not([class*="text-"]):not([class*="fill-"]):not([class*="stroke-"]) {
+  color: currentColor;
+}
+
+/* ---- Campos, seleções e filtros (tema claro) ---- */
+.soft-ui input::placeholder,
+.soft-ui textarea::placeholder {
+  color: #94a3b8;
+}
+.soft-ui input:not([type="checkbox"]):not([type="radio"]),
+.soft-ui select,
+.soft-ui textarea {
+  color: #0f172a;
+}
+.soft-ui select option {
+  color: #0f172a;
+}
+.soft-ui input:focus-visible,
+.soft-ui select:focus-visible,
+.soft-ui textarea:focus-visible {
+  outline: 2px solid rgba(0, 168, 107, 0.45);
+  outline-offset: 1px;
+}
+
+/* ---- Campos no tema escuro (reforço de placeholder e foco) ---- */
+.dark .soft-ui input::placeholder,
+.dark .soft-ui textarea::placeholder {
+  color: #8b8b94 !important;
+}
+.dark .soft-ui input:focus-visible,
+.dark .soft-ui select:focus-visible,
+.dark .soft-ui textarea:focus-visible {
+  outline: 2px solid rgba(52, 211, 153, 0.6);
+  outline-offset: 1px;
+  border-color: rgba(52, 211, 153, 0.5) !important;
+}
+.dark .soft-ui [class*="placeholder-slate-"]::placeholder,
+.dark .soft-ui [class*="placeholder:text-slate-"]::placeholder {
+  color: #8b8b94 !important;
+}
+
+/* ---- Listas, tabelas e estados vazios ---- */
+.dark .soft-ui th,
+.dark .soft-ui thead {
+  color: #a1a1aa;
+}
+.dark .soft-ui td {
+  color: #e4e4e7;
+}
+.dark .soft-ui hr,
+.dark .soft-ui [class*="divide-"] > * + * {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ---- Modais e painéis: título e descrição sempre legíveis ---- */
+.dark .soft-ui .pf-modal [class*="text-[#0A3D2E]"],
+.dark .soft-ui .pf-panel [class*="text-[#0A3D2E]"],
+.dark .soft-ui .pf-list [class*="text-[#0A3D2E]"],
+.dark .soft-ui .pf-row [class*="text-[#0A3D2E]"] {
+  color: #fafafa !important;
+}
