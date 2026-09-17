@@ -7952,7 +7952,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           ) : (
                             <>
                               <Search className="w-3.5 h-3.5" />
-                              Caçar Leads
+                              Buscar Oportunidades
                             </>
                           )}
                         </button>
@@ -8473,7 +8473,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       <div className="space-y-1">
                         <p className="text-sm font-black text-slate-700">O seu funil ativo está aguardando você</p>
                         <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
-                          Escolha um segmento de mercado (ex: Restaurantes, Dentistas, Padarias, Transportadoras) e uma cidade, e clique em "Caçar Leads" para iniciar a prospecção ativa de Pronampe.
+                          Escolha um segmento de mercado (ex: Restaurantes, Dentistas, Padarias, Transportadoras) e uma cidade, e clique em "Buscar Oportunidades" para iniciar a prospecção ativa de Pronampe.
                         </p>
                       </div>
                     </div>
