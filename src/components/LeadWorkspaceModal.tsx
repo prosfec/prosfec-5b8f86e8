@@ -4693,47 +4693,61 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                     </a>
                                   )}
 
-                                  <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg shrink-0 border ${
-                                    isPaid 
-                                      ? "bg-emerald-100 text-emerald-800 border-emerald-300" 
-                                      : "bg-amber-50 text-amber-800 border-amber-200"
-                                  }`}>
-                                    {isPaid ? `💰 Pago (${(sub as any).formaPagamento === "manual" ? "Manual" : "Hubla"})` : "⏳ Pgt Pendente"}
-                                  </span>
+                                  {(() => {
+                                    const forma = String((sub as any).formaPagamento || "").toUpperCase();
+                                    const formaLabel = forma === "CARTAO"
+                                      ? "Cartão"
+                                      : forma === "PIX"
+                                        ? "Pix"
+                                        : forma === "MANUAL"
+                                          ? "Manual"
+                                          : "Hubla";
+                                    const liberacao = (sub as any).dataLiberacaoSaque
+                                      ? new Date((sub as any).dataLiberacaoSaque).toLocaleDateString("pt-BR")
+                                      : null;
+                                    return (
+                                      <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg shrink-0 border ${
+                                        isPaid
+                                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                          : "bg-amber-50 text-amber-800 border-amber-200"
+                                      }`}>
+                                        {isPaid
+                                          ? `💰 Pago (${formaLabel})${liberacao ? ` · Saque em ${liberacao}` : ""}`
+                                          : "⏳ Pgt Pendente"}
+                                      </span>
+                                    );
+                                  })()}
 
                                   {isAdminUser && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const updated = [...subEtapasPasso6];
-                                        if (isPaid) {
-                                          updated[idx] = {
-                                            ...updated[idx],
-                                            statusPagamento: "pendente",
-                                            formaPagamento: undefined,
-                                            dataPagamento: undefined
-                                          } as any;
-                                        } else {
-                                          updated[idx] = {
-                                            ...updated[idx],
-                                            statusPagamento: "pago",
-                                            formaPagamento: "manual",
-                                            dataPagamento: new Date().toISOString(),
-                                            concluida: true
-                                          } as any;
-                                        }
-                                        setSubEtapasPasso6(updated);
-                                        handleSaveSubEtapasLocal(updated);
-                                      }}
-                                      className={`text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                                        isPaid 
-                                          ? "bg-slate-200 text-slate-700 hover:bg-slate-300" 
-                                          : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-                                      }`}
-                                      title={isPaid ? "Reverter pagamento para pendente" : "Confirmar pagamento manual desta sub-etapa"}
-                                    >
-                                      {isPaid ? "Estornar Pgt" : "✓ Confirmar Pgt Manual"}
-                                    </button>
+                                    isPaid ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => confirmarPagamentoSubEtapa(idx, null)}
+                                        className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all cursor-pointer"
+                                        title="Reverter pagamento para pendente"
+                                      >
+                                        Estornar Pgt
+                                      </button>
+                                    ) : (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => confirmarPagamentoSubEtapa(idx, "PIX")}
+                                          className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer active:scale-95"
+                                          title="Confirmar recebimento via Pix — libera a comissão em 48h"
+                                        >
+                                          ✓ Pago no Pix (48h)
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => confirmarPagamentoSubEtapa(idx, "CARTAO")}
+                                          className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all cursor-pointer active:scale-95"
+                                          title="Confirmar recebimento via Cartão de Crédito — libera a comissão em 15 dias corridos"
+                                        >
+                                          ✓ Pago no Cartão (15 dias)
+                                        </button>
+                                      </>
+                                    )
                                   )}
                                 </>
                               )}
