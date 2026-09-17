@@ -814,7 +814,6 @@ export function createExpressApp() {
             );
           });
           if (duplicada) {
-            await patchDocRest(operationPath, { status: "falha", erroCodigo: "DUPLICADA" }).catch(() => undefined);
             operationPath = "";
             return res.json({
               success: true,
