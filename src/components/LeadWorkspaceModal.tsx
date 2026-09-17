@@ -1025,7 +1025,7 @@ export default function LeadWorkspaceModal({
         const content = trimmed.replace(/^[-*]\s*/, "");
         return (
           <div key={i} className="my-1.5 p-3 bg-white border border-slate-200/90 rounded-xl shadow-2xs hover:border-emerald-300 transition-all flex items-start gap-2.5 group">
-            <span className="p-1 bg-emerald-50 text-emerald-700 rounded-lg shrink-0 mt-0.5 border border-emerald-200/60 group-hover:bg-emerald-100 transition-colors">
+            <span className="pf-badge pf-badge-success p-1 rounded-lg shrink-0 mt-0.5 transition-colors">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
             </span>
             <span className="text-xs text-slate-700 leading-relaxed flex-1 font-medium">
@@ -2789,7 +2789,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     ) : (
                       <div className="flex flex-col items-start">
                         <div className="max-w-[88%] bg-amber-500/20 border border-amber-500/30 p-3 rounded-2xl rounded-tl-xs text-xs text-amber-100 space-y-1">
-                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-500/30 text-amber-300">
+                          <span className="pf-badge pf-badge-warning text-[10px] font-extrabold px-2 py-0.5 rounded-md">
                             🏛️ Mesa de Operações
                           </span>
                           <p className="font-medium leading-relaxed whitespace-pre-wrap text-slate-100">
@@ -3313,7 +3313,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     <ol className="space-y-2.5">
                       {proximosPassos.map((r: string, i: number) => (
                         <li key={i} className="flex gap-3 items-start">
-                          <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black flex items-center justify-center shrink-0">
+                          <span className="pf-badge pf-badge-success w-6 h-6 rounded-full text-[11px] font-black flex items-center justify-center shrink-0 p-0">
                             {i + 1}
                           </span>
                           <span className="text-[12px] text-slate-700 font-medium leading-relaxed break-words min-w-0">{r}</span>
@@ -4250,11 +4250,11 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                     return (
                                       <div className="flex items-center gap-1.5">
                                         {isDemand ? (
-                                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
+                                          <span className="pf-badge pf-badge-info text-[10px] font-extrabold px-2.5 py-1 rounded-lg">
                                             📋 Serviços Contratados por demanda
                                           </span>
                                         ) : (
-                                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-blue-50 text-blue-800 border-blue-200 flex items-center gap-1">
+                                          <span className="pf-badge pf-badge-info text-[10px] font-extrabold px-2.5 py-1 rounded-lg flex items-center gap-1">
                                             🎯 Sem Custo Inicial (Remuneração no Êxito)
                                           </span>
                                         )}
@@ -4267,14 +4267,14 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                   return (
                                     <div className="flex items-center gap-1.5">
                                       {isDemand && (
-                                        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
+                                        <span className="pf-badge pf-badge-info text-[10px] font-extrabold px-2.5 py-1 rounded-lg">
                                           📋 Serviços Contratados por demanda
                                         </span>
                                       )}
-                                      <span className={`text-[10px] font-extrabold px-2 py-1 rounded-lg border ${
+                                      <span className={`pf-badge text-[10px] font-extrabold px-2 py-1 rounded-lg ${
                                         isPaid 
-                                          ? "bg-emerald-100 text-emerald-800 border-emerald-300" 
-                                          : "bg-amber-50 text-amber-800 border-amber-200"
+                                          ? "pf-badge-success" 
+                                          : "pf-badge-warning"
                                       }`}>
                                         {isPaid ? "✓ Pago" : "⏳ Pendente"}
                                       </span>
@@ -4292,7 +4292,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                       )}
                                       {isAdminUser && !isPaid && (
                                         <span
-                                          className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-500 border border-slate-200"
+                                          className="pf-badge pf-badge-neutral text-[10px] font-bold px-2 py-1 rounded-lg"
                                           title="A confirmação de pagamento é feita no Passo 6 (Estruturação), escolhendo Pix ou Cartão"
                                         >
                                           Confirmação no Passo 6
@@ -4560,7 +4560,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
 
                 {/* SEÇÃO 1: CHECKLIST DA ETAPA 6 (ESTRUTURAÇÃO) — PROSFEC IA */}
-                <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                <div className="pf-workspace-section bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                     <div className="space-y-0.5">
                       <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
@@ -4688,7 +4688,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                                 return (
                                   <span 
-                                    className="text-[10px] font-bold text-emerald-800 bg-emerald-50/80 px-2 py-0.5 rounded-lg border border-emerald-200/80"
+                                    className="pf-badge pf-badge-success text-[10px] font-bold px-2 py-0.5 rounded-lg"
                                     title={breakdown.splitDescription}
                                   >
                                     💎 Com.: {formatCurrencyBRL(commValue)} ({commRateLabel})
@@ -4699,11 +4699,11 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               {isZeroCost ? (
                                 <div className="flex items-center gap-1.5">
                                   {isDemand ? (
-                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
+                                    <span className="pf-badge pf-badge-info text-[10px] font-extrabold px-2.5 py-1 rounded-lg">
                                       📋 Serviços Contratados por demanda
                                     </span>
                                   ) : (
-                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-blue-50 text-blue-800 border-blue-200">
+                                    <span className="pf-badge pf-badge-info text-[10px] font-extrabold px-2.5 py-1 rounded-lg">
                                       🎯 Sem Custo Inicial (Remuneração no Êxito)
                                     </span>
                                   )}
@@ -4711,7 +4711,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               ) : (
                                 <>
                                   {isDemand && (
-                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
+                                    <span className="pf-badge pf-badge-info text-[10px] font-extrabold px-2.5 py-1 rounded-lg">
                                       📋 Serviços Contratados por demanda
                                     </span>
                                   )}
@@ -4741,10 +4741,10 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                                       ? new Date((sub as any).dataLiberacaoSaque).toLocaleDateString("pt-BR")
                                       : null;
                                     return (
-                                      <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg shrink-0 border ${
+                                      <span className={`pf-badge text-[10px] font-extrabold px-2.5 py-1 rounded-lg shrink-0 ${
                                         isPaid
-                                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                          : "bg-amber-50 text-amber-800 border-amber-200"
+                                          ? "pf-badge-success"
+                                          : "pf-badge-warning"
                                       }`}>
                                         {isPaid
                                           ? `💰 Pago (${formaLabel})${liberacao ? ` · Saque em ${liberacao}` : ""}`
@@ -4923,7 +4923,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* Coluna Esquerda: Parâmetros Editáveis */}
-                    <div className="lg:col-span-5 bg-slate-50 p-5 rounded-2xl border border-slate-200/80 space-y-4">
+                    <div className="pf-workspace-subtle lg:col-span-5 bg-slate-50 p-5 rounded-2xl border border-slate-200/80 space-y-4">
                       
                       {/* Linha de Crédito Governamental */}
                       <div className="space-y-1.5 pb-3 border-b border-slate-200/60">
@@ -4931,7 +4931,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           <label className="text-[11px] font-black text-emerald-900 uppercase block tracking-wider">
                             Linha de Crédito Governamental
                           </label>
-                          <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                          <span className="pf-badge pf-badge-success text-[9px] font-black px-2 py-0.5 rounded-full">
                             {currentRule.badge}
                           </span>
                         </div>
@@ -5119,7 +5119,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       </div>
 
                       {/* Checkbox Juros na Carência */}
-                      <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
+                      <div className="pf-workspace-subtle p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                           <input
                             type="checkbox"
@@ -5137,7 +5137,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       {/* Validação de Regras */}
                       <div className="pt-1">
                         {!validation.isValid ? (
-                          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl space-y-2 text-left animate-fade-in">
+                          <div className="pf-workspace-subtle p-3.5 bg-rose-50 border border-rose-200 rounded-2xl space-y-2 text-left animate-fade-in">
                             <div className="flex items-center gap-2 text-rose-800 font-extrabold text-xs">
                               <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                               <span>Inconformidade com Regras Governamentais</span>
@@ -5157,7 +5157,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                             </button>
                           </div>
                         ) : (
-                          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1 text-left">
+                          <div className="pf-workspace-subtle p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1 text-left">
                             <div className="flex items-center gap-2 text-emerald-900 font-extrabold text-xs">
                               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                               <span>Parâmetros em Conformidade ({currentRule.code})</span>
@@ -5193,7 +5193,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         </div>
                       </div>
 
-                      <div className="bg-white p-4 rounded-2xl border border-slate-200 max-h-56 overflow-y-auto">
+                      <div className="pf-workspace-subtle bg-white p-4 rounded-2xl border border-slate-200 max-h-56 overflow-y-auto">
                         <table className="w-full text-[10px]">
                           <thead>
                             <tr className="bg-slate-50 border-b border-slate-100 font-bold uppercase text-slate-500">
@@ -5209,8 +5209,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                               <tr key={row.mes} className="hover:bg-slate-50 border-b border-slate-100/50">
                                 <td className="p-2 font-mono">Mês {row.mes}</td>
                                 <td className="p-2">
-                                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
-                                    row.tipo === "Carência" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                                  <span className={`pf-badge px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
+                                    row.tipo === "Carência" ? "pf-badge-warning" : "pf-badge-success"
                                   }`}>
                                     {row.tipo}
                                   </span>
@@ -5253,7 +5253,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                 </div>
 
                 {/* SEÇÃO 3: LINHA DO TEMPO & HISTÓRICO AUDITÁVEL DA OPERAÇÃO */}
-                <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div className="pf-workspace-section bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <div className="space-y-0.5">
                       <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
@@ -5264,13 +5264,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         Registro cronológico com todas as transições de etapas, validações e eventos deste lead.
                       </p>
                     </div>
-                    <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200">
+                    <span className="pf-badge pf-badge-neutral text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
                       {lead.historicoEtapas?.length || 0} evento(s)
                     </span>
                   </div>
 
                   {!lead.historicoEtapas || lead.historicoEtapas.length === 0 ? (
-                    <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <div className="pf-workspace-subtle text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                       Nenhum registro de alteração de etapa para este lead ainda.
                     </div>
                   ) : (
@@ -5279,13 +5279,13 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         const isMesa = hist.autor === "admin" || hist.autor === "Mesa de Operações";
                         return (
                           <div key={idx} className="relative">
-                            <div className="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs" />
-                            <div className="bg-slate-50/70 hover:bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-1 transition-all">
+                            <div className="pf-timeline-marker absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs" />
+                            <div className="pf-workspace-subtle bg-slate-50/70 hover:bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-1 transition-all">
                               <div className="flex items-center justify-between gap-2">
-                                <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
+                                <span className={`pf-badge text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
                                   isMesa
-                                    ? "bg-amber-100 text-amber-900 border border-amber-200"
-                                    : "bg-emerald-100 text-emerald-900 border border-emerald-200"
+                                    ? "pf-badge-warning"
+                                    : "pf-badge-success"
                                 }`}>
                                   {isMesa ? "🏛️ Mesa de Operações" : hist.autor ? `👤 ${hist.autor}` : "⚡ Sistema"}
                                 </span>
@@ -5440,8 +5440,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           Parcela {p.numero}/{TOTAL_PARCELAS_ASSESSORIA}
                         </p>
                         <span
-                          className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                            pago ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                          className={`pf-badge text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                            pago ? "pf-badge-success" : "pf-badge-warning"
                           }`}
                         >
                           {pago ? "Pago" : "Pendente"}

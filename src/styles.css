@@ -407,7 +407,9 @@ body {
   gap: 0.375rem;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  background: #f1f5f9;
+  background: var(--pf-badge-bg, #f1f5f9);
+  color: var(--pf-badge-text, #334155);
+  border: 1px solid var(--pf-badge-border, #e2e8f0);
   font-size: 0.6875rem;
   font-weight: 700;
   white-space: nowrap;
@@ -810,6 +812,21 @@ select option {
    ============================================================ */
 .dark .soft-ui {
   background-color: #09090b;
+  --pf-badge-success-bg: rgba(16, 185, 129, 0.1);
+  --pf-badge-success-text: #34d399;
+  --pf-badge-success-border: rgba(16, 185, 129, 0.2);
+  --pf-badge-warning-bg: rgba(245, 158, 11, 0.1);
+  --pf-badge-warning-text: #fbbf24;
+  --pf-badge-warning-border: rgba(245, 158, 11, 0.2);
+  --pf-badge-neutral-bg: rgba(113, 113, 122, 0.1);
+  --pf-badge-neutral-text: #d4d4d8;
+  --pf-badge-neutral-border: rgba(113, 113, 122, 0.2);
+  --pf-badge-danger-bg: rgba(244, 63, 94, 0.1);
+  --pf-badge-danger-text: #fb7185;
+  --pf-badge-danger-border: rgba(244, 63, 94, 0.2);
+  --pf-badge-info-bg: rgba(59, 130, 246, 0.1);
+  --pf-badge-info-text: #60a5fa;
+  --pf-badge-info-border: rgba(59, 130, 246, 0.2);
 }
 
 /* Superfícies: cartões e painéis em grafite com borda ultrafina */
@@ -920,18 +937,24 @@ select option {
   border-color: rgba(16, 185, 129, 0.2);
 }
 
-/* Botões principais (verde) */
-.dark .soft-ui [class*="bg-emerald-5"],
-.dark .soft-ui [class*="bg-emerald-6"],
-.dark .soft-ui [class*="bg-emerald-7"] {
+/* Botões principais (verde). Restrito a controles para não solidificar badges. */
+.dark .soft-ui button[class*="bg-emerald-5"],
+.dark .soft-ui button[class*="bg-emerald-6"],
+.dark .soft-ui button[class*="bg-emerald-7"],
+.dark .soft-ui a[class*="bg-emerald-5"],
+.dark .soft-ui a[class*="bg-emerald-6"],
+.dark .soft-ui a[class*="bg-emerald-7"] {
   background-color: #10b981;
   color: #ffffff;
   border-color: transparent;
 }
 
-.dark .soft-ui [class*="bg-emerald-5"]:hover,
-.dark .soft-ui [class*="bg-emerald-6"]:hover,
-.dark .soft-ui [class*="bg-emerald-7"]:hover {
+.dark .soft-ui button[class*="bg-emerald-5"]:hover,
+.dark .soft-ui button[class*="bg-emerald-6"]:hover,
+.dark .soft-ui button[class*="bg-emerald-7"]:hover,
+.dark .soft-ui a[class*="bg-emerald-5"]:hover,
+.dark .soft-ui a[class*="bg-emerald-6"]:hover,
+.dark .soft-ui a[class*="bg-emerald-7"]:hover {
   background-color: #34d399;
 }
 
@@ -956,26 +979,37 @@ select option {
 
 /* Tonalidades claras viram vidro colorido */
 .dark .soft-ui [class*="bg-emerald-50"],
+.dark .soft-ui [class*="bg-emerald-100"],
 .dark .soft-ui [class*="bg-green-50"],
-.dark .soft-ui [class*="bg-teal-50"] {
-  background-color: rgba(16, 185, 129, 0.12);
+.dark .soft-ui [class*="bg-green-100"],
+.dark .soft-ui [class*="bg-teal-50"],
+.dark .soft-ui [class*="bg-teal-100"] {
+  background-color: rgba(16, 185, 129, 0.1);
   border-color: rgba(16, 185, 129, 0.2);
 }
 .dark .soft-ui [class*="bg-amber-50"],
+.dark .soft-ui [class*="bg-amber-100"],
 .dark .soft-ui [class*="bg-orange-50"],
-.dark .soft-ui [class*="bg-yellow-50"] {
-  background-color: rgba(245, 158, 11, 0.12);
+.dark .soft-ui [class*="bg-orange-100"],
+.dark .soft-ui [class*="bg-yellow-50"],
+.dark .soft-ui [class*="bg-yellow-100"] {
+  background-color: rgba(245, 158, 11, 0.1);
   border-color: rgba(245, 158, 11, 0.2);
 }
 .dark .soft-ui [class*="bg-rose-50"],
-.dark .soft-ui [class*="bg-red-50"] {
-  background-color: rgba(244, 63, 94, 0.12);
+.dark .soft-ui [class*="bg-rose-100"],
+.dark .soft-ui [class*="bg-red-50"],
+.dark .soft-ui [class*="bg-red-100"] {
+  background-color: rgba(244, 63, 94, 0.1);
   border-color: rgba(244, 63, 94, 0.2);
 }
 .dark .soft-ui [class*="bg-blue-50"],
+.dark .soft-ui [class*="bg-blue-100"],
 .dark .soft-ui [class*="bg-indigo-50"],
-.dark .soft-ui [class*="bg-sky-50"] {
-  background-color: rgba(59, 130, 246, 0.12);
+.dark .soft-ui [class*="bg-indigo-100"],
+.dark .soft-ui [class*="bg-sky-50"],
+.dark .soft-ui [class*="bg-sky-100"] {
+  background-color: rgba(59, 130, 246, 0.1);
   border-color: rgba(59, 130, 246, 0.2);
 }
 
@@ -1245,6 +1279,81 @@ select option {
 .dark .soft-ui .pf-warn { color: #fbbf24; }
 .dark .soft-ui .pf-error { color: #fb7185; }
 
+/* ---- Etiquetas e status semânticos ---- */
+.soft-ui .pf-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 1px solid var(--pf-badge-border);
+  background: var(--pf-badge-bg);
+  color: var(--pf-badge-text);
+}
+.soft-ui .pf-badge-success {
+  --pf-badge-bg: rgba(16, 185, 129, 0.1);
+  --pf-badge-text: #047857;
+  --pf-badge-border: rgba(16, 185, 129, 0.25);
+}
+.soft-ui .pf-badge-warning {
+  --pf-badge-bg: rgba(245, 158, 11, 0.1);
+  --pf-badge-text: #b45309;
+  --pf-badge-border: rgba(245, 158, 11, 0.25);
+}
+.soft-ui .pf-badge-neutral {
+  --pf-badge-bg: #f1f5f9;
+  --pf-badge-text: #475569;
+  --pf-badge-border: #cbd5e1;
+}
+.soft-ui .pf-badge-danger {
+  --pf-badge-bg: rgba(244, 63, 94, 0.08);
+  --pf-badge-text: #be123c;
+  --pf-badge-border: rgba(244, 63, 94, 0.22);
+}
+.soft-ui .pf-badge-info {
+  --pf-badge-bg: rgba(59, 130, 246, 0.08);
+  --pf-badge-text: #1d4ed8;
+  --pf-badge-border: rgba(59, 130, 246, 0.22);
+}
+.dark .soft-ui .pf-badge-success {
+  --pf-badge-bg: var(--pf-badge-success-bg);
+  --pf-badge-text: var(--pf-badge-success-text);
+  --pf-badge-border: var(--pf-badge-success-border);
+}
+.dark .soft-ui .pf-badge-warning {
+  --pf-badge-bg: var(--pf-badge-warning-bg);
+  --pf-badge-text: var(--pf-badge-warning-text);
+  --pf-badge-border: var(--pf-badge-warning-border);
+}
+.dark .soft-ui .pf-badge-neutral {
+  --pf-badge-bg: var(--pf-badge-neutral-bg);
+  --pf-badge-text: var(--pf-badge-neutral-text);
+  --pf-badge-border: var(--pf-badge-neutral-border);
+}
+.dark .soft-ui .pf-badge-danger {
+  --pf-badge-bg: var(--pf-badge-danger-bg);
+  --pf-badge-text: var(--pf-badge-danger-text);
+  --pf-badge-border: var(--pf-badge-danger-border);
+}
+.dark .soft-ui .pf-badge-info {
+  --pf-badge-bg: var(--pf-badge-info-bg);
+  --pf-badge-text: var(--pf-badge-info-text);
+  --pf-badge-border: var(--pf-badge-info-border);
+}
+
+/* Espaço do Lead: superfícies e detalhes internos no tema tecnológico */
+.dark .soft-ui .pf-workspace-section {
+  background: #18181b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #e4e4e7;
+  box-shadow: none !important;
+}
+.dark .soft-ui .pf-workspace-subtle {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.dark .soft-ui .pf-timeline-marker {
+  border-color: #18181b !important;
+}
+
 /* ---- Cores fixas da marca usadas como TEXTO/ÍCONE ---- */
 /* Verde institucional escuro: ilegível sobre fundo escuro */
 .dark .soft-ui [class*="text-[#0A3D2E]"],
@@ -1278,6 +1387,13 @@ select option {
 .dark .soft-ui [class*="text-[#B45309]"] {
   color: #fbbf24 !important;
 }
+
+/* Cinzas e cores semânticas fixas ainda usadas no Concierge legado */
+.dark .soft-ui [class*="text-[#0b1f18]"] { color: #fafafa !important; }
+.dark .soft-ui [class*="text-[#5b6f68]"] { color: #a1a1aa !important; }
+.dark .soft-ui [class*="text-[#d98207]"] { color: #fbbf24 !important; }
+.dark .soft-ui [class*="text-[#d64545]"] { color: #fb7185 !important; }
+.dark .soft-ui [class*="text-[#2f7fb8]"] { color: #60a5fa !important; }
 
 /* Preto e cinzas fora da escala já tratada */
 .dark .soft-ui .text-black,

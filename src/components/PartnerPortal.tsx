@@ -4915,7 +4915,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     <h2 className="font-extrabold text-sm text-slate-900 truncate">Olá, {currentPartner?.nome?.split(" ")[0]}</h2>
                     <p className="text-[11px] text-slate-500 font-medium truncate">Plataforma Financeira PROSFEC</p>
                   </div>
-                  <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider text-emerald-700">
+                  <span className="pf-badge pf-badge-success hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     {isProfileComplete(currentPartner) ? "Conta ativa" : "Cadastro pendente"}
                   </span>
@@ -5750,7 +5750,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <RefreshCw className={`w-3.5 h-3.5 ${isSyncingStep6 ? "animate-spin" : ""}`} />
                               <span>Sincronizar</span>
                             </button>
-                            <span className="text-[11px] font-bold uppercase font-mono tracking-wider px-3 py-1.5 rounded-md bg-emerald-50 text-[#00A86B] border border-emerald-200">
+                            <span className="pf-badge pf-badge-success text-[11px] font-bold uppercase font-mono tracking-wider px-3 py-1.5 rounded-md">
                               Margem: {getPlanServiceLabel(partnerPlan)}
                             </span>
                           </div>
@@ -5766,7 +5766,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <span>Serviços Pendentes</span>
                               </div>
                               <div>
-                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100/80 text-amber-900 border border-amber-200">
+                                <span className="pf-badge pf-badge-warning inline-block text-[10px] font-bold px-2 py-0.5 rounded-md">
                                   {countPendentes} {countPendentes === 1 ? "lead pendente" : "leads pendentes"}
                                 </span>
                               </div>
@@ -5792,7 +5792,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <span>Serviços Pagos</span>
                               </div>
                               <div>
-                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100/80 text-emerald-900 border border-emerald-200">
+                                <span className="pf-badge pf-badge-success inline-block text-[10px] font-bold px-2 py-0.5 rounded-md">
                                   {countPagos} {countPagos === 1 ? "serviço quitado" : "serviços quitados"}
                                 </span>
                               </div>
@@ -6266,10 +6266,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                       </td>
                                       <td className="py-2.5 px-3 font-mono font-extrabold text-slate-900">
                                         <span className="block">{formatCurrencyBRL(sol.valor)}</span>
-                                        <span className={`inline-block mt-0.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                                        <span className={`pf-badge inline-block mt-0.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
                                           getSolicitacaoOrigem(sol) === "vendas"
-                                            ? "bg-sky-50 text-sky-700 border border-sky-200"
-                                            : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                            ? "pf-badge-info"
+                                            : "pf-badge-success"
                                         }`}>
                                           {getSolicitacaoOrigem(sol) === "vendas" ? "Vendas" : "Serviços P6"}
                                         </span>
@@ -6278,12 +6278,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         {sol.chavePix}
                                       </td>
                                       <td className="py-2.5 px-3">
-                                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase font-mono ${
+                                        <span className={`pf-badge inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase font-mono ${
                                           sol.status === "pago"
-                                            ? "bg-emerald-50 text-[#00A86B] border border-emerald-200"
+                                            ? "pf-badge-success"
                                             : sol.status === "recusado"
-                                              ? "bg-rose-50 text-rose-700 border border-rose-200"
-                                              : "bg-amber-50 text-amber-700 border border-amber-200"
+                                              ? "pf-badge-danger"
+                                              : "pf-badge-warning"
                                         }`}>
                                           {sol.status === "pago" && <CheckCircle2 className="w-3 h-3 text-[#00A86B]" />}
                                           {sol.status === "recusado" && <AlertTriangle className="w-3 h-3 text-rose-600" />}
@@ -6503,10 +6503,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 </div>
                                 <div className="text-right shrink-0">
                                   <span className="font-extrabold font-mono text-[#0A3D2E] block tabular-nums">{lead.limiteEstimated ? formatCurrencyBRL(lead.limiteEstimated) : (lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "Sob Consulta")}</span>
-                                  <span className={`inline-block text-[10px] uppercase font-bold px-2 py-0.5 rounded-md mt-0.5 ${
-                                    lead.status === "concluido" ? "bg-emerald-50 text-[#00A86B] border border-emerald-200" :
-                                    lead.status === "em atendimento" ? "bg-amber-50 text-amber-700 border border-amber-200" :
-                                    "bg-blue-50 text-blue-700 border border-blue-200"
+                                  <span className={`pf-badge inline-block text-[10px] uppercase font-bold px-2 py-0.5 rounded-md mt-0.5 ${
+                                    lead.status === "concluido" ? "pf-badge-success" :
+                                    lead.status === "em atendimento" ? "pf-badge-warning" :
+                                    "pf-badge-info"
                                   }`}>
                                     {lead.status}
                                   </span>
@@ -6687,7 +6687,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <span className="font-bold text-slate-900">{lead.razaoSocial || "Não informado"}</span>
                                     {(lead.pendente || lead.pendencias?.status === "pendente") && (
-                                      <span className="inline-flex items-center gap-1 bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold px-2 py-0.5 rounded-md uppercase">
+                                      <span className="pf-badge pf-badge-danger inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md uppercase">
                                         <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
                                         Pendência
                                       </span>
@@ -6702,7 +6702,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <td className="py-3.5 px-4">
                                   <div className="text-[11px] text-slate-400 font-bold uppercase flex items-center gap-1.5 flex-wrap">
                                     <span>Simulado</span>
-                                    <span className="bg-emerald-50 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-md font-mono border border-emerald-100">
+                                    <span className="pf-badge pf-badge-success text-[11px] font-bold px-2 py-0.5 rounded-md font-mono">
                                       {lead.propostaNegociada?.creditLineCode || lead.creditLineCode || lead.result?.creditLineCode || "PRONAMPE"}
                                     </span>
                                   </div>
@@ -6724,19 +6724,19 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   </div>
                                   <div className="mt-1">
                                     {lead.comissaoPaga ? (
-                                      <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-emerald-50 text-[#00A86B] border border-emerald-200 px-2.5 py-0.5 rounded-md">
+                                      <span className="pf-badge pf-badge-success inline-flex items-center gap-1 text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md">
                                         ✓ Pago
                                       </span>
                                     ) : (lead.etapa === 7 || lead.status === "concluido") ? (
-                                      <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-md">
+                                      <span className="pf-badge pf-badge-warning inline-flex items-center gap-1 text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md">
                                         ⏱ Pendente
                                       </span>
                                     ) : lead.etapa === 8 ? (
-                                      <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-md">
+                                      <span className="pf-badge pf-badge-danger inline-flex items-center gap-1 text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md">
                                         ✕ Sem Repasse
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-md">
+                                      <span className="pf-badge pf-badge-neutral inline-flex items-center gap-1 text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md">
                                         Aguardando
                                       </span>
                                     )}
@@ -6746,12 +6746,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   {new Date(lead.dataCriacao).toLocaleDateString("pt-BR")}
                                 </td>
                                 <td className="py-3.5 px-4">
-                                  <span className={`inline-block text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md font-mono ${
-                                    lead.etapa === 7 ? "bg-emerald-50 text-[#00A86B] border border-emerald-200" :
-                                    lead.etapa === 8 ? "bg-rose-50 text-rose-700 border border-rose-200" :
-                                    lead.status === "concluido" ? "bg-emerald-50 text-[#00A86B] border border-emerald-200" :
-                                    lead.status === "em atendimento" ? "bg-amber-50 text-amber-700 border border-amber-200" :
-                                    "bg-blue-50 text-blue-700 border border-blue-200"
+                                  <span className={`pf-badge inline-block text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md font-mono ${
+                                    lead.etapa === 7 ? "pf-badge-success" :
+                                    lead.etapa === 8 ? "pf-badge-danger" :
+                                    lead.status === "concluido" ? "pf-badge-success" :
+                                    lead.status === "em atendimento" ? "pf-badge-warning" :
+                                    "pf-badge-info"
                                   }`}>
                                     {lead.etapa === 7 ? "Crédito Aprovado" :
                                      lead.etapa === 8 ? "Crédito Recusado" :
@@ -6872,7 +6872,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
                                   <div className="flex items-center justify-between gap-1">
                                     <span className="text-[11px] text-slate-400 font-bold uppercase block">Simulado</span>
-                                    <span className="bg-emerald-50 text-emerald-800 text-[11px] font-bold px-1.5 py-0.5 rounded-md font-mono border border-emerald-100">
+                                    <span className="pf-badge pf-badge-success text-[11px] font-bold px-1.5 py-0.5 rounded-md font-mono">
                                       {lead.propostaNegociada?.creditLineCode || lead.creditLineCode || lead.result?.creditLineCode || "PRONAMPE"}
                                     </span>
                                   </div>
@@ -6898,19 +6898,19 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 </div>
                                 <div>
                                   {lead.comissaoPaga ? (
-                                    <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-md">
+                                    <span className="pf-badge pf-badge-success inline-flex items-center gap-1 text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md">
                                       ✓ Pago
                                     </span>
                                   ) : isConcluded ? (
-                                    <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-md">
+                                    <span className="pf-badge pf-badge-warning inline-flex items-center gap-1 text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md">
                                       ⏱ Pendente
                                     </span>
                                   ) : isRefused ? (
-                                    <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-md">
+                                    <span className="pf-badge pf-badge-danger inline-flex items-center gap-1 text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md">
                                       ✕ Sem Repasse
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-md">
+                                    <span className="pf-badge pf-badge-neutral inline-flex items-center gap-1 text-[11px] uppercase font-bold px-2.5 py-0.5 rounded-md">
                                       Aguardando
                                     </span>
                                   )}
@@ -7355,7 +7355,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                            <Users className="w-96 h-96 text-emerald-600" />
                          </div>
                          <div className="space-y-2 relative z-10">
-                           <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-[#00A86B] border border-emerald-100 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                           <div className="pf-badge pf-badge-success inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
                              <Users className="w-3.5 h-3.5 text-emerald-600" />
                              Portal do Consultor
                            </div>
@@ -7798,7 +7798,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </select>
                             </div>
                           )}
-                          <div className="bg-emerald-50 border border-emerald-100/50 p-2.5 rounded-2xl flex items-center gap-2 text-[11px] text-emerald-800 font-bold">
+                          <div className="pf-badge pf-badge-success p-2.5 rounded-2xl flex items-center gap-2 text-[11px] font-bold">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                             <span>Tecnologia de Varredura de Leads Ativa</span>
                           </div>
@@ -7873,17 +7873,17 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   </div>
                                   <div>
                                     {refill.status === "pendente" && (
-                                      <span className="inline-flex items-center text-[10px] bg-amber-50 border border-amber-100 font-extrabold text-amber-700 px-2 py-0.5 rounded-full uppercase">
+                                      <span className="pf-badge pf-badge-warning inline-flex items-center text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">
                                         Pendente
                                       </span>
                                     )}
                                     {refill.status === "aprovada" && (
-                                      <span className="inline-flex items-center text-[10px] bg-emerald-50 border border-emerald-100 font-extrabold text-emerald-700 px-2 py-0.5 rounded-full uppercase">
+                                      <span className="pf-badge pf-badge-success inline-flex items-center text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">
                                         Aprovada
                                       </span>
                                     )}
                                     {refill.status === "cancelada" && (
-                                      <span className="inline-flex items-center text-[10px] bg-slate-100 border border-slate-200 font-extrabold text-slate-600 px-2 py-0.5 rounded-full uppercase">
+                                      <span className="pf-badge pf-badge-neutral inline-flex items-center text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">
                                         Cancelada
                                       </span>
                                     )}
@@ -8882,7 +8882,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <div>
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="font-display font-extrabold text-base text-slate-800">Consultores do meu Time</h3>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 font-mono">
+                                <span className="pf-badge pf-badge-success px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                                   {teamMembers.length} {teamMembers.length === 1 ? "consultor" : "consultores"}
                                 </span>
                               </div>
@@ -9232,7 +9232,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <div>
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="font-display font-extrabold text-base text-slate-800">Pipeline de Vendas da Equipe</h3>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 font-mono">
+                                <span className="pf-badge pf-badge-success px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                                   {teamLeads.length} {teamLeads.length === 1 ? "lead" : "leads"}
                                 </span>
                               </div>
@@ -9601,25 +9601,25 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                           {sub.nome}
                                         </td>
                                         <td className="py-3.5 px-4">
-                                          <span className="bg-slate-100 text-slate-700 font-extrabold px-2 py-0.5 rounded border border-slate-200">
+                                          <span className="pf-badge pf-badge-neutral font-extrabold px-2 py-0.5 rounded">
                                             {sub.plano || "STARTER"}
                                           </span>
                                         </td>
                                         <td className="py-3.5 px-4">
                                           {details.isExempt ? (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded uppercase">
+                                            <span className="pf-badge pf-badge-neutral inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded uppercase">
                                               Isento (Consultor)
                                             </span>
                                           ) : details.isTrial ? (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded uppercase animate-pulse">
+                                            <span className="pf-badge pf-badge-warning inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded uppercase animate-pulse">
                                               Período de Teste ({details.status.daysLeft}d)
                                             </span>
                                           ) : details.isActive ? (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200/50 px-2 py-0.5 rounded uppercase">
+                                            <span className="pf-badge pf-badge-success inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded uppercase">
                                               ✓ Pago/Ativo ({details.status.daysLeft}d restantes)
                                             </span>
                                           ) : (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded uppercase">
+                                            <span className="pf-badge pf-badge-danger inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded uppercase">
                                               ✕ Expirado
                                             </span>
                                           )}

@@ -37,7 +37,7 @@ export const LeadStepTimeline: React.FC<LeadStepTimelineProps> = ({
 
   if (compact) {
     return (
-      <div className="w-full bg-white p-2 rounded-lg border border-slate-200">
+      <div className="pf-workspace-section w-full bg-white p-2 rounded-lg border border-slate-200">
         <div className="flex items-center justify-between text-[11px] mb-2 font-mono">
           <span className="text-slate-500 font-semibold uppercase tracking-wider">Progresso da jornada</span>
           <span className="text-emerald-700 font-extrabold">{safeEtapa}/8 concluído</span>
