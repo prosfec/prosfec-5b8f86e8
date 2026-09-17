@@ -4082,44 +4082,41 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   );
 
   const renderProfileCard = (
-    <div className="bg-[#0A3D2E] text-white p-5 rounded-3xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
+    <div className="bg-[#0A3D2E] text-white p-3.5 rounded-xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20">
 
-      <div className="absolute right-[-30px] top-[-30px] w-32 h-32 rounded-full bg-emerald-500/10 pointer-events-none" />
-      <div className="space-y-4 relative z-10">
-        <div className="flex items-start justify-between">
-          <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md border border-emerald-500/30">
+      <div className="absolute right-[-30px] top-[-30px] w-28 h-28 rounded-full bg-emerald-500/10 pointer-events-none" />
+      <div className="space-y-2 relative z-10">
+        <div className="flex items-center justify-between gap-2">
+          <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-500/30">
             Área do Parceiro
           </span>
-          <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300">
-            <Handshake className="w-5 h-5 text-emerald-300" />
+          <div className="w-7 h-7 rounded-lg bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300 shrink-0">
+            <Handshake className="w-4 h-4 text-emerald-300" />
           </div>
         </div>
-        <div>
-          <h2 className="font-extrabold text-lg leading-tight text-white">{currentPartner?.nome}</h2>
-          <p className="text-xs text-emerald-200/90 mt-1 truncate">E-mail: {currentPartner?.email}</p>
-          <p className="text-[11px] text-emerald-300/80 font-mono mt-0.5">ID: {currentPartner?.id}</p>
+        <div className="min-w-0">
+          <h2 className="font-extrabold text-base leading-tight text-white truncate" title={currentPartner?.nome}>{currentPartner?.nome}</h2>
+          <p className="text-[11px] text-emerald-200/90 truncate" title={currentPartner?.email}>{currentPartner?.email}</p>
+          <p className="text-[9px] text-emerald-300/70 font-mono truncate">ID: {currentPartner?.id}</p>
         </div>
       </div>
 
-      <div className="mt-5 border-t border-emerald-800/60 pt-4 grid grid-cols-2 gap-3 relative z-10">
-        <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
-          <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Sua Comissão</span>
+      <div className="mt-2.5 border-t border-emerald-800/60 pt-2 flex items-center gap-2 relative z-10">
+        <div className="bg-emerald-950/40 border border-emerald-800/40 px-2 py-1.5 rounded-lg flex-1 min-w-0">
+          <span className="text-[9px] text-emerald-300/90 uppercase block font-bold tracking-wider">Comissão</span>
           {isFranquiaDigital(currentPartner?.plano) ? (
-            <div className="space-y-0.5 mt-1">
-              <span className="text-base font-extrabold text-emerald-100 font-mono block">3,0% Direto</span>
-              <span className="text-[9px] text-emerald-300 font-medium block leading-tight">
-                Equipe: 1,5% Exec / 2,5% Start
-              </span>
-            </div>
+            <span className="text-xs font-extrabold text-emerald-100 font-mono block truncate" title="3,0% Direto · Equipe: 1,5% Exec / 2,5% Start">
+              3,0% Direto
+            </span>
           ) : (
-            <span className="text-base font-extrabold text-emerald-100 font-mono block mt-1">
+            <span className="text-xs font-extrabold text-emerald-100 font-mono block truncate">
               {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%
             </span>
           )}
         </div>
-        <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
-          <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Chave Pix</span>
-          <span className="text-xs font-mono font-bold text-emerald-200 truncate block mt-1" title={currentPartner?.chavePix}>
+        <div className="bg-emerald-950/40 border border-emerald-800/40 px-2 py-1.5 rounded-lg flex-1 min-w-0">
+          <span className="text-[9px] text-emerald-300/90 uppercase block font-bold tracking-wider">Chave Pix</span>
+          <span className="text-[11px] font-mono font-bold text-emerald-200 truncate block" title={currentPartner?.chavePix}>
             {currentPartner?.chavePix || "Não informada"}
           </span>
         </div>
