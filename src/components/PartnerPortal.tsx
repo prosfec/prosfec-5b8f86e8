@@ -6977,7 +6977,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             });
                             
                             return (
-                              <div key={column.id} className="w-72 shrink-0 flex flex-col bg-slate-50/70 border border-slate-200/60 rounded-2xl p-3.5 space-y-3 h-[600px] max-h-[600px]">
+                              <div key={column.id} className="w-[86vw] snap-start lg:w-72 shrink-0 flex flex-col bg-slate-50/70 border border-slate-200/60 rounded-2xl p-3.5 space-y-3 h-[600px] max-h-[600px]">
                                 {/* Column Header */}
                                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                                   <div className="flex items-center gap-1.5 min-w-0">
