@@ -796,6 +796,40 @@ export function createExpressApp() {
         return res.status(409).json({ error: "Esta consulta já está sendo processada." });
       }
 
+      // Rede de segurança contra duplicidade: mesmo lead + documento + produto
+      // já consultado com sucesso não gera nova chamada nem novo débito.
+      const forcarNovaConsulta = caller.isAdmin && req.body?.forcarNovaConsulta === true;
+      if (!forcarNovaConsulta && leadId) {
+        try {
+          const existentes = await runQueryRest("consultas_realizadas", {
+            fieldFilter: { field: { fieldPath: "documento" }, op: "EQUAL", value: { stringValue: cleanDoc } },
+          });
+          const duplicada = existentes.find((r: any) => {
+            const d = r?.data || {};
+            return (
+              String(d.leadId || "") === String(leadId) &&
+              String(d.produto_code || "") === codeToUse &&
+              String(d.status || "") === "sucesso" &&
+              d.resultado
+            );
+          });
+          if (duplicada) {
+            await patchDocRest(operationPath, { status: "falha", erroCodigo: "DUPLICADA" }).catch(() => undefined);
+            operationPath = "";
+            return res.json({
+              success: true,
+              duplicate: true,
+              debited: false,
+              consulta_id: duplicada.id,
+              produto_nome: duplicada.data?.produto_nome || "",
+              data: duplicada.data?.resultado,
+            });
+          }
+        } catch (dupErr: any) {
+          console.warn("Checagem de duplicidade falhou:", dupErr?.message || "erro");
+        }
+      }
+
       const partnerData: any = partnerId === "admin" ? null : await getDocRest(`parceiros/${partnerId}`);
       const isAdminUser = caller.isAdmin;
       if (!isAdminUser && !partnerData) return res.status(404).json({ error: "Parceiro não encontrado no sistema." });
