@@ -4749,8 +4749,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       const summary = calculateLeadMultilevelCommissions(l, partners);
                       totalVolumeServicosGeral += summary.valorTotalServicos;
                       totalComissoesGeradasGeral += summary.valorTotalComissao;
-                      totalComissoesLiquidadasHubla += summary.valorComissaoLiberadaSaque;
-                      totalComissoesAguardandoHubla += summary.valorAguardandoCompensacao;
+                      totalComissoesLiquidadas += summary.valorComissaoLiberadaSaque;
+                      totalComissoesAguardando += summary.valorAguardandoCompensacao;
                       totalComissoesPendentesCliente += summary.valorComissaoPendente;
                     });
 
