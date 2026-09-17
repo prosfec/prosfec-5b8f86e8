@@ -42,7 +42,7 @@ export function normalizePartnerPlan(plan?: string): PartnerPlanType {
   if (p.includes("FRANQUIA") || p.includes("DIGITAL") || p.includes("MASTER")) return "MASTER";
   if (p.includes("EXEC")) return "EXECUTIVE";
   if (p.includes("STARTER") || p.includes("INICIANTE") || p.includes("BASICO")) return "STARTER";
-  return "EXECUTIVE"; // Default fallback
+  return "STARTER"; // Fallback conservador: plano não reconhecido = menor taxa direta (10%)
 }
 
 /**
