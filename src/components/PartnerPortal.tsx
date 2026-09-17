@@ -4164,8 +4164,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   );
 
   const renderNavItems = (
-    <div className="soft-card p-3 flex flex-col gap-3 lg:gap-1 text-left">
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.14em] px-4 py-1.5 mb-0.5 block">Navegação do Portal</span>
+    <div className="soft-card soft-nav-shell p-3 flex flex-col gap-3 lg:gap-1 text-left">
+      <span className="soft-nav-group-label">Operação</span>
 
       <button
         onClick={() => { handleTabClick("dashboard"); setMobileMenuOpen(false); }}
