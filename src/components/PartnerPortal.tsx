@@ -4247,6 +4247,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         </button>
       )}
 
+      <span className="soft-nav-group-label">Ferramentas</span>
+
       <button
         onClick={() => { handleTabClick("servicos-contabilidade"); setMobileMenuOpen(false); }}
         className={`soft-nav-item justify-between text-left group ${
@@ -4265,6 +4267,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "servicos-contabilidade" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
         )}
       </button>
+
+      <span className="soft-nav-group-label">Conta</span>
 
       <button
         onClick={() => { handleTabClick("perfil"); setMobileMenuOpen(false); }}
