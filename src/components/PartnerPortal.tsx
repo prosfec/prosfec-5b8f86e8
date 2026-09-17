@@ -5282,7 +5282,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 min-h-[44px] lg:min-h-0 lg:h-9 rounded-lg text-[11px] transition-all shadow-sm hover:shadow flex items-center justify-center gap-1.5 cursor-pointer w-full"
                               title="Solicitar saque das comissões de vendas/planos"
                             >
-                              <Coins className="w-3.5 h-3.5 text-slate-950 shrink-0" />
+                              <Coins className="w-3.5 h-3.5 text-white shrink-0" />
                               <span>Solicitar Comissão</span>
                             </button>
                           </div>
@@ -5794,7 +5794,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Card 4: Saldo Disponível para Saque (Solid #0A3D2E, no gradient) */}
-                          <div className="bg-[#0A3D2E] text-white rounded-2xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden border border-emerald-500/20 shadow-xs">
+                          <div className="bg-gradient-to-br from-emerald-900 to-slate-900 text-white rounded-2xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden ring-1 ring-white/10 shadow-sm">
                             <div className="space-y-1.5">
                               <div className="flex items-center gap-1.5 text-[11px] text-emerald-300 font-bold uppercase tracking-wider">
                                 <Coins className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2} />
@@ -5809,7 +5809,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     setPayoutModalOrigin("servicos");
                                   }}
                                   disabled={saldoDisponivelParaSaque <= 0}
-                                  className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-md bg-[#00A86B] hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 cursor-pointer transition-all shadow-xs"
+                                  className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white cursor-pointer transition-all shadow-sm"
                                   title="Solicitar saque de comissão via Pix"
                                 >
                                   Solicitar Saque
