@@ -1130,6 +1130,55 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
+  // Alteração do nível de acesso (plano) do parceiro pelo ADM
+  const handleUpdatePartnerPlan = async (partner: Partner, novoPlano: string) => {
+    if (userRole === "contador") {
+      alert("Acesso Restrito: Contadores não possuem permissão para alterar o nível de acesso do parceiro.");
+      return;
+    }
+    const planoAtual = partner.plano || "";
+    if (!novoPlano || novoPlano === planoAtual) return;
+
+    const confirmar = window.confirm(
+      `Alterar o nível de acesso de "${partner.nome}"?\n\nNível atual: ${getPlanName(planoAtual)}\nNovo nível: ${getPlanName(novoPlano)}`
+    );
+    if (!confirmar) return;
+
+    try {
+      const agora = new Date().toISOString();
+      const adminEmail = auth.currentUser?.email || "admin";
+      await updateDoc(doc(db, "parceiros", partner.id), {
+        plano: novoPlano,
+        planoAlteradoEm: agora,
+        planoAlteradoPor: adminEmail
+      });
+
+      setPartners(prev => prev.map(p =>
+        p.id === partner.id ? { ...p, plano: novoPlano } : p
+      ));
+      setSelectedPartner(prev =>
+        prev && prev.id === partner.id ? { ...prev, plano: novoPlano } : prev
+      );
+
+      try {
+        await createNotification(
+          partner.id,
+          "parceiro",
+          "Nível de Acesso Atualizado",
+          `Seu nível de acesso PROSFEC foi atualizado para: ${getPlanName(novoPlano)}.`,
+          "info"
+        );
+      } catch (notifErr) {
+        console.error("Erro ao notificar parceiro sobre alteração de nível:", notifErr);
+      }
+
+      toast.success(`Nível de ${partner.nome} alterado para ${getPlanName(novoPlano)}.`);
+    } catch (err) {
+      console.error("Erro ao alterar nível do parceiro:", err);
+      toast.error("Erro ao alterar nível: " + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
   const handleCancelRefill = async (id: string) => {
     if (userRole === "contador") {
       alert("Acesso Restrito: Contadores não possuem permissão para recusar recargas.");
