@@ -1011,3 +1011,192 @@ select option {
   -webkit-text-fill-color: #ffffff !important;
   -webkit-box-shadow: 0 0 0px 1000px #09090b inset !important;
 }
+
+/* ============================================================
+   PROSFEC FINTECH PREMIUM — hierarquia visual por tipo de bloco
+   Escopo exclusivo do Portal do Parceiro (.soft-ui).
+   Somente apresentação: nenhuma regra de negócio depende daqui.
+   ============================================================ */
+
+/* ---- Nível 1: métricas financeiras principais ---- */
+.soft-ui .pf-hero {
+  position: relative;
+  background: linear-gradient(155deg, #0e1f19 0%, #0a1512 55%, #081210 100%) !important;
+  border: 1px solid rgba(0, 168, 107, 0.28) !important;
+  border-radius: 1.25rem !important;
+  padding: 1.15rem 1.25rem !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 24px 60px -34px rgba(0, 168, 107, 0.55) !important;
+  overflow: hidden;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.soft-ui .pf-hero::before {
+  content: "";
+  position: absolute;
+  inset: -40% 55% 40% -10%;
+  background: radial-gradient(60% 60% at 30% 30%, rgba(0, 168, 107, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.soft-ui .pf-hero:hover {
+  border-color: rgba(0, 168, 107, 0.5) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 28px 70px -34px rgba(0, 168, 107, 0.7) !important;
+  transform: translateY(-1px);
+}
+
+.soft-ui .pf-hero,
+.soft-ui .pf-hero [class*="text-slate-9"],
+.soft-ui .pf-hero [class*="text-slate-8"],
+.soft-ui .pf-hero [class*="text-slate-7"] {
+  color: #f4fbf8 !important;
+}
+
+.soft-ui .pf-hero [class*="text-slate-5"],
+.soft-ui .pf-hero [class*="text-slate-4"] {
+  color: rgba(226, 244, 236, 0.58) !important;
+}
+
+.soft-ui .pf-hero [class*="text-emerald-"],
+.soft-ui .pf-hero [class*="text-teal-"] {
+  color: #37e0a0 !important;
+}
+
+.soft-ui .pf-hero [class*="border-slate-"] {
+  border-color: rgba(255, 255, 255, 0.09) !important;
+}
+
+/* ícone do hero */
+.soft-ui .pf-hero [class*="rounded-xl"][class*="bg-emerald-50"],
+.soft-ui .pf-hero [class*="rounded-xl"][class*="bg-teal-50"] {
+  background: rgba(0, 168, 107, 0.16) !important;
+  border-color: rgba(0, 168, 107, 0.3) !important;
+  color: #37e0a0 !important;
+}
+
+/* valor principal */
+.soft-ui .pf-hero .pf-value,
+.soft-ui .pf-hero [class*="font-mono"][class*="text-xl"],
+.soft-ui .pf-hero [class*="font-mono"][class*="text-2xl"] {
+  font-family: var(--font-display, inherit);
+  font-size: 1.75rem !important;
+  line-height: 1.08 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Nível 2: métricas secundárias ---- */
+.soft-ui .pf-mini {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(2, 36, 26, 0.08) !important;
+  border-radius: 0.875rem !important;
+  padding: 0.7rem 0.85rem !important;
+  box-shadow: none !important;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.soft-ui .pf-mini:hover {
+  border-color: rgba(0, 168, 107, 0.28) !important;
+}
+
+.soft-ui .pf-mini [class*="text-2xl"] {
+  font-size: 1.15rem !important;
+  line-height: 1.15 !important;
+}
+
+.dark .soft-ui .pf-mini {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ---- Nível 3: ferramenta comercial (link de indicação) ---- */
+.soft-ui .pf-tool {
+  background: linear-gradient(120deg, #0a1512 0%, #0d221b 45%, #0a1713 100%) !important;
+  border: 1px solid rgba(0, 168, 107, 0.26) !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 20px 50px -34px rgba(0, 168, 107, 0.5) !important;
+  color: #eaf7f1 !important;
+}
+
+.soft-ui .pf-tool h3,
+.soft-ui .pf-tool [class*="text-slate-8"],
+.soft-ui .pf-tool [class*="text-slate-7"] {
+  color: #ffffff !important;
+}
+
+.soft-ui .pf-tool [class*="text-slate-4"],
+.soft-ui .pf-tool [class*="text-slate-5"] {
+  color: rgba(226, 244, 236, 0.55) !important;
+}
+
+.soft-ui .pf-tool [class*="bg-slate-50"] {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.soft-ui .pf-tool [class*="bg-emerald-50"] {
+  background: rgba(0, 168, 107, 0.16) !important;
+  border-color: rgba(0, 168, 107, 0.3) !important;
+}
+
+/* ---- Nível 4: painéis operacionais ---- */
+.soft-ui .pf-panel {
+  background: #ffffff !important;
+  border: 1px solid rgba(2, 36, 26, 0.08) !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 1px 2px rgba(2, 36, 26, 0.04), 0 22px 48px -34px rgba(2, 36, 26, 0.3) !important;
+}
+
+.dark .soft-ui .pf-panel {
+  background: #131316 !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  box-shadow: none !important;
+}
+
+.soft-ui .pf-panel-head {
+  position: relative;
+  padding-left: 0.85rem;
+}
+
+.soft-ui .pf-panel-head::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  bottom: 0.15rem;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #00A86B, rgba(0, 168, 107, 0.15));
+}
+
+/* ---- Nível 5: listas / extrato ---- */
+.soft-ui .pf-list > * + * {
+  border-top: 1px solid rgba(2, 36, 26, 0.07);
+}
+
+.dark .soft-ui .pf-list > * + * {
+  border-top-color: rgba(255, 255, 255, 0.07);
+}
+
+.soft-ui .pf-row {
+  transition: background-color 160ms ease;
+}
+
+.soft-ui .pf-row:hover {
+  background-color: rgba(0, 168, 107, 0.05);
+}
+
+.dark .soft-ui .pf-row:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* ---- Nível 7: modais ---- */
+.soft-ui .pf-modal,
+.dark .soft-ui .pf-modal {
+  border: 1px solid rgba(0, 168, 107, 0.18) !important;
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.65) !important;
+}
+
+.dark .soft-ui .pf-modal {
+  background: #131316 !important;
+}
