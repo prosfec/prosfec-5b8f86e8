@@ -1130,6 +1130,55 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
+  // Alteração do nível de acesso (plano) do parceiro pelo ADM
+  const handleUpdatePartnerPlan = async (partner: Partner, novoPlano: string) => {
+    if (userRole === "contador") {
+      alert("Acesso Restrito: Contadores não possuem permissão para alterar o nível de acesso do parceiro.");
+      return;
+    }
+    const planoAtual = partner.plano || "";
+    if (!novoPlano || novoPlano === planoAtual) return;
+
+    const confirmar = window.confirm(
+      `Alterar o nível de acesso de "${partner.nome}"?\n\nNível atual: ${getPlanName(planoAtual)}\nNovo nível: ${getPlanName(novoPlano)}`
+    );
+    if (!confirmar) return;
+
+    try {
+      const agora = new Date().toISOString();
+      const adminEmail = auth.currentUser?.email || "admin";
+      await updateDoc(doc(db, "parceiros", partner.id), {
+        plano: novoPlano,
+        planoAlteradoEm: agora,
+        planoAlteradoPor: adminEmail
+      });
+
+      setPartners(prev => prev.map(p =>
+        p.id === partner.id ? { ...p, plano: novoPlano } : p
+      ));
+      setSelectedPartner(prev =>
+        prev && prev.id === partner.id ? { ...prev, plano: novoPlano } : prev
+      );
+
+      try {
+        await createNotification(
+          partner.id,
+          "parceiro",
+          "Nível de Acesso Atualizado",
+          `Seu nível de acesso PROSFEC foi atualizado para: ${getPlanName(novoPlano)}.`,
+          "info"
+        );
+      } catch (notifErr) {
+        console.error("Erro ao notificar parceiro sobre alteração de nível:", notifErr);
+      }
+
+      toast.success(`Nível de ${partner.nome} alterado para ${getPlanName(novoPlano)}.`);
+    } catch (err) {
+      console.error("Erro ao alterar nível do parceiro:", err);
+      toast.error("Erro ao alterar nível: " + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
   const handleCancelRefill = async (id: string) => {
     if (userRole === "contador") {
       alert("Acesso Restrito: Contadores não possuem permissão para recusar recargas.");
@@ -7081,6 +7130,51 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <span className="text-lg font-black text-[#0A3D2E] block mt-0.5">
                       {getPlanName(selectedPartner.plano)}
                     </span>
+                    {(() => {
+                      const planoUpper = (selectedPartner.plano || "").toUpperCase();
+                      const isConsultorEquipe =
+                        !!selectedPartner.parentPartnerId ||
+                        selectedPartner.isTeamMember === true ||
+                        planoUpper.includes("CONSULTOR") ||
+                        planoUpper.includes("EQUIPE");
+
+                      if (isConsultorEquipe) {
+                        return (
+                          <p className="text-[10px] text-slate-500 font-semibold mt-2 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5">
+                            Consultor de equipe: o nível é gerido pelo Parceiro Master responsável.
+                          </p>
+                        );
+                      }
+
+                      const valorAtual =
+                        planoUpper.includes("FRANQUIA") || planoUpper.includes("DIGITAL") || planoUpper.includes("MASTER") || planoUpper === "PLATINUM"
+                          ? "MASTER PARTNER"
+                          : planoUpper.includes("EXECUTIVE") || planoUpper === "GOLD"
+                            ? "Executive Partner PROSFEC"
+                            : "STARTER";
+
+                      return (
+                        <div className="mt-2">
+                          <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">
+                            Alterar Nível de Acesso
+                          </span>
+                          <select
+                            value={valorAtual}
+                            disabled={userRole === "contador"}
+                            onChange={(e) => handleUpdatePartnerPlan(selectedPartner, e.target.value)}
+                            className={`w-full text-xs font-extrabold rounded-lg border px-2.5 py-2 outline-none transition-all ${
+                              userRole === "contador"
+                                ? "bg-slate-100 text-slate-400 border-slate-100 cursor-not-allowed"
+                                : "bg-white text-slate-700 border-slate-200 hover:border-emerald-500 cursor-pointer"
+                            }`}
+                          >
+                            <option value="STARTER">Starter</option>
+                            <option value="Executive Partner PROSFEC">Executive Partner PROSFEC</option>
+                            <option value="MASTER PARTNER">Master Partner</option>
+                          </select>
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div>
                     <span className="text-xs text-slate-400 block font-bold">Comissão Estimada por Conversão</span>
