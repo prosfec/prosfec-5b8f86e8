@@ -873,6 +873,7 @@ export default function LeadWorkspaceModal({
 
   // Execute a credit query directly from lead sheet
   const handleExecuteLocalQuery = async () => {
+    if (executingLocalQuery) return; // trava contra clique duplo
     if (!selectedQueryDocument) {
       setLocalQueryError("Por favor, selecione ou digite um documento.");
       return;
