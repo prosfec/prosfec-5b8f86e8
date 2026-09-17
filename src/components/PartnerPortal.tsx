@@ -4900,7 +4900,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         className={`px-3 min-h-[44px] lg:min-h-0 lg:h-9 rounded-lg text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0 ${
                           copiedLink
                             ? "bg-emerald-400 text-slate-950 font-bold font-mono"
-                            : "bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold shadow-sm"
+                            : "bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-sm hover:shadow"
                         }`}
                       >
                         {copiedLink ? (
