@@ -4871,37 +4871,28 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 <div className="max-w-6xl mx-auto space-y-6">
                 {/* Unique Indicator Link Card */}
-                <div className="bg-white text-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                  <div className="space-y-4 relative z-10">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="bg-emerald-50 p-2.5 rounded-xl text-emerald-600 border border-emerald-100 shrink-0">
-                          <TrendingUp className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-extrabold text-base text-slate-800">Seu Link Exclusivo de Indicação</h3>
-                          <p className="text-[11px] text-slate-400 font-medium">Divulgação com rastreamento persistente</p>
-                        </div>
+                <div className="bg-white text-slate-800 px-4 py-3 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-3 relative z-10">
+                    <div className="flex items-center gap-2.5 min-w-0 lg:w-[290px] shrink-0">
+                      <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600 border border-emerald-100 shrink-0">
+                        <TrendingUp className="w-4 h-4 text-emerald-600" />
                       </div>
-                      <span className="text-[10px] bg-emerald-50 text-[#00A86B] font-mono font-bold px-2.5 py-1 rounded-md border border-emerald-100 uppercase tracking-wider">
-                        Rastreamento Ativo
-                      </span>
+                      <div className="min-w-0">
+                        <h3 className="font-extrabold text-sm text-slate-800 truncate">Seu Link Exclusivo de Indicação</h3>
+                        <p className="text-[10px] text-slate-400 font-medium truncate">Rastreamento persistente &bull; ID: {currentPartner?.id}</p>
+                      </div>
                     </div>
 
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                      Divulgue seu link para sua carteira de clientes, contatos de WhatsApp, contadores e redes sociais. Todo faturamento e simulação gerados por meio desse link serão vinculados automaticamente a você na nossa base de dados.
-                    </p>
-
-                    <div className="bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div className="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
                       <div className="min-w-0 flex-1">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">URL do seu Link</span>
-                        <span className="text-xs font-mono font-bold text-slate-700 select-all break-all block mt-0.5" title={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref=${currentPartner?.id}`}>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">URL do seu Link</span>
+                        <span className="text-[11px] font-mono font-bold text-slate-700 select-all truncate block" title={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref=${currentPartner?.id}`}>
                           {window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref={currentPartner?.id}
                         </span>
                       </div>
                       <button
                         onClick={copyReferralLink}
-                        className={`px-4 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-2 shrink-0 min-h-[44px] ${
+                        className={`px-3 h-9 rounded-lg text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0 ${
                           copiedLink
                             ? "bg-emerald-400 text-slate-950 font-bold font-mono"
                             : "bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold shadow-sm"
@@ -4909,27 +4900,21 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       >
                         {copiedLink ? (
                           <>
-                            <Check className="w-4 h-4 text-slate-950" />
-                            <span>Link Copiado!</span>
+                            <Check className="w-3.5 h-3.5 text-slate-950" />
+                            <span>Copiado!</span>
                           </>
                         ) : (
                           <>
-                            <Copy className="w-4 h-4 text-slate-950" />
-                            <span>Copiar Link</span>
+                            <Copy className="w-3.5 h-3.5 text-slate-950" />
+                            <span>Copiar</span>
                           </>
                         )}
                       </button>
                     </div>
-                  </div>
 
-                  <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-wrap gap-4 text-xs relative z-10 font-mono">
-                    <div className="flex items-center gap-2 text-emerald-700 text-[11px]">
+                    <div className="hidden xl:flex items-center gap-2 text-emerald-700 text-[10px] font-mono shrink-0">
                       <div className="w-2 h-2 rounded-full bg-[#00A86B] animate-pulse" />
-                      <span>Afiliação Ativa &bull; ID: {currentPartner?.id}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-                      <div className="w-2 h-2 rounded-full bg-[#00A86B]" />
-                      <span>Rastreamento persistente via navegador</span>
+                      <span>Afiliação Ativa</span>
                     </div>
                   </div>
                 </div>
