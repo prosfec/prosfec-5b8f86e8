@@ -7,26 +7,22 @@ Tudo continua sendo apenas visual e apenas no Portal do Parceiro. Modo claro, Ho
 ## O que muda
 
 1. Fundos
-   - Fundo geral do portal: preto profundo (zinc-950).
-   - Cartões e painéis: grafite (zinc-900), sem sombra, apenas uma borda ultrafina translúcida (branco 10%).
-
+  - Fundo geral do portal: preto profundo (zinc-950).
+  - Cartões e painéis: grafite (zinc-900), sem sombra, apenas uma borda ultrafina translúcida (branco 10%).
 2. Menu lateral
-   - Sai o bloco branco que envolve os links de navegação: o contêiner fica transparente, sem borda e sem sombra.
-   - Item ativo: verde neon suave (fundo verde translúcido + texto verde claro), no lugar do verde sólido atual.
-   - Itens inativos: cinza claro, com texto branco e fundo levemente claro ao passar o mouse.
-   - Ícones e setas do menu acompanham o mesmo cinza claro.
-
+  - Sai o bloco branco que envolve os links de navegação: o contêiner fica transparente, sem borda e sem sombra.
+  - Item ativo: verde neon suave (fundo verde translúcido + texto verde claro), no lugar do verde sólido atual.
+  - Itens inativos: cinza claro, com texto branco e fundo levemente claro ao passar o mouse.
+  - Ícones e setas do menu acompanham o mesmo cinza claro.
 3. Tipografia (fim das letras apagadas)
-   - Títulos, nomes e valores (saldo, comissão): branco puro.
-   - Rótulos, descrições e subtítulos: cinza claro brilhante (zinc-400).
-   - Textos muito discretos hoje (cinza fraco): sobem para zinc-500, nunca abaixo disso.
-   - Avisos coloridos ficam luminosos: verde claro, âmbar claro, vermelho claro, azul claro — inclusive quando o texto está sobre fundo colorido suave.
-
+  - Títulos, nomes e valores (saldo, comissão): branco puro.
+  - Rótulos, descrições e subtítulos: cinza claro brilhante (zinc-400).
+  - Textos muito discretos hoje (cinza fraco): sobem para zinc-500, nunca abaixo disso.
+  - Avisos coloridos ficam luminosos: verde claro, âmbar claro, vermelho claro, azul claro — inclusive quando o texto está sobre fundo colorido suave.
 4. Botões e campos
-   - Botões secundários (Copiar, Sincronizar, Via Master): fundo grafite, texto branco, borda branca 10%, hover mais claro.
-   - Botões principais verdes: verde vivo com texto branco, hover ainda mais claro.
-   - Campos de texto, seletores e áreas de texto: fundo preto, borda branca 10%, texto branco, placeholder cinza médio.
-
+  - Botões secundários (Copiar, Sincronizar, Via Master): fundo grafite, texto branco, borda branca 10%, hover mais claro.
+  - Botões principais verdes: verde vivo com texto branco, hover ainda mais claro.
+  - Campos de texto, seletores e áreas de texto: fundo preto, borda branca 10%, texto branco, placeholder cinza médio.
 5. Nada de tons "slate"/"gray" no escuro — a escala usada passa a ser cinza-chumbo (zinc) em todo o tema.
 
 ## Detalhes técnicos
@@ -46,4 +42,6 @@ Arquivo único: `src/styles.css`, bloco `.dark .soft-ui` (linhas ~641-769), rees
 - Cartões já escuros no claro (perfil, `#0A3D2E`) mantêm o halo verde.
 - A regra mobile no fim do arquivo não é tocada.
 
-Após a edição: typecheck e build.
+Após a edição: typecheck e build.  
+  
+Plano 100% aprovado, excelente leitura estética e técnica! A paleta Zinc (#09090b e #18181b) combinada com as bordas translúcidas de 10% é exatamente o padrão Vercel/Linear que procuramos. A solução de remapear as escalas de Slate/Gray para Zinc centralmente no `styles.css` e deixar o fundo do nav transparente foi brilhante. Pode mandar bala na execução!

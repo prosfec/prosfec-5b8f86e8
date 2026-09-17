@@ -640,102 +640,180 @@ select option {
 
 /* ============================================================
    Aparência Tecnológica (Dark Mode) — escopo do Painel do Parceiro
-   Somente estético: superfícies, texto, bordas e campos.
+   Dark SaaS Premium: escala zinc, alto contraste, sem sombras.
    ============================================================ */
-.dark .soft-ui,
-.dark .soft-ui [class*="bg-slate-50"],
-.dark .soft-ui [class*="bg-slate-100"],
-.dark .soft-ui [class*="bg-white"] {
-  background-color: #020617;
+.dark .soft-ui {
+  background-color: #09090b;
 }
 
+/* Superfícies: cartões e painéis em grafite com borda ultrafina */
 .dark .soft-ui [class*="bg-white"],
 .dark .soft-ui [class*="bg-slate-50"],
-.dark .soft-ui [class*="bg-slate-100"] {
-  background-color: #0f172a;
+.dark .soft-ui [class*="bg-slate-100"],
+.dark .soft-ui [class*="bg-gray-50"],
+.dark .soft-ui [class*="bg-gray-100"] {
+  background-color: #18181b;
   box-shadow: none;
-}
-
-.dark .soft-ui [class*="bg-white"]:not(.soft-nav-item-active),
-.dark .soft-ui [class*="bg-slate-50"]:not(.soft-nav-item-active),
-.dark .soft-ui [class*="bg-slate-100"]:not(.soft-nav-item-active) {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .dark .soft-ui [class*="border-slate-"],
 .dark .soft-ui [class*="border-gray-"],
-.dark .soft-ui [class*="divide-slate-"] {
-  border-color: rgba(255, 255, 255, 0.08);
+.dark .soft-ui [class*="border-zinc-"],
+.dark .soft-ui [class*="divide-slate-"],
+.dark .soft-ui [class*="divide-gray-"] {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .dark .soft-ui [class*="shadow-"] {
   box-shadow: none;
 }
 
+/* Tipografia de alto contraste */
 .dark .soft-ui [class*="text-slate-9"],
 .dark .soft-ui [class*="text-slate-8"],
 .dark .soft-ui [class*="text-slate-7"],
 .dark .soft-ui [class*="text-gray-9"],
-.dark .soft-ui [class*="text-gray-8"] {
-  color: #f8fafc;
+.dark .soft-ui [class*="text-gray-8"],
+.dark .soft-ui [class*="text-gray-7"],
+.dark .soft-ui [class*="text-zinc-9"],
+.dark .soft-ui [class*="text-zinc-8"] {
+  color: #ffffff;
 }
 
 .dark .soft-ui [class*="text-slate-6"],
 .dark .soft-ui [class*="text-slate-5"],
 .dark .soft-ui [class*="text-gray-6"],
-.dark .soft-ui [class*="text-gray-5"] {
-  color: #94a3b8;
+.dark .soft-ui [class*="text-gray-5"],
+.dark .soft-ui [class*="text-zinc-6"],
+.dark .soft-ui [class*="text-zinc-5"] {
+  color: #a1a1aa;
 }
 
 .dark .soft-ui [class*="text-slate-4"],
-.dark .soft-ui [class*="text-slate-3"] {
-  color: #64748b;
+.dark .soft-ui [class*="text-slate-3"],
+.dark .soft-ui [class*="text-gray-4"],
+.dark .soft-ui [class*="text-gray-3"],
+.dark .soft-ui [class*="text-zinc-4"],
+.dark .soft-ui [class*="text-zinc-3"] {
+  color: #71717a;
 }
 
-/* Sidebar e cabeçalho do painel */
+/* Acentos luminosos */
+.dark .soft-ui [class*="text-emerald-"],
+.dark .soft-ui [class*="text-green-"],
+.dark .soft-ui [class*="text-teal-"] {
+  color: #34d399;
+}
+.dark .soft-ui [class*="text-amber-"],
+.dark .soft-ui [class*="text-orange-"],
+.dark .soft-ui [class*="text-yellow-"] {
+  color: #fbbf24;
+}
+.dark .soft-ui [class*="text-rose-"],
+.dark .soft-ui [class*="text-red-"] {
+  color: #fb7185;
+}
+.dark .soft-ui [class*="text-blue-"],
+.dark .soft-ui [class*="text-indigo-"],
+.dark .soft-ui [class*="text-sky-"] {
+  color: #60a5fa;
+}
+
+/* Sidebar */
 .dark .soft-ui aside {
-  background-color: #0b1120;
-  border-color: rgba(255, 255, 255, 0.08);
+  background-color: #09090b;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .soft-ui nav .soft-card {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.dark .soft-ui .soft-nav-item {
+  color: #a1a1aa;
+  background-color: transparent;
+}
+
+.dark .soft-ui .soft-nav-item svg {
+  color: currentColor;
 }
 
 .dark .soft-ui .soft-nav-item:hover {
   background-color: rgba(255, 255, 255, 0.05);
-}
-
-.dark .soft-ui .soft-nav-item-active {
-  background-color: #059669;
   color: #ffffff;
 }
 
-/* Botões verdes brilham um pouco mais no escuro */
+.dark .soft-ui .soft-nav-item-active,
+.dark .soft-ui .soft-nav-item-active:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  box-shadow: none;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* Botões principais (verde) */
+.dark .soft-ui [class*="bg-emerald-5"],
 .dark .soft-ui [class*="bg-emerald-6"],
 .dark .soft-ui [class*="bg-emerald-7"] {
   background-color: #10b981;
+  color: #ffffff;
+  border-color: transparent;
 }
 
+.dark .soft-ui [class*="bg-emerald-5"]:hover,
 .dark .soft-ui [class*="bg-emerald-6"]:hover,
 .dark .soft-ui [class*="bg-emerald-7"]:hover {
   background-color: #34d399;
 }
 
-/* Tonalidades claras de destaque viram vidro escuro */
-.dark .soft-ui [class*="bg-emerald-50"] {
-  background-color: rgba(16, 185, 129, 0.12);
+/* Botões secundários */
+.dark .soft-ui button[class*="bg-white"],
+.dark .soft-ui button[class*="bg-slate-100"],
+.dark .soft-ui button[class*="bg-slate-50"],
+.dark .soft-ui button[class*="bg-gray-100"],
+.dark .soft-ui a[class*="bg-white"] {
+  background-color: #27272a;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.1);
 }
-.dark .soft-ui [class*="bg-amber-50"] {
+
+.dark .soft-ui button[class*="bg-white"]:hover,
+.dark .soft-ui button[class*="bg-slate-100"]:hover,
+.dark .soft-ui button[class*="bg-slate-50"]:hover,
+.dark .soft-ui button[class*="bg-gray-100"]:hover,
+.dark .soft-ui a[class*="bg-white"]:hover {
+  background-color: #3f3f46;
+}
+
+/* Tonalidades claras viram vidro colorido */
+.dark .soft-ui [class*="bg-emerald-50"],
+.dark .soft-ui [class*="bg-green-50"],
+.dark .soft-ui [class*="bg-teal-50"] {
+  background-color: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+.dark .soft-ui [class*="bg-amber-50"],
+.dark .soft-ui [class*="bg-orange-50"],
+.dark .soft-ui [class*="bg-yellow-50"] {
   background-color: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.2);
 }
 .dark .soft-ui [class*="bg-rose-50"],
 .dark .soft-ui [class*="bg-red-50"] {
   background-color: rgba(244, 63, 94, 0.12);
+  border-color: rgba(244, 63, 94, 0.2);
 }
 .dark .soft-ui [class*="bg-blue-50"],
-.dark .soft-ui [class*="bg-teal-50"],
-.dark .soft-ui [class*="bg-indigo-50"] {
+.dark .soft-ui [class*="bg-indigo-50"],
+.dark .soft-ui [class*="bg-sky-50"] {
   background-color: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
-/* Cartões que já são escuros no modo claro ganham halo tecnológico */
+/* Cartões já escuros no modo claro mantêm o halo verde */
 .dark .soft-ui [class*="from-emerald-900"],
 .dark .soft-ui [class*="bg-[#0A3D2E]"],
 .dark .soft-ui [class*="bg-[#02241A]"] {
@@ -746,18 +824,18 @@ select option {
 .dark .soft-ui input:not([type="checkbox"]):not([type="radio"]),
 .dark .soft-ui select,
 .dark .soft-ui textarea {
-  background-color: #020617 !important;
-  border-color: #1e293b !important;
+  background-color: #09090b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
 }
 
 .dark .soft-ui input::placeholder,
 .dark .soft-ui textarea::placeholder {
-  color: #64748b;
+  color: #71717a;
 }
 
 .dark .soft-ui option {
-  background-color: #0f172a;
+  background-color: #18181b;
   color: #ffffff;
 }
 
@@ -765,5 +843,5 @@ select option {
 .dark .soft-ui input:-webkit-autofill:hover,
 .dark .soft-ui input:-webkit-autofill:focus {
   -webkit-text-fill-color: #ffffff !important;
-  -webkit-box-shadow: 0 0 0px 1000px #020617 inset !important;
+  -webkit-box-shadow: 0 0 0px 1000px #09090b inset !important;
 }
