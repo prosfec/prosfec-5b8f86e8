@@ -738,6 +738,8 @@ export default function LeadWorkspaceModal({
   const [localQueryError, setLocalQueryError] = useState<string | null>(null);
   const [localQuerySuccess, setLocalQuerySuccess] = useState<string | null>(null);
   const [selectedQueryDocument, setSelectedQueryDocument] = useState(lead.cnpj || "");
+  // Documentos consultados nesta sessão (trava imediata, sem esperar recarregar o histórico)
+  const [documentosConsultadosSessao, setDocumentosConsultadosSessao] = useState<string[]>([]);
   const queryRequestIdRef = useRef<string | null>(null);
 
   const authenticatedHeaders = async (requestId?: string) => {
@@ -871,6 +873,7 @@ export default function LeadWorkspaceModal({
 
   // Execute a credit query directly from lead sheet
   const handleExecuteLocalQuery = async () => {
+    if (executingLocalQuery) return; // trava contra clique duplo
     if (!selectedQueryDocument) {
       setLocalQueryError("Por favor, selecione ou digite um documento.");
       return;
@@ -915,9 +918,14 @@ export default function LeadWorkspaceModal({
         throw new Error(data?.error || "Erro ao executar consulta.");
       }
       queryRequestIdRef.current = null;
+      // Trava imediata deste documento, sem esperar o histórico recarregar
+      const docConsultado = selectedQueryDocument.replace(/\D/g, "");
+      setDocumentosConsultadosSessao((prev) => prev.includes(docConsultado) ? prev : [...prev, docConsultado]);
       setLocalQuerySuccess(
-        `Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}` +
-        (data.debitWarning ? ` — ${data.debitWarning}` : "")
+        data.duplicate
+          ? "Este documento já possui consulta — nenhum saldo foi debitado."
+          : `Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}` +
+            (data.debitWarning ? ` — ${data.debitWarning}` : "")
       );
       // Atualiza o saldo visível imediatamente, sem F5
       if (data.debited && typeof data.newBalance === "number") {
@@ -953,6 +961,17 @@ export default function LeadWorkspaceModal({
   });
 
   const hasAnyConsulta = leadConsultas.length > 0;
+
+  // Documentos que já possuem consulta neste lead (histórico + sessão atual)
+  const documentosConsultados = new Set<string>([
+    ...leadConsultas.map((c: any) => String(c.documento || "").replace(/\D/g, "")).filter(Boolean),
+    ...documentosConsultadosSessao,
+  ]);
+  const documentoSelecionadoDigits = String(selectedQueryDocument || "").replace(/\D/g, "");
+  const documentoJaConsultado = documentoSelecionadoDigits.length > 0 && documentosConsultados.has(documentoSelecionadoDigits);
+  const consultaExistenteDoDocumento = leadConsultas.find(
+    (c: any) => String(c.documento || "").replace(/\D/g, "") === documentoSelecionadoDigits
+  );
 
   function parseBoldText(text: string) {
     const parts = text.split(/\*\*([^*]+)\*\*/g);
@@ -3955,13 +3974,18 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                       <button
                         onClick={handleExecuteLocalQuery}
-                        disabled={executingLocalQuery || !selectedQueryDocument || !localCatalog.length || !selectedProductCode}
+                        disabled={executingLocalQuery || !selectedQueryDocument || !localCatalog.length || !selectedProductCode || (documentoJaConsultado && !isAdminUser)}
                         className="w-full py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                       >
                         {executingLocalQuery ? (
                           <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             Processando Consulta...
+                          </>
+                        ) : documentoJaConsultado && !isAdminUser ? (
+                          <>
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            Consulta já realizada para este documento
                           </>
                         ) : (
                           <>
@@ -3970,6 +3994,14 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           </>
                         )}
                       </button>
+
+                      {documentoJaConsultado && (
+                        <div className="text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 p-2.5 rounded-xl">
+                          Este CPF/CNPJ já foi consultado{consultaExistenteDoDocumento?.dataConsulta ? ` em ${new Date(consultaExistenteDoDocumento.dataConsulta).toLocaleDateString("pt-BR")}` : ""}. Abra o relatório no histórico abaixo ou selecione outro documento ainda não consultado.
+                          {isAdminUser && " (Como ADM, você ainda pode refazer a consulta.)"}
+                        </div>
+                      )}
+
 
                       {localQueryError && (
                         <div className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-100 p-2.5 rounded-xl">
