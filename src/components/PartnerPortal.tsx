@@ -4082,44 +4082,41 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   );
 
   const renderProfileCard = (
-    <div className="bg-[#0A3D2E] text-white p-5 rounded-3xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20 min-h-[220px]">
+    <div className="bg-[#0A3D2E] text-white p-3.5 rounded-xl relative overflow-hidden shadow-[0_10px_30px_-12px_rgba(10,61,46,0.55)] flex flex-col justify-between border border-emerald-500/20">
 
-      <div className="absolute right-[-30px] top-[-30px] w-32 h-32 rounded-full bg-emerald-500/10 pointer-events-none" />
-      <div className="space-y-4 relative z-10">
-        <div className="flex items-start justify-between">
-          <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md border border-emerald-500/30">
+      <div className="absolute right-[-30px] top-[-30px] w-28 h-28 rounded-full bg-emerald-500/10 pointer-events-none" />
+      <div className="space-y-2 relative z-10">
+        <div className="flex items-center justify-between gap-2">
+          <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-500/30">
             Área do Parceiro
           </span>
-          <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300">
-            <Handshake className="w-5 h-5 text-emerald-300" />
+          <div className="w-7 h-7 rounded-lg bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300 shrink-0">
+            <Handshake className="w-4 h-4 text-emerald-300" />
           </div>
         </div>
-        <div>
-          <h2 className="font-extrabold text-lg leading-tight text-white">{currentPartner?.nome}</h2>
-          <p className="text-xs text-emerald-200/90 mt-1 truncate">E-mail: {currentPartner?.email}</p>
-          <p className="text-[11px] text-emerald-300/80 font-mono mt-0.5">ID: {currentPartner?.id}</p>
+        <div className="min-w-0">
+          <h2 className="font-extrabold text-base leading-tight text-white truncate" title={currentPartner?.nome}>{currentPartner?.nome}</h2>
+          <p className="text-[11px] text-emerald-200/90 truncate" title={currentPartner?.email}>{currentPartner?.email}</p>
+          <p className="text-[9px] text-emerald-300/70 font-mono truncate">ID: {currentPartner?.id}</p>
         </div>
       </div>
 
-      <div className="mt-5 border-t border-emerald-800/60 pt-4 grid grid-cols-2 gap-3 relative z-10">
-        <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
-          <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Sua Comissão</span>
+      <div className="mt-2.5 border-t border-emerald-800/60 pt-2 flex items-center gap-2 relative z-10">
+        <div className="bg-emerald-950/40 border border-emerald-800/40 px-2 py-1.5 rounded-lg flex-1 min-w-0">
+          <span className="text-[9px] text-emerald-300/90 uppercase block font-bold tracking-wider">Comissão</span>
           {isFranquiaDigital(currentPartner?.plano) ? (
-            <div className="space-y-0.5 mt-1">
-              <span className="text-base font-extrabold text-emerald-100 font-mono block">3,0% Direto</span>
-              <span className="text-[9px] text-emerald-300 font-medium block leading-tight">
-                Equipe: 1,5% Exec / 2,5% Start
-              </span>
-            </div>
+            <span className="text-xs font-extrabold text-emerald-100 font-mono block truncate" title="3,0% Direto · Equipe: 1,5% Exec / 2,5% Start">
+              3,0% Direto
+            </span>
           ) : (
-            <span className="text-base font-extrabold text-emerald-100 font-mono block mt-1">
+            <span className="text-xs font-extrabold text-emerald-100 font-mono block truncate">
               {(getCommissionMultiplier(currentPartner?.plano) * 100).toFixed(1)}%
             </span>
           )}
         </div>
-        <div className="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
-          <span className="text-[10px] text-emerald-300/90 uppercase block font-bold tracking-wider">Chave Pix</span>
-          <span className="text-xs font-mono font-bold text-emerald-200 truncate block mt-1" title={currentPartner?.chavePix}>
+        <div className="bg-emerald-950/40 border border-emerald-800/40 px-2 py-1.5 rounded-lg flex-1 min-w-0">
+          <span className="text-[9px] text-emerald-300/90 uppercase block font-bold tracking-wider">Chave Pix</span>
+          <span className="text-[11px] font-mono font-bold text-emerald-200 truncate block" title={currentPartner?.chavePix}>
             {currentPartner?.chavePix || "Não informada"}
           </span>
         </div>
@@ -4874,37 +4871,28 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 <div className="max-w-6xl mx-auto space-y-6">
                 {/* Unique Indicator Link Card */}
-                <div className="bg-white text-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                  <div className="space-y-4 relative z-10">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="bg-emerald-50 p-2.5 rounded-xl text-emerald-600 border border-emerald-100 shrink-0">
-                          <TrendingUp className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-extrabold text-base text-slate-800">Seu Link Exclusivo de Indicação</h3>
-                          <p className="text-[11px] text-slate-400 font-medium">Divulgação com rastreamento persistente</p>
-                        </div>
+                <div className="bg-white text-slate-800 px-4 py-3 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-3 relative z-10">
+                    <div className="flex items-center gap-2.5 min-w-0 lg:w-[290px] shrink-0">
+                      <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600 border border-emerald-100 shrink-0">
+                        <TrendingUp className="w-4 h-4 text-emerald-600" />
                       </div>
-                      <span className="text-[10px] bg-emerald-50 text-[#00A86B] font-mono font-bold px-2.5 py-1 rounded-md border border-emerald-100 uppercase tracking-wider">
-                        Rastreamento Ativo
-                      </span>
+                      <div className="min-w-0">
+                        <h3 className="font-extrabold text-sm text-slate-800 truncate">Seu Link Exclusivo de Indicação</h3>
+                        <p className="text-[10px] text-slate-400 font-medium truncate">Rastreamento persistente &bull; ID: {currentPartner?.id}</p>
+                      </div>
                     </div>
 
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                      Divulgue seu link para sua carteira de clientes, contatos de WhatsApp, contadores e redes sociais. Todo faturamento e simulação gerados por meio desse link serão vinculados automaticamente a você na nossa base de dados.
-                    </p>
-
-                    <div className="bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div className="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
                       <div className="min-w-0 flex-1">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">URL do seu Link</span>
-                        <span className="text-xs font-mono font-bold text-slate-700 select-all break-all block mt-0.5" title={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref=${currentPartner?.id}`}>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">URL do seu Link</span>
+                        <span className="text-[11px] font-mono font-bold text-slate-700 select-all truncate block" title={`${window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref=${currentPartner?.id}`}>
                           {window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref={currentPartner?.id}
                         </span>
                       </div>
                       <button
                         onClick={copyReferralLink}
-                        className={`px-4 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-2 shrink-0 min-h-[44px] ${
+                        className={`px-3 h-9 rounded-lg text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0 ${
                           copiedLink
                             ? "bg-emerald-400 text-slate-950 font-bold font-mono"
                             : "bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold shadow-sm"
@@ -4912,27 +4900,21 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       >
                         {copiedLink ? (
                           <>
-                            <Check className="w-4 h-4 text-slate-950" />
-                            <span>Link Copiado!</span>
+                            <Check className="w-3.5 h-3.5 text-slate-950" />
+                            <span>Copiado!</span>
                           </>
                         ) : (
                           <>
-                            <Copy className="w-4 h-4 text-slate-950" />
-                            <span>Copiar Link</span>
+                            <Copy className="w-3.5 h-3.5 text-slate-950" />
+                            <span>Copiar</span>
                           </>
                         )}
                       </button>
                     </div>
-                  </div>
 
-                  <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-wrap gap-4 text-xs relative z-10 font-mono">
-                    <div className="flex items-center gap-2 text-emerald-700 text-[11px]">
+                    <div className="hidden xl:flex items-center gap-2 text-emerald-700 text-[10px] font-mono shrink-0">
                       <div className="w-2 h-2 rounded-full bg-[#00A86B] animate-pulse" />
-                      <span>Afiliação Ativa &bull; ID: {currentPartner?.id}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-                      <div className="w-2 h-2 rounded-full bg-[#00A86B]" />
-                      <span>Rastreamento persistente via navegador</span>
+                      <span>Afiliação Ativa</span>
                     </div>
                   </div>
                 </div>
@@ -5113,137 +5095,124 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       .reduce((acc, l) => acc + (l.valorAprovado || 0), 0);
 
                     return (
-                      <div className="space-y-4">
-                        {/* LINHA 1: Quick Metrics Grid (Desempenho: Total Indicados, Em Atendimento, Crédito Aprovado Real) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-                          {/* Card 1: Total Indicados */}
-                          <div className="bg-white/75 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex items-center gap-3.5 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
-                              <Users className="w-5 h-5" />
+                      <div className="space-y-3">
+                        {/* LINHA 1: Quick Metrics Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-xl border border-slate-200/90 shadow-[0_10px_26px_-14px_rgba(2,36,26,0.2)] flex items-center gap-3 relative overflow-hidden hover:border-emerald-500/40 transition-all min-w-0">
+                            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
+                              <Users className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide truncate">Total Indicados</span>
-                              <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 mt-0.5 block truncate">{leads.length}</span>
+                              <span className="text-[10px] text-slate-500 uppercase block font-bold tracking-wide truncate">Total Indicados</span>
+                              <span className="text-2xl font-extrabold font-mono text-slate-900 block leading-tight truncate">{leads.length}</span>
                               <span className="text-[10px] text-slate-400 font-medium block truncate">Empresas cadastradas</span>
                             </div>
                           </div>
 
-                          {/* Card 2: Em Atendimento */}
-                          <div className="bg-white/75 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex items-center gap-3.5 relative overflow-hidden group hover:border-amber-500/40 transition-all min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0">
-                              <RefreshCw className="w-5 h-5" />
+                          <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-xl border border-slate-200/90 shadow-[0_10px_26px_-14px_rgba(2,36,26,0.2)] flex items-center gap-3 relative overflow-hidden hover:border-amber-500/40 transition-all min-w-0">
+                            <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0">
+                              <RefreshCw className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide truncate">Em Atendimento</span>
-                              <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 mt-0.5 block truncate">
+                              <span className="text-[10px] text-slate-500 uppercase block font-bold tracking-wide truncate">Em Atendimento</span>
+                              <span className="text-2xl font-extrabold font-mono text-slate-900 block leading-tight truncate">
                                 {leads.filter(l => l.status === "em atendimento" || l.status === "novo").length}
                               </span>
                               <span className="text-[10px] text-slate-400 font-medium block truncate">Esteira em andamento</span>
                             </div>
                           </div>
 
-                          {/* Card 3: Crédito Aprovado Real */}
-                          <div className="bg-white/75 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex items-center gap-3.5 relative overflow-hidden group hover:border-emerald-500/40 transition-all min-w-0 sm:col-span-2 lg:col-span-1">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
-                              <CheckCircle2 className="w-5 h-5" />
+                          <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-xl border border-slate-200/90 shadow-[0_10px_26px_-14px_rgba(2,36,26,0.2)] flex items-center gap-3 relative overflow-hidden hover:border-emerald-500/40 transition-all min-w-0">
+                            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
+                              <CheckCircle2 className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide truncate">Crédito Aprovado Real</span>
-                              <span className="text-xl sm:text-2xl font-extrabold font-mono text-[#00A86B] block mt-0.5 truncate" title={formatCurrencyBRL(totalApprovedCredit)}>
+                              <span className="text-[10px] text-slate-500 uppercase block font-bold tracking-wide truncate">Crédito Aprovado Real</span>
+                              <span className="text-xl font-extrabold font-mono text-[#00A86B] block leading-tight truncate" title={formatCurrencyBRL(totalApprovedCredit)}>
                                 {formatCurrencyBRL(totalApprovedCredit)}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-medium block mt-0.5 truncate">
+                              <span className="text-[10px] text-slate-400 font-medium block truncate">
                                 {leads.filter(l => l.etapa === 7 || l.status === "concluido").length} empresas aprovadas
                               </span>
                             </div>
                           </div>
                         </div>
 
-                        {/* LINHA 2: Dedicated Saldos Grid (Recargas e Saldos: Saldo Geral vs. Saldo Painel de Oportunidade) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 text-left">
+                        {/* LINHA 2: Saldos + Comissões (cockpit em 3 colunas) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-left">
                           {/* Saldo Geral (Consultas e Serviços) */}
-                          <div className="bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
-                                  <Wallet className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0">
-                                  <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide">
-                                    Saldo Geral (Consultas e Serviços)
-                                  </span>
-                                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">
-                                    Cobre Consultas de Crédito e Serviços Contábeis
-                                  </p>
-                                </div>
+                          <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-xl border border-slate-200/90 shadow-[0_10px_26px_-14px_rgba(2,36,26,0.2)] flex flex-col justify-between gap-2.5 relative overflow-hidden hover:border-emerald-500/40 transition-all">
+                            <div className="flex items-start gap-2.5 min-w-0">
+                              <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
+                                <Wallet className="w-4 h-4" />
                               </div>
-                              <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-100 uppercase tracking-wider shrink-0">
-                                Unificado
-                              </span>
+                              <div className="min-w-0">
+                                <span className="text-[10px] text-slate-500 uppercase block font-bold tracking-wide">
+                                  Saldo Geral (Consultas e Serviços)
+                                </span>
+                                <p className="text-[10px] text-slate-400 font-medium">
+                                  Consultas de Crédito e Serviços Contábeis
+                                </p>
+                              </div>
                             </div>
 
-                            <div className="flex items-baseline justify-between pt-1 border-t border-slate-50">
-                              <div>
-                                <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 block truncate">
+                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                              <div className="min-w-0">
+                                <span className="text-xl font-extrabold font-mono text-slate-900 block truncate leading-tight">
                                   {formatCurrencyBRL(
                                     currentPartner?.saldoGeral !== undefined
                                       ? Number(currentPartner.saldoGeral)
                                       : (currentPartner?.saldoConsultas !== undefined ? Number(currentPartner.saldoConsultas) : 0)
                                   )}
                                 </span>
-                                <span className="text-[10px] text-emerald-700 font-bold block mt-0.5">
-                                  Disponível para uso imediato
+                                <span className="text-[10px] text-emerald-700 font-bold block">
+                                  Disponível para uso
                                 </span>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => setShowRechargeModal(true)}
-                                className="px-3.5 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-extrabold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px]"
+                                className="px-3 h-9 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
                               >
                                 <Coins className="w-3.5 h-3.5 text-emerald-300" />
-                                <span>Adicionar Saldo</span>
+                                <span>Adicionar</span>
                               </button>
                             </div>
                           </div>
 
                           {/* Saldo Painel de Oportunidade (buscas) */}
-                          <div className="bg-white/75 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/90 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)] flex flex-col justify-between gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-100 flex items-center justify-center shrink-0">
-                                  <Search className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0">
-                                  <span className="text-[11px] text-slate-500 uppercase block font-bold tracking-wide">
-                                    Saldo Painel de Oportunidade (buscas)
-                                  </span>
-                                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">
-                                    Buscas de empresas e sócios ativas em tempo real
-                                  </p>
-                                </div>
+                          <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-xl border border-slate-200/90 shadow-[0_10px_26px_-14px_rgba(2,36,26,0.2)] flex flex-col justify-between gap-2.5 relative overflow-hidden hover:border-emerald-500/40 transition-all">
+                            <div className="flex items-start gap-2.5 min-w-0">
+                              <div className="w-9 h-9 rounded-lg bg-teal-50 text-teal-700 border border-teal-100 flex items-center justify-center shrink-0">
+                                <Search className="w-4 h-4" />
                               </div>
-                              <span className="bg-teal-50 text-teal-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-teal-100 uppercase tracking-wider shrink-0">
-                                Por Pacotes
-                              </span>
+                              <div className="min-w-0">
+                                <span className="text-[10px] text-slate-500 uppercase block font-bold tracking-wide">
+                                  Saldo Painel de Oportunidade (buscas)
+                                </span>
+                                <p className="text-[10px] text-slate-400 font-medium">
+                                  Retorno de até 20 leads por busca
+                                </p>
+                              </div>
                             </div>
 
-                            <div className="flex items-baseline justify-between pt-1 border-t border-slate-50">
-                              <div>
-                                <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 block truncate">
+                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                              <div className="min-w-0">
+                                <span className="text-xl font-extrabold font-mono text-slate-900 block truncate leading-tight">
                                   {currentPartner?.cacaLeadsCredits || 0}{" "}
-                                  <span className="text-xs text-slate-500 font-bold uppercase font-sans">buscas</span>
+                                  <span className="text-[11px] text-slate-500 font-bold uppercase font-sans">buscas</span>
                                 </span>
-                                <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
-                                  Retorno de até 20 leads/busca
+                                <span className="text-[10px] text-slate-500 font-medium block">
+                                  Créditos disponíveis
                                 </span>
                               </div>
                               {isSubMember ? (
-                                <div 
-                                  className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-slate-400 text-[11px] font-bold rounded-xl flex items-center gap-1.5 shrink-0 cursor-not-allowed select-none"
+                                <div
+                                  className="px-2.5 h-9 bg-slate-100 border border-slate-200 text-slate-400 text-[10px] font-bold rounded-lg flex items-center gap-1.5 shrink-0 cursor-not-allowed select-none"
                                   title="Seus créditos de busca são gerenciados e distribuídos pelo seu Líder/Master de equipe."
                                 >
                                   <Lock className="w-3.5 h-3.5 text-slate-400" />
-                                  <span>Distribuído pelo Master</span>
+                                  <span>Via Master</span>
                                 </div>
                               ) : (
                                 <button
@@ -5254,69 +5223,57 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     setRefillCopiedPix(false);
                                     setShowRefillModal(true);
                                   }}
-                                  className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px]"
+                                  className="px-3 h-9 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
                                 >
                                   <Coins className="w-3.5 h-3.5 text-amber-300" />
-                                  <span>Adquirir Recarga</span>
+                                  <span>Recarregar</span>
                                 </button>
                               )}
                             </div>
                           </div>
-                        </div>
 
-                        {/* LINHA 3: Saldo e Comissões Hero Card (Suas Comissões & Repasses) */}
-                        <div className="bg-white text-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                          <div className="absolute right-0 top-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
-                          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-                            <div className="space-y-2 min-w-0">
-                              <div className="flex items-center gap-2">
-<div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                                   <Coins className="w-5 h-5 text-emerald-600" />
-                                </div>
-                                <div>
-                                   <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#00A86B] block">
-                                     Suas Comissões & Repasses
-                                   </span>
-                                   <span className="text-xs text-slate-500 font-medium">Saldo total liberado e pendente de liquidação</span>
-                                </div>
+                          {/* Comissões & Repasses */}
+                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between gap-2.5 md:col-span-2 lg:col-span-1">
+                            <div className="flex items-start gap-2.5 min-w-0">
+                              <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                                <Coins className="w-4 h-4 text-emerald-600" />
                               </div>
+                              <div className="min-w-0">
+                                <span className="text-[10px] font-bold uppercase tracking-wide text-[#00A86B] block">
+                                  Suas Comissões &amp; Repasses
+                                </span>
+                                <p className="text-[10px] text-slate-400 font-medium">Liberado e pendente de liquidação</p>
+                              </div>
+                            </div>
 
-                              <div className="pt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                                <div className="text-3xl sm:text-4xl font-extrabold font-mono text-slate-900 tracking-tight" title={formatCurrencyBRL(totalPaidCommissions)}>
+                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                              <div className="min-w-0">
+                                <span className="text-xl font-extrabold font-mono text-slate-900 block truncate leading-tight" title={formatCurrencyBRL(totalPaidCommissions)}>
                                   {formatCurrencyBRL(totalPaidCommissions)}
-                                </div>
-<span className="text-xs font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
-                                   Pagas e Liberadas
-                                 </span>
+                                </span>
+                                <span className="text-[10px] text-emerald-700 font-bold block">Pagas e liberadas</span>
+                              </div>
+                              <div className="min-w-0 text-right">
+                                <span className="text-sm font-extrabold font-mono text-amber-600 block truncate leading-tight" title={formatCurrencyBRL(totalPendingCommissions)}>
+                                  {formatCurrencyBRL(totalPendingCommissions)}
+                                </span>
+                                <span className="text-[10px] text-amber-600 font-bold block">Pendentes</span>
                               </div>
                             </div>
 
-                            {/* Secondary sub-metrics and CTA */}
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-<div className="bg-amber-50 border border-amber-200 p-3 rounded-xl min-w-[170px]">
-                                 <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider block">
-                                   Comissões Pendentes
-                                 </span>
-                                 <span className="text-lg font-extrabold font-mono text-amber-600 block mt-0.5" title={formatCurrencyBRL(totalPendingCommissions)}>
-                                   {formatCurrencyBRL(totalPendingCommissions)}
-                                 </span>
-                                 <span className="text-[10px] text-slate-400 font-medium block">Aguardando liquidação</span>
-                               </div>
-
-                              <button
-                                onClick={() => {
-                                  setPayoutPixKey(currentPartner?.chavePix || "");
-                                  setPayoutAmountCustom(saldoVendasDisponivel > 0 ? saldoVendasDisponivel.toFixed(2) : "0");
-                                  setCommissionPayoutSuccess(null);
-                                  setPayoutModalOrigin("vendas");
-                                }}
-                                className="bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold px-4 py-3 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer shrink-0 min-h-[44px]"
-                                title="Solicitar saque das comissões de vendas/planos"
-                              >
-                                <Coins className="w-4 h-4 text-slate-950 shrink-0" />
-                                <span>Solicitar Comissão</span>
-                              </button>
-                            </div>
+                            <button
+                              onClick={() => {
+                                setPayoutPixKey(currentPartner?.chavePix || "");
+                                setPayoutAmountCustom(saldoVendasDisponivel > 0 ? saldoVendasDisponivel.toFixed(2) : "0");
+                                setCommissionPayoutSuccess(null);
+                                setPayoutModalOrigin("vendas");
+                              }}
+                              className="bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold px-3 h-9 rounded-lg text-[11px] transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer w-full"
+                              title="Solicitar saque das comissões de vendas/planos"
+                            >
+                              <Coins className="w-3.5 h-3.5 text-slate-950 shrink-0" />
+                              <span>Solicitar Comissão</span>
+                            </button>
                           </div>
                         </div>
                       </div>
