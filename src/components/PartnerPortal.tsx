@@ -38,6 +38,13 @@ import { calculateLeadStepStatus } from "../utils/stepValidation";
 import { TeamPerformanceChart } from "./TeamPerformanceChart";
 import PartnerServicosContabilidadeTab from "./PartnerServicosContabilidadeTab";
 import { sanitizeAndSyncServicosList, ServiceCatalogItem } from "../utils/serviceUtils";
+import {
+  getServiceCommissionRate,
+  getMasterTeamServiceOverrideRate,
+  getPlanServiceLabel,
+  isFranquiaDigital,
+  withoutMensalidades
+} from "../utils/commissionUtils";
 import { 
   Handshake, 
   Copy, 
