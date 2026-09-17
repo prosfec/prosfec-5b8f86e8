@@ -5939,8 +5939,15 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                              </div>
                            </div>
 
-                           {/* Grouped Lead Cards or Empty State */}
-                          {filteredGroups.length === 0 ? (
+                            {/* Grouped Lead Cards or Empty State */}
+                           {!passo6ListaVisivel ? (
+                             <div className="py-4 px-4 flex items-center justify-center gap-2 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                               <EyeOff className="w-3.5 h-3.5 text-slate-400" />
+                               <p className="text-xs font-semibold text-slate-500">
+                                 {filteredGroups.length} {filteredGroups.length === 1 ? "cliente oculto" : "clientes ocultos"} — recolhido para deixar o painel limpo
+                               </p>
+                             </div>
+                           ) : filteredGroups.length === 0 ? (
                             <div className="py-8 px-4 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 space-y-2">
                               <Receipt className="w-8 h-8 text-slate-300 mx-auto" />
                               <p className="text-xs font-bold text-slate-600">
