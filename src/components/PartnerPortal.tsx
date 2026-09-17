@@ -46,7 +46,10 @@ import {
   withoutMensalidades
 } from "../utils/commissionUtils";
 import { 
+  Sun,
+  Moon,
   Handshake, 
+
   Copy, 
   LogOut, 
   LayoutDashboard, 
@@ -786,6 +789,37 @@ export default function PartnerPortal({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
+  // Aparência (Claro / Tecnológico) — apenas visual, persistida no navegador
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("prosfec_partner_theme");
+      if (saved === "dark" || saved === "light") setTheme(saved);
+    } catch {
+      /* localStorage indisponível */
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
+    return () => root.classList.remove("dark");
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => {
+      const next = prev === "dark" ? "light" : "dark";
+      try {
+        localStorage.setItem("prosfec_partner_theme", next);
+      } catch {
+        /* localStorage indisponível */
+      }
+      return next;
+    });
+  };
+
   const [showLeadRegisterForm, setShowLeadRegisterForm] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
