@@ -2508,7 +2508,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
             />
           </div>
 
-          <div className="min-h-0 flex-1 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
+          <div className="min-h-0 flex-1 flex flex-col lg:block lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
 
         {/* Navigation Tabs */}
         <div className="bg-[#02241a] border-b border-emerald-950 px-3 flex items-center overflow-x-auto gap-1 text-xs font-extrabold scrollbar-none shrink-0 min-h-[52px] lg:min-h-0 lg:flex-col lg:items-stretch lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-3 lg:py-4">
@@ -2703,7 +2703,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
         </div>
 
         {/* Workspace Body */}
-        <div className="min-w-0 overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8 space-y-6 text-slate-900">
+        <div className="min-w-0 min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-4 sm:p-6 lg:p-8 space-y-6 text-slate-900">
           
           {(lead.pendencias?.status === "pendente" || lead.pendente) && (
             <div className="bg-amber-50 border-2 border-amber-500/30 p-5 rounded-2xl flex flex-col md:flex-row items-start gap-4">
