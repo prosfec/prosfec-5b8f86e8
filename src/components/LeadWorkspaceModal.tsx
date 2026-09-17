@@ -3974,13 +3974,18 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                       <button
                         onClick={handleExecuteLocalQuery}
-                        disabled={executingLocalQuery || !selectedQueryDocument || !localCatalog.length || !selectedProductCode}
+                        disabled={executingLocalQuery || !selectedQueryDocument || !localCatalog.length || !selectedProductCode || (documentoJaConsultado && !isAdminUser)}
                         className="w-full py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                       >
                         {executingLocalQuery ? (
                           <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             Processando Consulta...
+                          </>
+                        ) : documentoJaConsultado && !isAdminUser ? (
+                          <>
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            Consulta já realizada para este documento
                           </>
                         ) : (
                           <>
@@ -3989,6 +3994,14 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           </>
                         )}
                       </button>
+
+                      {documentoJaConsultado && (
+                        <div className="text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 p-2.5 rounded-xl">
+                          Este CPF/CNPJ já foi consultado{consultaExistenteDoDocumento?.dataConsulta ? ` em ${new Date(consultaExistenteDoDocumento.dataConsulta).toLocaleDateString("pt-BR")}` : ""}. Abra o relatório no histórico abaixo ou selecione outro documento ainda não consultado.
+                          {isAdminUser && " (Como ADM, você ainda pode refazer a consulta.)"}
+                        </div>
+                      )}
+
 
                       {localQueryError && (
                         <div className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-100 p-2.5 rounded-xl">
