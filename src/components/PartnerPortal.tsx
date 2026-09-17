@@ -5966,11 +5966,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 value={dashboardServiceSearch}
                                 onChange={(e) => setDashboardServiceSearch(e.target.value)}
                                 className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 font-medium placeholder:text-slate-400 outline-hidden focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all"
-                              />
-                            </div>
-                          </div>
+                               />
+                               </div>
+                             </div>
+                           </div>
 
-                          {/* Grouped Lead Cards or Empty State */}
+                           {/* Grouped Lead Cards or Empty State */}
                           {filteredGroups.length === 0 ? (
                             <div className="py-8 px-4 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 space-y-2">
                               <Receipt className="w-8 h-8 text-slate-300 mx-auto" />
