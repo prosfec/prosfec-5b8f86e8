@@ -10378,7 +10378,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* Reassign Lead Modal Overlay */}
       {assigningLead && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -10447,7 +10447,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* ANNOUNCEMENT POPUP OVERLAY */}
       {currentAnnouncementShow && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50 animate-fade-in">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -10543,7 +10543,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* CNPJ INPUT PROMPT MODAL */}
       {cnpjInputModal && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -10614,7 +10614,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* ACTIVE CNPJ DETAILS CARD MODAL */}
       {activeCnpjModal && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50 overflow-y-auto">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -10736,7 +10736,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* DIRECT LEAD REGISTER MODAL FORM (SIMULADOR COMPLETO DA HOME) */}
       {selectedLeadForRegistration && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50 overflow-y-auto">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -10780,7 +10780,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* CONSULTANT CAÇA-LEADS INSPECTION MODAL */}
       {selectedConsultantForInspection && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-fade-in overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 lg:p-6 animate-fade-in overflow-y-auto">
           <div className="bg-white/75 backdrop-blur-xl rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col text-left">
             {/* Modal Header */}
             <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 flex items-center justify-between shrink-0">
@@ -11092,7 +11092,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* INDIVIDUAL LEAD REDIRECTION MODAL */}
       {leadToReassign && (
-        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in text-left">
+        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-indigo-700">
@@ -11195,7 +11195,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* BULK PORTFOLIO TRANSFER MODAL */}
       {bulkReassignConsultantSource && (
-        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in text-left">
+        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-indigo-700">
@@ -11335,7 +11335,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* MODAL SOLICITAR COMISSÃO */}
       {showCommissionPayoutModal && (
-        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in text-left">
+        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-emerald-800">
@@ -11674,7 +11674,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* Modal de Recarga de Saldo Geral (Passo 1: Valor -> Passo 2: Pix & Confirmação) */}
       {showRechargeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs text-left">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-950/60 backdrop-blur-xs text-left">
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -12001,7 +12001,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* Modal de Recarga do Painel de Oportunidade (Passo 1: Pacote -> Passo 2: Pix & Confirmação) */}
       {showRefillModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs text-left">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-950/60 backdrop-blur-xs text-left">
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
