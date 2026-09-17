@@ -3232,7 +3232,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
   const resolveCheckoutLink = (serv: any, catalog: any[]): string => {
     const pick = (v: any) =>
       typeof v === "string" && v.trim().startsWith("http") ? v.trim() : "";
-    const own = pick(serv?.hublaLink) || pick(serv?.linkPagamento) || pick(serv?.checkoutUrl);
+    const own = pick(serv?.linkPagamento) || pick(serv?.hublaLink) || pick(serv?.checkoutUrl);
     if (own) return own;
 
     const nome = String(serv?.nome || serv?.titulo || serv?.servico || "").toLowerCase().trim();
@@ -3242,7 +3242,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         ((c.id && serv?.id && c.id === serv.id) ||
           (c.nome && nome && String(c.nome).toLowerCase().trim() === nome)),
     );
-    return match ? pick(match.hublaLink) : "";
+    return match ? (pick(match.linkPagamento) || pick(match.hublaLink)) : "";
   };
 
   app.get("/api/public/proposta/:leadId", async (req, res) => {
