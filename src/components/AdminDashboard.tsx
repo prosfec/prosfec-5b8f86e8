@@ -5978,17 +5978,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         </span>
                       </button>
 
-                      {/* Botão de Status Pagamento do Serviço PROSFEC (Apenas no Passo 6) */}
+                      {/* Indicador de Pagamento dos Serviços (confirmação é feita serviço a serviço no Passo 6) */}
                       {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleServicoPago(selectedLead.id, !selectedLead.servicoPago)}
-                          className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
+                        <div
+                          className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase flex items-center justify-center gap-1.5 shadow-xs ${
                             selectedLead.servicoPago
-                              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                              : "bg-white hover:bg-amber-50 text-amber-800 border border-amber-300"
+                              ? "bg-emerald-50 text-emerald-800 border border-emerald-300"
+                              : "bg-white text-amber-800 border border-amber-300"
                           }`}
-                          title="Alternar se o cliente já realizou o pagamento dos serviços do Passo 6 ou se está pendente"
+                          title="A confirmação de pagamento é feita serviço a serviço no Passo 6, escolhendo Pix ou Cartão"
                         >
                           {selectedLead.servicoPago ? (
                             <>
@@ -6001,7 +5999,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               <span>Serviço Pendente ⏳</span>
                             </>
                           )}
-                        </button>
+                        </div>
                       )}
                     </div>
 
