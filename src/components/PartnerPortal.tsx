@@ -11634,7 +11634,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   const consultantPlan = member?.plano || "Executive Partner PROSFEC";
                   const teamOverrideRate = getMasterTeamServiceOverrideRate(consultantPlan);
 
-                  const syncedServices = sanitizeAndSyncServicosList(rawServices, catalogServices);
+                  const syncedServices = withoutMensalidades(sanitizeAndSyncServicosList(rawServices, catalogServices));
 
                   syncedServices.forEach((s: any) => {
                     const precoNum = typeof s.preco === "number" ? s.preco : typeof s.valor === "number" ? s.valor : parseFloat(s.preco || s.valor || 0) || 0;
