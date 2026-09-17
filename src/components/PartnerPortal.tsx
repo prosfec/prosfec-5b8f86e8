@@ -4121,13 +4121,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   );
 
   const renderProfileCard = (
-    <div className="bg-gradient-to-br from-emerald-900 to-slate-900 text-white p-3.5 rounded-xl relative overflow-hidden shadow-[0_18px_40px_-20px_rgba(2,44,34,0.65)] flex flex-col justify-between ring-1 ring-white/10">
+    <div className="bg-gradient-to-br from-emerald-900 to-slate-900 text-white p-3.5 rounded-2xl relative overflow-hidden shadow-[0_18px_40px_-20px_rgba(2,44,34,0.65)] flex flex-col justify-between ring-1 ring-emerald-400/20">
 
       <div className="absolute right-[-30px] top-[-30px] w-28 h-28 rounded-full bg-emerald-500/10 pointer-events-none" />
       <div className="space-y-2 relative z-10">
         <div className="flex items-center justify-between gap-2">
-          <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-500/30">
-            Área do Parceiro
+          <span className="bg-emerald-500/20 text-[#00A86B] font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-500/30 truncate max-w-[70%]" title={currentPartner?.plano || "Área do Parceiro"}>
+            {currentPartner?.plano || "Área do Parceiro"}
           </span>
           <div className="w-7 h-7 rounded-lg bg-emerald-950/60 border border-emerald-700/40 flex items-center justify-center text-emerald-300 shrink-0">
             <Handshake className="w-4 h-4 text-emerald-300" />
