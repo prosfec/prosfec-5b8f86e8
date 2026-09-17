@@ -5151,9 +5151,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       .reduce((acc, l) => acc + (l.valorAprovado || 0), 0);
 
                     return (
-                      <div className="space-y-3">
-                        {/* LINHA 1: Quick Metrics Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="flex flex-col gap-3">
+                        {/* LINHA 1: Quick Metrics Grid (secundárias) */}
+                        <div className="order-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
                             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
                               <Users className="w-4 h-4" />
@@ -5178,13 +5178,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
                           </div>
 
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
                             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
                               <CheckCircle2 className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
                               <span className="text-[10px] text-slate-500 uppercase block font-semibold tracking-wider truncate">Crédito Aprovado Real</span>
-                              <span className="text-xl font-bold tracking-tight font-mono text-emerald-600 block leading-tight truncate" title={formatCurrencyBRL(totalApprovedCredit)}>
+                              <span className="text-2xl font-extrabold tracking-tight font-mono text-emerald-600 block leading-tight truncate" title={formatCurrencyBRL(totalApprovedCredit)}>
                                 {formatCurrencyBRL(totalApprovedCredit)}
                               </span>
                               <span className="text-[10px] text-slate-400 font-medium block truncate">
@@ -5196,9 +5196,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
 
                         {/* LINHA 2: Saldos + Comissões (cockpit em 3 colunas) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-left">
+                        <div className="order-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-left">
                           {/* Saldo Geral (Consultas e Serviços) */}
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5 relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5 relative overflow-hidden transition-all duration-300 hover:shadow-md">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
 
@@ -5294,7 +5294,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Comissões & Repasses */}
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col justify-between gap-2.5 transition-all duration-300 hover:shadow-md md:col-span-2 lg:col-span-1">
+                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col justify-between gap-2.5 transition-all duration-300 hover:shadow-md md:col-span-2 lg:col-span-1">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-emerald-50 ring-1 ring-emerald-100/60 flex items-center justify-center text-emerald-600 shrink-0">
                                 <Coins className="w-4 h-4 text-emerald-600" />
