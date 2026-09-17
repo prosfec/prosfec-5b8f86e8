@@ -1326,10 +1326,6 @@ export default function PartnerPortal({
     return plan;
   };
 
-  const isFranquiaDigital = (plan?: string) => {
-    const p = plan?.toUpperCase() || "";
-    return p.includes("FRANQUIA") || p.includes("DIGITAL") || p.includes("MASTER");
-  };
 
   const isEligibleForAffiliates = (_plan?: string, _partnerObj?: Partner | null) => {
     return false;
