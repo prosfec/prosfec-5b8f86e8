@@ -1316,33 +1316,8 @@ export default function PartnerPortal({
     return 0.005; // Default fallback
   };
 
-  // Percentual de Comissão sobre Serviços de Estruturação Técnica (Passo 6)
-  // Starter: 10% | Executive: 20% | Master: 30%
-  const getServiceCommissionRate = (plan?: string): number => {
-    const p = plan?.toUpperCase() || "";
-    if (p.includes("STARTER")) return 0.10; // Starter: 10%
-    if (p.includes("FRANQUIA") || p.includes("DIGITAL") || p.includes("MASTER")) return 0.30; // Master: 30%
-    if (p.includes("EXEC")) return 0.20; // Executive: 20%
-    return 0.20; // Default fallback (Executive)
-  };
-
-  // Ganhos sobre Equipe para Master Partner (Override/Spread sobre Serviços de Estruturação)
-  // Master ganha 30%. Se o consultor for Executive (20%), Master ganha 10%. Se o consultor for Starter (10%), Master ganha 20%.
-  const getMasterTeamServiceOverrideRate = (consultantPlan?: string): number => {
-    const cp = consultantPlan?.toUpperCase() || "";
-    if (cp.includes("STARTER")) return 0.20; // 30% Master - 10% Starter = 20% spread
-    if (cp.includes("EXEC")) return 0.10; // 30% Master - 20% Executive = 10% spread
-    if (cp.includes("FRANQUIA") || cp.includes("DIGITAL") || cp.includes("MASTER")) return 0.00;
-    return 0.10; // Default fallback para consultor da equipe (10% spread)
-  };
-
-  const getPlanServiceLabel = (plan?: string): string => {
-    const p = plan?.toUpperCase() || "";
-    if (p.includes("STARTER")) return "10% (Starter)";
-    if (p.includes("FRANQUIA") || p.includes("DIGITAL") || p.includes("MASTER")) return "30% Direta / Repasse de Equipe (Teto 30%)";
-    if (p.includes("EXEC")) return "20% (Executive)";
-    return "20% (Executive)";
-  };
+  // Percentuais de comissão de serviços: fonte única em utils/commissionUtils.ts
+  // Starter: 10% | Executive: 20% | Master: 30% | Repasse de equipe = diferença até 30%
 
   const getPlanDisplayName = (plan?: string) => {
     if (!plan) return "STARTER";
