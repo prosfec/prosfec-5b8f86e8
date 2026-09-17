@@ -2508,7 +2508,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
             />
           </div>
 
-          <div className="min-h-0 flex-1 flex flex-col lg:block lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
+          <div className="min-h-0 flex-1 flex flex-col lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
 
         {/* Navigation Tabs */}
         <div className="bg-[#02241a] border-b border-emerald-950 px-3 flex items-center overflow-x-auto gap-1 text-xs font-extrabold scrollbar-none shrink-0 min-h-[52px] lg:min-h-0 lg:flex-col lg:items-stretch lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-3 lg:py-4">
