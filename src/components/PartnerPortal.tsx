@@ -46,7 +46,10 @@ import {
   withoutMensalidades
 } from "../utils/commissionUtils";
 import { 
+  Sun,
+  Moon,
   Handshake, 
+
   Copy, 
   LogOut, 
   LayoutDashboard, 
@@ -786,6 +789,37 @@ export default function PartnerPortal({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
+  // Aparência (Claro / Tecnológico) — apenas visual, persistida no navegador
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("prosfec_partner_theme");
+      if (saved === "dark" || saved === "light") setTheme(saved);
+    } catch {
+      /* localStorage indisponível */
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
+    return () => root.classList.remove("dark");
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => {
+      const next = prev === "dark" ? "light" : "dark";
+      try {
+        localStorage.setItem("prosfec_partner_theme", next);
+      } catch {
+        /* localStorage indisponível */
+      }
+      return next;
+    });
+  };
+
   const [showLeadRegisterForm, setShowLeadRegisterForm] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -4274,8 +4308,17 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   const renderSidebarFooterButtons = (
     <>
       <button
+        onClick={toggleTheme}
+        className="w-full bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px]"
+        title={theme === "dark" ? "Voltar para a aparência clara" : "Ativar aparência tecnológica"}
+      >
+        {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-500" />}
+        <span>{theme === "dark" ? "Aparência: Tecnológica" : "Aparência: Clara"}</span>
+      </button>
+      <button
         onClick={handleLogout}
-        className="w-full bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-700 hover:text-rose-600 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px]"
+        className="w-full bg-slate-100 hover:bg-rose-50 dark:bg-slate-900 dark:hover:bg-rose-950/40 border border-slate-200 hover:border-rose-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:text-rose-600 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px]"
+
         title="Sair do Portal"
       >
         <LogOut className="w-3.5 h-3.5" />
@@ -4283,7 +4326,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       </button>
       <button
         onClick={onBackToHome}
-        className="w-full bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[40px]"
+        className="w-full bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[40px]"
       >
         Voltar ao Site
       </button>
@@ -4291,7 +4334,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   );
 
   return (
-    <div className={`soft-ui font-sans bg-slate-50 text-slate-900 ${isAuthenticated && currentPartner ? "h-screen overflow-hidden flex flex-col" : "min-h-screen flex flex-col"}`}>
+    <div className={`soft-ui font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 ${isAuthenticated && currentPartner ? "h-screen overflow-hidden flex flex-col" : "min-h-screen flex flex-col"}`}>
       {/* Dynamic Header (somente telas públicas/login) */}
       {!(isAuthenticated && currentPartner) && (
       <header className="bg-[#0A3D2E] text-slate-100 py-3.5 px-4 sm:px-6 border-b border-emerald-800/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
