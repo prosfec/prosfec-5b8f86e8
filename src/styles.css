@@ -639,6 +639,172 @@ select option {
 }
 
 /* ============================================================
+   Fintech Premium — escopo exclusivo do Portal do Parceiro (.soft-ui)
+   Somente estético. Não afeta Home, ADM ou páginas públicas.
+   ============================================================ */
+
+.soft-ui {
+  background-color: #f5f7f6;
+}
+
+.soft-ui .soft-card {
+  border: 1px solid rgba(2, 36, 26, 0.07);
+  border-radius: 1.5rem;
+  box-shadow: 0 1px 2px rgba(2, 36, 26, 0.04), 0 18px 40px -28px rgba(2, 36, 26, 0.35);
+}
+
+.soft-ui .soft-card:hover {
+  border-color: rgba(0, 168, 107, 0.28);
+  box-shadow: 0 2px 6px rgba(2, 36, 26, 0.05), 0 26px 56px -30px rgba(0, 168, 107, 0.35);
+}
+
+/* Números financeiros com fonte tabular */
+.soft-ui [class*="font-mono"],
+.soft-ui [class*="font-extrabold"][class*="text-2xl"],
+.soft-ui [class*="font-extrabold"][class*="text-3xl"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.soft-ui h1,
+.soft-ui h2,
+.soft-ui h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* ===== Sidebar premium (escura nos dois temas) ===== */
+.soft-ui .soft-sidebar-premium {
+  background: linear-gradient(180deg, #0c1a15 0%, #081310 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.soft-ui .soft-sidebar-premium h1,
+.soft-ui .soft-sidebar-premium h2,
+.soft-ui .soft-sidebar-premium h3 {
+  color: #ffffff;
+}
+
+.soft-ui .soft-sidebar-premium [class*="border-slate-100"],
+.soft-ui .soft-sidebar-premium [class*="border-gray-200"],
+.soft-ui .soft-sidebar-premium [class*="border-slate-200"] {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.soft-ui .soft-nav-shell {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.soft-ui .soft-nav-group-label {
+  display: block;
+  padding: 0.75rem 1rem 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #64748b;
+}
+
+.soft-ui .soft-sidebar-premium .soft-nav-item {
+  position: relative;
+  border-radius: 0.875rem;
+  color: #cbd5e1;
+  background: transparent;
+}
+
+.soft-ui .soft-sidebar-premium .soft-nav-item svg {
+  color: currentColor;
+}
+
+.soft-ui .soft-sidebar-premium .soft-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.soft-ui .soft-sidebar-premium .soft-nav-item-active,
+.soft-ui .soft-sidebar-premium .soft-nav-item-active:hover {
+  background: rgba(0, 168, 107, 0.14);
+  color: #6ee7b7;
+  box-shadow: none;
+}
+
+.soft-ui .soft-sidebar-premium .soft-nav-item-active::before {
+  content: "";
+  position: absolute;
+  left: 0.25rem;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  width: 3px;
+  border-radius: 9999px;
+  background: #00a86b;
+  box-shadow: 0 0 10px rgba(0, 168, 107, 0.7);
+}
+
+.soft-ui .soft-sidebar-premium button[class*="bg-white"],
+.soft-ui .soft-sidebar-premium button[class*="bg-slate-100"],
+.soft-ui .soft-sidebar-premium button[class*="bg-slate-50"] {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+.soft-ui .soft-sidebar-premium button[class*="bg-white"]:hover,
+.soft-ui .soft-sidebar-premium button[class*="bg-slate-100"]:hover,
+.soft-ui .soft-sidebar-premium button[class*="bg-slate-50"]:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* Cabeçalho do conteúdo */
+.soft-ui .soft-topbar {
+  border-bottom: 1px solid rgba(2, 36, 26, 0.07);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+}
+
+/* Métricas principais com halo verde discreto */
+.soft-ui .soft-metric-hero {
+  position: relative;
+}
+
+.soft-ui .soft-metric-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 168, 107, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .soft-ui * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Sidebar premium também no tema escuro */
+.dark .soft-ui .soft-sidebar-premium {
+  background: linear-gradient(180deg, #111113 0%, #09090b 100%);
+}
+
+.dark .soft-ui .soft-sidebar-premium .soft-nav-item {
+  color: #a1a1aa;
+}
+
+.dark .soft-ui .soft-sidebar-premium .soft-nav-item:hover {
+  color: #ffffff;
+}
+
+.dark .soft-ui .soft-topbar {
+  background: rgba(9, 9, 11, 0.85);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================================
    Aparência Tecnológica (Dark Mode) — escopo do Painel do Parceiro
    Dark SaaS Premium: escala zinc, alto contraste, sem sombras.
    ============================================================ */
