@@ -1006,7 +1006,12 @@ export default function PartnerPortal({
   // Step 6 Services Performance & Financial Control states
   const [dashboardServiceFilter, setDashboardServiceFilter] = useState<"todos" | "pendente" | "pago" | "cancelado">("todos");
   const [dashboardServiceSearch, setDashboardServiceSearch] = useState("");
+  const [passo6ListaVisivel, setPasso6ListaVisivel] = useState(true);
   const [expandedServiceLeadIds, setExpandedServiceLeadIds] = useState<Set<string>>(new Set());
+  // Reexibe a lista de clientes do Passo 6 quando o parceiro usa filtros ou busca
+  useEffect(() => {
+    setPasso6ListaVisivel(true);
+  }, [dashboardServiceFilter, dashboardServiceSearch]);
   const toggleExpandedServiceLead = (leadId: string) => {
     setExpandedServiceLeadIds((prev) => {
       const next = new Set(prev);
@@ -5897,20 +5902,26 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                               <button
                                 type="button"
-                                onClick={() => setExpandedServiceLeadIds(new Set(filteredGroups.map((g) => g.leadId)))}
-                                disabled={filteredGroups.length === 0 || expandedServiceLeadIds.size >= filteredGroups.length}
+                                onClick={() => {
+                                  setPasso6ListaVisivel(true);
+                                  setExpandedServiceLeadIds(new Set(filteredGroups.map((g) => g.leadId)));
+                                }}
+                                disabled={filteredGroups.length === 0}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
-                                title="Abrir o detalhamento de serviços de todos os clientes listados"
+                                title="Exibir a lista de clientes e abrir o detalhamento de serviços de todos eles"
                               >
                                 <ChevronRight className="w-3.5 h-3.5" />
                                 Todos os detalhes
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setExpandedServiceLeadIds(new Set())}
-                                disabled={expandedServiceLeadIds.size === 0}
+                                onClick={() => {
+                                  setExpandedServiceLeadIds(new Set());
+                                  setPasso6ListaVisivel(false);
+                                }}
+                                disabled={passo6ListaVisivel === false && expandedServiceLeadIds.size === 0}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
-                                title="Recolher todos os detalhamentos e limpar a tela"
+                                title="Esconder a lista de clientes e limpar o painel"
                               >
                                 <ChevronDown className="w-3.5 h-3.5" />
                                 Recolher
