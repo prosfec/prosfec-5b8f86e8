@@ -8882,7 +8882,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <div>
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="font-display font-extrabold text-base text-slate-800">Consultores do meu Time</h3>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 font-mono">
+                                <span className="pf-badge pf-badge-success px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                                   {teamMembers.length} {teamMembers.length === 1 ? "consultor" : "consultores"}
                                 </span>
                               </div>
@@ -9232,7 +9232,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <div>
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="font-display font-extrabold text-base text-slate-800">Pipeline de Vendas da Equipe</h3>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 font-mono">
+                                <span className="pf-badge pf-badge-success px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                                   {teamLeads.length} {teamLeads.length === 1 ? "lead" : "leads"}
                                 </span>
                               </div>
@@ -9601,25 +9601,25 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                           {sub.nome}
                                         </td>
                                         <td className="py-3.5 px-4">
-                                          <span className="bg-slate-100 text-slate-700 font-extrabold px-2 py-0.5 rounded border border-slate-200">
+                                          <span className="pf-badge pf-badge-neutral font-extrabold px-2 py-0.5 rounded">
                                             {sub.plano || "STARTER"}
                                           </span>
                                         </td>
                                         <td className="py-3.5 px-4">
                                           {details.isExempt ? (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded uppercase">
+                                            <span className="pf-badge pf-badge-neutral inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded uppercase">
                                               Isento (Consultor)
                                             </span>
                                           ) : details.isTrial ? (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded uppercase animate-pulse">
+                                            <span className="pf-badge pf-badge-warning inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded uppercase animate-pulse">
                                               Período de Teste ({details.status.daysLeft}d)
                                             </span>
                                           ) : details.isActive ? (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200/50 px-2 py-0.5 rounded uppercase">
+                                            <span className="pf-badge pf-badge-success inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded uppercase">
                                               ✓ Pago/Ativo ({details.status.daysLeft}d restantes)
                                             </span>
                                           ) : (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded uppercase">
+                                            <span className="pf-badge pf-badge-danger inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded uppercase">
                                               ✕ Expirado
                                             </span>
                                           )}
