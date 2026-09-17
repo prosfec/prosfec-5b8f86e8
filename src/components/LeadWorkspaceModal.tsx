@@ -2789,7 +2789,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     ) : (
                       <div className="flex flex-col items-start">
                         <div className="max-w-[88%] bg-amber-500/20 border border-amber-500/30 p-3 rounded-2xl rounded-tl-xs text-xs text-amber-100 space-y-1">
-                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-500/30 text-amber-300">
+                          <span className="pf-badge pf-badge-warning text-[10px] font-extrabold px-2 py-0.5 rounded-md">
                             🏛️ Mesa de Operações
                           </span>
                           <p className="font-medium leading-relaxed whitespace-pre-wrap text-slate-100">
