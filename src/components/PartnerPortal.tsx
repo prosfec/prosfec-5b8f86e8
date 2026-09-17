@@ -5147,13 +5147,15 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {/* LINHA 2: Saldos + Comissões (cockpit em 3 colunas) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-left">
                           {/* Saldo Geral (Consultas e Serviços) */}
-                          <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-xl border border-slate-200/90 shadow-[0_10px_26px_-14px_rgba(2,36,26,0.2)] flex flex-col justify-between gap-2.5 relative overflow-hidden hover:border-emerald-500/40 transition-all">
+                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5 relative overflow-hidden transition-all duration-300 hover:shadow-md">
                             <div className="flex items-start gap-2.5 min-w-0">
-                              <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#00A86B] border border-emerald-100 flex items-center justify-center shrink-0">
+                              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
+
                                 <Wallet className="w-4 h-4" />
                               </div>
                               <div className="min-w-0">
-                                <span className="text-[10px] text-slate-500 uppercase block font-bold tracking-wide">
+                                <span className="text-[10px] text-slate-500 uppercase block font-semibold tracking-wider">
+
                                   Saldo Geral (Consultas e Serviços)
                                 </span>
                                 <p className="text-[10px] text-slate-400 font-medium">
@@ -5164,7 +5166,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                             <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                               <div className="min-w-0">
-                                <span className="text-xl font-extrabold font-mono text-slate-900 block truncate leading-tight">
+                                <span className="text-xl font-bold tracking-tight font-mono text-slate-900 block truncate leading-tight">
+
                                   {formatCurrencyBRL(
                                     currentPartner?.saldoGeral !== undefined
                                       ? Number(currentPartner.saldoGeral)
@@ -5178,7 +5181,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <button
                                 type="button"
                                 onClick={() => setShowRechargeModal(true)}
-                                className="px-3 min-h-[44px] lg:min-h-0 lg:h-9 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                                className="px-3 min-h-[44px] lg:min-h-0 lg:h-9 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-sm hover:shadow flex items-center gap-1.5 cursor-pointer shrink-0"
                               >
                                 <Coins className="w-3.5 h-3.5 text-emerald-300" />
                                 <span>Adicionar</span>
@@ -5187,13 +5190,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Saldo Painel de Oportunidade (buscas) */}
-                          <div className="bg-white/75 backdrop-blur-xl p-3.5 rounded-xl border border-slate-200/90 shadow-[0_10px_26px_-14px_rgba(2,36,26,0.2)] flex flex-col justify-between gap-2.5 relative overflow-hidden hover:border-emerald-500/40 transition-all">
+                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5 relative overflow-hidden transition-all duration-300 hover:shadow-md">
                             <div className="flex items-start gap-2.5 min-w-0">
-                              <div className="w-9 h-9 rounded-lg bg-teal-50 text-teal-700 border border-teal-100 flex items-center justify-center shrink-0">
+                              <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-700 ring-1 ring-teal-100/60 flex items-center justify-center shrink-0">
+
                                 <Search className="w-4 h-4" />
                               </div>
                               <div className="min-w-0">
-                                <span className="text-[10px] text-slate-500 uppercase block font-bold tracking-wide">
+                                <span className="text-[10px] text-slate-500 uppercase block font-semibold tracking-wider">
                                   Saldo Painel de Oportunidade (buscas)
                                 </span>
                                 <p className="text-[10px] text-slate-400 font-medium">
@@ -5204,7 +5208,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                             <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                               <div className="min-w-0">
-                                <span className="text-xl font-extrabold font-mono text-slate-900 block truncate leading-tight">
+                                <span className="text-xl font-bold tracking-tight font-mono text-slate-900 block truncate leading-tight">
                                   {currentPartner?.cacaLeadsCredits || 0}{" "}
                                   <span className="text-[11px] text-slate-500 font-bold uppercase font-sans">buscas</span>
                                 </span>
@@ -5229,7 +5233,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     setRefillCopiedPix(false);
                                     setShowRefillModal(true);
                                   }}
-                                  className="px-3 min-h-[44px] lg:min-h-0 lg:h-9 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                                  className="px-3 min-h-[44px] lg:min-h-0 lg:h-9 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-sm hover:shadow flex items-center gap-1.5 cursor-pointer shrink-0"
                                 >
                                   <Coins className="w-3.5 h-3.5 text-amber-300" />
                                   <span>Recarregar</span>
@@ -5239,13 +5243,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Comissões & Repasses */}
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between gap-2.5 md:col-span-2 lg:col-span-1">
+                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col justify-between gap-2.5 transition-all duration-300 hover:shadow-md md:col-span-2 lg:col-span-1">
                             <div className="flex items-start gap-2.5 min-w-0">
-                              <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                              <div className="w-9 h-9 rounded-xl bg-emerald-50 ring-1 ring-emerald-100/60 flex items-center justify-center text-emerald-600 shrink-0">
                                 <Coins className="w-4 h-4 text-emerald-600" />
                               </div>
                               <div className="min-w-0">
-                                <span className="text-[10px] font-bold uppercase tracking-wide text-[#00A86B] block">
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block">
+
                                   Suas Comissões &amp; Repasses
                                 </span>
                                 <p className="text-[10px] text-slate-400 font-medium">Liberado e pendente de liquidação</p>
@@ -5254,7 +5259,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                             <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                               <div className="min-w-0">
-                                <span className="text-xl font-extrabold font-mono text-slate-900 block truncate leading-tight" title={formatCurrencyBRL(totalPaidCommissions)}>
+                                <span className="text-xl font-bold tracking-tight font-mono text-slate-900 block truncate leading-tight" title={formatCurrencyBRL(totalPaidCommissions)}>
                                   {formatCurrencyBRL(totalPaidCommissions)}
                                 </span>
                                 <span className="text-[10px] text-emerald-700 font-bold block">Pagas e liberadas</span>
@@ -5274,7 +5279,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 setCommissionPayoutSuccess(null);
                                 setPayoutModalOrigin("vendas");
                               }}
-                              className="bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold px-3 min-h-[44px] lg:min-h-0 lg:h-9 rounded-lg text-[11px] transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer w-full"
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 min-h-[44px] lg:min-h-0 lg:h-9 rounded-lg text-[11px] transition-all shadow-sm hover:shadow flex items-center justify-center gap-1.5 cursor-pointer w-full"
                               title="Solicitar saque das comissões de vendas/planos"
                             >
                               <Coins className="w-3.5 h-3.5 text-slate-950 shrink-0" />
