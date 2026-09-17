@@ -4125,7 +4125,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   );
 
   const renderNavItems = (
-    <div className="soft-card p-3 flex flex-col gap-1 text-left">
+    <div className="soft-card p-3 flex flex-col gap-3 lg:gap-1 text-left">
       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.14em] px-4 py-1.5 mb-0.5 block">Navegação do Portal</span>
 
       <button
@@ -4892,7 +4892,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       </div>
                       <button
                         onClick={copyReferralLink}
-                        className={`px-3 h-9 rounded-lg text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0 ${
+                        className={`px-3 min-h-[44px] lg:min-h-0 lg:h-9 rounded-lg text-xs font-extrabold cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0 ${
                           copiedLink
                             ? "bg-emerald-400 text-slate-950 font-bold font-mono"
                             : "bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold shadow-sm"
@@ -5172,7 +5172,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <button
                                 type="button"
                                 onClick={() => setShowRechargeModal(true)}
-                                className="px-3 h-9 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                                className="px-3 min-h-[44px] lg:min-h-0 lg:h-9 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
                               >
                                 <Coins className="w-3.5 h-3.5 text-emerald-300" />
                                 <span>Adicionar</span>
@@ -5208,7 +5208,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </div>
                               {isSubMember ? (
                                 <div
-                                  className="px-2.5 h-9 bg-slate-100 border border-slate-200 text-slate-400 text-[10px] font-bold rounded-lg flex items-center gap-1.5 shrink-0 cursor-not-allowed select-none"
+                                  className="px-2.5 min-h-[44px] lg:min-h-0 lg:h-9 bg-slate-100 border border-slate-200 text-slate-400 text-[10px] font-bold rounded-lg flex items-center gap-1.5 shrink-0 cursor-not-allowed select-none"
                                   title="Seus créditos de busca são gerenciados e distribuídos pelo seu Líder/Master de equipe."
                                 >
                                   <Lock className="w-3.5 h-3.5 text-slate-400" />
@@ -5223,7 +5223,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     setRefillCopiedPix(false);
                                     setShowRefillModal(true);
                                   }}
-                                  className="px-3 h-9 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                                  className="px-3 min-h-[44px] lg:min-h-0 lg:h-9 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
                                 >
                                   <Coins className="w-3.5 h-3.5 text-amber-300" />
                                   <span>Recarregar</span>
@@ -5268,7 +5268,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 setCommissionPayoutSuccess(null);
                                 setPayoutModalOrigin("vendas");
                               }}
-                              className="bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold px-3 h-9 rounded-lg text-[11px] transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer w-full"
+                              className="bg-[#00A86B] hover:bg-emerald-400 text-slate-950 font-extrabold px-3 min-h-[44px] lg:min-h-0 lg:h-9 rounded-lg text-[11px] transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer w-full"
                               title="Solicitar saque das comissões de vendas/planos"
                             >
                               <Coins className="w-3.5 h-3.5 text-slate-950 shrink-0" />
@@ -5945,7 +5945,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
                           ) : (
                             <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white/75 backdrop-blur-xl shadow-2xs">
-                              <div className="overflow-x-auto">
+                              <div className="overflow-x-auto snap-x scroll-smooth">
                                 <div className="min-w-[920px] divide-y divide-slate-100">
                                   {/* Table Header */}
                                   <div className="grid grid-cols-12 gap-3 px-5 py-3 bg-slate-50/90 text-[11px] font-bold uppercase tracking-wider text-slate-500 font-mono items-center border-b border-slate-200/70">
@@ -6172,7 +6172,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </p>
                             </div>
                           ) : (
-                            <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                            <div className="overflow-x-auto snap-x scroll-smooth rounded-2xl border border-slate-200">
                               <table className="w-full text-left text-xs border-collapse">
                                 <thead>
                                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-mono text-[10px] uppercase tracking-wider">
@@ -6957,8 +6957,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   ) : (
                     /* Render Kanban View */
                     <div className="space-y-4 pt-2">
-                      <div className="overflow-x-auto pb-6 -mx-6 px-6">
-                        <div className="flex gap-4 min-w-[1500px]">
+                      <div className="overflow-x-auto snap-x snap-mandatory scroll-smooth pb-6 -mx-6 px-6">
+                        <div className="flex gap-4 lg:min-w-[1500px]">
                           {[
                             { id: 1, name: "1. Ficha Cadastral", color: "bg-slate-50 border-slate-200/80 text-slate-700", dot: "bg-slate-400" },
                             { id: 2, name: "2. Coleta Sócios", color: "bg-sky-50 border-sky-200/80 text-sky-700", dot: "bg-sky-400" },
@@ -6977,7 +6977,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             });
                             
                             return (
-                              <div key={column.id} className="w-72 shrink-0 flex flex-col bg-slate-50/70 border border-slate-200/60 rounded-2xl p-3.5 space-y-3 h-[600px] max-h-[600px]">
+                              <div key={column.id} className="w-[86vw] snap-start lg:w-72 shrink-0 flex flex-col bg-slate-50/70 border border-slate-200/60 rounded-2xl p-3.5 space-y-3 h-[600px] max-h-[600px]">
                                 {/* Column Header */}
                                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                                   <div className="flex items-center gap-1.5 min-w-0">
@@ -9494,7 +9494,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               </button>
                             </div>
                           ) : (
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto snap-x scroll-smooth">
                               <table className="w-full text-left border-collapse text-xs">
                                 <thead>
                                   <tr className="bg-slate-50 text-slate-400 font-bold border-b border-slate-100 uppercase tracking-wider text-[9px]">
@@ -10378,11 +10378,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* Reassign Lead Modal Overlay */}
       {assigningLead && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl border border-slate-100 space-y-4 text-left"
+            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl p-6 max-w-md w-full max-h-[88vh] overflow-y-auto md:max-h-none shadow-xl border border-slate-100 space-y-4 text-left"
           >
             <div className="flex justify-between items-start">
               <div>
@@ -10447,11 +10447,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* ANNOUNCEMENT POPUP OVERLAY */}
       {currentAnnouncementShow && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50 animate-fade-in">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl overflow-hidden max-w-lg w-full shadow-2xl border border-slate-100 flex flex-col text-left"
+            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-lg w-full max-h-[88vh] md:max-h-none shadow-2xl border border-slate-100 flex flex-col text-left"
           >
             {/* Header / Banner Image */}
             {currentAnnouncementShow.imagemUrl ? (
@@ -10543,11 +10543,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* CNPJ INPUT PROMPT MODAL */}
       {cnpjInputModal && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl overflow-hidden max-w-md w-full shadow-2xl border border-slate-100 p-6 space-y-4 text-left"
+            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-y-auto max-w-md w-full max-h-[88vh] md:max-h-none shadow-2xl border border-slate-100 p-6 space-y-4 text-left"
           >
             <div className="flex justify-between items-start">
               <div>
@@ -10614,11 +10614,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* ACTIVE CNPJ DETAILS CARD MODAL */}
       {activeCnpjModal && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50 overflow-y-auto">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl overflow-hidden max-w-2xl w-full shadow-2xl border border-slate-100 my-8 text-left"
+            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-2xl w-full my-0 md:my-8 text-left shadow-2xl border border-slate-100"
           >
             {/* Header */}
             <div className="bg-[#0A3D2E] p-6 text-white flex justify-between items-start">
@@ -10736,11 +10736,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* DIRECT LEAD REGISTER MODAL FORM (SIMULADOR COMPLETO DA HOME) */}
       {selectedLeadForRegistration && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50 overflow-y-auto">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl overflow-hidden max-w-4xl w-full shadow-2xl border border-slate-100 my-8 text-left relative"
+            className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl overflow-hidden max-w-4xl w-full my-0 md:my-8 text-left relative shadow-2xl border border-slate-100"
           >
             <div className="p-5 md:p-6 bg-[#0A3D2E] text-white flex justify-between items-center border-b border-emerald-800/40">
               <div className="flex items-center gap-3">
@@ -10780,8 +10780,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* CONSULTANT CAÇA-LEADS INSPECTION MODAL */}
       {selectedConsultantForInspection && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-fade-in overflow-y-auto">
-          <div className="bg-white/75 backdrop-blur-xl rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col text-left">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 lg:p-6 animate-fade-in overflow-y-auto">
+          <div className="bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-0 md:my-auto max-h-[88vh] md:max-h-[90vh] flex flex-col text-left">
             {/* Modal Header */}
             <div className="bg-[#0A3D2E] text-white p-5 sm:p-6 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
@@ -11092,8 +11092,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* INDIVIDUAL LEAD REDIRECTION MODAL */}
       {leadToReassign && (
-        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in text-left">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
+        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
+          <div className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-md w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-indigo-700">
                 <ArrowRightLeft className="w-5 h-5" />
@@ -11195,8 +11195,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* BULK PORTFOLIO TRANSFER MODAL */}
       {bulkReassignConsultantSource && (
-        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in text-left">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
+        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
+          <div className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-md w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-indigo-700">
                 <ArrowRightLeft className="w-5 h-5" />
@@ -11335,8 +11335,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* MODAL SOLICITAR COMISSÃO */}
       {showCommissionPayoutModal && (
-        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in text-left">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
+        <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in text-left">
+          <div className="bg-white rounded-t-3xl rounded-b-none md:rounded-3xl max-w-lg w-full p-6 max-h-[88vh] overflow-y-auto md:max-h-none shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-emerald-800">
                 <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-200/70">
@@ -11674,12 +11674,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* Modal de Recarga de Saldo Geral (Passo 1: Valor -> Passo 2: Pix & Confirmação) */}
       {showRechargeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs text-left">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-950/60 backdrop-blur-xs text-left">
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+            className="bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh] md:max-h-[90vh]"
           >
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-3 bg-gradient-to-br from-slate-50 to-emerald-50/30">
@@ -12001,12 +12001,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* Modal de Recarga do Painel de Oportunidade (Passo 1: Pacote -> Passo 2: Pix & Confirmação) */}
       {showRefillModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs text-left">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-950/60 backdrop-blur-xs text-left">
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="bg-white/75 backdrop-blur-xl rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+            className="bg-white/75 backdrop-blur-xl rounded-t-3xl rounded-b-none md:rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh] md:max-h-[90vh]"
           >
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-3 bg-gradient-to-br from-slate-50 to-emerald-50/30">
