@@ -638,6 +638,38 @@ export default function LeadWorkspaceModal({
   const [subEtapasPasso6, setSubEtapasPasso6] = useState<{ id: string; titulo: string; concluida: boolean; preco?: number }[]>(getInitialSubEtapasPasso6);
   const [savingSubEtapasLocal, setSavingSubEtapasLocal] = useState(false);
 
+  // Confirmação manual de pagamento de serviço de estruturação (Passo 6).
+  // PIX libera a comissão em 48h; Cartão de Crédito em 15 dias corridos.
+  const confirmarPagamentoSubEtapa = (idx: number, metodo: "PIX" | "CARTAO" | null) => {
+    const updated = [...subEtapasPasso6];
+    if (!metodo) {
+      updated[idx] = {
+        ...updated[idx],
+        statusPagamento: "pendente",
+        pago: false,
+        formaPagamento: null,
+        dataPagamento: null,
+        dataLiberacaoSaque: null,
+        origemConfirmacao: null
+      } as any;
+    } else {
+      const agora = new Date();
+      const prazoMs = metodo === "CARTAO" ? 15 * 24 * 60 * 60 * 1000 : 48 * 60 * 60 * 1000;
+      updated[idx] = {
+        ...updated[idx],
+        statusPagamento: "pago",
+        pago: true,
+        formaPagamento: metodo,
+        dataPagamento: agora.toISOString(),
+        dataLiberacaoSaque: new Date(agora.getTime() + prazoMs).toISOString(),
+        origemConfirmacao: "manual_adm",
+        concluida: true
+      } as any;
+    }
+    setSubEtapasPasso6(updated);
+    handleSaveSubEtapasLocal(updated as any);
+  };
+
   const handleSaveSubEtapasLocal = async (updatedList?: { id: string; titulo: string; concluida: boolean; preco?: number }[]) => {
     const listToSave = updatedList || subEtapasPasso6;
     setSavingSubEtapasLocal(true);
