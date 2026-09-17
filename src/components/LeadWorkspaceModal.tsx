@@ -738,6 +738,8 @@ export default function LeadWorkspaceModal({
   const [localQueryError, setLocalQueryError] = useState<string | null>(null);
   const [localQuerySuccess, setLocalQuerySuccess] = useState<string | null>(null);
   const [selectedQueryDocument, setSelectedQueryDocument] = useState(lead.cnpj || "");
+  // Documentos consultados nesta sessão (trava imediata, sem esperar recarregar o histórico)
+  const [documentosConsultadosSessao, setDocumentosConsultadosSessao] = useState<string[]>([]);
   const queryRequestIdRef = useRef<string | null>(null);
 
   const authenticatedHeaders = async (requestId?: string) => {
