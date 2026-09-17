@@ -4247,7 +4247,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         </button>
       )}
 
-      <span className="soft-nav-group-label">Ferramentas</span>
+      <span className="soft-nav-group-label">Financeiro</span>
 
       <button
         onClick={() => { handleTabClick("servicos-contabilidade"); setMobileMenuOpen(false); }}
