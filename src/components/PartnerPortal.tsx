@@ -4152,7 +4152,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       >
         <span className="flex items-center gap-2.5">
           <ClipboardList className={`w-5 h-5 ${activeTab === "leads" ? "text-white" : "text-slate-400"}`} strokeWidth={2} />
-          Meus Leads ({leads.length})
+          Funil Kanban Vendas ({leads.length})
         </span>
         {!isProfileComplete(currentPartner) ? (
           <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
@@ -4172,10 +4172,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         >
           <span className="flex items-center gap-2.5">
             <Search className={`w-5 h-5 ${activeTab === "caca-leads" ? "text-white animate-pulse" : "text-emerald-600"}`} strokeWidth={2} />
-            <span className="flex items-center gap-1">
-              Caça Leads
-              <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
-            </span>
+            Painel de Oportunidade
           </span>
           {!isProfileComplete(currentPartner) ? (
             <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
@@ -4216,10 +4213,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       >
         <span className="flex items-center gap-2.5">
           <Calculator className={`w-5 h-5 ${activeTab === "servicos-contabilidade" ? "text-white" : "text-emerald-600"}`} strokeWidth={2} />
-          <span className="flex items-center gap-1">
-            Serviços Contábeis
-            <span className="bg-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90">NOVO</span>
-          </span>
+          Serviços Contábeis
         </span>
         {!isProfileComplete(currentPartner) ? (
           <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
