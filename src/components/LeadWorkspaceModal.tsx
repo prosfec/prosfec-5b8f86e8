@@ -918,9 +918,14 @@ export default function LeadWorkspaceModal({
         throw new Error(data?.error || "Erro ao executar consulta.");
       }
       queryRequestIdRef.current = null;
+      // Trava imediata deste documento, sem esperar o histórico recarregar
+      const docConsultado = selectedQueryDocument.replace(/\D/g, "");
+      setDocumentosConsultadosSessao((prev) => prev.includes(docConsultado) ? prev : [...prev, docConsultado]);
       setLocalQuerySuccess(
-        `Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}` +
-        (data.debitWarning ? ` — ${data.debitWarning}` : "")
+        data.duplicate
+          ? "Este documento já possui consulta — nenhum saldo foi debitado."
+          : `Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}` +
+            (data.debitWarning ? ` — ${data.debitWarning}` : "")
       );
       // Atualiza o saldo visível imediatamente, sem F5
       if (data.debited && typeof data.newBalance === "number") {
