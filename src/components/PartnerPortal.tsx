@@ -4164,8 +4164,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
   );
 
   const renderNavItems = (
-    <div className="soft-card p-3 flex flex-col gap-3 lg:gap-1 text-left">
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.14em] px-4 py-1.5 mb-0.5 block">Navegação do Portal</span>
+    <div className="soft-card soft-nav-shell p-3 flex flex-col gap-3 lg:gap-1 text-left">
+      <span className="soft-nav-group-label">Operação</span>
 
       <button
         onClick={() => { handleTabClick("dashboard"); setMobileMenuOpen(false); }}
@@ -4247,6 +4247,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         </button>
       )}
 
+      <span className="soft-nav-group-label">Ferramentas</span>
+
       <button
         onClick={() => { handleTabClick("servicos-contabilidade"); setMobileMenuOpen(false); }}
         className={`soft-nav-item justify-between text-left group ${
@@ -4265,6 +4267,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "servicos-contabilidade" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
         )}
       </button>
+
+      <span className="soft-nav-group-label">Conta</span>
 
       <button
         onClick={() => { handleTabClick("perfil"); setMobileMenuOpen(false); }}
@@ -4860,7 +4864,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             {mobileMenuOpen && (
               <div className="fixed inset-0 z-50 lg:hidden">
                 <div className="absolute inset-0 bg-slate-900/50" onClick={() => setMobileMenuOpen(false)} />
-                <aside className="relative w-72 max-w-[85vw] h-full bg-white border-r border-gray-200 flex flex-col animate-in slide-in-from-left duration-200">
+                <aside className="soft-sidebar-premium relative w-72 max-w-[85vw] h-full flex flex-col animate-in slide-in-from-left duration-200">
                   <div className="p-4 border-b border-slate-100 shrink-0">
                     {renderProfileCard}
                   </div>
@@ -4875,7 +4879,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             )}
 
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex w-72 h-full bg-white border-r border-gray-200 flex-col shrink-0">
+            <aside className="soft-sidebar-premium hidden lg:flex w-72 h-full flex-col shrink-0">
               <div className="p-5 border-b border-slate-100 flex items-center gap-3 shrink-0">
                 <div className="bg-[#0A3D2E] p-2.5 rounded-xl text-emerald-300 shrink-0">
                   <Handshake className="w-5 h-5" />
@@ -4898,7 +4902,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
             {/* Right Column */}
             <div className="flex-1 flex flex-col min-w-0 h-full">
-              <header className="shrink-0 bg-white/85 backdrop-blur-xl border-b border-slate-200 px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+              <header className="soft-topbar shrink-0 px-4 md:px-6 py-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <button
                     onClick={() => setMobileMenuOpen(true)}
@@ -4909,8 +4913,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   </button>
                   <div className="min-w-0">
                     <h2 className="font-extrabold text-sm text-slate-900 truncate">Olá, {currentPartner?.nome?.split(" ")[0]}</h2>
-                    <p className="text-[11px] text-slate-500 font-medium truncate">Painel do Parceiro PROSFEC</p>
+                    <p className="text-[11px] text-slate-500 font-medium truncate">Plataforma Financeira PROSFEC</p>
                   </div>
+                  <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider text-emerald-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {isProfileComplete(currentPartner) ? "Conta ativa" : "Cadastro pendente"}
+                  </span>
                 </div>
                 {renderNotificationsBell("relative")}
               </header>
@@ -4919,7 +4927,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 <div className="max-w-6xl mx-auto space-y-6">
                 {/* Unique Indicator Link Card */}
-                <div className="bg-white text-slate-800 px-4 py-3 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div className="soft-card bg-white text-slate-800 px-4 py-3 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                   <div className="flex flex-col lg:flex-row lg:items-center gap-3 relative z-10">
                     <div className="flex items-center gap-2.5 min-w-0 lg:w-[290px] shrink-0">
                       <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600 border border-emerald-100 shrink-0">
@@ -5143,9 +5151,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       .reduce((acc, l) => acc + (l.valorAprovado || 0), 0);
 
                     return (
-                      <div className="space-y-3">
-                        {/* LINHA 1: Quick Metrics Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="flex flex-col gap-3">
+                        {/* LINHA 1: Quick Metrics Grid (secundárias) */}
+                        <div className="order-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
                             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
                               <Users className="w-4 h-4" />
@@ -5170,13 +5178,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             </div>
                           </div>
 
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
                             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
                               <CheckCircle2 className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
                               <span className="text-[10px] text-slate-500 uppercase block font-semibold tracking-wider truncate">Crédito Aprovado Real</span>
-                              <span className="text-xl font-bold tracking-tight font-mono text-emerald-600 block leading-tight truncate" title={formatCurrencyBRL(totalApprovedCredit)}>
+                              <span className="text-2xl font-extrabold tracking-tight font-mono text-emerald-600 block leading-tight truncate" title={formatCurrencyBRL(totalApprovedCredit)}>
                                 {formatCurrencyBRL(totalApprovedCredit)}
                               </span>
                               <span className="text-[10px] text-slate-400 font-medium block truncate">
@@ -5188,9 +5196,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
 
                         {/* LINHA 2: Saldos + Comissões (cockpit em 3 colunas) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-left">
+                        <div className="order-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-left">
                           {/* Saldo Geral (Consultas e Serviços) */}
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5 relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5 relative overflow-hidden transition-all duration-300 hover:shadow-md">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/60 flex items-center justify-center shrink-0">
 
@@ -5286,7 +5294,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           </div>
 
                           {/* Comissões & Repasses */}
-                          <div className="bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col justify-between gap-2.5 transition-all duration-300 hover:shadow-md md:col-span-2 lg:col-span-1">
+                          <div className="soft-metric-hero bg-white p-3.5 rounded-xl border border-slate-100/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col justify-between gap-2.5 transition-all duration-300 hover:shadow-md md:col-span-2 lg:col-span-1">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-emerald-50 ring-1 ring-emerald-100/60 flex items-center justify-center text-emerald-600 shrink-0">
                                 <Coins className="w-4 h-4 text-emerald-600" />

@@ -93,4 +93,11 @@ Nenhuma regra de negócio muda: autenticação, permissões, Firestore, APIs, co
 5. Passo 6 e bloco de comissões.
 6. Demais abas e modais.
 
-Ao final de cada etapa: typecheck e build.
+Ao final de cada etapa: typecheck e build.  
+
+
+Antes de executar, garanta que as novas classes/tokens visuais criados em src/styles.css sejam escopados ao Portal do Parceiro sempre que possível.
+
+Não alterar visualmente páginas, componentes ou áreas fora do Portal do Parceiro.
+
+Após cada etapa, verificar se o restante da aplicação permanece visualmente inalterado.
