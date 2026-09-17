@@ -313,10 +313,12 @@ body {
 /* ===== Soft UI (Painel do Parceiro) ===== */
 @utility soft-card {
   background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(241, 245, 249, 0.6);
   border-radius: 1.5rem;
-  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03), 0 12px 32px -18px rgba(15, 23, 42, 0.18);
+  transition: box-shadow 300ms ease, transform 300ms ease;
 }
+
 
 @utility soft-sidebar {
   background: #ffffff;
@@ -360,18 +362,24 @@ body {
   padding: 0.625rem 1.125rem;
   font-size: 0.75rem;
   font-weight: 800;
-  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: background-color 200ms ease, color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
   cursor: pointer;
+  &:hover {
+    box-shadow: 0 6px 18px -8px rgba(15, 23, 42, 0.35);
+    transform: translateY(-1px);
+  }
 }
 
 @utility soft-btn-primary {
-  background: #00a86b;
+  background: #059669;
   color: #ffffff;
-  box-shadow: 0 6px 16px -6px rgba(0, 168, 107, 0.55);
+  box-shadow: 0 6px 16px -8px rgba(5, 150, 105, 0.6);
   &:hover {
-    background: #0a3d2e;
+    background: #10b981;
   }
 }
+
 
 @utility soft-field {
   width: 100%;
@@ -408,15 +416,29 @@ body {
 
 .soft-ui [class*="border-slate-200"],
 .soft-ui [class*="border-slate-300"] {
-  border-color: rgba(15, 23, 42, 0.07);
+  border-color: rgba(241, 245, 249, 0.9);
 }
 
 .soft-ui [class*="shadow-2xs"],
 .soft-ui [class*="shadow-xs"],
 .soft-ui [class*="shadow-sm"],
 .soft-ui [class*="shadow-md"] {
-  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03), 0 12px 32px -18px rgba(15, 23, 42, 0.18);
 }
+
+.soft-ui [class*="shadow-"][class*="transition"]:hover {
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04), 0 18px 40px -20px rgba(15, 23, 42, 0.25);
+}
+
+.soft-ui button:not(:disabled)[class*="bg-"]:hover {
+  transform: translateY(-1px);
+}
+
+.soft-ui button {
+  transition: background-color 200ms ease, color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+
+
 
 .soft-ui button[class*="rounded-md"],
 .soft-ui button[class*="rounded-lg"],
