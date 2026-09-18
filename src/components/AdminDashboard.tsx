@@ -513,6 +513,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [savingSubEtapas, setSavingSubEtapas] = useState(false);
   const [savingComissaoId, setSavingComissaoId] = useState<string | null>(null);
   const [savingServicoPagoId, setSavingServicoPagoId] = useState<string | null>(null);
+  const [savingRecusaId, setSavingRecusaId] = useState<string | null>(null);
   const [editingServicosRecomendados, setEditingServicosRecomendados] = useState<any[]>([]);
   const [savingServicos, setSavingServicos] = useState(false);
 
@@ -1947,6 +1948,42 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     } catch (err) {
       console.error("Error marking credit as refused:", err);
       alert("Falha ao marcar crédito como recusado no Firestore.");
+    }
+  };
+
+  const handleDesfazerCreditoRecusado = async (id: string) => {
+    if (!window.confirm("Deseja desfazer a recusa de crédito deste lead? Ele volta para 'Em Análise Bancária'.")) return;
+    setSavingRecusaId(id);
+    try {
+      const docRef = doc(db, "leads", id);
+      const updateData = {
+        status: "em atendimento",
+        resultadoAnaliseCredito: "em_analise",
+        motivoRecusa: "",
+        dataResultadoAnalise: new Date().toISOString()
+      };
+      await updateDoc(docRef, updateData);
+
+      setLeads(prev => prev.map(item => item.id === id ? { ...item, ...updateData } : item));
+      if (selectedLead?.id === id) {
+        setSelectedLead(prev => prev ? { ...prev, ...updateData } : null);
+      }
+
+      const leadToUpdate = leads.find(l => l.id === id) || (selectedLead?.id === id ? selectedLead : null);
+      if (leadToUpdate?.parceiroId) {
+        await createNotification(
+          leadToUpdate.parceiroId,
+          "parceiro",
+          "Recusa de Crédito Revista",
+          `A recusa de crédito do indicado "${leadToUpdate.nome}" foi revista e o lead voltou para análise.`,
+          "warning"
+        );
+      }
+    } catch (err) {
+      console.error("Error undoing credit refusal:", err);
+      alert("Falha ao desfazer a recusa de crédito. Tente novamente.");
+    } finally {
+      setSavingRecusaId(null);
     }
   };
 
