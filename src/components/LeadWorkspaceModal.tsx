@@ -376,19 +376,37 @@ export default function LeadWorkspaceModal({
 
   // Lista mínima de hierarquia: o próprio parceiro + o Master vinculado (quando houver),
   // para que o registro de comissão do lead já nasça com consultor + Master corretos.
+  // Documento real do parceiro superior (Master). Nunca presumimos o plano dele:
+  // o repasse de equipe só existe se o superior for de fato um Master.
+  const [parentPartnerDoc, setParentPartnerDoc] = useState<any | null>(null);
+  const masterVinculadoId = (currentPartner as any)?.parentPartnerId || (lead as any)?.parentPartnerId || null;
+
+  useEffect(() => {
+    let cancelled = false;
+    const carregarMaster = async () => {
+      if (!masterVinculadoId || (Array.isArray(allPartners) && allPartners.length > 0)) {
+        if (!cancelled) setParentPartnerDoc(null);
+        return;
+      }
+      try {
+        const snap = await getDoc(doc(db, "parceiros", String(masterVinculadoId)));
+        if (!cancelled) setParentPartnerDoc(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+      } catch (err) {
+        console.warn("Não foi possível ler o parceiro superior para o cálculo de comissão:", err);
+        if (!cancelled) setParentPartnerDoc(null);
+      }
+    };
+    carregarMaster();
+    return () => { cancelled = true; };
+  }, [masterVinculadoId, allPartners]);
+
   const hierarchyPartners = React.useMemo(() => {
+    if (Array.isArray(allPartners) && allPartners.length > 0) return allPartners;
     if (!currentPartner?.id) return [] as any[];
     const list: any[] = [currentPartner];
-    const masterId = (currentPartner as any).parentPartnerId;
-    if (masterId) {
-      list.push({
-        id: masterId,
-        nome: (currentPartner as any).parentPartnerNome || "Master Partner PROSFEC",
-        plano: "Franquia Digital PROSFEC"
-      });
-    }
+    if (parentPartnerDoc?.id) list.push(parentPartnerDoc);
     return list;
-  }, [currentPartner]);
+  }, [currentPartner, allPartners, parentPartnerDoc]);
 
   const [parcelasAssessoria, setParcelasAssessoria] = useState<any[]>(() => buildParcelasAssessoria(lead));
   const [savingParcela, setSavingParcela] = useState<number | null>(null);

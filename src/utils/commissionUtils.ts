@@ -312,7 +312,8 @@ export function resolveLeadPartnerHierarchy(
     consultor: directPartner || {
       id: parceiroId || "",
       nome: lead?.parceiroNome || "Consultor Parceiro",
-      plano: lead?.parceiroPlano || "Executive Partner PROSFEC"
+      // Plano desconhecido = menor taxa direta (Starter, 10%), nunca 20% por presunção
+      plano: lead?.parceiroPlano || "Starter Partner PROSFEC"
     },
     master: hasHierarchy ? parentPartner : null,
     hasHierarchy,
