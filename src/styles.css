@@ -1497,3 +1497,116 @@ select option {
 .dark .soft-ui .pf-row [class*="text-[#0A3D2E]"] {
   color: #fafafa !important;
 }
+
+/* ============================================================
+   Painel ADM — mesmo acabamento Fintech Premium / Dark SaaS
+   Escopo exclusivo: .pf-admin (dentro de .soft-ui). Só estética.
+   ============================================================ */
+.soft-ui.pf-admin {
+  background-color: #f8fafc;
+}
+
+.dark .soft-ui.pf-admin {
+  background-color: #09090b;
+}
+
+/* Cabeçalhos de tabela */
+.pf-admin thead th,
+.pf-admin th {
+  background-color: #f1f5f9;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #64748b;
+  border-bottom: 1px solid rgba(2, 36, 26, 0.08);
+}
+
+.dark .pf-admin thead th,
+.dark .pf-admin th {
+  background-color: rgba(24, 24, 27, 0.5);
+  color: #a1a1aa;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.pf-admin tbody tr:hover {
+  background-color: rgba(15, 23, 42, 0.03);
+}
+
+.dark .pf-admin tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark .pf-admin tbody td {
+  color: #d4d4d8;
+}
+
+/* Cartões de métricas: sem borda dura nem sombra pesada */
+.dark .pf-admin [class*="rounded-2xl"][class*="bg-white"],
+.dark .pf-admin [class*="rounded-xl"][class*="bg-white"] {
+  background-color: #18181b;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+
+/* Etiquetas com fundo sólido claro: translúcidas no modo escuro */
+.dark .pf-admin [class*="bg-emerald-50"],
+.dark .pf-admin [class*="bg-emerald-100"],
+.dark .pf-admin [class*="bg-green-50"],
+.dark .pf-admin [class*="bg-green-100"] {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+.dark .pf-admin [class*="bg-amber-50"],
+.dark .pf-admin [class*="bg-amber-100"],
+.dark .pf-admin [class*="bg-yellow-50"],
+.dark .pf-admin [class*="bg-yellow-100"],
+.dark .pf-admin [class*="bg-orange-50"],
+.dark .pf-admin [class*="bg-orange-100"] {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.dark .pf-admin [class*="bg-rose-50"],
+.dark .pf-admin [class*="bg-rose-100"],
+.dark .pf-admin [class*="bg-red-50"],
+.dark .pf-admin [class*="bg-red-100"] {
+  background-color: rgba(244, 63, 94, 0.1) !important;
+  color: #fb7185 !important;
+  border-color: rgba(244, 63, 94, 0.2) !important;
+}
+
+.dark .pf-admin [class*="bg-blue-50"],
+.dark .pf-admin [class*="bg-blue-100"],
+.dark .pf-admin [class*="bg-sky-50"],
+.dark .pf-admin [class*="bg-sky-100"],
+.dark .pf-admin [class*="bg-indigo-50"],
+.dark .pf-admin [class*="bg-indigo-100"] {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  color: #60a5fa !important;
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark .pf-admin [class*="bg-slate-50"],
+.dark .pf-admin [class*="bg-slate-100"],
+.dark .pf-admin [class*="bg-zinc-100"],
+.dark .pf-admin [class*="bg-gray-100"] {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* A barra lateral do ADM permanece escura nos dois temas */
+.pf-admin aside [class*="bg-white"],
+.pf-admin aside [class*="bg-slate-50"],
+.pf-admin aside [class*="bg-slate-100"] {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.pf-admin aside .sidebar-item-active {
+  background-color: rgba(0, 168, 107, 0.12);
+  color: #6ee7b7;
+}
