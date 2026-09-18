@@ -2007,6 +2007,29 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
+  const handleToggleServicoPago = async (id: string, pago: boolean) => {
+    const leadAlvo = leads.find(l => l.id === id) || (selectedLead?.id === id ? selectedLead : null);
+    const mensagem = pago
+      ? `Confirmar o pagamento do serviço do cliente ${leadAlvo?.nome || "selecionado"}?`
+      : "Deseja desfazer o pagamento do serviço deste lead? O status volta para Pagamento Pendente.";
+    if (!window.confirm(mensagem)) return;
+    setSavingServicoPagoId(id);
+    try {
+      const docRef = doc(db, "leads", id);
+      await updateDoc(docRef, {
+        servicoPago: pago,
+        dataConfirmacaoPagamentoServico: pago ? new Date().toISOString() : null,
+      });
+      setLeads(prev => prev.map(item => item.id === id ? { ...item, servicoPago: pago } : item));
+      if (selectedLead?.id === id) setSelectedLead(prev => prev ? { ...prev, servicoPago: pago } : null);
+    } catch (err) {
+      console.error("Error updating servicoPago in Firestore:", err);
+      alert("Falha ao atualizar o pagamento do serviço no Firestore. Tente novamente.");
+    } finally {
+      setSavingServicoPagoId(null);
+    }
+  };
+
   const handleUpdateSubEtapasPasso6 = async () => {
     if (!selectedLead) return;
 
