@@ -717,9 +717,21 @@ export default function LeadWorkspaceModal({
           return item;
         });
 
+      // Sinalizador de pagamento no nível do lead (usado na ficha do ADM e nos contadores do parceiro)
+      const servicosCobraveis = withoutMensalidades(listToSave).filter(
+        (sub: any) => typeof sub.preco === "number" && sub.preco > 0
+      );
+      const algumPago = servicosCobraveis.some((sub: any) => sub.statusPagamento === "pago" || sub.pago === true);
+      const datasPagamento = servicosCobraveis
+        .map((sub: any) => sub.dataPagamento)
+        .filter(Boolean)
+        .sort();
+
       const firestoreUpdate: any = cleanForFirestore({
         subEtapasPasso6: commissionPayload.subEtapasPasso6,
         comissaoMultinivel: commissionPayload.comissaoMultinivel,
+        servicoPago: algumPago,
+        dataConfirmacaoPagamentoServico: algumPago ? (datasPagamento[0] || new Date().toISOString()) : null,
         ...(syncedServicos.length > 0 ? { servicosRecomendados: syncedServicos } : {})
       });
 
