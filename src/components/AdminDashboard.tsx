@@ -2843,6 +2843,20 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         {sidebarBrand}
         {renderSidebarNav()}
         <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          <button
+            onClick={toggleTheme}
+            className="sidebar-item"
+            title={theme === "dark" ? "Voltar para a aparência clara" : "Ativar aparência tecnológica"}
+          >
+            {theme === "dark" ? (
+              <Sun className="w-[18px] h-[18px] text-amber-300" strokeWidth={2} />
+            ) : (
+              <Moon className="w-[18px] h-[18px]" strokeWidth={2} />
+            )}
+            <span className="flex-1 text-left">
+              {theme === "dark" ? "Aparência: Tecnológica" : "Aparência: Clara"}
+            </span>
+          </button>
           <button onClick={fetchData} className="sidebar-item" title="Sincronizar dados">
             <RefreshCw className={`w-[18px] h-[18px] ${loading ? "animate-spin" : ""}`} strokeWidth={2} />
             <span className="flex-1 text-left">Sincronizar</span>
