@@ -5,19 +5,17 @@ Transformar a ficha do lead em uma área administrativa leve e focada, sem repet
 ## Estrutura final
 
 1. **Cabeçalho compacto de identificação**
-   - Manter somente nome do cliente/lead e identificação necessária para o ADM saber qual operação está aberta.
-   - Manter o botão de fechar.
-   - Remover o excesso de etiquetas e informações decorativas do cabeçalho.
-
+  - Manter somente nome do cliente/lead e identificação necessária para o ADM saber qual operação está aberta.
+  - Manter o botão de fechar.
+  - Remover o excesso de etiquetas e informações decorativas do cabeçalho.
 2. **Mesa de Operações**
-   - Preservar integralmente o “Chat de Pendências & Atendimento”.
-   - Manter histórico, contador de mensagens, limpeza do chat, status da pendência, envio de mensagem e estados de carregamento.
-   - Reorganizar visualmente o bloco para seguir a aparência leve e objetiva do Workspace, sem alterar seu funcionamento.
-
+  - Preservar integralmente o “Chat de Pendências & Atendimento”.
+  - Manter histórico, contador de mensagens, limpeza do chat, status da pendência, envio de mensagem e estados de carregamento.
+  - Reorganizar visualmente o bloco para seguir a aparência leve e objetiva do Workspace, sem alterar seu funcionamento.
 3. **Painel Financeiro & Controle de Comissão**
-   - Preservar valor aprovado, resultado da análise, controle de serviço pago e comissão do parceiro.
-   - Manter cálculos, permissões, confirmações, estados e botões atuais.
-   - Organizar as informações financeiras em uma leitura mais direta, com hierarquia clara entre valor, status e ações.
+  - Preservar valor aprovado, resultado da análise, controle de serviço pago e comissão do parceiro.
+  - Manter cálculos, permissões, confirmações, estados e botões atuais.
+  - Organizar as informações financeiras em uma leitura mais direta, com hierarquia clara entre valor, status e ações.
 
 ## Conteúdo removido da “Ver Ficha”
 
@@ -57,4 +55,6 @@ Nenhum desses dados será apagado: eles apenas deixarão de aparecer em “Ver F
 - Testar envio, resolução e limpeza de pendências.
 - Testar valor aprovado, crédito recusado, serviço pago e comissão paga/pendente.
 - Conferir desktop e celular nas aparências Clara e Tecnológica.
-- Confirmar construção sem erros e ausência de mudanças no Workspace.
+- Confirmar construção sem erros e ausência de mudanças no Workspace.  
+  
+Detalhe: O nome do botao "Ver Ficha" deve ser alterado para "Operacional"
