@@ -5959,8 +5959,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       </span>
                     </div>
 
-                    {/* Botões de Ação Rápida: Recusado / Aprovado / Pagamento do Serviço */}
-                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200">
+                    {/* Ação Rápida: Crédito Recusado */}
+                    <div className="grid grid-cols-1 gap-2 pt-3 border-t border-slate-200">
                       {/* Botão de Crédito Recusado (reversível) */}
                       {(() => {
                         const estaRecusado = selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado";
