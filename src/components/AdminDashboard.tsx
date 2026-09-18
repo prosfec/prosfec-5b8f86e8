@@ -3933,7 +3933,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   onClick={() => setSelectedLead(lead)}
                                   className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#0A3D2E] text-slate-700 hover:text-white rounded-lg font-bold transition-all cursor-pointer"
                                 >
-                                  Ficha
+                                  Operacional
                                 </button>
 
                                 <button
