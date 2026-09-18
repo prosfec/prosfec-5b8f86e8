@@ -659,13 +659,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       return;
     }
     if (!selectedMasterPartnerId) {
-      alert("Por favor, selecione um Parceiro Master.");
+      alert("Por favor, selecione um Parceiro.");
       return;
     }
 
     const masterPartner = partners.find(p => p.id === selectedMasterPartnerId);
     if (!masterPartner) {
-      alert("Parceiro Master selecionado não foi encontrado.");
+      alert("Parceiro selecionado não foi encontrado.");
       return;
     }
 
@@ -705,11 +705,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         console.warn("Não foi possível gerar notificação:", notifErr);
       }
 
-      alert(`Lead "${assigningLead.razaoSocial || assigningLead.nome}" direcionado com sucesso para o Parceiro Master ${masterPartner.nome}!`);
+      alert(`Lead "${assigningLead.razaoSocial || assigningLead.nome}" direcionado com sucesso para o Parceiro ${masterPartner.nome}!`);
       setAssigningLead(null);
     } catch (err: any) {
       console.error("Erro ao vincular lead:", err);
-      alert("Erro ao vincular lead ao Parceiro Master: " + (err?.message || String(err)));
+      alert("Erro ao vincular lead ao Parceiro: " + (err?.message || String(err)));
     } finally {
       setIsAssigningMaster(false);
     }
