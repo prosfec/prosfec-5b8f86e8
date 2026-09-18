@@ -639,7 +639,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     return pName.includes("FRANQUIA") || pName.includes("DIGITAL") || pName.includes("MASTER") || pName === "PLATINUM";
   };
 
-  const masterPartners = partners.filter(isMasterPartner);
+  const isParceiroDireto = (p: Partner) => {
+    const plano = String(p.plano || "").toUpperCase();
+    if (p.parentPartnerId) return false;
+    if (p.isTeamMember === true) return false;
+    if (plano.includes("CONSULTOR") || plano.includes("EQUIPE")) return false;
+    return true;
+  };
+
+  const parceirosDiretos = partners
+    .filter(isParceiroDireto)
+    .slice()
+    .sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || "")));
 
   const handleConfirmAssignMaster = async () => {
     if (!assigningLead) return;
