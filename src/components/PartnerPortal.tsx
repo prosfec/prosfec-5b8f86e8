@@ -1493,20 +1493,22 @@ export default function PartnerPortal({
   // ===== Saldo de COMISSÕES DE VENDAS (planos) — usado no card e na caixa de saque "vendas"
   const salesCommissionStats = (() => {
     const directMultiplier = getDirectCommissionMultiplier(currentPartner?.plano);
-    const isPaidLead = (l: any) => l.comissaoPaga === true || l.servicoPago === true || l.comissaoMultinivel?.statusGeral === "pago";
-    const isPendingLead = (l: any) =>
-      l.comissaoPaga !== true && l.servicoPago !== true && l.comissaoMultinivel?.statusGeral !== "pago" &&
-      (l.etapa === 7 || l.status === "concluido" || l.servicosRecomendados?.length > 0 || (l.subEtapasPasso6 && l.subEtapasPasso6.length > 0));
+    // Base exclusiva: Crédito Real Aprovado informado pelo ADM (nunca o limite estimado)
+    const isCreditoRecusado = (l: any) => l.status === "recusado" || l.resultadoAnaliseCredito === "recusado";
+    const creditoAprovado = (l: any) => (isCreditoRecusado(l) ? 0 : Number(l.valorAprovado || 0));
+    const isElegivel = (l: any) => creditoAprovado(l) > 0;
+    const isPaidLead = (l: any) => isElegivel(l) && l.comissaoPaga === true;
+    const isPendingLead = (l: any) => isElegivel(l) && l.comissaoPaga !== true;
 
     const directPaid = (leads || []).filter(isPaidLead).reduce((acc: number, l: any) =>
-      acc + (l.comissaoMultinivel?.valorComissaoDireta || ((l.valorAprovado || l.limiteEstimado || 0) * directMultiplier)), 0);
+      acc + (l.comissaoMultinivel?.valorComissaoDireta || (creditoAprovado(l) * directMultiplier)), 0);
     const directPending = (leads || []).filter(isPendingLead).reduce((acc: number, l: any) =>
-      acc + (l.comissaoMultinivel?.valorComissaoDireta || ((l.valorAprovado || l.limiteEstimado || 0) * directMultiplier)), 0);
+      acc + (l.comissaoMultinivel?.valorComissaoDireta || (creditoAprovado(l) * directMultiplier)), 0);
 
     const teamPaid = (teamLeads || []).filter(isPaidLead).reduce((acc: number, l: any) =>
-      acc + (l.comissaoMultinivel?.valorComissaoEquipe || ((l.valorAprovado || l.limiteEstimado || 0) * getOverrideMultiplierForLead(l))), 0);
+      acc + (l.comissaoMultinivel?.valorComissaoEquipe || (creditoAprovado(l) * getOverrideMultiplierForLead(l))), 0);
     const teamPending = (teamLeads || []).filter(isPendingLead).reduce((acc: number, l: any) =>
-      acc + (l.comissaoMultinivel?.valorComissaoEquipe || ((l.valorAprovado || l.limiteEstimado || 0) * getOverrideMultiplierForLead(l))), 0);
+      acc + (l.comissaoMultinivel?.valorComissaoEquipe || (creditoAprovado(l) * getOverrideMultiplierForLead(l))), 0);
 
     const master = isFranquiaDigital(currentPartner?.plano);
     return {
