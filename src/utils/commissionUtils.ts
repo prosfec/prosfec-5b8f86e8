@@ -333,7 +333,7 @@ export function augmentServiceItemsWithCommission(
   if (!Array.isArray(rawServices) || rawServices.length === 0) return [];
 
   const hierarchy = resolveLeadPartnerHierarchy(lead, allPartners, currentPartnerContext);
-  const consultantPlan = hierarchy.consultor?.plano || "Executive Partner PROSFEC";
+  const consultantPlan = hierarchy.consultor?.plano || "Starter Partner PROSFEC";
   const masterPlan = hierarchy.master?.plano || "Franquia Digital PROSFEC";
 
   return rawServices.map((s: any, idx: number) => {
@@ -410,7 +410,7 @@ export function calculateLeadMultilevelCommissions(
   currentPartnerContext?: any
 ): LeadMultilevelCommissionSummary {
   const hierarchy = resolveLeadPartnerHierarchy(lead, allPartners, currentPartnerContext);
-  const consultantPlan = hierarchy.consultor?.plano || "Executive Partner PROSFEC";
+  const consultantPlan = hierarchy.consultor?.plano || "Starter Partner PROSFEC";
   const masterPlan = hierarchy.master?.plano || "Franquia Digital PROSFEC";
 
   let rawServices: any[] = [];
@@ -508,8 +508,8 @@ export function calculateLeadMultilevelCommissions(
 
     consultorId: hierarchy.consultor?.id || lead.parceiroId || null,
     consultorNome: hierarchy.consultor?.nome || lead.parceiroNome || "Consultor Parceiro",
-    consultorPlano: hierarchy.consultor?.plano || consultantPlan || "Executive Partner PROSFEC",
-    consultorPlanoNormalizado: consultantPlanNorm || "EXECUTIVE",
+    consultorPlano: hierarchy.consultor?.plano || consultantPlan || "Starter Partner PROSFEC",
+    consultorPlanoNormalizado: consultantPlanNorm || "STARTER",
 
     masterId: hierarchy.master?.id || null,
     masterNome: hierarchy.master?.nome || null,
