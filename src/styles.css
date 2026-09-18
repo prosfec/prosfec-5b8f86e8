@@ -1761,3 +1761,64 @@ select option {
 .home-simulator [class*="shadow-"] {
   box-shadow: none;
 }
+
+.home-simulator [class*="bg-emerald-50"],
+.home-simulator [class*="bg-green-50"],
+.home-simulator [class*="bg-teal-50"],
+.home-simulator [class*="bg-emerald-100"],
+.home-simulator [class*="bg-green-100"] {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+.home-simulator [class*="bg-amber-50"],
+.home-simulator [class*="bg-yellow-50"],
+.home-simulator [class*="bg-amber-100"] {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.home-simulator [class*="bg-rose-50"],
+.home-simulator [class*="bg-red-50"],
+.home-simulator [class*="bg-rose-100"],
+.home-simulator [class*="bg-red-100"] {
+  background-color: rgba(244, 63, 94, 0.1);
+  border-color: rgba(244, 63, 94, 0.2);
+  color: #fda4af;
+}
+
+.home-simulator [class*="bg-blue-50"],
+.home-simulator [class*="bg-indigo-50"],
+.home-simulator [class*="bg-sky-50"],
+.home-simulator [class*="bg-blue-100"] {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.home-simulator [class*="bg-gray-200"],
+.home-simulator [class*="bg-slate-200"],
+.home-simulator [class*="bg-zinc-100"] {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.home-simulator [class*="text-emerald-700"],
+.home-simulator [class*="text-emerald-800"],
+.home-simulator [class*="text-green-700"],
+.home-simulator [class*="text-green-800"] {
+  color: #34d399;
+}
+
+.home-simulator [class*="text-rose-700"],
+.home-simulator [class*="text-red-700"],
+.home-simulator [class*="text-rose-800"] {
+  color: #fb7185;
+}
+
+.home-simulator [class*="text-amber-700"],
+.home-simulator [class*="text-amber-800"] {
+  color: #fbbf24;
+}
