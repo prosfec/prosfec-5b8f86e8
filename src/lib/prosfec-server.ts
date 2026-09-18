@@ -11,7 +11,7 @@ import { getBankSpecificRules, GOVERNMENT_CREDIT_LINES, validateCreditLineCondit
 import { BankRulesManager } from "../utils/BankRulesManager";
 import { runCreditEngine, calcularParcela } from "../utils/creditEligibilityEngine";
 import { optionalEnv, requireEnv, firstEnv, maskEmail, maskDoc, redact } from "../utils/env";
-import { normalizeMensalidades, DEFAULT_MENSALIDADES, normalizeAssinaturaParceiro, DEFAULT_ASSINATURA_PARCEIRO, normalizeServiceClauses, buildServiceTemplateId, CLAUSULA_GENERICA_AVULSO } from "../utils/serviceUtils";
+import { normalizeMensalidades, DEFAULT_MENSALIDADES, normalizeAssinaturaParceiro, DEFAULT_ASSINATURA_PARCEIRO, normalizeServiceClauses, buildServiceTemplateId, CLAUSULA_GENERICA_AVULSO, DEFAULT_SERVICE_CLAUSES } from "../utils/serviceUtils";
 
 export function cleanForFirestore<T = any>(obj: T): T {
   if (obj === undefined) return null as any;
@@ -2477,6 +2477,14 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     });
     if (!r.ok) {
       const detail = await r.text().catch(() => "");
+      if (r.status === 403) {
+        console.error(
+          `Firestore negou a criação em "${collectionPath}" para a identidade de serviço ` +
+          `"${optionalEnv("PROSFEC_SERVICE_EMAIL") || "(não configurada)"}". ` +
+          `Verifique se as regras publicadas contêm isServico() e a coleção "${collectionPath}". ` +
+          `Detalhe: ${detail.slice(0, 160)}`
+        );
+      }
       throw new Error(`Firestore CREATE ${r.status}: ${detail.slice(0, 160)}`);
     }
     const created = await r.json().catch(() => null);
@@ -2684,10 +2692,10 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     const servicos = lista
       .filter((s: any) => {
         if (!s) return false;
-        const valor = Number(s.valor ?? s.preco ?? 0);
-        if (!(valor > 0)) return false;
+        // Serviços de êxito (valor 0 / semCustoInicial) TAMBÉM entram no contrato.
+        const nome = String(s.nome || s.titulo || "").trim();
         const k = chaveServico(s);
-        return !!k && !jaContratados.has(k);
+        return !!nome && !!k && !jaContratados.has(k);
       })
       .map((s: any) => {
         const cat = catalogo.find((c: any) => {
@@ -2698,19 +2706,27 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           return !!cn && cn === sn;
         });
         const nome = String(cat?.nome || s.nome || s.titulo || "Serviço");
+        const idServico = String(s.id || cat?.id || "");
+        const clausulasPadrao = normalizeServiceClauses(
+          (DEFAULT_SERVICE_CLAUSES as any)[idServico] || (DEFAULT_SERVICE_CLAUSES as any)[String(cat?.id || "")]
+        );
+        const clausulas =
+          normalizeServiceClauses(cat?.clausulas) ||
+          normalizeServiceClauses(s.clausulas) ||
+          clausulasPadrao ||
+          CLAUSULA_GENERICA_AVULSO;
         return {
-          id: String(s.id || cat?.id || ""),
+          id: idServico,
           nome,
           valor: Number(s.valor ?? s.preco ?? 0),
           descricao: String(cat?.descricao || s.descricao || ""),
-          clausulas:
-            normalizeServiceClauses(cat?.clausulas) ||
-            normalizeServiceClauses(s.clausulas) ||
-            CLAUSULA_GENERICA_AVULSO,
+          semCustoInicial: Boolean(s.semCustoInicial ?? cat?.semCustoInicial ?? false),
+          clausulas,
           templateId: String(cat?.templateId || s.templateId || buildServiceTemplateId(nome, s.id)),
           templateVersao: Number(cat?.templateVersao || s.templateVersao || 1),
         };
       });
+
 
     if (servicos.length === 0) return null;
 
