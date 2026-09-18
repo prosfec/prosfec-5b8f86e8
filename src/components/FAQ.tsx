@@ -54,7 +54,7 @@ export default function FAQ() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+        <div className="text-center max-w-2xl mx-auto mb-8 space-y-4">
           <div className="home-kicker inline-flex items-center gap-1.5 text-xs font-bold uppercase">
             FAQ • Dúvidas Frequentes
           </div>
