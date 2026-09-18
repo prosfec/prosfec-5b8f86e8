@@ -512,7 +512,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [editingSubEtapasPasso6, setEditingSubEtapasPasso6] = useState<{ id: string; titulo: string; concluida: boolean }[]>([]);
   const [savingSubEtapas, setSavingSubEtapas] = useState(false);
   const [savingComissaoId, setSavingComissaoId] = useState<string | null>(null);
-  const [savingServicoPagoId, setSavingServicoPagoId] = useState<string | null>(null);
   const [savingRecusaId, setSavingRecusaId] = useState<string | null>(null);
   const [editingServicosRecomendados, setEditingServicosRecomendados] = useState<any[]>([]);
   const [savingServicos, setSavingServicos] = useState(false);
