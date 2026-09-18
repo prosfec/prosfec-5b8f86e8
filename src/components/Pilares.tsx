@@ -56,6 +56,64 @@ const PILARES = [
   },
 ];
 
+const TIMELINE_STEPS = [
+  "Diagnóstico de crédito",
+  "Identificação de linhas",
+  "Estruturação de propostas",
+  "Preparação para solicitação",
+];
+
+function CreditTimeline() {
+  return (
+    <motion.div
+      initial="rest"
+      whileInView="active"
+      viewport={{ once: true, margin: "-80px" }}
+      className="hidden lg:block mt-auto pt-8 pb-2"
+    >
+      <div className="relative">
+        {/* trilha e progresso */}
+        <div className="absolute left-0 right-0 top-2 h-px bg-white/5" />
+        <motion.div
+          className="absolute left-0 top-2 h-px bg-emerald-500"
+          variants={{ rest: { width: "0%" }, active: { width: "100%" } }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
+        />
+
+        <div className="relative flex justify-between">
+          {TIMELINE_STEPS.map((step, i) => (
+            <div
+              key={step}
+              className="flex flex-col items-center text-center w-[120px] xl:w-[140px]"
+            >
+              <motion.div
+                className="w-4 h-4 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center"
+                variants={{ rest: {}, active: {} }}
+              >
+                <motion.span
+                  className="block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+                  variants={{ rest: { opacity: 0, scale: 0.4 }, active: { opacity: 1, scale: 1 } }}
+                  transition={{ duration: 0.35, delay: 0.15 + i * 0.3 }}
+                />
+              </motion.div>
+              <motion.span
+                className="mt-3 text-[10px] uppercase font-bold tracking-wider leading-tight"
+                variants={{
+                  rest: { color: "rgb(113 113 122)", opacity: 0.6 },
+                  active: { color: "rgb(255 255 255)", opacity: 1 },
+                }}
+                transition={{ duration: 0.35, delay: 0.15 + i * 0.3 }}
+              >
+                {step}
+              </motion.span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function Pilares() {
   return (
     <section id="solucoes" className="home-section py-12 md:py-16 bg-[#0B0F14] scroll-mt-16 text-left">
@@ -98,7 +156,9 @@ export default function Pilares() {
                   {pilar.title}
                 </h3>
                 <p className="text-sm text-zinc-400 leading-relaxed">{pilar.desc}</p>
-                <ul className="flex flex-wrap gap-2 pt-1">
+                <ul
+                  className={`flex flex-wrap gap-2 pt-1 ${idx === 0 ? "lg:hidden" : ""}`}
+                >
                   {pilar.items.map((item) => (
                     <li
                       key={item}
@@ -108,6 +168,7 @@ export default function Pilares() {
                     </li>
                   ))}
                 </ul>
+                {idx === 0 && <CreditTimeline />}
               </motion.article>
             );
           })}
