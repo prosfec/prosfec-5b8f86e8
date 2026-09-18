@@ -512,7 +512,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [editingSubEtapasPasso6, setEditingSubEtapasPasso6] = useState<{ id: string; titulo: string; concluida: boolean }[]>([]);
   const [savingSubEtapas, setSavingSubEtapas] = useState(false);
   const [savingComissaoId, setSavingComissaoId] = useState<string | null>(null);
-  const [savingServicoPagoId, setSavingServicoPagoId] = useState<string | null>(null);
   const [savingRecusaId, setSavingRecusaId] = useState<string | null>(null);
   const [editingServicosRecomendados, setEditingServicosRecomendados] = useState<any[]>([]);
   const [savingServicos, setSavingServicos] = useState(false);
@@ -2041,29 +2040,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       alert("Falha ao atualizar o status de comissão no Firestore. Tente novamente.");
     } finally {
       setSavingComissaoId(null);
-    }
-  };
-
-  const handleToggleServicoPago = async (id: string, pago: boolean) => {
-    const leadAlvo = leads.find(l => l.id === id) || (selectedLead?.id === id ? selectedLead : null);
-    const mensagem = pago
-      ? `Confirmar o pagamento do serviço do cliente ${leadAlvo?.nome || "selecionado"}?`
-      : "Deseja desfazer o pagamento do serviço deste lead? O status volta para Pagamento Pendente.";
-    if (!window.confirm(mensagem)) return;
-    setSavingServicoPagoId(id);
-    try {
-      const docRef = doc(db, "leads", id);
-      await updateDoc(docRef, {
-        servicoPago: pago,
-        dataConfirmacaoPagamentoServico: pago ? new Date().toISOString() : null,
-      });
-      setLeads(prev => prev.map(item => item.id === id ? { ...item, servicoPago: pago } : item));
-      if (selectedLead?.id === id) setSelectedLead(prev => prev ? { ...prev, servicoPago: pago } : null);
-    } catch (err) {
-      console.error("Error updating servicoPago in Firestore:", err);
-      alert("Falha ao atualizar o pagamento do serviço no Firestore. Tente novamente.");
-    } finally {
-      setSavingServicoPagoId(null);
     }
   };
 
@@ -5959,8 +5935,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       </span>
                     </div>
 
-                    {/* Botões de Ação Rápida: Recusado / Aprovado / Pagamento do Serviço */}
-                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200">
+                    {/* Ação Rápida: Crédito Recusado */}
+                    <div className="grid grid-cols-1 gap-2 pt-3 border-t border-slate-200">
                       {/* Botão de Crédito Recusado (reversível) */}
                       {(() => {
                         const estaRecusado = selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado";
@@ -5996,69 +5972,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         );
                       })()}
 
-                      {/* Controle de Pagamento dos Serviços (reversível; confirmação detalhada serviço a serviço no Passo 6) */}
-                      {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (() => {
-                        const processandoServico = savingServicoPagoId === selectedLead.id;
-                        return (
-                          <button
-                            type="button"
-                            disabled={processandoServico}
-                            onClick={() => handleToggleServicoPago(selectedLead.id, !selectedLead.servicoPago)}
-                            className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase flex items-center justify-center gap-1.5 shadow-xs transition-all ${
-                              processandoServico
-                                ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-                                : selectedLead.servicoPago
-                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 cursor-pointer"
-                                  : "bg-white text-amber-800 border border-amber-300 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 cursor-pointer"
-                            }`}
-                            title={
-                              processandoServico
-                                ? "Gravando..."
-                                : selectedLead.servicoPago
-                                  ? "Desfazer o pagamento do serviço deste lead (volta para Pagamento Pendente)"
-                                  : "Confirmar o pagamento do serviço deste lead"
-                            }
-                          >
-                            {processandoServico ? (
-                              <span>Processando...</span>
-                            ) : selectedLead.servicoPago ? (
-                              <>
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Serviço Pago ✓ — Desfazer</span>
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="w-3.5 h-3.5" />
-                                <span>Confirmar Serviço Pago</span>
-                              </>
-                            )}
-                          </button>
-                        );
-                      })()}
                     </div>
-
-                    {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (
-                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pagamento do Serviço (Passo 6)</span>
-                        {selectedLead.servicoPago ? (
-                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
-                            Pago pelo Cliente
-                          </span>
-                        ) : (
-                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                            Pendente de Pagamento
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
 
                   {/* Detalhes de Comissão se houver parceiro */}
                   {selectedLead.parceiroId ? (() => {
                     const partnerObj = partners.find(p => p.id === selectedLead.parceiroId);
                     const commissionMultiplier = getCommissionMultiplier(partnerObj?.plano);
-                    const isConcluidoOrAprovado = selectedLead.etapa === 7 || selectedLead.status === "concluido";
-                    const directCommissionValue = (selectedLead.valorAprovado || selectedLead.limiteEstimado || 0) * commissionMultiplier;
+                    const creditoRecusadoLead = selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado";
+                    const creditoBase = creditoRecusadoLead ? 0 : Number(selectedLead.valorAprovado || 0);
+                    const directCommissionValue = creditoBase * commissionMultiplier;
 
                     return (
                       <div className="bg-slate-50 p-4 border border-slate-200 rounded-lg space-y-3 text-left">
@@ -6072,11 +5995,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </span>
                         </div>
 
-                        <div className="flex justify-between items-center border-t border-slate-200 pt-3">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Repasse ({(commissionMultiplier * 100).toFixed(1)}%)</span>
-                          <span className="text-sm font-bold text-[#0A3D2E] font-display">
-                            {formatCurrencyBRL(directCommissionValue)}
-                          </span>
+                        <div className="border-t border-slate-200 pt-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Repasse ({(commissionMultiplier * 100).toFixed(1)}%)</span>
+                            <span className="text-sm font-bold text-[#0A3D2E] font-display">
+                              {formatCurrencyBRL(directCommissionValue)}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-400 block mt-1">Calculado sobre o Crédito Real Aprovado.</span>
                         </div>
 
                         <div className="flex flex-wrap justify-between items-center gap-2 border-t border-slate-200 pt-3">
@@ -6086,13 +6012,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
                                 Pago
                               </span>
-                            ) : isConcluidoOrAprovado ? (
+                            ) : creditoBase > 0 ? (
                               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                                 Pendente
                               </span>
                             ) : (
                               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600">
-                                Aguardando
+                                Aguardando Crédito Aprovado
                               </span>
                             )}
                           </div>
