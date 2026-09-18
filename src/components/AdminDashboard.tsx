@@ -6036,13 +6036,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
                                 Pago
                               </span>
-                            ) : isConcluidoOrAprovado ? (
+                            ) : creditoBase > 0 ? (
                               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                                 Pendente
                               </span>
                             ) : (
                               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600">
-                                Aguardando
+                                Aguardando Crédito Aprovado
                               </span>
                             )}
                           </div>
