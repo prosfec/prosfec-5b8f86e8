@@ -5996,61 +5996,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         );
                       })()}
 
-                      {/* Controle de Pagamento dos Serviços (reversível; confirmação detalhada serviço a serviço no Passo 6) */}
-                      {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (() => {
-                        const processandoServico = savingServicoPagoId === selectedLead.id;
-                        return (
-                          <button
-                            type="button"
-                            disabled={processandoServico}
-                            onClick={() => handleToggleServicoPago(selectedLead.id, !selectedLead.servicoPago)}
-                            className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase flex items-center justify-center gap-1.5 shadow-xs transition-all ${
-                              processandoServico
-                                ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-                                : selectedLead.servicoPago
-                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 cursor-pointer"
-                                  : "bg-white text-amber-800 border border-amber-300 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 cursor-pointer"
-                            }`}
-                            title={
-                              processandoServico
-                                ? "Gravando..."
-                                : selectedLead.servicoPago
-                                  ? "Desfazer o pagamento do serviço deste lead (volta para Pagamento Pendente)"
-                                  : "Confirmar o pagamento do serviço deste lead"
-                            }
-                          >
-                            {processandoServico ? (
-                              <span>Processando...</span>
-                            ) : selectedLead.servicoPago ? (
-                              <>
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Serviço Pago ✓ — Desfazer</span>
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="w-3.5 h-3.5" />
-                                <span>Confirmar Serviço Pago</span>
-                              </>
-                            )}
-                          </button>
-                        );
-                      })()}
                     </div>
-
-                    {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (
-                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pagamento do Serviço (Passo 6)</span>
-                        {selectedLead.servicoPago ? (
-                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
-                            Pago pelo Cliente
-                          </span>
-                        ) : (
-                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                            Pendente de Pagamento
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
 
                   {/* Detalhes de Comissão se houver parceiro */}
