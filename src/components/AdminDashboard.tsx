@@ -401,6 +401,37 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   const [loggingIn, setLoggingIn] = useState(false);
 
+  // Aparência (somente visual): clara por padrão, tecnológica opcional.
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("prosfec_admin_theme");
+      if (saved === "dark" || saved === "light") setTheme(saved);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
+    return () => root.classList.remove("dark");
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      try {
+        localStorage.setItem("prosfec_admin_theme", next);
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
