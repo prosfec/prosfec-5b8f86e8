@@ -6924,10 +6924,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 </div>
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base">
-                    Direcionar Lead para Parceiro Master
+                    Direcionar Lead para Parceiro
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Vincule este lead a um Parceiro Master para atendimento dedicado.
+                    Vincule este lead a um parceiro direto para atendimento dedicado.
                   </p>
                 </div>
               </div>
@@ -6963,14 +6963,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               )}
             </div>
 
-            {/* Select Master Partner */}
+            {/* Select Direct Partner */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Selecione o Parceiro Master Responsável
+                Selecione o Parceiro Responsável
               </label>
-              {masterPartners.length === 0 ? (
+              {parceirosDiretos.length === 0 ? (
                 <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-center text-rose-800 text-xs font-medium">
-                  Nenhum parceiro com plano Master (Franquia / Digital / Master) encontrado no sistema.
+                  Nenhum parceiro direto encontrado no sistema.
                 </div>
               ) : (
                 <select
@@ -6978,16 +6978,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   onChange={(e) => setSelectedMasterPartnerId(e.target.value)}
                   className="w-full text-xs font-bold p-3 rounded-xl bg-white border border-slate-300 text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#00A86B]"
                 >
-                  <option value="">-- Selecione um Parceiro Master --</option>
-                  {masterPartners.map((master) => (
-                    <option key={master.id} value={master.id}>
-                      {master.nome} ({master.cidade || "Sem Cidade"}) - {master.whatsapp || master.email}
+                  <option value="">-- Selecione um Parceiro --</option>
+                  {parceirosDiretos.map((parceiro) => (
+                    <option key={parceiro.id} value={parceiro.id}>
+                      {parceiro.nome} ({getPlanName(parceiro.plano)}) - {parceiro.cidade || "Sem Cidade"} - {parceiro.whatsapp || parceiro.email}
                     </option>
                   ))}
                 </select>
               )}
               <p className="text-[11px] text-slate-400 italic">
-                * Apenas parceiros cadastrados com plano Master / Franquia listados acima receberão este lead no portal.
+                * Apenas parceiros diretos (sem vínculo com Master) recebem leads direcionados pelo Administrador.
               </p>
             </div>
 
