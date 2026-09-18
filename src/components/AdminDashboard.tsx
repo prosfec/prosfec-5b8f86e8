@@ -3578,13 +3578,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             )}
 
                              {/* Header details */}
-                            <div className="p-4 flex-1 space-y-3">
+                            <div className="p-4 flex-1 space-y-2.5">
                               <div className="flex justify-between items-start gap-2">
                                 <div className="min-w-0">
                                   <h4 className="font-extrabold text-sm text-slate-900 tracking-tight line-clamp-1" title={lead.razaoSocial || lead.nome || "Não informado"}>
                                     {lead.razaoSocial || lead.nome || "Não informado"}
                                   </h4>
-                                   <span className="text-[11px] text-slate-500 font-mono block mt-0.5">{lead.cnpj || "-"}</span>
+                                   <span className="text-[11px] text-slate-500 dark:text-zinc-500 font-mono block leading-tight">{lead.cnpj || "-"}</span>
                                    {pdfPendentes > 0 && (
                                      <span
                                        className="mt-1.5 inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md"
@@ -3600,7 +3600,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <select
                                   value={lead.status || "novo"}
                                   onChange={(e) => handleUpdateStatus(lead.id, "leads", e.target.value)}
-                                  className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full cursor-pointer focus:outline-hidden transition-all ${getStatusBadgeClass(lead.status)}`}
+                                  className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full cursor-pointer focus:outline-hidden transition-all shrink-0 ${getStatusBadgeClass(lead.status)}`}
                                 >
                                   <option value="novo">Novo</option>
                                   <option value="em atendimento">Atendimento</option>
@@ -3623,21 +3623,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               )}
 
                               {/* Funnel pipeline visualization bar */}
-                              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                                <div className="flex justify-between items-center mb-1.5">
-                                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Progresso do Funil</span>
-                                  <span className="text-[10px] font-bold text-[#0A3D2E] font-mono">Passo {stageNum}/8</span>
-                                </div>
-                                
+                              <div>
                                 {/* Mini-blocks progress bar */}
-                                <div className="flex gap-1 mb-2">
+                                <div className="flex gap-0.5 mb-1.5">
                                   {Array(8).fill(0).map((_, i) => (
-                                    <div 
-                                      key={i} 
-                                      className={`h-1.5 flex-1 rounded-sm transition-all ${
-                                        (i + 1) <= stageNum 
-                                          ? "bg-[#00A86B]" 
-                                          : "bg-slate-200"
+                                    <div
+                                      key={i}
+                                      className={`h-1 flex-1 rounded-sm transition-all ${
+                                        (i + 1) <= stageNum
+                                          ? "bg-[#00A86B]"
+                                          : "bg-slate-200 dark:bg-white/10"
                                       }`}
                                     ></div>
                                   ))}
@@ -3647,7 +3642,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <select
                                   value={stageNum}
                                   onChange={(e) => handleUpdateEtapa(lead.id, Number(e.target.value))}
-                                  className="w-full text-[10px] px-2 py-1.5 rounded-lg font-bold bg-white/75 backdrop-blur-xl border border-slate-200 text-slate-700 focus:outline-hidden cursor-pointer truncate"
+                                  className="w-full text-[10px] px-2 py-1 rounded-lg font-bold bg-white/75 dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-zinc-200 focus:outline-hidden cursor-pointer truncate"
                                 >
                                   <option value={1}>1. Dados CNPJ</option>
                                   <option value={2}>2. Dados Sócios</option>
@@ -3661,22 +3656,22 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </div>
 
                               {/* Financial / Attribution Info */}
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
-                                  <span className="text-[8px] text-slate-400 font-black block uppercase tracking-wider">Limite Estimado</span>
-                                  <span className="text-xs font-bold font-mono text-[#0A3D2E] truncate block">
+                              <div className="grid grid-cols-2 gap-3 divide-x divide-slate-200/70 dark:divide-white/5">
+                                <div className="min-w-0">
+                                  <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-bold block uppercase tracking-wider">Limite Estimado</span>
+                                  <span className="text-sm font-bold font-mono text-slate-900 dark:text-white truncate block">
                                     {lead.limiteEstimado ? formatCurrencyBRL(lead.limiteEstimado) : "N/D"}
                                   </span>
                                 </div>
-                                <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100 flex flex-col justify-between">
-                                  <span className="text-[8px] text-slate-400 font-black block uppercase tracking-wider">Certificado</span>
+                                <div className="min-w-0 pl-3">
+                                  <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-bold block uppercase tracking-wider">Certificado</span>
                                   <span className="truncate block mt-0.5">
                                     {lead.certificadoFileBase64 ? (
-                                      <span className="bg-emerald-50 text-[#00A86B] text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md border border-emerald-200">Anexado</span>
+                                      <span className="pf-badge pf-badge-success text-[10px] px-2 py-0.5">Anexado</span>
                                     ) : lead.certificadoSenha ? (
-                                      <span className="bg-amber-50 text-amber-700 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md border border-amber-200">Pendente</span>
+                                      <span className="pf-badge pf-badge-warning text-[10px] px-2 py-0.5">Pendente</span>
                                     ) : (
-                                      <span className="bg-slate-100 text-slate-600 text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-md border border-slate-200">Ausente</span>
+                                      <span className="pf-badge pf-badge-neutral text-[10px] px-2 py-0.5">Ausente</span>
                                     )}
                                   </span>
                                 </div>
@@ -3685,38 +3680,38 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               {/* Attribution Handshake / Directing Button */}
                               {lead.parceiroId ? (
                                 partners.length > 0 && !partners.find(p => p.id === lead.parceiroId) ? (
-                                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-2 flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                                      <div className="min-w-0 flex-1">
-                                        <span className="text-[8px] text-rose-800 font-black block uppercase tracking-wider">Lead órfão</span>
-                                        <p className="text-[10px] text-rose-900 font-bold truncate">
-                                          {lead.parceiroNome ? `${lead.parceiroNome} (removido)` : "Parceiro removido do sistema"}
-                                        </p>
-                                      </div>
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="shrink-0 p-1 rounded-md bg-rose-500/10">
+                                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                      <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-bold block uppercase tracking-wider leading-tight">Lead órfão</span>
+                                      <p className="text-xs text-rose-700 dark:text-rose-400 font-bold truncate leading-tight">
+                                        {lead.parceiroNome ? `${lead.parceiroNome} (removido)` : "Parceiro removido do sistema"}
+                                      </p>
                                     </div>
                                     <button
                                       onClick={() => setAssigningLead(lead)}
-                                      className="text-[9px] font-black text-white bg-rose-600 hover:bg-rose-700 px-1.5 py-0.5 rounded-md cursor-pointer shrink-0 transition-colors"
+                                      className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer shrink-0"
                                       title="Reatribuir este lead a um Parceiro Master ativo"
                                     >
                                       Reatribuir
                                     </button>
                                   </div>
                                 ) : (
-                                <div className="bg-emerald-50/60 border border-emerald-100/70 rounded-xl p-2 flex items-center justify-between gap-2">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <Handshake className="w-3.5 h-3.5 text-[#00A86B] shrink-0" />
-                                    <div className="min-w-0 flex-1">
-                                      <span className="text-[8px] text-emerald-800 font-black block uppercase tracking-wider">Parceiro</span>
-                                      <p className="text-[10px] text-[#0A3D2E] font-bold truncate">
-                                        {lead.parceiroNome || partners.find(p => p.id === lead.parceiroId)?.nome || "Parceiro"}
-                                      </p>
-                                    </div>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="shrink-0 p-1 rounded-md bg-emerald-500/10">
+                                    <Handshake className="w-3.5 h-3.5 text-[#00A86B]" />
+                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-bold block uppercase tracking-wider leading-tight">Parceiro</span>
+                                    <p className="text-xs text-slate-900 dark:text-white font-bold truncate leading-tight">
+                                      {lead.parceiroNome || partners.find(p => p.id === lead.parceiroId)?.nome || "Parceiro"}
+                                    </p>
                                   </div>
                                   <button
                                     onClick={() => setAssigningLead(lead)}
-                                    className="text-[9px] font-black text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded-md cursor-pointer shrink-0 transition-colors"
+                                    className="text-xs font-bold text-emerald-600 dark:text-emerald-500 hover:underline cursor-pointer shrink-0"
                                     title="Alterar Parceiro Master"
                                   >
                                     Alterar
@@ -3726,10 +3721,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               ) : (
                                 <button
                                   onClick={() => setAssigningLead(lead)}
-                                  className="w-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded-xl p-1.5 flex items-center justify-center gap-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                                  className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer py-1"
                                   title="Direcionar este lead para um Parceiro Master"
                                 >
-                                  <UserPlus className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                  <UserPlus className="w-3.5 h-3.5 shrink-0" />
                                   <span>Direcionar p/ Master</span>
                                 </button>
                               )}
@@ -3753,47 +3748,51 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             </div>
 
                             {/* Actions footer bar */}
-                            <div className="bg-slate-50 px-3.5 py-2.5 border-t border-slate-100 flex items-center justify-between gap-1.5">
-                              <button
-                                onClick={() => setSelectedLead(lead)}
-                                className="flex-1 py-1.5 bg-[#0A3D2E]/10 hover:bg-[#0A3D2E] text-[#0A3D2E] hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-2xs"
-                              >
-                                Ver Ficha
-                              </button>
+                            <div className="mx-4 mb-3 pt-3 border-t border-slate-200/70 dark:border-white/5 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <button
+                                  onClick={() => setSelectedLead(lead)}
+                                  className="h-8 px-3 bg-[#0A3D2E]/10 hover:bg-[#0A3D2E] text-[#0A3D2E] dark:text-emerald-400 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
+                                >
+                                  Ver Ficha
+                                </button>
 
-                              <button
-                                onClick={() => setWorkspaceLead(lead)}
-                                className="py-1.5 px-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 text-xs font-bold rounded-lg transition-all cursor-pointer shrink-0 flex items-center gap-1 shadow-2xs"
-                                title="Abrir Workspace do Lead & Diagnóstico IA"
-                              >
-                                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                                <span className="hidden sm:inline">Workspace</span>
-                              </button>
+                                <button
+                                  onClick={() => setWorkspaceLead(lead)}
+                                  className="h-8 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold rounded-lg transition-all cursor-pointer shrink-0 flex items-center gap-1"
+                                  title="Abrir Workspace do Lead & Diagnóstico IA"
+                                >
+                                  <Sparkles className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline">Workspace</span>
+                                </button>
+                              </div>
 
-                              <a
-                                href={buildWhatsAppUrl(lead.whatsapp)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1.5 bg-[#25D366]/10 hover:bg-[#25D366] text-[#20ba5a] hover:text-white rounded-lg transition-all shrink-0 border border-[#25D366]/20"
-                                title="Chamar no WhatsApp"
-                              >
-                                <Phone className="w-3.5 h-3.5 fill-current" />
-                              </a>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <a
+                                  href={buildWhatsAppUrl(lead.whatsapp)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="h-8 w-8 flex items-center justify-center bg-[#25D366]/10 hover:bg-[#25D366] text-[#20ba5a] hover:text-white rounded-lg transition-all"
+                                  title="Chamar no WhatsApp"
+                                >
+                                  <Phone className="w-3.5 h-3.5 fill-current" />
+                                </a>
 
-                              <button
-                                onClick={() => handleDeleteRecord(lead.id, "leads")}
-                                disabled={userRole === "contador"}
-                                className={`p-1.5 rounded-lg border transition-all shrink-0 ${
-                                  userRole === "contador"
-                                    ? "bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed opacity-50"
-                                    : isDeletingId === lead.id && confirmDelete 
-                                      ? "bg-rose-600 text-white border-rose-600 animate-bounce cursor-pointer" 
-                                      : "bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-100 cursor-pointer"
-                                }`}
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                                <button
+                                  onClick={() => handleDeleteRecord(lead.id, "leads")}
+                                  disabled={userRole === "contador"}
+                                  className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all ${
+                                    userRole === "contador"
+                                      ? "bg-slate-100 dark:bg-white/5 text-slate-300 cursor-not-allowed opacity-50"
+                                      : isDeletingId === lead.id && confirmDelete
+                                        ? "bg-rose-600 text-white animate-bounce cursor-pointer"
+                                        : "bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 cursor-pointer"
+                                  }`}
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         );
