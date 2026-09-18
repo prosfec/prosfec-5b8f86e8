@@ -3754,7 +3754,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   onClick={() => setSelectedLead(lead)}
                                   className="h-8 px-3 bg-[#0A3D2E]/10 hover:bg-[#0A3D2E] text-[#0A3D2E] dark:text-emerald-400 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
                                 >
-                                  Ver Ficha
+                                  Operacional
                                 </button>
 
                                 <button
@@ -5655,16 +5655,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       {/* LEAD DETAIL MODAL - Caixa Flutuante (Floating Modal) */}
       {selectedLead && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 animate-fade-in">
-          <div className="bg-slate-50 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-scale-in">
+          <div className="bg-slate-50 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-scale-in">
             
             {/* Header */}
-            <div className="flex justify-between items-start gap-4 border-b border-slate-200 p-5 sm:p-6 bg-white shrink-0">
+            <div className="flex justify-between items-center gap-4 border-b border-slate-200 px-5 py-4 bg-white shrink-0">
               <div className="min-w-0">
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                  Ficha de Lead de Crédito
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-display leading-tight truncate">{selectedLead.nome}</h2>
-                <p className="text-xs font-medium text-slate-500 mt-1 font-mono truncate">ID do Registro: {selectedLead.id}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Operacional</p>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-1 font-display leading-tight truncate">{selectedLead.nome}</h2>
+                <p className="text-xs font-medium text-slate-500 mt-0.5 font-mono truncate">{selectedLead.id}</p>
               </div>
               <button 
                 onClick={() => setSelectedLead(null)}
@@ -5677,118 +5675,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             {/* Content Details Grid */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-left bg-slate-50">
               
-              {/* Linha do Tempo Visual de Progresso das Etapas (Stepper Interativo) */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      Jornada do Lead (Etapa {selectedLead.etapa || 1} de 8)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                      {ETAPAS_LABELS[selectedLead.etapa || 1] || `Passo ${selectedLead.etapa || 1}`}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setWorkspaceLead(selectedLead)}
-                      className="px-3 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-semibold rounded-lg transition-all hover:shadow-md cursor-pointer flex items-center gap-1.5"
-                      title="Abrir Workspace Completo deste Lead"
-                    >
-                      <Briefcase className="w-3.5 h-3.5" />
-                      <span>Abrir Workspace</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Stepper Horizontal Interativo */}
-                <div className="overflow-x-auto p-4 scrollbar-none">
-                  <div className="flex items-center justify-between min-w-[620px] gap-1 px-1">
-                    {STEPS_CONFIG.map((s, idx) => {
-                      const currentEtapaNum = selectedLead.etapa || 1;
-                      const isCompleted = s.step < currentEtapaNum;
-                      const isCurrent = s.step === currentEtapaNum;
-
-                      return (
-                        <React.Fragment key={s.step}>
-                          {idx > 0 && (
-                            <div
-                              className={`h-0.5 flex-1 mx-1 rounded-full transition-all duration-300 ${
-                                isCompleted ? "bg-emerald-400" : isCurrent ? "bg-emerald-200" : "bg-slate-200"
-                              }`}
-                            />
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateEtapa(selectedLead.id, s.step)}
-                            title={`Clique para avançar/retornar lead para ${s.fullLabel}`}
-                            className={`flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all cursor-pointer group ${
-                              isCurrent
-                                ? "bg-emerald-50 border border-emerald-200 shadow-sm"
-                                : isCompleted
-                                ? "bg-white hover:bg-slate-50 border border-slate-200"
-                                : "bg-white hover:bg-slate-50 border border-slate-100"
-                            }`}
-                          >
-                            <div
-                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                                isCompleted
-                                  ? "bg-emerald-500 text-white"
-                                  : isCurrent
-                                  ? "bg-[#0A3D2E] text-white ring-4 ring-emerald-100"
-                                  : "bg-slate-100 text-slate-400 group-hover:text-slate-600"
-                              }`}
-                            >
-                              {isCompleted ? (
-                                <CheckCircle className="w-4 h-4" />
-                              ) : (
-                                <span>{s.step}</span>
-                              )}
-                            </div>
-
-                            <span
-                              className={`text-[10px] font-semibold whitespace-nowrap text-center ${
-                                isCurrent
-                                  ? "text-[#0A3D2E]"
-                                  : isCompleted
-                                  ? "text-emerald-600"
-                                  : "text-slate-400 group-hover:text-slate-600"
-                              }`}
-                            >
-                              {s.label.replace(`Passo ${s.step}: `, "")}
-                            </span>
-                          </button>
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Contact & Status Bar */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="space-y-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Status do Lead</p>
-                  <select
-                    value={selectedLead.status || "novo"}
-                    onChange={(e) => handleUpdateStatus(selectedLead.id, "leads", e.target.value)}
-                    className={`text-xs px-3 py-1.5 rounded-full font-bold cursor-pointer transition-all focus:outline-hidden focus:ring-2 focus:ring-primary/20 ${getStatusBadgeClass(selectedLead.status)}`}
-                  >
-                    <option value="novo">Novo</option>
-                    <option value="em atendimento">Em Atendimento</option>
-                    <option value="concluido">Concluído</option>
-                    <option value="arquivado">Arquivado</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data de Cadastro</p>
-                  <p className="text-sm font-medium text-slate-900 font-mono">{formatDate(selectedLead.dataCriacao)}</p>
-                </div>
-              </div>
-
               {/* Controle de Pendências e Alertas para o Parceiro */}
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden text-left">
                 <div className="flex items-center gap-2 border-b border-slate-200 bg-amber-50/50 px-4 py-3">
