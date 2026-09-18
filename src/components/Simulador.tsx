@@ -1020,23 +1020,24 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
   };
 
   return (
-    <div className={isModalMode ? "w-full" : "home-simulator py-16 md:py-24 bg-slate-50 scroll-mt-20"} id={isModalMode ? undefined : "simulador"}>
+    <div className={isModalMode ? "w-full" : "home-simulator py-12 md:py-16 bg-[#0B0F14] scroll-mt-20"} id={isModalMode ? undefined : "simulador"}>
       <div className={isModalMode ? "w-full" : "max-w-4xl mx-auto px-4 sm:px-6"}>
         
         {/* Section Title (only in full page mode) */}
         {!isModalMode && (
-          <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">
+          <div className="text-center max-w-2xl mx-auto mb-8 space-y-3">
             <h2 className="home-heading font-display font-bold text-3xl md:text-4xl">
               Calcule seu limite potencial em 5 etapas
             </h2>
-            <p className="text-gray-500 text-sm md:text-base font-semibold text-emerald-700">
+            <p className="text-sm md:text-base font-semibold text-emerald-400">
               ⏳ Leva menos de 3 minutos · Simulador Consultivo Sem Compromisso
             </p>
           </div>
         )}
 
         {/* Card Simulator Container */}
-        <div className={`bg-white ${isModalMode ? "rounded-2xl border-0 shadow-none" : "rounded-3xl border border-slate-200/60 shadow-sm"} overflow-hidden min-h-[500px]`}>
+        <div className={`${isModalMode ? "bg-white rounded-2xl border-0 shadow-none" : "bg-zinc-900/50 rounded-3xl border border-white/10"} overflow-hidden min-h-[500px]`}>
+
           
           <AnimatePresence mode="wait">
             {!finished ? (

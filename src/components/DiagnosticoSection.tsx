@@ -24,7 +24,7 @@ const ITENS = [
 
 export default function DiagnosticoSection({ onSimulateClick }: DiagnosticoSectionProps) {
   return (
-    <section id="diagnostico" className="home-section py-16 md:py-24 bg-slate-50 scroll-mt-16 text-left">
+    <section id="diagnostico" className="home-section py-12 md:py-16 bg-[#0B0F14] scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

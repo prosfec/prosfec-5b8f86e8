@@ -1615,11 +1615,8 @@ select option {
 .home-premium {
   --home-ink: #0b0f14;
   --home-deep: #13242a;
-  --home-canvas: #f8fafc;
   --home-accent: #22c55e;
-  --home-line: rgba(148, 163, 184, 0.24);
-  --home-shadow: 0 24px 60px -36px rgba(15, 23, 42, 0.32);
-  background: var(--home-canvas);
+  background: var(--home-ink);
   font-family: "DM Sans", system-ui, sans-serif;
 }
 
@@ -1636,73 +1633,78 @@ select option {
 }
 
 .home-heading {
-  color: var(--home-ink);
-  letter-spacing: 0;
+  color: #ffffff;
+  letter-spacing: -0.01em;
 }
 
 .home-kicker {
-  color: #059669;
+  color: #34d399;
   letter-spacing: 0.2em;
 }
 
 .home-card {
   box-shadow: none;
   transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 300ms ease, border-color 300ms ease;
+    border-color 300ms ease, background-color 300ms ease;
 }
 
 .home-card:hover {
   transform: translateY(-4px);
   border-color: rgba(34, 197, 94, 0.28);
-  box-shadow: var(--home-shadow);
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 .home-dark-panel {
   background: linear-gradient(145deg, #18181b 0%, var(--home-deep) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 34px 80px -52px rgba(11, 15, 20, 0.9);
 }
 
 .home-diagnostic-panel {
   box-shadow: 0 0 80px -20px rgba(34, 197, 94, 0.3);
 }
 
-.home-premium .home-diagnostic-panel > div:first-child {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.home-premium .home-diagnostic-panel [class*="text-gray-600"],
-.home-premium .home-diagnostic-panel [class*="text-gray-700"] {
+/* Simulador na Home: o mesmo componente também é aberto em janela
+   dentro dos painéis internos (tema claro), por isso o tema escuro
+   fica restrito a este escopo. */
+.home-simulator {
   color: #d4d4d8;
-}
-
-.home-premium .home-diagnostic-panel [class*="text-gray-400"],
-.home-premium .home-diagnostic-panel [class*="text-gray-500"] {
-  color: #a1a1aa;
-}
-
-.home-premium .home-diagnostic-panel [class*="bg-gray-50"],
-.home-premium .home-diagnostic-panel [class*="bg-gray-100"] {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.home-premium .home-diagnostic-panel [class*="text-brand-primary"] {
-  color: #6ee7b7;
 }
 
 .home-simulator input:not([type="checkbox"]):not([type="radio"]),
 .home-simulator select,
 .home-simulator textarea {
-  background-color: #f8fafc;
-  border-color: #e2e8f0;
+  background-color: #0b0f14;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.home-simulator input::placeholder,
+.home-simulator textarea::placeholder {
+  color: #52525b;
 }
 
 .home-simulator input:not([type="checkbox"]):not([type="radio"]):focus,
 .home-simulator select:focus,
 .home-simulator textarea:focus {
   border-color: var(--home-accent);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+
+.home-simulator select option {
+  background-color: #18181b;
+  color: #ffffff;
+}
+
+.home-simulator input:-webkit-autofill,
+.home-simulator input:-webkit-autofill:hover,
+.home-simulator input:-webkit-autofill:focus,
+.home-simulator textarea:-webkit-autofill,
+.home-simulator select:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+  -webkit-box-shadow: 0 0 0 1000px #0b0f14 inset;
+  box-shadow: 0 0 0 1000px #0b0f14 inset;
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1713,4 +1715,110 @@ select option {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+
+/* Tema escuro do Simulador na Home.
+   O componente Simulador é compartilhado com as janelas dos painéis internos
+   (tema claro), portanto o tema noturno é aplicado como skin escopado a
+   .home-simulator em vez de reescrever as classes do componente. */
+.home-simulator [class*="bg-white"]:not([class*="bg-white/"]),
+.home-simulator [class*="bg-slate-50"],
+.home-simulator [class*="bg-gray-50"],
+.home-simulator [class*="bg-slate-100"],
+.home-simulator [class*="bg-gray-100"] {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.home-simulator [class*="border-gray-100"],
+.home-simulator [class*="border-gray-200"],
+.home-simulator [class*="border-slate-100"],
+.home-simulator [class*="border-slate-200"] {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.home-simulator [class*="text-gray-900"],
+.home-simulator [class*="text-gray-800"],
+.home-simulator [class*="text-slate-900"],
+.home-simulator [class*="text-brand-primary"] {
+  color: #ffffff;
+}
+
+.home-simulator [class*="text-gray-700"],
+.home-simulator [class*="text-gray-600"],
+.home-simulator [class*="text-gray-500"],
+.home-simulator [class*="text-slate-600"],
+.home-simulator [class*="text-slate-500"] {
+  color: #a1a1aa;
+}
+
+.home-simulator [class*="text-gray-400"],
+.home-simulator [class*="text-gray-300"] {
+  color: #71717a;
+}
+
+.home-simulator [class*="shadow-"] {
+  box-shadow: none;
+}
+
+.home-simulator [class*="bg-emerald-50"],
+.home-simulator [class*="bg-green-50"],
+.home-simulator [class*="bg-teal-50"],
+.home-simulator [class*="bg-emerald-100"],
+.home-simulator [class*="bg-green-100"] {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+.home-simulator [class*="bg-amber-50"],
+.home-simulator [class*="bg-yellow-50"],
+.home-simulator [class*="bg-amber-100"] {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.home-simulator [class*="bg-rose-50"],
+.home-simulator [class*="bg-red-50"],
+.home-simulator [class*="bg-rose-100"],
+.home-simulator [class*="bg-red-100"] {
+  background-color: rgba(244, 63, 94, 0.1);
+  border-color: rgba(244, 63, 94, 0.2);
+  color: #fda4af;
+}
+
+.home-simulator [class*="bg-blue-50"],
+.home-simulator [class*="bg-indigo-50"],
+.home-simulator [class*="bg-sky-50"],
+.home-simulator [class*="bg-blue-100"] {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.home-simulator [class*="bg-gray-200"],
+.home-simulator [class*="bg-slate-200"],
+.home-simulator [class*="bg-zinc-100"] {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.home-simulator [class*="text-emerald-700"],
+.home-simulator [class*="text-emerald-800"],
+.home-simulator [class*="text-green-700"],
+.home-simulator [class*="text-green-800"] {
+  color: #34d399;
+}
+
+.home-simulator [class*="text-rose-700"],
+.home-simulator [class*="text-red-700"],
+.home-simulator [class*="text-rose-800"] {
+  color: #fb7185;
+}
+
+.home-simulator [class*="text-amber-700"],
+.home-simulator [class*="text-amber-800"] {
+  color: #fbbf24;
 }

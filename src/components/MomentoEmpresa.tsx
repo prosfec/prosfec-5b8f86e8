@@ -45,13 +45,13 @@ export default function MomentoEmpresa({ onSimulateClick, whatsappUrl }: Momento
   ];
 
   return (
-    <section id="momento" className="home-section py-16 md:py-24 bg-white scroll-mt-16 text-left">
+    <section id="momento" className="home-section py-12 md:py-16 bg-[#0B0F14] scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mb-12 space-y-4">
+        <div className="max-w-3xl mb-8 space-y-4">
           <h2 className="home-heading font-display font-bold text-3xl md:text-4xl leading-tight">
             Qual é o momento da sua empresa?
           </h2>
-          <p className="text-gray-600 text-base leading-relaxed">
+          <p className="text-zinc-400 text-base leading-relaxed">
             Conte o que sua empresa precisa hoje. A PROSFEC identifica o caminho mais adequado para
             sua situação.
           </p>
@@ -62,14 +62,14 @@ export default function MomentoEmpresa({ onSimulateClick, whatsappUrl }: Momento
             const Icon = op.icon;
             const content = (
               <>
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
                   <Icon className="w-5 h-5" strokeWidth={2} />
                 </div>
-                <h3 className="font-display font-bold text-base text-brand-primary leading-snug">
+                <h3 className="font-display font-bold text-base text-white leading-snug">
                   {op.title}
                 </h3>
-                <p className="text-sm text-gray-600 leading-relaxed flex-1">{op.desc}</p>
-                <span className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700 group-hover:gap-2.5 transition-all">
+                <p className="text-sm text-zinc-400 leading-relaxed flex-1">{op.desc}</p>
+                <span className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-400 group-hover:gap-2.5 transition-all">
                   {op.cta}
                   <ArrowRight className="w-4 h-4" strokeWidth={2} />
                 </span>
@@ -77,7 +77,7 @@ export default function MomentoEmpresa({ onSimulateClick, whatsappUrl }: Momento
             );
 
             const cardClass =
-              "home-card group bg-white border border-slate-200/60 rounded-2xl p-6 flex flex-col gap-3 text-left w-full cursor-pointer";
+              "home-card group bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex flex-col gap-3 text-left w-full cursor-pointer";
 
             return (
               <motion.div

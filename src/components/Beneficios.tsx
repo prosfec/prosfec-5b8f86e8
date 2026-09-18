@@ -20,7 +20,7 @@ const BENEFICIOS = [
 
 export default function Beneficios() {
   return (
-    <section id="beneficios" className="home-section py-16 md:py-24 bg-slate-50 scroll-mt-16 text-left">
+    <section id="beneficios" className="home-section py-12 md:py-16 bg-[#0B0F14] scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           <div className="lg:col-span-5 space-y-4">
@@ -30,7 +30,7 @@ export default function Beneficios() {
             <h2 className="home-heading font-display font-bold text-3xl md:text-4xl leading-tight">
               Mais do que buscar crédito. Preparar sua empresa para crescer.
             </h2>
-            <p className="text-gray-600 text-sm md:text-base leading-relaxed">
+            <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
               O trabalho da PROSFEC é consultivo: entender a realidade da empresa, corrigir o que
               atrapalha e construir uma estratégia financeira sustentável.
             </p>
@@ -44,12 +44,12 @@ export default function Beneficios() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.35, delay: idx * 0.04 }}
-                className="home-card flex items-start gap-3 bg-white border border-slate-200/60 rounded-2xl p-4"
+                className="home-card flex items-start gap-3 bg-white/[0.02] border border-white/10 rounded-2xl p-4"
               >
-                <div className="bg-emerald-50 text-emerald-700 p-1.5 rounded-full shrink-0">
+                <div className="bg-emerald-500/10 text-emerald-400 p-1.5 rounded-full shrink-0">
                   <Check className="w-4 h-4" strokeWidth={2.5} />
                 </div>
-                <span className="text-sm font-semibold text-gray-700 leading-snug">{item}</span>
+                <span className="text-sm font-semibold text-zinc-300 leading-snug">{item}</span>
               </motion.div>
             ))}
           </div>

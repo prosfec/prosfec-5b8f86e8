@@ -125,7 +125,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
                 (line) => (
                   <span
                     key={line}
-                    className="bg-gray-50 text-gray-600 border border-gray-100 text-[11px] font-semibold px-2.5 py-1 rounded-md"
+                    className="bg-white/5 text-zinc-300 border border-white/10 text-[11px] font-semibold px-2.5 py-1 rounded-md"
                   >
                     {line}
                   </span>
@@ -142,27 +142,27 @@ export default function Hero({ onSimulateClick }: HeroProps) {
               transition={{ duration: 0.8 }}
                className="home-diagnostic-panel relative mx-auto max-w-sm lg:max-w-none bg-zinc-900/80 backdrop-blur-xl p-6 rounded-3xl border border-white/10"
             >
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
                   Exemplo de Diagnóstico
                 </span>
-                <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded">
+                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold px-2 py-1 rounded">
                   Visão estratégica
                 </span>
               </div>
 
               <div className="space-y-5">
                 <div>
-                  <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1.5">
+                  <div className="flex justify-between text-xs font-semibold text-zinc-400 mb-1.5">
                     <span>Perfil financeiro</span>
-                    <span className="text-brand-primary font-bold">Em estruturação</span>
+                    <span className="text-emerald-400 font-bold">Em estruturação</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 bg-brand-primary w-[62%]" />
+                  <div className="h-1.5 bg-white/10 rounded-full relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 bg-emerald-500 w-[62%]" />
                   </div>
                 </div>
 
-                <div className="bg-brand-primary text-white p-5 rounded-xl space-y-1 relative overflow-hidden">
+                <div className="bg-emerald-500/10 border border-emerald-500/20 text-white p-5 rounded-xl space-y-1 relative overflow-hidden">
                   <div className="absolute right-[-20px] bottom-[-20px] opacity-10">
                     <TrendingUp className="w-32 h-32" />
                   </div>
@@ -178,25 +178,25 @@ export default function Hero({ onSimulateClick }: HeroProps) {
                 </div>
 
                 <div className="space-y-2.5">
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest block">
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest block">
                     O que o diagnóstico mostra
                   </span>
 
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-gray-700 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                    <div className="flex items-center justify-between text-xs text-zinc-300 bg-white/5 p-2.5 rounded-lg border border-white/10">
                       <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2} />
+                        <Check className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2} />
                         <span>Rating e Score comercial/bancário</span>
                       </div>
-                      <span className="font-semibold text-emerald-700">Avaliado</span>
+                      <span className="font-semibold text-emerald-400">Avaliado</span>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-gray-700 bg-amber-50 p-2.5 rounded-lg border border-amber-100">
+                    <div className="flex items-center justify-between text-xs text-zinc-300 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
                       <div className="flex items-center gap-2">
                         <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
-                        <span className="text-amber-900">Restrições e pendências</span>
+                        <span className="text-amber-300">Restrições e pendências</span>
                       </div>
-                      <span className="font-semibold text-amber-700">A corrigir</span>
+                      <span className="font-semibold text-amber-400">A corrigir</span>
                     </div>
                   </div>
                 </div>

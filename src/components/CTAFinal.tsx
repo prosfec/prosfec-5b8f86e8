@@ -14,7 +14,7 @@ interface CTAFinalProps {
 
 export default function CTAFinal({ onSimulateClick, whatsappUrl }: CTAFinalProps) {
   return (
-    <section className="home-section py-16 md:py-24 bg-slate-50">
+    <section className="home-section py-12 md:py-16 bg-[#0B0F14]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

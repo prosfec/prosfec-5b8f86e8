@@ -531,7 +531,7 @@ export default function App() {
   }
 
   return (
-    <div className="home-premium font-sans antialiased text-gray-800 bg-slate-50 min-h-screen flex flex-col">
+    <div className="home-premium font-sans antialiased text-zinc-300 bg-[#0B0F14] min-h-screen flex flex-col">
       {/* Navbar with callbacks */}
       <Navbar
         onSimulateClick={handleScrollToSimulador}
@@ -588,12 +588,12 @@ export default function App() {
         <SolucoesEspecificas />
 
         {/* 9. SIMULADOR / PRIMEIRA ANÁLISE */}
-        <div className="home-section bg-slate-50 pt-16 md:pt-24">
+        <div className="home-section bg-[#0B0F14] pt-12 md:pt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left space-y-3">
-            <h2 className="font-display font-bold text-3xl md:text-4xl text-slate-900 leading-tight">
+            <h2 className="font-display font-bold text-3xl md:text-4xl text-white leading-tight">
               Comece entendendo o potencial da sua empresa
             </h2>
-            <p className="text-gray-600 text-base leading-relaxed max-w-2xl">
+            <p className="text-zinc-400 text-base leading-relaxed max-w-2xl">
               Faça uma primeira análise e descubra quais caminhos de crédito podem fazer sentido para
               o seu negócio.
             </p>
@@ -652,7 +652,7 @@ export default function App() {
       </a>
 
       {/* MOBILE STICKY CTA (Bottom of mobile screen) - Clean, premium conversion focused */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-2xl p-3 z-45 flex gap-3 h-16 items-center">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0B0F14]/80 backdrop-blur-md border-t border-white/10 p-3 z-45 flex gap-3 h-16 items-center">
         <button
           onClick={handleScrollToSimulador}
           className="flex-1 bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold text-xs py-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-98"

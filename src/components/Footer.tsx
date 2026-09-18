@@ -39,16 +39,16 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
   };
 
   return (
-    <footer className="bg-brand-primary text-gray-300 pt-16 pb-24 md:pb-12 border-t border-emerald-950 text-left">
+    <footer className="bg-[#0B0F14] text-zinc-400 pt-12 pb-24 md:pb-12 border-t border-white/10 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Core footer layout */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 pb-12 border-b border-white/5">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 pb-12 border-b border-white/10">
           
           {/* Column 1 - Brand Info - 5 cols */}
           <div className="col-span-1 md:col-span-5 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="bg-white p-2 rounded-lg text-brand-primary">
+              <div className="bg-white/[0.06] border border-white/10 p-2 rounded-lg">
                 <Landmark className="w-5 h-5 text-brand-accent" strokeWidth={2} />
               </div>
               <span className="font-display font-extrabold text-lg text-white block">
@@ -56,11 +56,11 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
               </span>
             </div>
             
-            <p className="text-xs text-gray-400 leading-relaxed max-w-sm">
+            <p className="text-xs text-zinc-400 leading-relaxed max-w-sm">
               Especialistas em inteligência e preparação de crédito corporativo focado em micro e pequenas empresas (MEI, ME e EPP). Atendimento consultivo transparente focado no crescimento do seu negócio.
             </p>
 
-            <div className="flex items-center gap-2 text-xs text-emerald-400 font-bold bg-white/5 p-2.5 rounded-lg w-fit border border-white/5">
+            <div className="flex items-center gap-2 text-xs text-emerald-400 font-bold bg-white/5 p-2.5 rounded-lg w-fit border border-white/10">
               <ShieldCheck className="w-4 h-4 shrink-0" strokeWidth={2} />
               <span>Diagnóstico de Viabilidade 100% Gratuito</span>
             </div>
@@ -126,7 +126,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
               Contato e Escritório
             </h4>
             
-            <ul className="space-y-3 text-xs text-gray-400">
+            <ul className="space-y-3 text-xs text-zinc-400">
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2} />
                 {referredByPartnerWhatsapp ? (
@@ -160,17 +160,17 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
 
         {/* Legal Text as strict requirement */}
         <div className="py-8 text-left space-y-4">
-          <p className="text-[10px] text-gray-500 leading-relaxed">
+          <p className="text-[10px] text-zinc-500 leading-relaxed">
             <strong>AVISO LEGAL IMPORTANTE:</strong> As condições de enquadramento, taxas de juros, carência e liberação final do limite de crédito do Pronampe podem sofrer alterações drásticas conforme as regulamentações governamentais decorrentes do ano vigente de 2026, a disponibilidade de recursos de repasse junto aos respectivos fundos garantidores, alterações nas taxas de política monetária do Banco Central, a política interna particular de cadastro de cada agente financeiro e a análise prévia do departamento de risco de crédito da instituição bancária parceira.
           </p>
           
-          <p className="text-[10px] text-gray-500 leading-relaxed">
+          <p className="text-[10px] text-zinc-500 leading-relaxed">
             A <strong>PROSFEC</strong> é uma sociedade de assessoria mercadológica corporativa de capitais, consultoria em negócios e inteligência de fomento privado. Nós <strong>NÃO</strong> somos um banco comercial, banco cooperativo, cooperativa de crédito, nem administramos fundos estatais. A PROSFEC atua estritamente como consultoria de fomento orientador, auxiliando pequenas empresas na elaboração cadastral, diagnóstico técnico no portal e-CAC da Receita Federal e na estruturação documental do dossiê corporativo. Nós não garantimos a aprovação ou liberação do recurso bancário.
           </p>
         </div>
 
         {/* Final subfooter */}
-        <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-gray-500">
+        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-500">
           <p>© {currentYear} PROSFEC - Estruturação de Crédito Corporativo. Todos os direitos reservados.</p>
           <div className="flex gap-4">
             <a
