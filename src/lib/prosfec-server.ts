@@ -2477,6 +2477,14 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     });
     if (!r.ok) {
       const detail = await r.text().catch(() => "");
+      if (r.status === 403) {
+        console.error(
+          `Firestore negou a criação em "${collectionPath}" para a identidade de serviço ` +
+          `"${optionalEnv("PROSFEC_SERVICE_EMAIL") || "(não configurada)"}". ` +
+          `Verifique se as regras publicadas contêm isServico() e a coleção "${collectionPath}". ` +
+          `Detalhe: ${detail.slice(0, 160)}`
+        );
+      }
       throw new Error(`Firestore CREATE ${r.status}: ${detail.slice(0, 160)}`);
     }
     const created = await r.json().catch(() => null);
