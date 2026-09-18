@@ -50,8 +50,8 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/95 backdrop-blur-md shadow-md border-b border-gray-100 py-3"
-          : "bg-white/80 backdrop-blur-sm py-4"
+          ? "bg-zinc-950/90 backdrop-blur-xl border-b border-white/10 py-3"
+          : "bg-zinc-950/75 backdrop-blur-lg border-b border-white/5 py-4"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -65,11 +65,11 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
             }}
             className="flex items-center gap-2 group"
           >
-            <div className="bg-brand-primary p-2 rounded-lg text-white group-hover:scale-105 transition-transform">
-              <Landmark className="w-5 h-5 text-brand-accent" strokeWidth={2} />
+            <div className="bg-emerald-500/10 border border-emerald-500/20 p-2 rounded-lg text-white group-hover:scale-105 transition-transform">
+              <Landmark className="w-5 h-5 text-emerald-400" strokeWidth={2} />
             </div>
             <div>
-              <span className="font-display font-bold text-lg md:text-xl text-brand-primary leading-none block">
+              <span className="font-display font-bold text-lg md:text-xl text-white leading-none block">
                 PROSFEC
               </span>
             </div>
@@ -80,35 +80,35 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
             <a
               href="#solucoes"
               onClick={(e) => handleLinkClick(e, "solucoes")}
-              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
+               className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
             >
               Soluções
             </a>
             <a
               href="#diagnostico"
               onClick={(e) => handleLinkClick(e, "diagnostico")}
-              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
+               className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
             >
               Diagnóstico
             </a>
             <a
               href="#como-funciona"
               onClick={(e) => handleLinkClick(e, "como-funciona")}
-              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
+               className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
             >
               Como Atuamos
             </a>
             <a
               href="#parceiros"
               onClick={(e) => handleLinkClick(e, "parceiros")}
-              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
+               className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
             >
               Parceiros
             </a>
             <a
               href="#faq"
               onClick={(e) => handleLinkClick(e, "faq")}
-              className="text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors"
+               className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
             >
               Dúvidas
             </a>
@@ -118,14 +118,14 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
           <div className="hidden sm:flex items-center gap-3">
             <button
               onClick={onPartnerPortalClick}
-              className="border border-brand-primary/10 hover:border-brand-primary/30 text-brand-primary font-bold text-xs px-4 py-2.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer bg-slate-50 hover:bg-slate-100"
+              className="border border-white/10 hover:border-white/20 text-zinc-200 font-bold text-xs px-4 py-2.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer bg-white/5 hover:bg-white/10"
             >
-              <Users className="w-4 h-4 text-brand-primary/70" strokeWidth={2} />
+              <Users className="w-4 h-4 text-emerald-400" strokeWidth={2} />
               Área do Parceiro
             </button>
             <button
               onClick={onSimulateClick}
-              className="bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold text-sm px-5 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-2 cursor-pointer"
+              className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-sm px-5 py-2.5 rounded-lg transition-all flex items-center gap-2 cursor-pointer"
             >
               <Calculator className="w-4 h-4" strokeWidth={2} />
               Simular agora
@@ -138,7 +138,7 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"}
               aria-expanded={isOpen}
-              className="p-2 rounded-md hover:bg-gray-100/80 text-brand-primary transition-colors"
+              className="p-2 rounded-md hover:bg-white/10 text-white transition-colors"
             >
               {isOpen ? <X className="w-6 h-6" strokeWidth={2} /> : <Menu className="w-6 h-6" strokeWidth={2} />}
             </button>
