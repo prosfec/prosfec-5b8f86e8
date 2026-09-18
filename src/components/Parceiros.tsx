@@ -199,7 +199,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
   };
 
   return (
-    <section id="parceiros" className="home-section py-16 md:py-24 bg-white scroll-mt-12 text-left">
+    <section id="parceiros" className="home-section py-12 md:py-16 bg-[#0B0F14] scroll-mt-12 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Main Grid Wrapper */}
@@ -217,7 +217,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
               Você atende empresas e quer oferecer uma estrutura financeira mais completa?
             </h2>
 
-            <p className="text-gray-200 text-sm md:text-base leading-relaxed max-w-3xl">
+            <p className="text-zinc-300 text-sm md:text-base leading-relaxed max-w-3xl">
               Indique clientes empresariais para nosso atendimento consultivo estratégico e garanta comissões atrativas sobre o montante aprovado. Acompanhe o progresso de cada proposta e os ganhos no nosso portal de parceiro. Sem taxas para fazer parte da rede.
             </p>
 
@@ -227,7 +227,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                 <Laptop className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" strokeWidth={2} />
                 <div>
                   <h4 className="font-semibold text-xs text-white">Painel Exclusivo</h4>
-                  <p className="text-[10px] text-gray-300">Acompanhe leads captados e status em tempo real.</p>
+                  <p className="text-[10px] text-zinc-400">Acompanhe leads captados e status em tempo real.</p>
                 </div>
               </div>
 
@@ -235,7 +235,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                 <Coins className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" strokeWidth={2} />
                 <div>
                   <h4 className="font-semibold text-xs text-white">Comissionamento</h4>
-                  <p className="text-[10px] text-gray-300">Remuneração agressiva sobre contratos liberados.</p>
+                  <p className="text-[10px] text-zinc-400">Remuneração agressiva sobre contratos liberados.</p>
                 </div>
               </div>
 
@@ -243,7 +243,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                 <UserCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" strokeWidth={2} />
                 <div>
                   <h4 className="font-semibold text-xs text-white">Suporte Técnico</h4>
-                  <p className="text-[10px] text-gray-300">Orientação completa de nossa mesa regulatória.</p>
+                  <p className="text-[10px] text-zinc-400">Orientação completa de nossa mesa regulatória.</p>
                 </div>
               </div>
             </div>

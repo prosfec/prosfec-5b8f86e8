@@ -39,7 +39,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
   };
 
   return (
-    <footer className="bg-brand-primary text-gray-300 pt-16 pb-24 md:pb-12 border-t border-emerald-950 text-left">
+    <footer className="bg-[#0B0F14] text-zinc-400 pt-12 pb-24 md:pb-12 border-t border-white/10 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Core footer layout */}
