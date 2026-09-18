@@ -45,7 +45,7 @@ export default function MomentoEmpresa({ onSimulateClick, whatsappUrl }: Momento
   ];
 
   return (
-    <section id="momento" className="home-section py-12 md:py-16 bg-white/[0.02] scroll-mt-16 text-left">
+    <section id="momento" className="home-section py-12 md:py-16 bg-[#0B0F14] scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mb-8 space-y-4">
           <h2 className="home-heading font-display font-bold text-3xl md:text-4xl leading-tight">

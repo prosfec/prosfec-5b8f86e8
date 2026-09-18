@@ -73,7 +73,7 @@ export default function FAQ() {
             return (
               <div
                 key={idx}
-                className="home-card bg-white/[0.02] rounded-2xl border border-white/10 overflow-hidden"
+                className="border-b border-white/10"
               >
                 <button
                   onClick={() => setExpandedIndex(isExpanded ? null : idx)}
@@ -96,7 +96,7 @@ export default function FAQ() {
                 <div
                   className={`transition-all duration-300 ease-in-out ${
                     isExpanded
-                      ? "max-h-[500px] border-t border-white/10 p-6 bg-white/5"
+                      ? "max-h-[500px] pb-6 px-6"
                       : "max-h-0 overflow-hidden"
                   }`}
                 >
