@@ -1717,3 +1717,47 @@ select option {
   }
 }
 
+
+/* Tema escuro do Simulador na Home.
+   O componente Simulador é compartilhado com as janelas dos painéis internos
+   (tema claro), portanto o tema noturno é aplicado como skin escopado a
+   .home-simulator em vez de reescrever as classes do componente. */
+.home-simulator [class*="bg-white"]:not([class*="bg-white/"]),
+.home-simulator [class*="bg-slate-50"],
+.home-simulator [class*="bg-gray-50"],
+.home-simulator [class*="bg-slate-100"],
+.home-simulator [class*="bg-gray-100"] {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.home-simulator [class*="border-gray-100"],
+.home-simulator [class*="border-gray-200"],
+.home-simulator [class*="border-slate-100"],
+.home-simulator [class*="border-slate-200"] {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.home-simulator [class*="text-gray-900"],
+.home-simulator [class*="text-gray-800"],
+.home-simulator [class*="text-slate-900"],
+.home-simulator [class*="text-brand-primary"] {
+  color: #ffffff;
+}
+
+.home-simulator [class*="text-gray-700"],
+.home-simulator [class*="text-gray-600"],
+.home-simulator [class*="text-gray-500"],
+.home-simulator [class*="text-slate-600"],
+.home-simulator [class*="text-slate-500"] {
+  color: #a1a1aa;
+}
+
+.home-simulator [class*="text-gray-400"],
+.home-simulator [class*="text-gray-300"] {
+  color: #71717a;
+}
+
+.home-simulator [class*="shadow-"] {
+  box-shadow: none;
+}
