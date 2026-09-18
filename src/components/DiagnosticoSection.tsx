@@ -24,7 +24,7 @@ const ITENS = [
 
 export default function DiagnosticoSection({ onSimulateClick }: DiagnosticoSectionProps) {
   return (
-    <section id="diagnostico" className="home-section py-16 md:py-24 bg-slate-50 scroll-mt-16 text-left">
+    <section id="diagnostico" className="home-section py-12 md:py-16 bg-[#0B0F14] scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -33,11 +33,11 @@ export default function DiagnosticoSection({ onSimulateClick }: DiagnosticoSecti
           transition={{ duration: 0.5 }}
           className="home-dark-panel text-white rounded-3xl p-8 md:p-12 relative overflow-hidden"
         >
-          <div className="absolute right-[-100px] top-[-80px] w-96 h-96 rounded-full bg-emerald-500/10 pointer-events-none" />
+          <div className="absolute right-[-100px] top-[-80px] w-96 h-96 rounded-full bg-emerald-500/100/10 pointer-events-none" />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative">
             <div className="lg:col-span-6 space-y-5">
-              <span className="bg-emerald-500/15 text-emerald-300 font-bold text-xs uppercase tracking-widest px-3 py-1.5 rounded-full w-fit inline-block">
+              <span className="bg-emerald-500/100/15 text-emerald-300 font-bold text-xs uppercase tracking-widest px-3 py-1.5 rounded-full w-fit inline-block">
                 Diagnóstico PROSFEC
               </span>
               <h2 className="font-display font-extrabold text-3xl md:text-4xl leading-tight">
@@ -50,7 +50,7 @@ export default function DiagnosticoSection({ onSimulateClick }: DiagnosticoSecti
               <button
                 type="button"
                 onClick={onSimulateClick}
-                className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold px-7 py-3.5 rounded-xl text-sm transition-all inline-flex items-center gap-2 cursor-pointer"
+                className="bg-emerald-500/100 hover:bg-emerald-400 text-zinc-950 font-extrabold px-7 py-3.5 rounded-xl text-sm transition-all inline-flex items-center gap-2 cursor-pointer"
               >
                 Solicitar Diagnóstico
                 <ArrowRight className="w-4 h-4" strokeWidth={2} />

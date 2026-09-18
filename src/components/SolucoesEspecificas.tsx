@@ -48,13 +48,13 @@ const CATEGORIAS = [
 
 export default function SolucoesEspecificas() {
   return (
-    <section id="solucoes-especificas" className="home-section py-16 md:py-24 bg-white scroll-mt-16 text-left">
+    <section id="solucoes-especificas" className="home-section py-12 md:py-16 bg-white/[0.02] scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mb-12 space-y-4">
+        <div className="max-w-3xl mb-8 space-y-4">
           <h2 className="home-heading font-display font-bold text-3xl md:text-4xl leading-tight">
             Soluções específicas dentro de uma mesma estrutura
           </h2>
-          <p className="text-gray-600 text-base leading-relaxed">
+          <p className="text-zinc-400 text-base leading-relaxed">
             Todos os serviços fazem parte de um único método de trabalho da PROSFEC, aplicado conforme
             a necessidade e o momento da empresa.
           </p>
@@ -70,20 +70,20 @@ export default function SolucoesEspecificas() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.4, delay: idx * 0.08 }}
-                className="home-card bg-white border border-slate-200/60 rounded-2xl p-7"
+                className="home-card bg-white/[0.02] border border-white/10 rounded-2xl p-7"
               >
-                <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-50">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 pb-4 mb-4 border-b border-white/10">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
                     <Icon className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-display font-bold text-lg text-brand-primary leading-snug">
+                  <h3 className="font-display font-bold text-lg text-white leading-snug">
                     {cat.title}
                   </h3>
                 </div>
                 <ul className="space-y-2.5">
                   {cat.items.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-gray-600 leading-snug">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                    <li key={item} className="flex items-start gap-2 text-sm text-zinc-400 leading-snug">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/100 mt-1.5 shrink-0" />
                       {item}
                     </li>
                   ))}

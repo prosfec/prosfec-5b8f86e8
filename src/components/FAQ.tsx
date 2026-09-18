@@ -50,7 +50,7 @@ export default function FAQ() {
   ];
 
   return (
-    <section id="faq" className="home-section py-16 md:py-24 bg-slate-50 scroll-mt-12 text-left">
+    <section id="faq" className="home-section py-12 md:py-16 bg-[#0B0F14] scroll-mt-12 text-left">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         
         {/* Header */}
@@ -61,7 +61,7 @@ export default function FAQ() {
           <h2 className="home-heading font-display font-bold text-3xl md:text-4xl">
             Perguntas frequentes sobre a PROSFEC
           </h2>
-          <p className="text-gray-500 text-sm md:text-base">
+          <p className="text-zinc-400 text-sm md:text-base">
             Entenda como atuamos, o que o diagnóstico revela e como funciona a contratação.
           </p>
         </div>
@@ -73,22 +73,22 @@ export default function FAQ() {
             return (
               <div
                 key={idx}
-                className="home-card bg-white rounded-2xl border border-slate-200/60 overflow-hidden"
+                className="home-card bg-white/[0.02] rounded-2xl border border-white/10 overflow-hidden"
               >
                 <button
                   onClick={() => setExpandedIndex(isExpanded ? null : idx)}
-                  className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-gray-50/50 transition-colors gap-4 cursor-pointer"
+                  className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors gap-4 cursor-pointer"
                 >
                   <div className="flex items-start gap-3">
-                    <HelpCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="font-display font-bold text-sm md:text-base text-brand-primary">
+                    <HelpCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                    <span className="font-display font-bold text-sm md:text-base text-white">
                       {faq.q}
                     </span>
                   </div>
                   {isExpanded ? (
                     <ChevronUp className="w-5 h-5 text-brand-accent shrink-0" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />
+                    <ChevronDown className="w-5 h-5 text-zinc-500 shrink-0" />
                   )}
                 </button>
 
@@ -96,11 +96,11 @@ export default function FAQ() {
                 <div
                   className={`transition-all duration-300 ease-in-out ${
                     isExpanded
-                      ? "max-h-[500px] border-t border-gray-50 p-6 bg-gray-50/30"
+                      ? "max-h-[500px] border-t border-white/10 p-6 bg-white/5"
                       : "max-h-0 overflow-hidden"
                   }`}
                 >
-                  <p className="text-xs md:text-sm text-gray-600 leading-relaxed font-medium">
+                  <p className="text-xs md:text-sm text-zinc-400 leading-relaxed font-medium">
                     {faq.a}
                   </p>
                 </div>

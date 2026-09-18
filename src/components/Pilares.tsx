@@ -58,14 +58,14 @@ const PILARES = [
 
 export default function Pilares() {
   return (
-    <section id="solucoes" className="home-section py-16 md:py-24 bg-slate-50 scroll-mt-16 text-left">
+    <section id="solucoes" className="home-section py-12 md:py-16 bg-[#0B0F14] scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.5 }}
-          className="max-w-3xl mb-12 space-y-4"
+          className="max-w-3xl mb-8 space-y-4"
         >
           <div className="home-kicker inline-flex items-center gap-1.5 text-xs font-bold uppercase">
             Nossas soluções
@@ -73,7 +73,7 @@ export default function Pilares() {
           <h2 className="home-heading font-display font-bold text-3xl md:text-4xl leading-tight">
             Como podemos ajudar sua empresa?
           </h2>
-          <p className="text-gray-600 text-base leading-relaxed">
+          <p className="text-zinc-400 text-base leading-relaxed">
             Cada empresa está em um momento diferente. Por isso, a estratégia financeira e creditícia
             precisa partir da realidade do negócio.
           </p>
@@ -89,20 +89,20 @@ export default function Pilares() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.45, delay: idx * 0.07 }}
-                className={`home-card bg-white border border-slate-200/60 rounded-2xl p-7 flex flex-col gap-4 ${idx === 0 || idx === 3 ? "md:col-span-4" : "md:col-span-2"}`}
+                className={`home-card bg-white/[0.02] border border-white/10 rounded-2xl p-7 flex flex-col gap-4 ${idx === 0 || idx === 3 ? "md:col-span-4" : "md:col-span-2"}`}
               >
-                <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
                   <Icon className="w-5 h-5" strokeWidth={2} />
                 </div>
-                <h3 className="font-display font-bold text-xl text-brand-primary leading-snug">
+                <h3 className="font-display font-bold text-xl text-white leading-snug">
                   {pilar.title}
                 </h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{pilar.desc}</p>
+                <p className="text-sm text-zinc-400 leading-relaxed">{pilar.desc}</p>
                 <ul className="flex flex-wrap gap-2 pt-1">
                   {pilar.items.map((item) => (
                     <li
                       key={item}
-                      className="text-[11px] font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-md px-2.5 py-1"
+                      className="text-[11px] font-semibold text-zinc-400 bg-white/5 border border-white/10 rounded-md px-2.5 py-1"
                     >
                       {item}
                     </li>

@@ -15,64 +15,64 @@ export default function Seguranca() {
       title: "Criptografia de Ponta a Ponta",
       desc: "Todas as informações enviadas são protegidas por protocolos SSL/TLS de 256 bits, o mesmo padrão de segurança utilizado pelas principais instituições financeiras.",
       icon: Lock,
-      iconColor: "text-emerald-600 bg-emerald-50 border-emerald-100",
+      iconColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
     },
     {
       id: "lgpd-compliance",
       title: "Conformidade com a LGPD",
       desc: "Respeitamos integralmente a Lei Geral de Proteção de Dados (Lei nº 13.709). Seus dados são confidenciais e utilizados exclusivamente para calcular sua estimativa de limite.",
       icon: ShieldCheck,
-      iconColor: "text-teal-600 bg-teal-50 border-teal-100",
+      iconColor: "text-teal-400 bg-teal-500/10 border-teal-500/20",
     },
     {
       id: "bank-servers",
       title: "Hospedagem em Nuvem Segura",
       desc: "Nossa infraestrutura é monitorada 24/7 em servidores de alta segurança, com proteção ativa contra ameaças digitais e backup contínuo.",
       icon: Database,
-      iconColor: "text-blue-600 bg-blue-50 border-blue-100",
+      iconColor: "text-blue-400 bg-blue-500/10 border-blue-500/20",
     },
     {
       id: "consultative-only",
       title: "Sem Dados Sensíveis de Acesso",
       desc: "A PROSFEC realiza uma simulação puramente consultiva. Nunca solicitamos senhas bancárias, chaves de acesso ou tokens de movimentação financeira.",
       icon: ShieldAlert,
-      iconColor: "text-amber-600 bg-amber-50 border-amber-100",
+      iconColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
     },
   ];
 
   return (
-    <section id="seguranca-e-confiabilidade" className="home-section py-16 md:py-20 bg-slate-50 border-b border-slate-200/60">
+    <section id="seguranca-e-confiabilidade" className="home-section py-12 md:py-16 bg-[#0B0F14] border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Block */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div className="space-y-2 text-left max-w-2xl">
             <div className="home-kicker inline-flex items-center gap-1.5 text-xs font-bold uppercase">
-              <Lock className="w-4 h-4 text-emerald-600" strokeWidth={2} />
+              <Lock className="w-4 h-4 text-emerald-400" strokeWidth={2} />
               Proteção Garantida
             </div>
             <h2 className="home-heading font-display font-bold text-3xl md:text-4xl">
               Segurança e Confiabilidade de Dados
             </h2>
-            <p className="text-gray-500 text-sm md:text-base leading-relaxed">
+            <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
               Priorizamos a privacidade e a proteção de suas informações corporativas do início ao fim da simulação do Pronampe.
             </p>
           </div>
 
           {/* Mini-Stat Box */}
-          <div className="flex items-center gap-3 bg-white px-5 py-3.5 rounded-2xl border border-slate-200/60 shrink-0 self-start md:self-auto">
+          <div className="flex items-center gap-3 bg-white/[0.02] px-5 py-3.5 rounded-2xl border border-white/10 shrink-0 self-start md:self-auto">
             <div className="bg-brand-primary text-brand-accent p-2 rounded-xl">
               <ShieldCheck className="w-5 h-5" strokeWidth={2} />
             </div>
             <div className="text-left">
-              <p className="text-xs text-gray-400 font-medium">Ambiente em conformidade</p>
-              <p className="text-sm font-bold text-brand-primary">Regulação Banco Central</p>
+              <p className="text-xs text-zinc-500 font-medium">Ambiente em conformidade</p>
+              <p className="text-sm font-bold text-white">Regulação Banco Central</p>
             </div>
           </div>
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           {safetyFeatures.map((feat, idx) => {
             const Icon = feat.icon;
             return (
@@ -82,16 +82,16 @@ export default function Seguranca() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.4, delay: idx * 0.05 }}
-                className="home-card bg-white p-6 rounded-2xl border border-slate-200/60 text-left flex flex-col justify-between"
+                className="home-card bg-white/[0.02] p-6 rounded-2xl border border-white/10 text-left flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className={`p-2.5 rounded-xl border inline-block ${feat.iconColor}`}>
                     <Icon className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-bold text-base text-brand-primary leading-snug">
+                  <h3 className="font-bold text-base text-white leading-snug">
                     {feat.title}
                   </h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">
+                  <p className="text-xs text-zinc-400 leading-relaxed">
                     {feat.desc}
                   </p>
                 </div>

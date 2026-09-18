@@ -14,7 +14,7 @@ interface CTAFinalProps {
 
 export default function CTAFinal({ onSimulateClick, whatsappUrl }: CTAFinalProps) {
   return (
-    <section className="home-section py-16 md:py-24 bg-slate-50">
+    <section className="home-section py-12 md:py-16 bg-[#0B0F14]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -35,7 +35,7 @@ export default function CTAFinal({ onSimulateClick, whatsappUrl }: CTAFinalProps
             <button
               type="button"
               onClick={onSimulateClick}
-              className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold px-8 py-4 rounded-xl text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
+              className="bg-emerald-500/100 hover:bg-emerald-400 text-zinc-950 font-extrabold px-8 py-4 rounded-xl text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
             >
               Quero analisar minha empresa
               <ArrowRight className="w-4 h-4" strokeWidth={2} />

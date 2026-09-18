@@ -42,23 +42,23 @@ export default function ComoFunciona() {
   ];
 
   return (
-    <section id="como-funciona" className="home-section py-16 md:py-24 bg-white scroll-mt-16 text-left">
+    <section id="como-funciona" className="home-section py-12 md:py-16 bg-white/[0.02] scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mb-14 space-y-4">
+        <div className="max-w-3xl mb-8 space-y-4">
           <div className="home-kicker inline-flex items-center gap-1.5 text-xs font-bold uppercase">
             Jornada consultiva
           </div>
           <h2 className="home-heading font-display font-bold text-3xl md:text-4xl leading-tight">
             Como a PROSFEC atua
           </h2>
-          <p className="text-gray-600 text-base leading-relaxed">
+          <p className="text-zinc-400 text-base leading-relaxed">
             Um método estruturado, do entendimento da realidade da empresa até o acompanhamento
             contínuo da estratégia.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5 relative">
-          <div className="hidden lg:block absolute top-[38px] left-[10%] right-[10%] h-0.5 bg-gray-200 -z-10" />
+          <div className="hidden lg:block absolute top-[38px] left-[10%] right-[10%] h-0.5 bg-white/10 -z-10" />
 
           {steps.map((step, index) => {
             const Icon = step.icon;
@@ -69,16 +69,16 @@ export default function ComoFunciona() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.4, delay: index * 0.08 }}
-                className="home-card bg-white rounded-2xl border border-slate-200/60 p-6 space-y-3"
+                className="home-card bg-white/[0.02] rounded-2xl border border-white/10 p-6 space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-full border-2 border-emerald-500 text-emerald-700 bg-emerald-50 flex items-center justify-center font-display font-extrabold text-base shrink-0">
+                  <div className="w-12 h-12 rounded-full border-2 border-emerald-500 text-emerald-400 bg-emerald-500/10 flex items-center justify-center font-display font-extrabold text-base shrink-0">
                     {step.num}
                   </div>
-                  <Icon className="w-5 h-5 text-gray-300" strokeWidth={2} />
+                  <Icon className="w-5 h-5 text-zinc-600" strokeWidth={2} />
                 </div>
-                <h3 className="font-display font-bold text-lg text-brand-primary">{step.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{step.desc}</p>
+                <h3 className="font-display font-bold text-lg text-white">{step.title}</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">{step.desc}</p>
               </motion.div>
             );
           })}
