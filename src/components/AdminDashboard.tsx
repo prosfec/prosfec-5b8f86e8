@@ -7003,7 +7003,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               <button
                 type="button"
                 onClick={handleConfirmAssignMaster}
-                disabled={!selectedMasterPartnerId || isAssigningMaster || masterPartners.length === 0}
+                disabled={!selectedMasterPartnerId || isAssigningMaster || parceirosDiretos.length === 0}
                 className="px-5 py-2 text-xs font-extrabold text-white bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
               >
                 {isAssigningMaster ? (
