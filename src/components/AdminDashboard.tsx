@@ -6013,16 +6013,45 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             )}
                           </div>
 
-                          <button
-                            onClick={() => handleUpdateComissaoPaga(selectedLead.id, !selectedLead.comissaoPaga)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:shadow-md cursor-pointer ${
-                              selectedLead.comissaoPaga
-                                ? "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-                                : "bg-[#0A3D2E] hover:bg-[#00A86B] text-white"
-                            }`}
-                          >
-                            {selectedLead.comissaoPaga ? "Marcar Pendente" : "Marcar Pago"}
-                          </button>
+                          {(() => {
+                            const creditoRecusado = selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado";
+                            const liberado = Number(selectedLead.valorAprovado || 0) > 0 && !creditoRecusado;
+                            const processando = savingComissaoId === selectedLead.id;
+                            return (
+                              <button
+                                disabled={!liberado || processando}
+                                title={
+                                  !liberado
+                                    ? "Preencha o Crédito Real Aprovado para liberar a baixa da comissão."
+                                    : selectedLead.comissaoPaga
+                                      ? "Estornar a baixa da comissão deste lead"
+                                      : "Confirmar a baixa da comissão deste lead"
+                                }
+                                onClick={() => handleUpdateComissaoPaga(selectedLead.id, !selectedLead.comissaoPaga, {
+                                  valor: directCommissionValue,
+                                  parceiroNome: partnerObj?.nome || selectedLead.parceiroNome || ""
+                                })}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                  !liberado || processando
+                                    ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                                    : selectedLead.comissaoPaga
+                                      ? "bg-white text-rose-700 hover:bg-rose-50 border border-rose-200 hover:shadow-md cursor-pointer"
+                                      : "bg-[#0A3D2E] hover:bg-[#00A86B] text-white hover:shadow-md cursor-pointer"
+                                }`}
+                              >
+                                {processando
+                                  ? "Processando..."
+                                  : selectedLead.comissaoPaga
+                                    ? "Estornar Comissão"
+                                    : "Marcar Comissão Paga"}
+                              </button>
+                            );
+                          })()}
+                          {!(Number(selectedLead.valorAprovado || 0) > 0 && selectedLead.status !== "recusado" && selectedLead.resultadoAnaliseCredito !== "recusado") && (
+                            <span className="w-full text-[11px] font-medium text-amber-700">
+                              Preencha o Crédito Real Aprovado para liberar a baixa da comissão.
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
