@@ -5106,43 +5106,47 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     }
 
                     const directMultiplier = getDirectCommissionMultiplier(currentPartner?.plano);
-                    
-                    // Direct commission stats (Calculated both from servicoPago/comissaoPaga and comissaoMultinivel snapshot)
+
+                    // Base exclusiva: Crédito Real Aprovado informado pelo ADM (nunca o limite estimado)
+                    const isCreditoRecusadoLead = (l: any) => l.status === "recusado" || l.resultadoAnaliseCredito === "recusado";
+                    const creditoAprovadoLead = (l: any) => (isCreditoRecusadoLead(l) ? 0 : Number(l.valorAprovado || 0));
+                    const isElegivelComissao = (l: any) => creditoAprovadoLead(l) > 0;
+
                     const directCommissionsPaid = leads
-                      .filter(l => l.comissaoPaga === true || l.servicoPago === true || l.comissaoMultinivel?.statusGeral === "pago")
+                      .filter(l => isElegivelComissao(l) && l.comissaoPaga === true)
                       .reduce((acc, l) => {
                         if (l.comissaoMultinivel?.valorComissaoDireta) {
                           return acc + (l.comissaoMultinivel.valorComissaoDireta || 0);
                         }
-                        return acc + ((l.valorAprovado || l.limiteEstimado || 0) * directMultiplier);
+                        return acc + (creditoAprovadoLead(l) * directMultiplier);
                       }, 0);
-                      
+
                     const directCommissionsPending = leads
-                      .filter(l => l.comissaoPaga !== true && l.servicoPago !== true && l.comissaoMultinivel?.statusGeral !== "pago" && (l.etapa === 7 || l.status === "concluido" || l.servicosRecomendados?.length > 0 || (l.subEtapasPasso6 && l.subEtapasPasso6.length > 0)))
+                      .filter(l => isElegivelComissao(l) && l.comissaoPaga !== true)
                       .reduce((acc, l) => {
                         if (l.comissaoMultinivel?.valorComissaoDireta) {
                           return acc + (l.comissaoMultinivel.valorComissaoDireta || 0);
                         }
-                        return acc + ((l.valorAprovado || l.limiteEstimado || 0) * directMultiplier);
+                        return acc + (creditoAprovadoLead(l) * directMultiplier);
                       }, 0);
 
                     // Team commission stats (Franquia Digital override on team leads based on team member plans)
                     const teamCommissionsPaid = teamLeads
-                      .filter(l => l.comissaoPaga === true || l.servicoPago === true || l.comissaoMultinivel?.statusGeral === "pago")
+                      .filter(l => isElegivelComissao(l) && l.comissaoPaga === true)
                       .reduce((acc, l) => {
                         if (l.comissaoMultinivel?.valorComissaoEquipe) {
                           return acc + (l.comissaoMultinivel.valorComissaoEquipe || 0);
                         }
-                        return acc + ((l.valorAprovado || l.limiteEstimado || 0) * getOverrideMultiplierForLead(l));
+                        return acc + (creditoAprovadoLead(l) * getOverrideMultiplierForLead(l));
                       }, 0);
-                      
+
                     const teamCommissionsPending = teamLeads
-                      .filter(l => l.comissaoPaga !== true && l.servicoPago !== true && l.comissaoMultinivel?.statusGeral !== "pago" && (l.etapa === 7 || l.status === "concluido" || l.servicosRecomendados?.length > 0 || (l.subEtapasPasso6 && l.subEtapasPasso6.length > 0)))
+                      .filter(l => isElegivelComissao(l) && l.comissaoPaga !== true)
                       .reduce((acc, l) => {
                         if (l.comissaoMultinivel?.valorComissaoEquipe) {
                           return acc + (l.comissaoMultinivel.valorComissaoEquipe || 0);
                         }
-                        return acc + ((l.valorAprovado || l.limiteEstimado || 0) * getOverrideMultiplierForLead(l));
+                        return acc + (creditoAprovadoLead(l) * getOverrideMultiplierForLead(l));
                       }, 0);
 
                     // Totalized stats
