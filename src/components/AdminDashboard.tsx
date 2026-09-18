@@ -6019,11 +6019,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </span>
                         </div>
 
-                        <div className="flex justify-between items-center border-t border-slate-200 pt-3">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Repasse ({(commissionMultiplier * 100).toFixed(1)}%)</span>
-                          <span className="text-sm font-bold text-[#0A3D2E] font-display">
-                            {formatCurrencyBRL(directCommissionValue)}
-                          </span>
+                        <div className="border-t border-slate-200 pt-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Repasse ({(commissionMultiplier * 100).toFixed(1)}%)</span>
+                            <span className="text-sm font-bold text-[#0A3D2E] font-display">
+                              {formatCurrencyBRL(directCommissionValue)}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-400 block mt-1">Calculado sobre o Crédito Real Aprovado.</span>
                         </div>
 
                         <div className="flex flex-wrap justify-between items-center gap-2 border-t border-slate-200 pt-3">
