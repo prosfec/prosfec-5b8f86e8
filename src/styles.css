@@ -1615,11 +1615,8 @@ select option {
 .home-premium {
   --home-ink: #0b0f14;
   --home-deep: #13242a;
-  --home-canvas: #f8fafc;
   --home-accent: #22c55e;
-  --home-line: rgba(148, 163, 184, 0.24);
-  --home-shadow: 0 24px 60px -36px rgba(15, 23, 42, 0.32);
-  background: var(--home-canvas);
+  background: var(--home-ink);
   font-family: "DM Sans", system-ui, sans-serif;
 }
 
@@ -1636,73 +1633,78 @@ select option {
 }
 
 .home-heading {
-  color: var(--home-ink);
-  letter-spacing: 0;
+  color: #ffffff;
+  letter-spacing: -0.01em;
 }
 
 .home-kicker {
-  color: #059669;
+  color: #34d399;
   letter-spacing: 0.2em;
 }
 
 .home-card {
   box-shadow: none;
   transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 300ms ease, border-color 300ms ease;
+    border-color 300ms ease, background-color 300ms ease;
 }
 
 .home-card:hover {
   transform: translateY(-4px);
   border-color: rgba(34, 197, 94, 0.28);
-  box-shadow: var(--home-shadow);
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 .home-dark-panel {
   background: linear-gradient(145deg, #18181b 0%, var(--home-deep) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 34px 80px -52px rgba(11, 15, 20, 0.9);
 }
 
 .home-diagnostic-panel {
   box-shadow: 0 0 80px -20px rgba(34, 197, 94, 0.3);
 }
 
-.home-premium .home-diagnostic-panel > div:first-child {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.home-premium .home-diagnostic-panel [class*="text-gray-600"],
-.home-premium .home-diagnostic-panel [class*="text-gray-700"] {
+/* Simulador na Home: o mesmo componente também é aberto em janela
+   dentro dos painéis internos (tema claro), por isso o tema escuro
+   fica restrito a este escopo. */
+.home-simulator {
   color: #d4d4d8;
-}
-
-.home-premium .home-diagnostic-panel [class*="text-gray-400"],
-.home-premium .home-diagnostic-panel [class*="text-gray-500"] {
-  color: #a1a1aa;
-}
-
-.home-premium .home-diagnostic-panel [class*="bg-gray-50"],
-.home-premium .home-diagnostic-panel [class*="bg-gray-100"] {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.home-premium .home-diagnostic-panel [class*="text-brand-primary"] {
-  color: #6ee7b7;
 }
 
 .home-simulator input:not([type="checkbox"]):not([type="radio"]),
 .home-simulator select,
 .home-simulator textarea {
-  background-color: #f8fafc;
-  border-color: #e2e8f0;
+  background-color: #0b0f14;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.home-simulator input::placeholder,
+.home-simulator textarea::placeholder {
+  color: #52525b;
 }
 
 .home-simulator input:not([type="checkbox"]):not([type="radio"]):focus,
 .home-simulator select:focus,
 .home-simulator textarea:focus {
   border-color: var(--home-accent);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+
+.home-simulator select option {
+  background-color: #18181b;
+  color: #ffffff;
+}
+
+.home-simulator input:-webkit-autofill,
+.home-simulator input:-webkit-autofill:hover,
+.home-simulator input:-webkit-autofill:focus,
+.home-simulator textarea:-webkit-autofill,
+.home-simulator select:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+  -webkit-box-shadow: 0 0 0 1000px #0b0f14 inset;
+  box-shadow: 0 0 0 1000px #0b0f14 inset;
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1714,3 +1716,4 @@ select option {
     transition-duration: 0.01ms !important;
   }
 }
+
