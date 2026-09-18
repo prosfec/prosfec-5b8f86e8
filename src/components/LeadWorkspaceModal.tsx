@@ -201,6 +201,7 @@ interface Partner {
 interface LeadWorkspaceModalProps {
   lead: Lead;
   currentPartner?: Partner | null;
+  allPartners?: any[];
   onClose: () => void;
   onRefreshLeads?: () => void;
   onLeadUpdated?: (updated: any) => void;
@@ -222,6 +223,7 @@ interface ScheduleRow {
 export default function LeadWorkspaceModal({ 
   lead, 
   currentPartner, 
+  allPartners,
   onClose, 
   onRefreshLeads,
   onLeadUpdated,
