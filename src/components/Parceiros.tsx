@@ -290,7 +290,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                 <h3 className="font-display font-extrabold text-2xl md:text-3xl text-[#0A5438]">
                   Escolha seu nível de atuação
                 </h3>
-                <p className="text-sm text-gray-500 max-w-2xl mx-auto leading-relaxed">
+                <p className="text-sm text-zinc-500 max-w-2xl mx-auto leading-relaxed">
                   Todos os planos incluem treinamento, sistema, suporte comercial e acesso ao ecossistema PROSFEC. Escolha apenas o nível de atuação que melhor se encaixa no seu momento.
                 </p>
               </div>
@@ -299,7 +299,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-stretch pt-2">
                 
                 {/* CARD 1 - STARTER */}
-                <div id="plan-starter-card" className="bg-white rounded-2xl p-6 border border-gray-200/65 shadow-sm flex flex-col justify-between h-full transition-all hover:shadow-md">
+                <div id="plan-starter-card" className="bg-white/[0.02] rounded-2xl p-6 border border-white/10 flex flex-col justify-between h-full transition-all hover:border-emerald-500/30">
                   <div>
                     {/* Tag superior */}
                     <span className="text-[10px] tracking-wider font-extrabold text-[#6B7280] uppercase block mb-2">
@@ -310,7 +310,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                       STARTER
                     </h4>
                     {/* Subtítulo */}
-                    <p className="text-xs text-gray-500 mt-0.5 font-medium">
+                    <p className="text-xs text-zinc-500 mt-0.5 font-medium">
                       Starter &gt; Ideal para iniciar sua atuação
                     </p>
 
@@ -355,31 +355,31 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                             <span>Ferramenta Caça-Leads: Liberada por pacotes de recarga (Bronze, Prata e Ouro — Até 20 resultados por busca totalmente higienizados e dados oficias cadastrais)</span>
                           </div>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Cadastro & Qualificação de Leads:</strong> Ficha cadastral com CNPJ, Faturamento e Sócios</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Simulações PRONAMPE:</strong> Limites estimados e diagnósticos automáticos</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Consultas de Crédito:</strong> Desconto especial em Rating e Diagnóstico</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Link de Afiliado Exclusivo:</strong> Ganhe comissão de 30% indicando novos parceiros</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
@@ -407,7 +407,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                 </div>
 
                 {/* CARD 2 - EXECUTIVE (MAIS VENDIDO) */}
-                <div id="plan-executive-card" className="bg-white rounded-2xl p-6 border-2 border-[#0A5438] shadow-md flex flex-col justify-between h-full transition-all relative lg:scale-[1.03] z-10">
+                <div id="plan-executive-card" className="bg-white/[0.04] rounded-2xl p-6 border-2 border-emerald-500/40 flex flex-col justify-between h-full transition-all relative lg:scale-[1.03] z-10">
                   <div>
                     {/* Tags */}
                     <div className="flex flex-wrap gap-1.5 mb-2">
@@ -424,7 +424,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                       Executive Partner PROSFEC
                     </h4>
                     {/* Subtítulo */}
-                    <p className="text-xs text-gray-500 mt-0.5 font-medium">
+                    <p className="text-xs text-zinc-500 mt-0.5 font-medium">
                       Executive &gt; Para atuar profissionalmente
                     </p>
 
@@ -469,37 +469,37 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                             <span>Ferramenta Caça-Leads: Liberada por pacotes de recarga (Bronze, Prata e Ouro — Até 20 resultados por busca totalmente higienizados e dados oficias cadastrais)</span>
                           </div>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Triplo de Comissão (1,5%):</strong> Ganhe 3x mais do que no plano Starter por operação</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Simulador Comercial Avançado:</strong> Tabela SAC/Price, carência, juros e envio de proposta em PDF/WhatsApp</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Painel de Performance Individual:</strong> Gráficos e relatórios de pipeline em tempo real</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Prioridade na Mesa Operacional:</strong> Analistas de crédito dedicados para acelerar aprovações</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Treinamento 2x por semana:</strong> Mentoria e técnicas de vendas de crédito corporativo</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
@@ -527,7 +527,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                 </div>
 
                 {/* CARD 3 - MASTER PARTNER */}
-                <div id="plan-master-card" className="bg-white rounded-2xl p-6 border border-gray-200/65 shadow-sm flex flex-col justify-between h-full transition-all hover:shadow-md">
+                <div id="plan-master-card" className="bg-white/[0.02] rounded-2xl p-6 border border-white/10 flex flex-col justify-between h-full transition-all hover:border-emerald-500/30">
                   <div>
                     {/* Tag superior */}
                     <span className="bg-amber-100 text-amber-800 font-extrabold text-[9px] uppercase tracking-wider px-2.5 py-1 rounded-full w-fit block mb-3">
@@ -539,7 +539,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                       MASTER PARTNER
                     </h4>
                     {/* Subtítulo */}
-                    <p className="text-xs text-gray-500 mt-0.5 font-medium">
+                    <p className="text-xs text-zinc-500 mt-0.5 font-medium">
                       Master &gt; Para construir sua própria equipe
                     </p>
 
@@ -561,7 +561,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                     </p>
 
                     {/* Texto */}
-                    <p className="text-sm font-semibold text-gray-700">
+                    <p className="text-sm font-semibold text-zinc-300">
                       R$ 6.000,00 por contrato de R$ 200 mil + Override
                     </p>
                     {/* Texto pequeno itálico */}
@@ -584,37 +584,37 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                             <span>Ferramenta Caça-Leads: Liberada por pacotes de recarga (Bronze, Prata e Ouro — Até 20 resultados por busca totalmente higienizados e dados oficias cadastrais)</span>
                           </div>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Gestão de Equipe (Franquia Digital):</strong> Cadastre consultores e vendedores vinculados à sua rede</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Distribuição de Leads em Lote:</strong> Transfira e atribua empresas captadas diretamente para seu time</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Ganha Override de Comissão:</strong> Receba participação sobre a produção de todos os seus consultores</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Consultores Sem Custo Adicional:</strong> Sua equipe usa o ecossistema sem taxa extra</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Suporte & Mentoria da Mesa VIP:</strong> Treinamento de equipe e suporte em operações estruturadas</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-gray-700 leading-snug">
+                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
