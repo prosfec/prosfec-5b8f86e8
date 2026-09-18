@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { 
   formatCurrencyBRL, 
@@ -382,19 +382,20 @@ export default function LeadRegisterForm({
         certificadoFileBase64
       };
 
-      // Calculate multilevel commission snapshot based on partner hierarchy
+      // Calculate multilevel commission snapshot based on partner hierarchy.
+      // O plano do parceiro superior é lido do cadastro real — nunca presumido como Master.
       const masterVinculadoId = (currentPartner as any)?.parentPartnerId;
+      let masterDocData: any = null;
+      if (currentPartner && masterVinculadoId) {
+        try {
+          const masterSnap = await getDoc(doc(db, "parceiros", String(masterVinculadoId)));
+          if (masterSnap.exists()) masterDocData = { id: masterSnap.id, ...masterSnap.data() };
+        } catch (err) {
+          console.warn("Não foi possível ler o parceiro superior para o cálculo de comissão:", err);
+        }
+      }
       const hierarchyPartners: any[] = currentPartner
-        ? [
-            currentPartner,
-            ...(masterVinculadoId
-              ? [{
-                  id: masterVinculadoId,
-                  nome: (currentPartner as any).parentPartnerNome || "Master Partner PROSFEC",
-                  plano: "Franquia Digital PROSFEC"
-                }]
-              : [])
-          ]
+        ? [currentPartner, ...(masterDocData ? [masterDocData] : [])]
         : [];
 
       const commissionPayload = buildLeadMultilevelFirestorePayload(

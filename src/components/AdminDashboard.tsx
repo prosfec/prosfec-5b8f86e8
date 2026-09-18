@@ -7027,6 +7027,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       {workspaceLead && (
         <LeadWorkspaceModal
           lead={workspaceLead}
+          allPartners={partners}
           isAdmin={true}
           onClose={() => { setWorkspaceLead(null); loadPendingReports(); }}
           onRefreshLeads={async () => {
