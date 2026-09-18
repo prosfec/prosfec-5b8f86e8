@@ -1672,7 +1672,10 @@ select option {
 
 .home-simulator input:not([type="checkbox"]):not([type="radio"]),
 .home-simulator select,
-.home-simulator textarea {
+.home-simulator textarea,
+.home-simulator input:not([type="checkbox"]):not([type="radio"])[class],
+.home-simulator select[class],
+.home-simulator textarea[class] {
   background-color: #0b0f14;
   border-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
@@ -1681,6 +1684,24 @@ select option {
 .home-simulator input::placeholder,
 .home-simulator textarea::placeholder {
   color: #52525b;
+}
+
+/* Exceção ao contraste global (input.bg-slate-50 com !important escuro):
+   dentro do simulador da Home os campos são escuros, então o texto é claro. */
+.home-simulator input:not([type="checkbox"]):not([type="radio"]),
+.home-simulator select,
+.home-simulator textarea {
+  color: #ffffff !important;
+}
+
+.home-simulator input[class*="text-emerald-800"],
+.home-simulator input[class*="text-emerald-700"] {
+  color: #6ee7b7 !important;
+}
+
+.home-simulator select option {
+  color: #ffffff !important;
+  background-color: #18181b !important;
 }
 
 .home-simulator input:not([type="checkbox"]):not([type="radio"]):focus,
@@ -1741,8 +1762,15 @@ select option {
 .home-simulator [class*="text-gray-900"],
 .home-simulator [class*="text-gray-800"],
 .home-simulator [class*="text-slate-900"],
+.home-simulator [class*="text-slate-800"],
+.home-simulator [class*="text-slate-700"],
 .home-simulator [class*="text-brand-primary"] {
   color: #ffffff;
+}
+
+.home-simulator input[class*="text-emerald-800"],
+.home-simulator input[class*="text-emerald-700"] {
+  color: #6ee7b7;
 }
 
 .home-simulator [class*="text-gray-700"],
