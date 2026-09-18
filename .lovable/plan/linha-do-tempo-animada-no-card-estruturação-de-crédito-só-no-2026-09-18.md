@@ -23,7 +23,11 @@ Os 4 passos exibidos (os mesmos textos que já existem):
 - Pontos: anel escuro com borda translúcida; aceso com verde e leve brilho.
 - Linha de base translúcida clara; linha de progresso verde por cima.
 - Títulos abaixo de cada ponto em maiúsculas pequenas, centralizados.
-- Card mantém o mesmo fundo, borda e altura; os outros cards da grade continuam alinhados.
+- Card mantém o mesmo fundo, borda e altura; os outros cards da grade continuam alinhados.  
+  
+*Plano 100% aprovado! A arquitetura da animação usando* `framer-motion` *(*`whileInView` *com* `once: true`*) e o escalonamento via* `delay` *foi uma decisão arquitetural brilhante. Vai manter a página leve e criar o efeito Premium exato que buscamos.*
+  *Apenas um refinamento de UI durante a execução: Como a timeline horizontal será distribuída no Desktop, certifique-se de usar* `flex justify-between` *para os nós e aplicar* `text-center w-[120px]` *(ou similar) nos rótulos textuais abaixo de cada ponto. Isso evita que os textos longos (ex: 'Preparação para solicitação') colidam uns com os outros em telas de notebooks menores (breakpoints próximos a 1024px).*
+  *Pode mandar bala no build!*
 
 ## Detalhes técnicos
 
