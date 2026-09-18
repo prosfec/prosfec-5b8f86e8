@@ -5993,6 +5993,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 </div>
               </div>
 
+            </div>
+
              {/* Modal Actions Footer */}
             <div className="border-t border-slate-200 p-4 bg-white flex flex-wrap gap-2.5 justify-end shrink-0">
               <button 
