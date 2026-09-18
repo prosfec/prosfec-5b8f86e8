@@ -56,61 +56,109 @@ const PILARES = [
   },
 ];
 
-const TIMELINE_STEPS = [
-  "Diagnóstico de crédito",
-  "Identificação de linhas",
-  "Estruturação de propostas",
-  "Preparação para solicitação",
+const CURVE_PATH = "M 60 150 C 180 150, 220 60, 330 60 S 520 120, 640 120 S 860 40, 940 40";
+
+const TIMELINE_NODES = [
+  { x: 60, y: 150, lines: ["Diagnóstico", "de crédito"], below: false },
+  { x: 330, y: 60, lines: ["Identificação", "de linhas"], below: true },
+  { x: 640, y: 120, lines: ["Estruturação", "de propostas"], below: false },
+  { x: 940, y: 40, lines: ["Preparação para", "solicitação"], below: true },
 ];
 
 function CreditTimeline() {
   return (
-    <motion.div
-      initial="rest"
-      whileInView="active"
-      viewport={{ once: true, margin: "-80px" }}
-      className="hidden lg:block mt-auto pt-8 pb-2"
-    >
-      <div className="relative">
-        {/* trilha e progresso */}
-        <div className="absolute left-0 right-0 top-2 h-px bg-white/5" />
-        <motion.div
-          className="absolute left-0 top-2 h-px bg-emerald-500"
-          variants={{ rest: { width: "0%" }, active: { width: "100%" } }}
-          transition={{ duration: 1.2, ease: "easeInOut" }}
+    <div className="hidden lg:flex flex-1 items-center w-full pt-4">
+      <motion.svg
+        viewBox="0 0 1000 200"
+        preserveAspectRatio="xMidYMid meet"
+        className="w-full h-auto overflow-visible"
+        initial="rest"
+        whileInView="active"
+        viewport={{ once: true, margin: "-80px" }}
+      >
+        <defs>
+          <filter id="pilar-node-glow" x="-200%" y="-200%" width="500%" height="500%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* trilha base */}
+        <path
+          d={CURVE_PATH}
+          fill="none"
+          stroke="rgba(255,255,255,0.10)"
+          strokeWidth={2}
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
         />
 
-        <div className="relative flex justify-between">
-          {TIMELINE_STEPS.map((step, i) => (
-            <div
-              key={step}
-              className="flex flex-col items-center text-center w-[120px] xl:w-[140px]"
-            >
-              <motion.div
-                className="w-4 h-4 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center"
-                variants={{ rest: {}, active: {} }}
-              >
-                <motion.span
-                  className="block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]"
-                  variants={{ rest: { opacity: 0, scale: 0.4 }, active: { opacity: 1, scale: 1 } }}
-                  transition={{ duration: 0.35, delay: 0.15 + i * 0.3 }}
-                />
-              </motion.div>
-              <motion.span
-                className="mt-3 text-[10px] uppercase font-bold tracking-wider leading-tight"
+        {/* progresso verde */}
+        <motion.path
+          d={CURVE_PATH}
+          fill="none"
+          stroke="#10b981"
+          strokeWidth={2}
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+          variants={{ rest: { pathLength: 0 }, active: { pathLength: 1 } }}
+          transition={{ duration: 1.8, ease: "easeInOut" }}
+        />
+
+        {TIMELINE_NODES.map((node, i) => {
+          const delay = 0.2 + i * 0.5;
+          const labelY = node.below ? node.y + 30 : node.y - 34;
+          return (
+            <g key={node.lines.join(" ")}>
+              <circle
+                cx={node.x}
+                cy={node.y}
+                r={9}
+                fill="#18181b"
+                stroke="rgba(255,255,255,0.10)"
+                strokeWidth={1}
+                vectorEffect="non-scaling-stroke"
+              />
+              <motion.circle
+                cx={node.x}
+                cy={node.y}
+                r={4}
+                fill="#10b981"
+                filter="url(#pilar-node-glow)"
                 variants={{
-                  rest: { color: "rgb(113 113 122)", opacity: 0.6 },
-                  active: { color: "rgb(255 255 255)", opacity: 1 },
+                  rest: { opacity: 0, scale: 0.4 },
+                  active: { opacity: 1, scale: 1 },
                 }}
-                transition={{ duration: 0.35, delay: 0.15 + i * 0.3 }}
+                style={{ transformOrigin: `${node.x}px ${node.y}px` }}
+                transition={{ duration: 0.35, delay }}
+              />
+              <motion.text
+                x={node.x}
+                y={labelY}
+                textAnchor="middle"
+                fontSize={11}
+                fontWeight={700}
+                letterSpacing={1.2}
+                variants={{
+                  rest: { fill: "#71717A", opacity: 0.7 },
+                  active: { fill: "#FFFFFF", opacity: 1 },
+                }}
+                transition={{ duration: 0.35, delay }}
               >
-                {step}
-              </motion.span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
+                {node.lines.map((line, li) => (
+                  <tspan key={line} x={node.x} dy={li === 0 ? 0 : 14}>
+                    {line.toUpperCase()}
+                  </tspan>
+                ))}
+              </motion.text>
+            </g>
+          );
+        })}
+      </motion.svg>
+    </div>
   );
 }
 
