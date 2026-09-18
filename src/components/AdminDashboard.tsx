@@ -511,6 +511,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   // Passo 6 Sub-etapas & Servicos Recomendados State
   const [editingSubEtapasPasso6, setEditingSubEtapasPasso6] = useState<{ id: string; titulo: string; concluida: boolean }[]>([]);
   const [savingSubEtapas, setSavingSubEtapas] = useState(false);
+  const [savingComissaoId, setSavingComissaoId] = useState<string | null>(null);
   const [editingServicosRecomendados, setEditingServicosRecomendados] = useState<any[]>([]);
   const [savingServicos, setSavingServicos] = useState(false);
 
