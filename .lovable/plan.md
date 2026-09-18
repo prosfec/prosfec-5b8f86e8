@@ -28,7 +28,7 @@ Arquivo único: `src/components/Pilares.tsx`, componente `CreditTimeline` (subst
 **Arquitetura: um único sistema de coordenadas.** Linha, nós e rótulos vivem todos dentro do mesmo `<svg>`; nenhuma `<div>` posicionada por `absolute`/percentual. Assim a linha e os pontos escalam juntos em qualquer largura (1024 px ou 1920 px).
 
 - Container: `hidden lg:block mt-auto w-full`.
-- `<svg viewBox="0 0 1000 200" preserveAspectRatio="none" className="w-full h-40 overflow-visible">` — viewBox largo para precisão e para os rótulos das pontas não serem cortados; `overflow-visible` como garantia extra.
+- `<svg viewBox="0 0 1000 200" preserveAspectRatio="xMidYMid meet" className="w-full h-auto overflow-visible">` — viewBox largo para precisão e para os rótulos das pontas não serem cortados; `overflow-visible` como garantia extra.
 - Path único `d = "M 60 150 C 180 150, 220 60, 330 60 S 520 120, 640 120 S 860 40, 940 40"` (coordenadas dos nós: 60/150, 330/60, 640/120, 940/40).
 - Dois `<path>` sobrepostos com o mesmo `d`, ambos `fill="none" strokeWidth={2} strokeLinecap="round" vectorEffect="non-scaling-stroke"`:
   - base `stroke="rgba(255,255,255,0.10)"`;
