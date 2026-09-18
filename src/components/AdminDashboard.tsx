@@ -6003,8 +6003,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   {selectedLead.parceiroId ? (() => {
                     const partnerObj = partners.find(p => p.id === selectedLead.parceiroId);
                     const commissionMultiplier = getCommissionMultiplier(partnerObj?.plano);
-                    const isConcluidoOrAprovado = selectedLead.etapa === 7 || selectedLead.status === "concluido";
-                    const directCommissionValue = (selectedLead.valorAprovado || selectedLead.limiteEstimado || 0) * commissionMultiplier;
+                    const creditoRecusadoLead = selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado";
+                    const creditoBase = creditoRecusadoLead ? 0 : Number(selectedLead.valorAprovado || 0);
+                    const directCommissionValue = creditoBase * commissionMultiplier;
 
                     return (
                       <div className="bg-slate-50 p-4 border border-slate-200 rounded-lg space-y-3 text-left">
