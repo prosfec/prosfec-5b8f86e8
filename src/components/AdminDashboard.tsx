@@ -2908,7 +2908,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
       <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
         {/* Topbar */}
-        <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-line-soft">
+        <header className="soft-topbar sticky top-0 z-30 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-b border-line-soft dark:border-white/10">
           <div className="h-16 px-4 sm:px-6 flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
