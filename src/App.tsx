@@ -593,7 +593,7 @@ export default function App() {
             <h2 className="font-display font-bold text-3xl md:text-4xl text-white leading-tight">
               Comece entendendo o potencial da sua empresa
             </h2>
-            <p className="text-gray-600 text-base leading-relaxed max-w-2xl">
+            <p className="text-zinc-400 text-base leading-relaxed max-w-2xl">
               Faça uma primeira análise e descubra quais caminhos de crédito podem fazer sentido para
               o seu negócio.
             </p>
