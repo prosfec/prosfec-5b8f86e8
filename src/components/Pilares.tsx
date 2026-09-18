@@ -98,7 +98,9 @@ export default function Pilares() {
                   {pilar.title}
                 </h3>
                 <p className="text-sm text-zinc-400 leading-relaxed">{pilar.desc}</p>
-                <ul className="flex flex-wrap gap-2 pt-1">
+                <ul
+                  className={`flex flex-wrap gap-2 pt-1 ${idx === 0 ? "lg:hidden" : ""}`}
+                >
                   {pilar.items.map((item) => (
                     <li
                       key={item}
@@ -108,6 +110,7 @@ export default function Pilares() {
                     </li>
                   ))}
                 </ul>
+                {idx === 0 && <CreditTimeline />}
               </motion.article>
             );
           })}
