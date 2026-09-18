@@ -639,7 +639,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     return pName.includes("FRANQUIA") || pName.includes("DIGITAL") || pName.includes("MASTER") || pName === "PLATINUM";
   };
 
-  const masterPartners = partners.filter(isMasterPartner);
+  const isParceiroDireto = (p: Partner) => {
+    const plano = String(p.plano || "").toUpperCase();
+    if (p.parentPartnerId) return false;
+    if (p.isTeamMember === true) return false;
+    if (plano.includes("CONSULTOR") || plano.includes("EQUIPE")) return false;
+    return true;
+  };
+
+  const parceirosDiretos = partners
+    .filter(isParceiroDireto)
+    .slice()
+    .sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || "")));
 
   const handleConfirmAssignMaster = async () => {
     if (!assigningLead) return;
@@ -648,13 +659,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       return;
     }
     if (!selectedMasterPartnerId) {
-      alert("Por favor, selecione um Parceiro Master.");
+      alert("Por favor, selecione um Parceiro.");
       return;
     }
 
     const masterPartner = partners.find(p => p.id === selectedMasterPartnerId);
     if (!masterPartner) {
-      alert("Parceiro Master selecionado não foi encontrado.");
+      alert("Parceiro selecionado não foi encontrado.");
       return;
     }
 
@@ -694,11 +705,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         console.warn("Não foi possível gerar notificação:", notifErr);
       }
 
-      alert(`Lead "${assigningLead.razaoSocial || assigningLead.nome}" direcionado com sucesso para o Parceiro Master ${masterPartner.nome}!`);
+      alert(`Lead "${assigningLead.razaoSocial || assigningLead.nome}" direcionado com sucesso para o Parceiro ${masterPartner.nome}!`);
       setAssigningLead(null);
     } catch (err: any) {
       console.error("Erro ao vincular lead:", err);
-      alert("Erro ao vincular lead ao Parceiro Master: " + (err?.message || String(err)));
+      alert("Erro ao vincular lead ao Parceiro: " + (err?.message || String(err)));
     } finally {
       setIsAssigningMaster(false);
     }
@@ -6913,10 +6924,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 </div>
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base">
-                    Direcionar Lead para Parceiro Master
+                    Direcionar Lead para Parceiro
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Vincule este lead a um Parceiro Master para atendimento dedicado.
+                    Vincule este lead a um parceiro direto para atendimento dedicado.
                   </p>
                 </div>
               </div>
@@ -6952,14 +6963,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               )}
             </div>
 
-            {/* Select Master Partner */}
+            {/* Select Direct Partner */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Selecione o Parceiro Master Responsável
+                Selecione o Parceiro Responsável
               </label>
-              {masterPartners.length === 0 ? (
+              {parceirosDiretos.length === 0 ? (
                 <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-center text-rose-800 text-xs font-medium">
-                  Nenhum parceiro com plano Master (Franquia / Digital / Master) encontrado no sistema.
+                  Nenhum parceiro direto encontrado no sistema.
                 </div>
               ) : (
                 <select
@@ -6967,16 +6978,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   onChange={(e) => setSelectedMasterPartnerId(e.target.value)}
                   className="w-full text-xs font-bold p-3 rounded-xl bg-white border border-slate-300 text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#00A86B]"
                 >
-                  <option value="">-- Selecione um Parceiro Master --</option>
-                  {masterPartners.map((master) => (
-                    <option key={master.id} value={master.id}>
-                      {master.nome} ({master.cidade || "Sem Cidade"}) - {master.whatsapp || master.email}
+                  <option value="">-- Selecione um Parceiro --</option>
+                  {parceirosDiretos.map((parceiro) => (
+                    <option key={parceiro.id} value={parceiro.id}>
+                      {parceiro.nome} ({getPlanName(parceiro.plano)}) - {parceiro.cidade || "Sem Cidade"} - {parceiro.whatsapp || parceiro.email}
                     </option>
                   ))}
                 </select>
               )}
               <p className="text-[11px] text-slate-400 italic">
-                * Apenas parceiros cadastrados com plano Master / Franquia listados acima receberão este lead no portal.
+                * Apenas parceiros diretos (sem vínculo com Master) recebem leads direcionados pelo Administrador.
               </p>
             </div>
 
@@ -6992,7 +7003,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               <button
                 type="button"
                 onClick={handleConfirmAssignMaster}
-                disabled={!selectedMasterPartnerId || isAssigningMaster || masterPartners.length === 0}
+                disabled={!selectedMasterPartnerId || isAssigningMaster || parceirosDiretos.length === 0}
                 className="px-5 py-2 text-xs font-extrabold text-white bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
               >
                 {isAssigningMaster ? (
