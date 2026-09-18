@@ -511,6 +511,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   // Passo 6 Sub-etapas & Servicos Recomendados State
   const [editingSubEtapasPasso6, setEditingSubEtapasPasso6] = useState<{ id: string; titulo: string; concluida: boolean }[]>([]);
   const [savingSubEtapas, setSavingSubEtapas] = useState(false);
+  const [savingComissaoId, setSavingComissaoId] = useState<string | null>(null);
   const [editingServicosRecomendados, setEditingServicosRecomendados] = useState<any[]>([]);
   const [savingServicos, setSavingServicos] = useState(false);
 
@@ -1948,7 +1949,24 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
-  const handleUpdateComissaoPaga = async (id: string, paga: boolean) => {
+  const handleUpdateComissaoPaga = async (id: string, paga: boolean, contexto?: { valor?: number; parceiroNome?: string }) => {
+    const leadAlvo = leads.find(l => l.id === id) || (selectedLead?.id === id ? selectedLead : null);
+
+    // Trava de segurança: baixa de comissão só com Crédito Real Aprovado válido e sem recusa
+    const valorAprovadoAtual = Number(leadAlvo?.valorAprovado || 0);
+    const recusado = leadAlvo?.status === "recusado" || leadAlvo?.resultadoAnaliseCredito === "recusado";
+    if (!(valorAprovadoAtual > 0) || recusado) {
+      alert("Preencha o Crédito Real Aprovado para liberar a baixa da comissão.");
+      return;
+    }
+
+    // Confirmação explícita nos dois sentidos (evita clique acidental)
+    const mensagem = paga
+      ? `Confirmar a baixa da comissão de ${formatCurrencyBRL(contexto?.valor || 0)} para o parceiro ${contexto?.parceiroNome || leadAlvo?.parceiroNome || "indicado"}? O parceiro será avisado.`
+      : "Deseja realmente estornar a comissão já marcada como paga deste lead? O status volta para Pendente.";
+    if (!window.confirm(mensagem)) return;
+
+    setSavingComissaoId(id);
     try {
       const docRef = doc(db, "leads", id);
       await updateDoc(docRef, { comissaoPaga: paga });
@@ -1960,19 +1978,31 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       }
 
       // Notify Partner if present
-      const leadToUpdate = leads.find(l => l.id === id);
-      if (leadToUpdate && leadToUpdate.parceiroId && paga) {
-        await createNotification(
-          leadToUpdate.parceiroId,
-          "parceiro",
-          "Comissão Paga!",
-          `O pagamento da comissão referente ao indicado "${leadToUpdate.nome}" foi realizado e liquidado com sucesso!`,
-          "success"
-        );
+      const leadToUpdate = leadAlvo;
+      if (leadToUpdate && leadToUpdate.parceiroId) {
+        if (paga) {
+          await createNotification(
+            leadToUpdate.parceiroId,
+            "parceiro",
+            "Comissão Paga!",
+            `O pagamento da comissão referente ao indicado "${leadToUpdate.nome}" foi realizado e liquidado com sucesso!`,
+            "success"
+          );
+        } else {
+          await createNotification(
+            leadToUpdate.parceiroId,
+            "parceiro",
+            "Baixa de Comissão Estornada",
+            `A baixa da comissão do indicado "${leadToUpdate.nome}" foi estornada pela administração e voltou para análise.`,
+            "warning"
+          );
+        }
       }
     } catch (err) {
       console.error("Error updating comissaoPaga in Firestore:", err);
       alert("Falha ao atualizar o status de comissão no Firestore. Tente novamente.");
+    } finally {
+      setSavingComissaoId(null);
     }
   };
 
@@ -5983,16 +6013,45 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             )}
                           </div>
 
-                          <button
-                            onClick={() => handleUpdateComissaoPaga(selectedLead.id, !selectedLead.comissaoPaga)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:shadow-md cursor-pointer ${
-                              selectedLead.comissaoPaga
-                                ? "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-                                : "bg-[#0A3D2E] hover:bg-[#00A86B] text-white"
-                            }`}
-                          >
-                            {selectedLead.comissaoPaga ? "Marcar Pendente" : "Marcar Pago"}
-                          </button>
+                          {(() => {
+                            const creditoRecusado = selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado";
+                            const liberado = Number(selectedLead.valorAprovado || 0) > 0 && !creditoRecusado;
+                            const processando = savingComissaoId === selectedLead.id;
+                            return (
+                              <button
+                                disabled={!liberado || processando}
+                                title={
+                                  !liberado
+                                    ? "Preencha o Crédito Real Aprovado para liberar a baixa da comissão."
+                                    : selectedLead.comissaoPaga
+                                      ? "Estornar a baixa da comissão deste lead"
+                                      : "Confirmar a baixa da comissão deste lead"
+                                }
+                                onClick={() => handleUpdateComissaoPaga(selectedLead.id, !selectedLead.comissaoPaga, {
+                                  valor: directCommissionValue,
+                                  parceiroNome: partnerObj?.nome || selectedLead.parceiroNome || ""
+                                })}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                  !liberado || processando
+                                    ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                                    : selectedLead.comissaoPaga
+                                      ? "bg-white text-rose-700 hover:bg-rose-50 border border-rose-200 hover:shadow-md cursor-pointer"
+                                      : "bg-[#0A3D2E] hover:bg-[#00A86B] text-white hover:shadow-md cursor-pointer"
+                                }`}
+                              >
+                                {processando
+                                  ? "Processando..."
+                                  : selectedLead.comissaoPaga
+                                    ? "Estornar Comissão"
+                                    : "Marcar Comissão Paga"}
+                              </button>
+                            );
+                          })()}
+                          {!(Number(selectedLead.valorAprovado || 0) > 0 && selectedLead.status !== "recusado" && selectedLead.resultadoAnaliseCredito !== "recusado") && (
+                            <span className="w-full text-[11px] font-medium text-amber-700">
+                              Preencha o Crédito Real Aprovado para liberar a baixa da comissão.
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
