@@ -199,11 +199,11 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
   };
 
   return (
-    <section id="parceiros" className="py-16 md:py-24 bg-white scroll-mt-12 text-left">
+    <section id="parceiros" className="home-section py-16 md:py-24 bg-white scroll-mt-12 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Main Grid Wrapper */}
-        <div className="bg-brand-primary text-white rounded-3xl p-8 md:p-12 relative overflow-hidden shadow-xl border border-white/5 max-w-4xl mx-auto">
+        <div className="home-dark-panel text-white rounded-3xl p-8 md:p-12 relative overflow-hidden max-w-5xl mx-auto">
           
           <div className="absolute right-[-80px] bottom-[-80px] w-96 h-96 rounded-full bg-emerald-600/10 pointer-events-none" />
 
@@ -252,7 +252,7 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
             <div className="pt-2 flex flex-wrap gap-4">
               <button
                 onClick={() => setIsPlansModalOpen(true)}
-                className="bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95 inline-flex items-center gap-2 cursor-pointer"
+                className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all active:scale-95 inline-flex items-center gap-2 cursor-pointer"
               >
                 Conhecer o Programa de Parceiros
                 <ArrowRight className="w-4 h-4" strokeWidth={2} />

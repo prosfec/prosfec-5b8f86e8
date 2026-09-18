@@ -18,9 +18,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
   };
 
   return (
-    <section className="relative pt-24 md:pt-32 pb-16 md:pb-24 overflow-hidden bg-gradient-to-b from-green-50/60 via-white to-white">
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-50 rounded-full blur-3xl -z-10 opacity-70" />
-      <div className="absolute bottom-10 left-0 w-[300px] h-[300px] bg-green-50 rounded-full blur-2xl -z-10 opacity-50" />
+    <section className="relative pt-28 md:pt-36 pb-16 md:pb-24 overflow-hidden bg-gradient-to-b from-zinc-950 to-zinc-900">
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -30,7 +28,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-1.5 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider"
+              className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider"
             >
               <Sparkles className="w-4 h-4 text-brand-accent" strokeWidth={2} />
               Inteligência financeira e creditícia para empresas
@@ -40,7 +38,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-[46px] xl:text-[54px] text-brand-primary leading-tight text-balance"
+              className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-[46px] xl:text-[54px] text-white leading-tight text-balance"
             >
               Sua empresa precisa de crédito, mas não sabe qual é o melhor caminho?
             </motion.h1>
@@ -49,7 +47,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl"
+              className="text-base sm:text-lg text-zinc-400 leading-relaxed max-w-2xl"
             >
               A PROSFEC analisa a estrutura financeira e creditícia da sua empresa, identifica
               oportunidades, aponta os fatores que podem estar dificultando seu acesso ao crédito e
@@ -69,14 +67,14 @@ export default function Hero({ onSimulateClick }: HeroProps) {
               ].map((item, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2.5 bg-white p-3 rounded-xl border border-gray-100 shadow-xs"
+                  className="flex items-start gap-2.5 bg-white/5 p-3 rounded-xl border border-white/10 backdrop-blur-sm"
                 >
                   <div className="bg-brand-accent/20 text-brand-primary p-1 rounded-full shrink-0">
                     <Check className="w-4 h-4" strokeWidth={2} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-800 leading-tight">{item.label}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{item.desc}</p>
+                    <p className="text-sm font-bold text-zinc-100 leading-tight">{item.label}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -90,7 +88,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
             >
               <button
                 onClick={onSimulateClick}
-                className="bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold text-base px-8 py-4 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-base px-8 py-4 rounded-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 Quero analisar minha empresa
                 <ArrowRight className="w-5 h-5" strokeWidth={2} />
@@ -98,7 +96,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
 
               <button
                 onClick={scrollToSolucoes}
-                className="border border-gray-200 hover:border-brand-primary text-brand-primary font-bold text-base px-8 py-4 rounded-xl transition-all cursor-pointer"
+                className="border border-white/10 hover:border-white/25 bg-white/5 text-zinc-100 font-bold text-base px-8 py-4 rounded-xl transition-all cursor-pointer"
               >
                 Conhecer nossas soluções
               </button>
@@ -108,9 +106,9 @@ export default function Hero({ onSimulateClick }: HeroProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="flex items-center gap-2 text-xs text-gray-500"
+              className="flex items-center gap-2 text-xs text-zinc-400"
             >
-              <ShieldCheck className="w-5 h-5 text-emerald-600" strokeWidth={2} />
+              <ShieldCheck className="w-5 h-5 text-emerald-400" strokeWidth={2} />
               <span>Ambiente seguro e atendimento empresarial especializado</span>
             </motion.div>
 
@@ -142,7 +140,7 @@ export default function Hero({ onSimulateClick }: HeroProps) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8 }}
-              className="relative mx-auto max-w-sm lg:max-w-none bg-white p-6 rounded-2xl border border-gray-100 shadow-xl"
+               className="home-diagnostic-panel relative mx-auto max-w-sm lg:max-w-none bg-zinc-900/80 backdrop-blur-xl p-6 rounded-3xl border border-white/10"
             >
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-400">

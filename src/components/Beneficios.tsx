@@ -20,14 +20,14 @@ const BENEFICIOS = [
 
 export default function Beneficios() {
   return (
-    <section id="beneficios" className="py-16 md:py-24 bg-brand-bg-light scroll-mt-16 text-left">
+    <section id="beneficios" className="home-section py-16 md:py-24 bg-slate-50 scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           <div className="lg:col-span-5 space-y-4">
-            <div className="inline-flex items-center gap-1.5 bg-brand-primary/5 text-brand-primary px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+            <div className="home-kicker inline-flex items-center gap-1.5 text-xs font-bold uppercase">
               Benefícios da assessoria
             </div>
-            <h2 className="font-display font-extrabold text-3xl md:text-4xl text-brand-primary leading-tight">
+            <h2 className="home-heading font-display font-bold text-3xl md:text-4xl leading-tight">
               Mais do que buscar crédito. Preparar sua empresa para crescer.
             </h2>
             <p className="text-gray-600 text-sm md:text-base leading-relaxed">
@@ -44,7 +44,7 @@ export default function Beneficios() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.35, delay: idx * 0.04 }}
-                className="flex items-start gap-3 bg-white border border-gray-100 rounded-xl p-4 shadow-xs"
+                className="home-card flex items-start gap-3 bg-white border border-slate-200/60 rounded-2xl p-4"
               >
                 <div className="bg-emerald-50 text-emerald-700 p-1.5 rounded-full shrink-0">
                   <Check className="w-4 h-4" strokeWidth={2.5} />

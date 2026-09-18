@@ -50,15 +50,15 @@ export default function FAQ() {
   ];
 
   return (
-    <section id="faq" className="py-16 md:py-24 bg-brand-bg-light scroll-mt-12 text-left">
+    <section id="faq" className="home-section py-16 md:py-24 bg-slate-50 scroll-mt-12 text-left">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-          <div className="inline-flex items-center gap-1.5 bg-brand-primary/5 text-brand-primary px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+          <div className="home-kicker inline-flex items-center gap-1.5 text-xs font-bold uppercase">
             FAQ • Dúvidas Frequentes
           </div>
-          <h2 className="font-display font-extrabold text-3xl text-brand-primary">
+          <h2 className="home-heading font-display font-bold text-3xl md:text-4xl">
             Perguntas frequentes sobre a PROSFEC
           </h2>
           <p className="text-gray-500 text-sm md:text-base">
@@ -73,7 +73,7 @@ export default function FAQ() {
             return (
               <div
                 key={idx}
-                className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden transition-all duration-300"
+                className="home-card bg-white rounded-2xl border border-slate-200/60 overflow-hidden"
               >
                 <button
                   onClick={() => setExpandedIndex(isExpanded ? null : idx)}

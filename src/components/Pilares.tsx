@@ -58,7 +58,7 @@ const PILARES = [
 
 export default function Pilares() {
   return (
-    <section id="solucoes" className="py-16 md:py-24 bg-white scroll-mt-16 text-left">
+    <section id="solucoes" className="home-section py-16 md:py-24 bg-slate-50 scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -67,10 +67,10 @@ export default function Pilares() {
           transition={{ duration: 0.5 }}
           className="max-w-3xl mb-12 space-y-4"
         >
-          <div className="inline-flex items-center gap-1.5 bg-brand-primary/5 text-brand-primary px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+          <div className="home-kicker inline-flex items-center gap-1.5 text-xs font-bold uppercase">
             Nossas soluções
           </div>
-          <h2 className="font-display font-extrabold text-3xl md:text-4xl text-brand-primary leading-tight">
+          <h2 className="home-heading font-display font-bold text-3xl md:text-4xl leading-tight">
             Como podemos ajudar sua empresa?
           </h2>
           <p className="text-gray-600 text-base leading-relaxed">
@@ -79,7 +79,7 @@ export default function Pilares() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
           {PILARES.map((pilar, idx) => {
             const Icon = pilar.icon;
             return (
@@ -89,7 +89,7 @@ export default function Pilares() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.45, delay: idx * 0.07 }}
-                className="bg-white border border-gray-100 rounded-2xl p-7 shadow-xs hover:shadow-md transition-shadow flex flex-col gap-4"
+                className={`home-card bg-white border border-slate-200/60 rounded-2xl p-7 flex flex-col gap-4 ${idx === 0 || idx === 3 ? "md:col-span-4" : "md:col-span-2"}`}
               >
                 <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
                   <Icon className="w-5 h-5" strokeWidth={2} />

@@ -42,13 +42,13 @@ export default function ComoFunciona() {
   ];
 
   return (
-    <section id="como-funciona" className="py-16 md:py-24 bg-brand-bg-light scroll-mt-16 text-left">
+    <section id="como-funciona" className="home-section py-16 md:py-24 bg-white scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mb-14 space-y-4">
-          <div className="inline-flex items-center gap-1.5 bg-brand-primary/5 text-brand-primary px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+          <div className="home-kicker inline-flex items-center gap-1.5 text-xs font-bold uppercase">
             Jornada consultiva
           </div>
-          <h2 className="font-display font-extrabold text-3xl md:text-4xl text-brand-primary leading-tight">
+          <h2 className="home-heading font-display font-bold text-3xl md:text-4xl leading-tight">
             Como a PROSFEC atua
           </h2>
           <p className="text-gray-600 text-base leading-relaxed">
@@ -69,7 +69,7 @@ export default function ComoFunciona() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.4, delay: index * 0.08 }}
-                className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-3"
+                className="home-card bg-white rounded-2xl border border-slate-200/60 p-6 space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="w-12 h-12 rounded-full border-2 border-emerald-500 text-emerald-700 bg-emerald-50 flex items-center justify-center font-display font-extrabold text-base shrink-0">

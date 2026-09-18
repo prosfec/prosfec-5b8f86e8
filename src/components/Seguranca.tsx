@@ -41,17 +41,17 @@ export default function Seguranca() {
   ];
 
   return (
-    <section id="seguranca-e-confiabilidade" className="py-12 md:py-16 bg-white border-b border-gray-100">
+    <section id="seguranca-e-confiabilidade" className="home-section py-16 md:py-20 bg-slate-50 border-b border-slate-200/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Block */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div className="space-y-2 text-left max-w-2xl">
-            <div className="inline-flex items-center gap-1.5 bg-emerald-100 text-brand-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-              <Lock className="w-4 h-4 text-[#00A86B]" strokeWidth={2} />
+            <div className="home-kicker inline-flex items-center gap-1.5 text-xs font-bold uppercase">
+              <Lock className="w-4 h-4 text-emerald-600" strokeWidth={2} />
               Proteção Garantida
             </div>
-            <h2 className="font-display font-extrabold text-2xl md:text-3xl text-brand-primary">
+            <h2 className="home-heading font-display font-bold text-3xl md:text-4xl">
               Segurança e Confiabilidade de Dados
             </h2>
             <p className="text-gray-500 text-sm md:text-base leading-relaxed">
@@ -60,7 +60,7 @@ export default function Seguranca() {
           </div>
 
           {/* Mini-Stat Box */}
-          <div className="flex items-center gap-3 bg-[#F5F7F6] px-5 py-3.5 rounded-2xl border border-gray-200/60 shrink-0 self-start md:self-auto">
+          <div className="flex items-center gap-3 bg-white px-5 py-3.5 rounded-2xl border border-slate-200/60 shrink-0 self-start md:self-auto">
             <div className="bg-brand-primary text-brand-accent p-2 rounded-xl">
               <ShieldCheck className="w-5 h-5" strokeWidth={2} />
             </div>
@@ -82,7 +82,7 @@ export default function Seguranca() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.4, delay: idx * 0.05 }}
-                className="bg-white p-5 rounded-2xl border border-gray-100 hover:border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-all duration-300 text-left flex flex-col justify-between"
+                className="home-card bg-white p-6 rounded-2xl border border-slate-200/60 text-left flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className={`p-2.5 rounded-xl border inline-block ${feat.iconColor}`}>

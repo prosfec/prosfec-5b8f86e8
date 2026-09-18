@@ -24,14 +24,14 @@ const ITENS = [
 
 export default function DiagnosticoSection({ onSimulateClick }: DiagnosticoSectionProps) {
   return (
-    <section id="diagnostico" className="py-16 md:py-24 bg-white scroll-mt-16 text-left">
+    <section id="diagnostico" className="home-section py-16 md:py-24 bg-slate-50 scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.5 }}
-          className="bg-brand-primary text-white rounded-3xl p-8 md:p-12 relative overflow-hidden shadow-xl"
+          className="home-dark-panel text-white rounded-3xl p-8 md:p-12 relative overflow-hidden"
         >
           <div className="absolute right-[-100px] top-[-80px] w-96 h-96 rounded-full bg-emerald-500/10 pointer-events-none" />
 
@@ -50,7 +50,7 @@ export default function DiagnosticoSection({ onSimulateClick }: DiagnosticoSecti
               <button
                 type="button"
                 onClick={onSimulateClick}
-                className="bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold px-7 py-3.5 rounded-xl text-sm transition-all inline-flex items-center gap-2 cursor-pointer shadow-md"
+                className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold px-7 py-3.5 rounded-xl text-sm transition-all inline-flex items-center gap-2 cursor-pointer"
               >
                 Solicitar Diagnóstico
                 <ArrowRight className="w-4 h-4" strokeWidth={2} />

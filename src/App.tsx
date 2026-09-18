@@ -531,7 +531,7 @@ export default function App() {
   }
 
   return (
-    <div className="font-sans antialiased text-gray-800 bg-white min-h-screen flex flex-col">
+    <div className="home-premium font-sans antialiased text-gray-800 bg-slate-50 min-h-screen flex flex-col">
       {/* Navbar with callbacks */}
       <Navbar
         onSimulateClick={handleScrollToSimulador}
@@ -588,9 +588,9 @@ export default function App() {
         <SolucoesEspecificas />
 
         {/* 9. SIMULADOR / PRIMEIRA ANÁLISE */}
-        <div className="bg-brand-bg-light pt-16 md:pt-24">
+        <div className="home-section bg-slate-50 pt-16 md:pt-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left space-y-3">
-            <h2 className="font-display font-extrabold text-3xl md:text-4xl text-brand-primary leading-tight">
+            <h2 className="font-display font-bold text-3xl md:text-4xl text-slate-900 leading-tight">
               Comece entendendo o potencial da sua empresa
             </h2>
             <p className="text-gray-600 text-base leading-relaxed max-w-2xl">
