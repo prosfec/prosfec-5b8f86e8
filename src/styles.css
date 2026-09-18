@@ -1672,7 +1672,10 @@ select option {
 
 .home-simulator input:not([type="checkbox"]):not([type="radio"]),
 .home-simulator select,
-.home-simulator textarea {
+.home-simulator textarea,
+.home-simulator input:not([type="checkbox"]):not([type="radio"])[class],
+.home-simulator select[class],
+.home-simulator textarea[class] {
   background-color: #0b0f14;
   border-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
@@ -1741,8 +1744,15 @@ select option {
 .home-simulator [class*="text-gray-900"],
 .home-simulator [class*="text-gray-800"],
 .home-simulator [class*="text-slate-900"],
+.home-simulator [class*="text-slate-800"],
+.home-simulator [class*="text-slate-700"],
 .home-simulator [class*="text-brand-primary"] {
   color: #ffffff;
+}
+
+.home-simulator input[class*="text-emerald-800"],
+.home-simulator input[class*="text-emerald-700"] {
+  color: #6ee7b7;
 }
 
 .home-simulator [class*="text-gray-700"],
