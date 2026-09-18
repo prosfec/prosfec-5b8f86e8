@@ -749,6 +749,8 @@ export default function LeadWorkspaceModal({
         ...lead,
         subEtapasPasso6: commissionPayload.subEtapasPasso6,
         comissaoMultinivel: commissionPayload.comissaoMultinivel,
+        servicoPago: algumPago,
+        dataConfirmacaoPagamentoServico: algumPago ? (datasPagamento[0] || new Date().toISOString()) : null,
         ...(syncedServicos.length > 0 ? { servicosRecomendados: syncedServicos } : {})
       });
     } catch (err: any) {
