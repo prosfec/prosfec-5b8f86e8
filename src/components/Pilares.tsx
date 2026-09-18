@@ -67,7 +67,7 @@ const TIMELINE_NODES = [
 
 function CreditTimeline() {
   return (
-    <div className="hidden lg:block mt-auto w-full">
+    <div className="hidden lg:flex flex-1 items-center w-full pt-4">
       <motion.svg
         viewBox="0 0 1000 200"
         preserveAspectRatio="xMidYMid meet"
