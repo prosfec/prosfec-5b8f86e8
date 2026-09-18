@@ -74,6 +74,8 @@ import {
   Link2,
   Calculator,
   Menu,
+  Sun,
+  Moon,
   LogOut
 } from "lucide-react";
 
