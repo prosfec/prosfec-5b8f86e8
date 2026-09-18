@@ -5961,33 +5961,40 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                     {/* Botões de Ação Rápida: Recusado / Aprovado / Pagamento do Serviço */}
                     <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200">
-                      {/* Botão de Crédito Recusado */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado") {
-                            // Desmarcar recusa e colocar em análise
-                            handleUpdateStatus(selectedLead.id, "leads", "em atendimento");
-                          } else {
-                            if (window.confirm(`Deseja marcar a análise de crédito do lead "${selectedLead.nome}" como RECUSADA?`)) {
-                              handleSetCreditoRecusado(selectedLead.id);
-                            }
-                          }
-                        }}
-                        className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
-                          selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado"
-                            ? "bg-rose-600 hover:bg-rose-700 text-white"
-                            : "bg-white hover:bg-rose-50 text-rose-700 border border-rose-200"
-                        }`}
-                        title="Marcar crédito do lead como recusado no sistema e notificar parceiro"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        <span>
-                          {selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado" 
-                            ? "✓ Crédito Recusado" 
-                            : "Marcar Recusado"}
-                        </span>
-                      </button>
+                      {/* Botão de Crédito Recusado (reversível) */}
+                      {(() => {
+                        const estaRecusado = selectedLead.status === "recusado" || selectedLead.resultadoAnaliseCredito === "recusado";
+                        const processandoRecusa = savingRecusaId === selectedLead.id;
+                        return (
+                          <button
+                            type="button"
+                            disabled={processandoRecusa}
+                            onClick={() => {
+                              if (processandoRecusa) return;
+                              if (estaRecusado) {
+                                handleDesfazerCreditoRecusado(selectedLead.id);
+                              } else {
+                                if (window.confirm(`Deseja marcar a análise de crédito do lead "${selectedLead.nome}" como RECUSADA?`)) {
+                                  handleSetCreditoRecusado(selectedLead.id);
+                                }
+                              }
+                            }}
+                            className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase transition-all flex items-center justify-center gap-1.5 shadow-xs ${
+                              processandoRecusa ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                            } ${
+                              estaRecusado
+                                ? "bg-rose-600 hover:bg-rose-700 text-white"
+                                : "bg-white hover:bg-rose-50 text-rose-700 border border-rose-200"
+                            }`}
+                            title={estaRecusado ? "Desfazer a recusa e voltar o lead para análise bancária" : "Marcar crédito do lead como recusado no sistema e notificar parceiro"}
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>
+                              {processandoRecusa ? "Processando..." : estaRecusado ? "Desfazer Recusa" : "Marcar Recusado"}
+                            </span>
+                          </button>
+                        );
+                      })()}
 
                       {/* Controle de Pagamento dos Serviços (reversível; confirmação detalhada serviço a serviço no Passo 6) */}
                       {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (() => {
