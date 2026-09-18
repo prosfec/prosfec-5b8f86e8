@@ -5310,7 +5310,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                                   Suas Comissões &amp; Repasses
                                 </span>
-                                <p className="text-[10px] text-slate-400 font-medium">Liberado e pendente de liquidação</p>
+                                <p className="text-[10px] text-slate-400 font-medium">Base: Crédito Real Aprovado informado pela administração.</p>
                               </div>
                             </div>
 
