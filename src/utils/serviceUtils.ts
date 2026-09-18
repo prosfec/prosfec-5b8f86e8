@@ -338,7 +338,10 @@ export function sanitizeServiceCatalogForFirestore(
       }
 
       // Cláusulas contratuais específicas (Contrato Avulso) + versionamento
-      cleaned.clausulas = normalizeServiceClauses((item as any).clausulas);
+      // Cláusulas: se o ADM não escreveu nada, usa o texto padrão do serviço.
+      cleaned.clausulas =
+        normalizeServiceClauses((item as any).clausulas) ||
+        normalizeServiceClauses(DEFAULT_SERVICE_CLAUSES[cleaned.id]);
       cleaned.templateId =
         String((item as any).templateId || "").trim() || buildServiceTemplateId(cleaned.nome, cleaned.id);
 
