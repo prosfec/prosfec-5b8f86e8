@@ -74,6 +74,8 @@ import {
   Link2,
   Calculator,
   Menu,
+  Sun,
+  Moon,
   LogOut
 } from "lucide-react";
 
@@ -398,6 +400,37 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [loginError, setLoginError] = useState("");
 
   const [loggingIn, setLoggingIn] = useState(false);
+
+  // Aparência (somente visual): clara por padrão, tecnológica opcional.
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("prosfec_admin_theme");
+      if (saved === "dark" || saved === "light") setTheme(saved);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
+    return () => root.classList.remove("dark");
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      try {
+        localStorage.setItem("prosfec_admin_theme", next);
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -2804,12 +2837,26 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   );
 
   return (
-    <div className="min-h-screen flex font-sans text-ink bg-surface-base">
+    <div className="soft-ui pf-admin min-h-screen flex font-sans text-ink bg-slate-50 dark:bg-zinc-950 dark:text-zinc-100">
       {/* Sidebar fixa (desktop) */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col z-40 bg-[#02241a] border-r border-white/10">
         {sidebarBrand}
         {renderSidebarNav()}
         <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          <button
+            onClick={toggleTheme}
+            className="sidebar-item"
+            title={theme === "dark" ? "Voltar para a aparência clara" : "Ativar aparência tecnológica"}
+          >
+            {theme === "dark" ? (
+              <Sun className="w-[18px] h-[18px] text-amber-300" strokeWidth={2} />
+            ) : (
+              <Moon className="w-[18px] h-[18px]" strokeWidth={2} />
+            )}
+            <span className="flex-1 text-left">
+              {theme === "dark" ? "Aparência: Tecnológica" : "Aparência: Clara"}
+            </span>
+          </button>
           <button onClick={fetchData} className="sidebar-item" title="Sincronizar dados">
             <RefreshCw className={`w-[18px] h-[18px] ${loading ? "animate-spin" : ""}`} strokeWidth={2} />
             <span className="flex-1 text-left">Sincronizar</span>
@@ -2835,7 +2882,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             </button>
             {sidebarBrand}
             {renderSidebarNav()}
-            <div className="px-3 py-4 border-t border-white/10">
+            <div className="px-3 py-4 border-t border-white/10 space-y-1">
+              <button
+                onClick={toggleTheme}
+                className="sidebar-item"
+                title={theme === "dark" ? "Voltar para a aparência clara" : "Ativar aparência tecnológica"}
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-[18px] h-[18px] text-amber-300" strokeWidth={2} />
+                ) : (
+                  <Moon className="w-[18px] h-[18px]" strokeWidth={2} />
+                )}
+                <span className="flex-1 text-left">
+                  {theme === "dark" ? "Aparência: Tecnológica" : "Aparência: Clara"}
+                </span>
+              </button>
               <button onClick={handleLogout} className="sidebar-item hover:bg-rose-500/15 hover:text-rose-200">
                 <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
                 <span className="flex-1 text-left">Sair</span>
@@ -2847,7 +2908,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
       <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
         {/* Topbar */}
-        <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-line-soft">
+        <header className="soft-topbar sticky top-0 z-30 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-b border-line-soft dark:border-white/10">
           <div className="h-16 px-4 sm:px-6 flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
