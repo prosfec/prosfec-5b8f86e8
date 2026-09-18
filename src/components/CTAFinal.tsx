@@ -35,7 +35,7 @@ export default function CTAFinal({ onSimulateClick, whatsappUrl }: CTAFinalProps
             <button
               type="button"
               onClick={onSimulateClick}
-              className="bg-emerald-500/100 hover:bg-emerald-400 text-zinc-950 font-extrabold px-8 py-4 rounded-xl text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
+              className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold px-8 py-4 rounded-xl text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
             >
               Quero analisar minha empresa
               <ArrowRight className="w-4 h-4" strokeWidth={2} />

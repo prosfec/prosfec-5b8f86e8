@@ -83,7 +83,7 @@ export default function SolucoesEspecificas() {
                 <ul className="space-y-2.5">
                   {cat.items.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-sm text-zinc-400 leading-snug">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/100 mt-1.5 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                       {item}
                     </li>
                   ))}
