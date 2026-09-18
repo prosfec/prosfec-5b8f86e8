@@ -79,7 +79,7 @@ export default function Pilares() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
           {PILARES.map((pilar, idx) => {
             const Icon = pilar.icon;
             return (
@@ -89,7 +89,7 @@ export default function Pilares() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.45, delay: idx * 0.07 }}
-                className={`home-card bg-white border border-slate-200/60 rounded-2xl p-7 flex flex-col gap-4 ${idx === 0 || idx === 3 ? "md:col-span-1" : ""}`}
+                className={`home-card bg-white border border-slate-200/60 rounded-2xl p-7 flex flex-col gap-4 ${idx === 0 || idx === 3 ? "md:col-span-4" : "md:col-span-2"}`}
               >
                 <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
                   <Icon className="w-5 h-5" strokeWidth={2} />
