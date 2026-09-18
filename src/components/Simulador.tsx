@@ -1020,13 +1020,13 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
   };
 
   return (
-    <div className={isModalMode ? "w-full" : "py-16 md:py-24 bg-brand-bg-light scroll-mt-20"} id={isModalMode ? undefined : "simulador"}>
+    <div className={isModalMode ? "w-full" : "home-simulator py-16 md:py-24 bg-slate-50 scroll-mt-20"} id={isModalMode ? undefined : "simulador"}>
       <div className={isModalMode ? "w-full" : "max-w-4xl mx-auto px-4 sm:px-6"}>
         
         {/* Section Title (only in full page mode) */}
         {!isModalMode && (
           <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">
-            <h2 className="font-display font-extrabold text-3xl text-brand-primary">
+            <h2 className="home-heading font-display font-bold text-3xl md:text-4xl">
               Calcule seu limite potencial em 5 etapas
             </h2>
             <p className="text-gray-500 text-sm md:text-base font-semibold text-emerald-700">
@@ -1036,7 +1036,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
         )}
 
         {/* Card Simulator Container */}
-        <div className={`bg-white ${isModalMode ? "rounded-2xl border-0 shadow-none" : "rounded-3xl border border-gray-100 shadow-xl"} overflow-hidden min-h-[500px]`}>
+        <div className={`bg-white ${isModalMode ? "rounded-2xl border-0 shadow-none" : "rounded-3xl border border-slate-200/60 shadow-sm"} overflow-hidden min-h-[500px]`}>
           
           <AnimatePresence mode="wait">
             {!finished ? (
@@ -1058,7 +1058,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                       {[1, 2, 3, 4, 5].map((s) => (
                         <div
                           key={s}
-                          className={`w-6 h-2 rounded-full transition-all duration-500 ${
+                      className={`w-6 h-1.5 rounded-full transition-all duration-500 ${
                             s === step 
                               ? "bg-brand-accent w-10 shadow-[0_0_8px_#00A86B]" 
                               : s < step 

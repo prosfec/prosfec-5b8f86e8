@@ -45,10 +45,10 @@ export default function MomentoEmpresa({ onSimulateClick, whatsappUrl }: Momento
   ];
 
   return (
-    <section id="momento" className="py-16 md:py-24 bg-brand-bg-light scroll-mt-16 text-left">
+    <section id="momento" className="home-section py-16 md:py-24 bg-white scroll-mt-16 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mb-12 space-y-4">
-          <h2 className="font-display font-extrabold text-3xl md:text-4xl text-brand-primary leading-tight">
+          <h2 className="home-heading font-display font-bold text-3xl md:text-4xl leading-tight">
             Qual é o momento da sua empresa?
           </h2>
           <p className="text-gray-600 text-base leading-relaxed">
@@ -77,7 +77,7 @@ export default function MomentoEmpresa({ onSimulateClick, whatsappUrl }: Momento
             );
 
             const cardClass =
-              "group bg-white border border-gray-100 rounded-2xl p-6 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col gap-3 text-left w-full cursor-pointer";
+              "home-card group bg-white border border-slate-200/60 rounded-2xl p-6 flex flex-col gap-3 text-left w-full cursor-pointer";
 
             return (
               <motion.div
