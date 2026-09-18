@@ -5952,29 +5952,45 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         </span>
                       </button>
 
-                      {/* Indicador de Pagamento dos Serviços (confirmação é feita serviço a serviço no Passo 6) */}
-                      {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (
-                        <div
-                          className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase flex items-center justify-center gap-1.5 shadow-xs ${
-                            selectedLead.servicoPago
-                              ? "bg-emerald-50 text-emerald-800 border border-emerald-300"
-                              : "bg-white text-amber-800 border border-amber-300"
-                          }`}
-                          title="A confirmação de pagamento é feita serviço a serviço no Passo 6, escolhendo Pix ou Cartão"
-                        >
-                          {selectedLead.servicoPago ? (
-                            <>
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Serviço Pago ✓</span>
-                            </>
-                          ) : (
-                            <>
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>Serviço Pendente ⏳</span>
-                            </>
-                          )}
-                        </div>
-                      )}
+                      {/* Controle de Pagamento dos Serviços (reversível; confirmação detalhada serviço a serviço no Passo 6) */}
+                      {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (() => {
+                        const processandoServico = savingServicoPagoId === selectedLead.id;
+                        return (
+                          <button
+                            type="button"
+                            disabled={processandoServico}
+                            onClick={() => handleToggleServicoPago(selectedLead.id, !selectedLead.servicoPago)}
+                            className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase flex items-center justify-center gap-1.5 shadow-xs transition-all ${
+                              processandoServico
+                                ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                                : selectedLead.servicoPago
+                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 cursor-pointer"
+                                  : "bg-white text-amber-800 border border-amber-300 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 cursor-pointer"
+                            }`}
+                            title={
+                              processandoServico
+                                ? "Gravando..."
+                                : selectedLead.servicoPago
+                                  ? "Desfazer o pagamento do serviço deste lead (volta para Pagamento Pendente)"
+                                  : "Confirmar o pagamento do serviço deste lead"
+                            }
+                          >
+                            {processandoServico ? (
+                              <span>Processando...</span>
+                            ) : selectedLead.servicoPago ? (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Serviço Pago ✓ — Desfazer</span>
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>Confirmar Serviço Pago</span>
+                              </>
+                            )}
+                          </button>
+                        );
+                      })()}
                     </div>
 
                     {(selectedLead.etapa === 6 || selectedLead.etapa >= 6) && (
