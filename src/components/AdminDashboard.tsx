@@ -1948,7 +1948,24 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
-  const handleUpdateComissaoPaga = async (id: string, paga: boolean) => {
+  const handleUpdateComissaoPaga = async (id: string, paga: boolean, contexto?: { valor?: number; parceiroNome?: string }) => {
+    const leadAlvo = leads.find(l => l.id === id) || (selectedLead?.id === id ? selectedLead : null);
+
+    // Trava de segurança: baixa de comissão só com Crédito Real Aprovado válido e sem recusa
+    const valorAprovadoAtual = Number(leadAlvo?.valorAprovado || 0);
+    const recusado = leadAlvo?.status === "recusado" || leadAlvo?.resultadoAnaliseCredito === "recusado";
+    if (!(valorAprovadoAtual > 0) || recusado) {
+      alert("Preencha o Crédito Real Aprovado para liberar a baixa da comissão.");
+      return;
+    }
+
+    // Confirmação explícita nos dois sentidos (evita clique acidental)
+    const mensagem = paga
+      ? `Confirmar a baixa da comissão de ${formatCurrencyBRL(contexto?.valor || 0)} para o parceiro ${contexto?.parceiroNome || leadAlvo?.parceiroNome || "indicado"}? O parceiro será avisado.`
+      : "Deseja realmente estornar a comissão já marcada como paga deste lead? O status volta para Pendente.";
+    if (!window.confirm(mensagem)) return;
+
+    setSavingComissaoId(id);
     try {
       const docRef = doc(db, "leads", id);
       await updateDoc(docRef, { comissaoPaga: paga });
@@ -1960,19 +1977,31 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       }
 
       // Notify Partner if present
-      const leadToUpdate = leads.find(l => l.id === id);
-      if (leadToUpdate && leadToUpdate.parceiroId && paga) {
-        await createNotification(
-          leadToUpdate.parceiroId,
-          "parceiro",
-          "Comissão Paga!",
-          `O pagamento da comissão referente ao indicado "${leadToUpdate.nome}" foi realizado e liquidado com sucesso!`,
-          "success"
-        );
+      const leadToUpdate = leadAlvo;
+      if (leadToUpdate && leadToUpdate.parceiroId) {
+        if (paga) {
+          await createNotification(
+            leadToUpdate.parceiroId,
+            "parceiro",
+            "Comissão Paga!",
+            `O pagamento da comissão referente ao indicado "${leadToUpdate.nome}" foi realizado e liquidado com sucesso!`,
+            "success"
+          );
+        } else {
+          await createNotification(
+            leadToUpdate.parceiroId,
+            "parceiro",
+            "Baixa de Comissão Estornada",
+            `A baixa da comissão do indicado "${leadToUpdate.nome}" foi estornada pela administração e voltou para análise.`,
+            "warning"
+          );
+        }
       }
     } catch (err) {
       console.error("Error updating comissaoPaga in Firestore:", err);
       alert("Falha ao atualizar o status de comissão no Firestore. Tente novamente.");
+    } finally {
+      setSavingComissaoId(null);
     }
   };
 
