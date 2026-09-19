@@ -307,7 +307,7 @@ export default function FichaRatingCreditoForm({
 
     // Per Socio metrics
     socios.forEach(s => {
-      totalItems += 8; // nome, cpf, estadoCivil, escolaridade, rendaFamiliar, rendaBruta, ref, at least 2 docs
+      totalItems += 10; // nome, cpf, estadoCivil, escolaridade, rendaFamiliar, rendaBruta, ref, docs, IRPF declaração, IRPF recibo
       if (s.nome) filledItems++;
       if (s.cpf) filledItems++;
       if (s.estadoCivil) filledItems++;
@@ -316,6 +316,8 @@ export default function FichaRatingCreditoForm({
       if (s.rendaBrutaIndividual) filledItems++;
       if (s.referenciasPessoais?.[0]?.nome && s.referenciasPessoais?.[0]?.telefone) filledItems++;
       if (s.fotoCnhRgFrente || s.fotoCnhRgVerso || s.selfieComDocumento) filledItems++;
+      if ((s as any).irpfDeclaracao) filledItems++;
+      if ((s as any).irpfRecibo) filledItems++;
     });
 
     // CNPJ required PDFs metrics
@@ -325,7 +327,8 @@ export default function FichaRatingCreditoForm({
       "comprovanteResidenciaPdf",
       "faturamento12MesesPdf",
       "drePdf",
-      "balancoPatrimonialPdf"
+      "balancoPatrimonialPdf",
+      "extratoBancarioPjPdf"
     ];
     cnpjFields.forEach(f => {
       totalItems++;
@@ -1047,6 +1050,21 @@ export default function FichaRatingCreditoForm({
                       hint="Recomendamos Google Drive. Certifique-se de configurar o compartilhamento como 'Qualquer pessoa com o link pode visualizar', senão o time da Prosfec não conseguirá abrir."
                     />
 
+                    <DocLinkInput
+                      label="IRPF — Declaração (PDF)"
+                      required
+                      value={(socios[activeSocioTab] as any).irpfDeclaracao}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "irpfDeclaracao" as any, url, "IRPF - Declaração")}
+                      hint="Cole o link que abre a declaração de IRPF deste sócio em PDF, liberada para visualização."
+                    />
+
+                    <DocLinkInput
+                      label="IRPF — Recibo de Entrega (PDF)"
+                      required
+                      value={(socios[activeSocioTab] as any).irpfRecibo}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "irpfRecibo" as any, url, "IRPF - Recibo de Entrega")}
+                      hint="Cole o link que abre o recibo de entrega do IRPF deste sócio em PDF, liberado para visualização."
+                    />
 
                   </div>
                 </div>
@@ -1179,6 +1197,28 @@ export default function FichaRatingCreditoForm({
                   value={dadosCNPJ.balancoPatrimonialPdf}
                   onChange={(url) => handleCNPJLinkChange("balancoPatrimonialPdf", url, "Balanço Patrimonial")}
                   hint="Cole o link que abre este documento em PDF e libere o acesso para visualização."
+                />
+
+                <DocLinkInput
+                  label="Extrato Bancário PJ — últimos 90 dias (PDF)"
+                  required
+                  value={dadosCNPJ.extratoBancarioPjPdf}
+                  onChange={(url) => handleCNPJLinkChange("extratoBancarioPjPdf", url, "Extrato Bancário PJ 90 dias")}
+                  hint="Cole o link que abre este documento em PDF e libere o acesso para visualização."
+                />
+
+                <DocLinkInput
+                  label="PGDAS — Declaração do mês atual e recibo (Opcional)"
+                  value={dadosCNPJ.pgdasPdf}
+                  onChange={(url) => handleCNPJLinkChange("pgdasPdf", url, "PGDAS")}
+                  hint="Somente para empresas do Simples Nacional. Cole o link que abre o PDF liberado para visualização."
+                />
+
+                <DocLinkInput
+                  label="DEFIS — Declaração e recibo (Opcional)"
+                  value={dadosCNPJ.defisPdf}
+                  onChange={(url) => handleCNPJLinkChange("defisPdf", url, "DEFIS")}
+                  hint="Somente para empresas do Simples Nacional. Cole o link que abre o PDF liberado para visualização."
                 />
 
               </div>

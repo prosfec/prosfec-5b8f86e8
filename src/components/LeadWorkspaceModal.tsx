@@ -4477,6 +4477,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
             const concluidasCount = subEtapasPasso6.filter(s => s.concluida).length;
             const totalSubEtapas = subEtapasPasso6.length;
             const pctConcluido = totalSubEtapas > 0 ? Math.round((concluidasCount / totalSubEtapas) * 100) : 0;
+            // Lead já apto para a mesa de crédito: o Passo 6 vira coleta documental + proposta
+            const fichaDocumentalMode = aptoMesaCredito === true;
+            const pctFichaDocumental = Number((lead as any).fichaRatingCredito?.progressoPercentual || 0);
 
             return (
               <div className="space-y-6 animate-fade-in">
@@ -4493,17 +4496,27 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </div>
                     <h3 className="font-display font-extrabold text-lg sm:text-xl text-white flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-emerald-400" />
-                      Estruturação da Operação & Melhoria de Perfil de Crédito
+                      {fichaDocumentalMode
+                        ? "Ficha Documental & Projeto Empresarial"
+                        : "Estruturação da Operação & Melhoria de Perfil de Crédito"}
                     </h3>
                     <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                      Central unificada do parceiro: acompanhe todas as ações técnicas de adequação cadastral configuradas pela PROSFEC IA, execute simulações em linhas governamentais e audite o histórico da operação em tempo real.
+                      {fichaDocumentalMode
+                        ? "Empresa apta para análise de crédito bancária: reúna os links dos documentos do cliente e lance a proposta da operação."
+                        : "Central unificada do parceiro: acompanhe todas as ações técnicas de adequação cadastral configuradas pela PROSFEC IA, execute simulações em linhas governamentais e audite o histórico da operação em tempo real."}
                     </p>
                   </div>
 
                   <div className="flex flex-wrap md:flex-col items-start md:items-end gap-2 shrink-0">
                     <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-left md:text-right">
-                      <span className="text-[9px] uppercase font-black tracking-wider text-emerald-300 block">Progresso da Estruturação</span>
-                      <span className="text-base font-black text-white font-mono">{concluidasCount}/{totalSubEtapas} Concluídas ({pctConcluido}%)</span>
+                      <span className="text-[9px] uppercase font-black tracking-wider text-emerald-300 block">
+                        {fichaDocumentalMode ? "Progresso da Ficha Documental" : "Progresso da Estruturação"}
+                      </span>
+                      <span className="text-base font-black text-white font-mono">
+                        {fichaDocumentalMode
+                          ? `${pctFichaDocumental}% preenchida`
+                          : `${concluidasCount}/${totalSubEtapas} Concluídas (${pctConcluido}%)`}
+                      </span>
                     </div>
                     <button
                       onClick={copyLeadProposalToClipboard}
@@ -4594,6 +4607,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
 
                 {/* SEÇÃO 1: CHECKLIST DA ETAPA 6 (ESTRUTURAÇÃO) — PROSFEC IA */}
+                {!fichaDocumentalMode && (
                 <div className="pf-workspace-section bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                     <div className="space-y-0.5">
@@ -4939,6 +4953,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </p>
                   </div>
                 </div>
+                )}
 
                 {/* SEÇÃO 2: SIMULADOR & PROPOSTA DE CRÉDITO GOVERNAMENTAL */}
                 <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
