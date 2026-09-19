@@ -307,7 +307,7 @@ export default function FichaRatingCreditoForm({
 
     // Per Socio metrics
     socios.forEach(s => {
-      totalItems += 8; // nome, cpf, estadoCivil, escolaridade, rendaFamiliar, rendaBruta, ref, at least 2 docs
+      totalItems += 10; // nome, cpf, estadoCivil, escolaridade, rendaFamiliar, rendaBruta, ref, docs, IRPF declaração, IRPF recibo
       if (s.nome) filledItems++;
       if (s.cpf) filledItems++;
       if (s.estadoCivil) filledItems++;
@@ -316,6 +316,8 @@ export default function FichaRatingCreditoForm({
       if (s.rendaBrutaIndividual) filledItems++;
       if (s.referenciasPessoais?.[0]?.nome && s.referenciasPessoais?.[0]?.telefone) filledItems++;
       if (s.fotoCnhRgFrente || s.fotoCnhRgVerso || s.selfieComDocumento) filledItems++;
+      if ((s as any).irpfDeclaracao) filledItems++;
+      if ((s as any).irpfRecibo) filledItems++;
     });
 
     // CNPJ required PDFs metrics
@@ -325,7 +327,8 @@ export default function FichaRatingCreditoForm({
       "comprovanteResidenciaPdf",
       "faturamento12MesesPdf",
       "drePdf",
-      "balancoPatrimonialPdf"
+      "balancoPatrimonialPdf",
+      "extratoBancarioPjPdf"
     ];
     cnpjFields.forEach(f => {
       totalItems++;
