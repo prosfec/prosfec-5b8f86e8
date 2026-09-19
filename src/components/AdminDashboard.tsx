@@ -1008,6 +1008,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setCustomServices(defaultSanitized);
       setEditMensalidades(DEFAULT_MENSALIDADES);
       setEditAssinaturaParceiro(DEFAULT_ASSINATURA_PARCEIRO);
+      setEditContratosAssessoria(DEFAULT_CONTRATOS_ASSESSORIA);
+      contratosAssessoriaSalvosRef.current = DEFAULT_CONTRATOS_ASSESSORIA;
+
       alert(`Preços e catálogo de serviços restaurados para o padrão!${updatedLeadsCount > 0 ? `\n\n${updatedLeadsCount} lead(s) sincronizados com o padrão.` : ''}`);
       await fetchData();
     } catch (err) {
