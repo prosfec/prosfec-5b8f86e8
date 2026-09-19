@@ -83,9 +83,9 @@ import ContratosAssinadosResumo from "./ContratosAssinadosResumo";
 import LeadConciergeTracker from "./LeadConciergeTracker";
 import FichaRatingAdmViewer from "./FichaRatingAdmViewer";
 import FichaRatingCreditoForm from "./FichaRatingCreditoForm";
-import { DossierComparativeViewer } from "./DossierComparativeViewer";
 import { RelatorioPdfViewerModal } from "./RelatorioPdfViewerModal";
 import { RelatorioPdfUploader } from "./RelatorioPdfUploader";
+import { Passo7DocumentalViewer } from "./Passo7DocumentalViewer";
 import { calculateLeadStepStatus } from "../utils/stepValidation";
 import { 
   GOVERNMENT_CREDIT_LINES, 
@@ -264,7 +264,6 @@ export default function LeadWorkspaceModal({
     }
   };
 
-  const [generatingPasso7, setGeneratingPasso7] = useState(false);
 
   const handleTabClick = (rawTab: "details" | "socios" | "diagnostico" | "contrato" | "credenciais" | "simulador" | "apta_bancaria" | "rating_adm" | "rating_form" | "concierge" | "faturamento") => {
     // A Ficha & Documentos agora vive dentro do Passo 6 (Estruturação)
@@ -306,6 +305,7 @@ export default function LeadWorkspaceModal({
   const [consultasError, setConsultasError] = useState<string | null>(null);
 
   const [viewingConsulta, setViewingConsulta] = useState<any | null>(null);
+  const [viewingConsultaVariant, setViewingConsultaVariant] = useState<"antes" | "depois">("antes");
 
   // Serviços Recomendados e Precificação (Apenas ADM altera)
   const [servicosRecomendados, setServicosRecomendados] = useState<any[]>(() => {
@@ -894,7 +894,7 @@ export default function LeadWorkspaceModal({
   // Run lead query listener on active tab (only after Firebase Auth resolves,
   // otherwise the rules reject the query with permission-denied)
   useEffect(() => {
-    if (workspaceTab !== "diagnostico") return;
+    if (workspaceTab !== "diagnostico" && workspaceTab !== "apta_bancaria") return;
     if (auth.currentUser) {
       loadLeadConsultas();
       return;
@@ -5384,40 +5384,16 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
           {/* TAB: Passo 7 - Operação Apta para Solicitação Bancária */}
           {workspaceTab === "apta_bancaria" && (
             <div className="space-y-6">
-              <DossierComparativeViewer
+              <Passo7DocumentalViewer
                 lead={lead as any}
-                diagnosticoPosEstruturacao={(lead as any).diagnosticoPosEstruturacao}
+                consultas={leadConsultas}
+                loading={loadingConsultas}
+                error={consultasError}
                 isAdmin={isAdminUser}
-                isRefreshing={generatingPasso7}
-                onRefresh={async () => {
-                  setGeneratingPasso7(true);
-                  setWorkspaceError(null);
-                  setWorkspaceSuccess(null);
-                  try {
-                    const res = await fetch("/api/credit/diagnostico-pos-estruturacao", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        leadId: lead.id,
-                        partnerId: currentPartner?.id || "admin"
-                      })
-                    });
-                    const data = await parseJsonResponse(res);
-                    if (!res.ok || !data.success) {
-                      throw new Error(data.error || "Erro ao gerar diagnóstico pós-estruturação.");
-                    }
-                    setWorkspaceSuccess("Dossiê Comparativo Pós-Estruturação gerado com sucesso!");
-                    safeRefreshLeads();
-                    onLeadUpdated?.({
-                      ...lead,
-                      etapa: Math.max(lead.etapa || 1, 7),
-                      diagnosticoPosEstruturacao: data.diagnosticoPosEstruturacao
-                    });
-                  } catch (err: any) {
-                    setWorkspaceError(err.message || "Erro ao gerar dossiê comparativo.");
-                  } finally {
-                    setGeneratingPasso7(false);
-                  }
+                onReload={() => loadLeadConsultas()}
+                onView={(consulta, variant) => {
+                  setViewingConsultaVariant(variant);
+                  setViewingConsulta(consulta);
                 }}
               />
             </div>
@@ -5704,6 +5680,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
         onClose={() => setViewingConsulta(null)}
         consulta={viewingConsulta}
         lead={lead}
+        variant={viewingConsultaVariant}
       />
 
     </div>
