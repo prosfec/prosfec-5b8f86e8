@@ -3296,6 +3296,30 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           contratoAssinadoDesenho: assinatura,
         };
 
+        // Congela o texto do contrato de assessoria vigente no momento da assinatura
+        if (String(lead.modeloContratacao).toLowerCase() !== "avulso") {
+          try {
+            const cfgAss: any = await getDocRest("configuracoes/precos_consultas");
+            const resolvido = contratoAssessoriaPorPlano(
+              lead.planoEscolhido,
+              normalizeContratosAssessoria(cfgAss?.contratosAssessoria)
+            );
+            if (resolvido.texto.trim()) {
+              payload.contratoAssessoriaTexto = resolvido.texto;
+              payload.contratoAssessoriaVersao = resolvido.versao;
+            } else if (multiplos) {
+              // Plano sem contrato cadastrado: nada a assinar neste documento
+              return;
+            } else {
+              throw new AssinaturaErro(404, "Contrato de assessoria ainda não disponibilizado.");
+            }
+          } catch (cfgErr: any) {
+            if (cfgErr instanceof AssinaturaErro) throw cfgErr;
+            console.warn("Falha ao congelar contrato de assessoria:", cfgErr?.message || cfgErr);
+          }
+        }
+
+
         if (nextEtapa !== currentEtapa) {
           const historyItem = {
             data: nowIso,
