@@ -8,6 +8,8 @@ import { db, auth, storage, createNotification } from "../firebase";
 interface RelatorioPdfUploaderProps {
   consulta: any;
   onUpdated?: () => void;
+  variant?: "antes" | "depois";
+  recipientId?: string;
 }
 
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -15,6 +17,8 @@ const MAX_BYTES = 15 * 1024 * 1024;
 export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
   consulta,
   onUpdated,
+  variant = "antes",
+  recipientId,
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -22,8 +26,15 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const hasPdf = Boolean(consulta?.relatorioPdfUrl);
-  const storagePath = `relatorios_consultas/${consulta?.id}.pdf`;
+  const isDepois = variant === "depois";
+  const fieldPrefix = isDepois ? "relatorioDepoisPdf" : "relatorioPdf";
+  const pdfUrl = consulta?.[`${fieldPrefix}Url`];
+  const pdfNome = consulta?.[`${fieldPrefix}Nome`];
+  const pdfEnviadoEm = consulta?.[`${fieldPrefix}EnviadoEm`];
+  const hasPdf = Boolean(pdfUrl);
+  const storagePath = isDepois
+    ? `relatorios_consultas/${consulta?.id}_depois.pdf`
+    : `relatorios_consultas/${consulta?.id}.pdf`;
 
   const handleSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -66,24 +77,27 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
       const agora = new Date().toISOString();
 
       await updateDoc(doc(db, "consultas_realizadas", consulta.id), {
-        relatorioPdfUrl: url,
-        relatorioPdfNome: file.name,
-        relatorioPdfTamanho: file.size,
-        relatorioPdfEnviadoEm: agora,
-        relatorioPdfEnviadoPor: auth.currentUser?.email || "equipe",
+        [`${fieldPrefix}Url`]: url,
+        [`${fieldPrefix}Nome`]: file.name,
+        [`${fieldPrefix}Tamanho`]: file.size,
+        [`${fieldPrefix}EnviadoEm`]: agora,
+        [`${fieldPrefix}EnviadoPor`]: auth.currentUser?.email || "equipe",
       });
 
-      if (consulta.partnerId) {
+      const notificationRecipient = recipientId || consulta.partnerId;
+      if (notificationRecipient && notificationRecipient !== "admin") {
         await createNotification(
-          consulta.partnerId,
+          notificationRecipient,
           "parceiro",
-          "Relatório de crédito disponível",
-          `O relatório PROSFEC DIAGNÓSTICO 360 do documento ${consulta.documento || ""} já está disponível na ficha do lead.`,
+          isDepois ? "Resultado final disponível" : "Relatório de crédito disponível",
+          isDepois
+            ? `O relatório final do documento ${consulta.documento || ""} já está disponível no Passo 7.`
+            : `O relatório PROSFEC DIAGNÓSTICO 360 do documento ${consulta.documento || ""} já está disponível na ficha do lead.`,
           "success",
         );
       }
 
-      setSuccess("Relatório anexado com sucesso.");
+      setSuccess(isDepois ? "Resultado final anexado com sucesso." : "Relatório anexado com sucesso.");
       onUpdated?.();
     } catch (err: any) {
       console.error("Erro ao enviar relatório PDF:", err);
@@ -110,13 +124,13 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
         if (err?.code !== "storage/object-not-found") throw err;
       }
       await updateDoc(doc(db, "consultas_realizadas", consulta.id), {
-        relatorioPdfUrl: deleteField(),
-        relatorioPdfNome: deleteField(),
-        relatorioPdfTamanho: deleteField(),
-        relatorioPdfEnviadoEm: deleteField(),
-        relatorioPdfEnviadoPor: deleteField(),
+        [`${fieldPrefix}Url`]: deleteField(),
+        [`${fieldPrefix}Nome`]: deleteField(),
+        [`${fieldPrefix}Tamanho`]: deleteField(),
+        [`${fieldPrefix}EnviadoEm`]: deleteField(),
+        [`${fieldPrefix}EnviadoPor`]: deleteField(),
       });
-      setSuccess("Relatório removido.");
+      setSuccess(isDepois ? "Resultado final removido." : "Relatório removido.");
       onUpdated?.();
     } catch (err) {
       console.error("Erro ao remover relatório PDF:", err);
@@ -130,7 +144,7 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
     <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">
-          Relatório oficial (PDF) — equipe
+          {isDepois ? "Resultado final (PDF) — equipe" : "Relatório oficial (PDF) — equipe"}
         </span>
         {hasPdf && (
           <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md uppercase">
@@ -141,9 +155,9 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
 
       {hasPdf && (
         <div className="text-[10px] text-slate-500 font-mono truncate">
-          {consulta.relatorioPdfNome || "relatorio.pdf"}
-          {consulta.relatorioPdfEnviadoEm
-            ? ` • ${new Date(consulta.relatorioPdfEnviadoEm).toLocaleString("pt-BR")}`
+          {pdfNome || "relatorio.pdf"}
+          {pdfEnviadoEm
+            ? ` • ${new Date(pdfEnviadoEm).toLocaleString("pt-BR")}`
             : ""}
         </div>
       )}
