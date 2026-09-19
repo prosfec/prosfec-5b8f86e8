@@ -2727,10 +2727,10 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   ? "border-amber-400 text-amber-300 bg-amber-500/10 font-bold"
                   : "border-transparent text-amber-400/80 hover:text-amber-300"
               }`}
-              title="Dossiê de Rating Comercial CPF/CNPJ (Exclusivo Administrador)"
+              title="Estruturação Financeira Corporativa (Exclusivo Administrador)"
             >
               <ShieldCheck className="w-4 h-4 text-amber-400" />
-              <span>Dossiê Rating (ADM)</span>
+              <span>Estruturação Financeira (ADM)</span>
               {lead.fichaRatingCredito?.dadosPreenchidos && (
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               )}
@@ -3969,7 +3969,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                           <div className="space-y-1">
                             <div className="w-full text-xs px-3 py-2.5 bg-emerald-50/60 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-2">
                               <span className="font-bold text-[#0A3D2E] truncate">
-                                Rating + Diagnóstico Financeiro 360
+                                Diagnóstico Financeiro Corporativo 360
                               </span>
                               <span className="font-mono font-black text-emerald-800 text-[11px] shrink-0 bg-white px-2 py-0.5 rounded-lg border border-emerald-200/50">
                                 {typeof localCatalog[0]?.price === "number" ? `R$ ${localCatalog[0].price.toFixed(2).replace(".", ",")}` : "Preço indisponível"}
@@ -4544,8 +4544,8 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   const aprovados = vals.filter(v => v?.status === "aprovado").length;
                   const rejeitados = vals.filter(v => v?.status === "rejeitado");
                   const faseLabel =
-                    ficha.faseRating === "concluido" ? "Rating concluído"
-                    : ficha.faseRating === "em_aplicacao" ? "Rating em aplicação"
+                    ficha.faseRating === "concluido" ? (fichaDocumentalMode ? "Documentação concluída" : "Estruturação concluída")
+                    : ficha.faseRating === "em_aplicacao" ? (fichaDocumentalMode ? "Em validação documental" : "Estruturação em aplicação")
                     : ficha.faseRating === "documentos_recebidos" ? "Documentos recebidos"
                     : "Aguardando documentos";
 
@@ -4555,10 +4555,10 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         <div className="space-y-0.5">
                           <h4 className="text-sm font-black text-[#0A3D2E] uppercase tracking-wider flex items-center gap-2">
                             <FileCheck className="w-5 h-5 text-[#00A86B]" />
-                            Ficha de Rating & Documentos do Cliente
+                            {fichaDocumentalMode ? "Ficha Documental do Cliente" : "Estruturação Financeira Corporativa & Documentos"}
                           </h4>
                           <p className="text-[11px] text-slate-500">
-                            Preenchimento feito pelo parceiro em nome do cliente. Inclui o link da pasta de documentos em nuvem.
+                            Preenchimento feito pelo parceiro em nome do cliente. Informe o link individual de cada documento em PDF.
                           </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -5576,7 +5576,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                       : activePdfTab === "termo"
                       ? "Termo de Reconhecimento de Honorários"
                       : activePdfTab === "rating_score"
-                      ? "Contrato de Serviços - Rating e Score"
+                       ? "Contrato de Serviços - Estruturação Financeira Corporativa"
                       : activePdfTab === "bacen"
                       ? "Contrato de Serviços - BACEN e SCR"
                       : "Termo de Contratação - RTB (Tarifas Bancárias)"}
