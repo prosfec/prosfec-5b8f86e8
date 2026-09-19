@@ -3231,7 +3231,9 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           assinados.push({
             id: alvo,
             tipo: String(contrato.tipo || "avulso"),
-            titulo: contrato.tipo === "aditivo" ? "Termo Aditivo" : "Contrato Avulso de Serviços",
+            titulo:
+              contrato.titulo ||
+              (contrato.tipo === "aditivo" ? "Termo Aditivo" : "Contrato Avulso de Serviços"),
             valorTotal: Number(contrato.valorTotal || 0),
           });
           return;
