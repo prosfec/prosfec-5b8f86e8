@@ -2661,7 +2661,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     assinaturaData: c.assinaturaData || null,
     assinaturaIp: c.assinaturaIp || null,
     assinaturaDispositivo: c.assinaturaDispositivo || null,
-  });
+    };
+  };
 
   /** Catálogo de serviços vigente (cláusulas escritas em "Preços e Serviços"). */
   const getCatalogoServicos = async (): Promise<any[]> => {
