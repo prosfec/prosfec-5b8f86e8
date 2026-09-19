@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { X, ShieldCheck, Download, FileText } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface RelatorioPdfViewerModalProps {
   isOpen: boolean;
@@ -86,20 +88,23 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
                 target="_blank"
                 rel="noopener noreferrer"
                 download={downloadName}
-                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 text-[10px] font-black uppercase tracking-wider text-white transition-colors hover:bg-emerald-500 sm:px-4 sm:text-xs"
+                className={cn(buttonVariants({ size: "sm" }), "h-9 rounded-lg bg-brand-accent px-3 text-[10px] font-black uppercase tracking-wider hover:bg-brand-accent-hover sm:px-4 sm:text-xs")}
                 title="Baixar PDF completo"
               >
                 <Download className="w-4 h-4 shrink-0" />
                 <span className="hidden sm:inline">Baixar PDF Completo</span>
               </a>
             )}
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               onClick={onClose}
-              className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer"
+              className="h-9 w-9 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white"
               aria-label="Fechar"
             >
               <X className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -150,7 +155,7 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
                 target="_blank"
                 rel="noopener noreferrer"
                 download={downloadName}
-                className="inline-flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all shadow-lg hover:shadow-xl"
+                className={cn(buttonVariants(), "h-11 w-full rounded-xl bg-brand-primary px-6 text-xs font-black uppercase tracking-wider hover:bg-brand-accent sm:text-sm")}
               >
                 <Download className="w-4 h-4 sm:w-5 sm:h-5" />
                 Baixar PDF Completo

@@ -4,12 +4,14 @@ import { UploadCloud, Trash2, Loader2, CheckCircle2, AlertCircle, RefreshCw } fr
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
 import { db, auth, storage, createNotification } from "../firebase";
+import { Button } from "@/components/ui/button";
 
 interface RelatorioPdfUploaderProps {
   consulta: any;
   onUpdated?: () => void;
   variant?: "antes" | "depois";
   recipientId?: string;
+  compact?: boolean;
 }
 
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -19,6 +21,7 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
   onUpdated,
   variant = "antes",
   recipientId,
+  compact = false,
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -141,8 +144,8 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2">
-      <div className="flex items-center justify-between gap-2">
+    <div className={compact ? "space-y-2 border-t border-line-soft pt-3" : "space-y-2 rounded-xl border border-line-soft bg-surface-raised p-3"}>
+      {!compact && <div className="flex items-center justify-between gap-2">
         <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">
           {isDepois ? "Resultado final (PDF) — equipe" : "Relatório oficial (PDF) — equipe"}
         </span>
@@ -151,9 +154,9 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
             Anexado
           </span>
         )}
-      </div>
+      </div>}
 
-      {hasPdf && (
+      {hasPdf && !compact && (
         <div className="text-[10px] text-slate-500 font-mono truncate">
           {pdfNome || "relatorio.pdf"}
           {pdfEnviadoEm
@@ -171,11 +174,12 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
       />
 
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button
           type="button"
+          size="sm"
           disabled={uploading}
           onClick={() => inputRef.current?.click()}
-          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+          className="h-8 rounded-lg bg-brand-primary px-3 text-[10px] font-black uppercase tracking-wider hover:bg-brand-accent"
         >
           {uploading ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -189,18 +193,20 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
             : hasPdf
               ? "Substituir PDF"
               : "Anexar PDF"}
-        </button>
+        </Button>
 
         {hasPdf && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             disabled={uploading}
             onClick={handleRemove}
-            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 text-rose-700 border border-rose-200 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+            className="h-8 rounded-lg border-rose-200 bg-rose-50 px-3 text-[10px] font-black uppercase tracking-wider text-rose-700 hover:bg-rose-100"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Remover
-          </button>
+          </Button>
         )}
       </div>
 
