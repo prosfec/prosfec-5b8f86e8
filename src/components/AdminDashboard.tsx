@@ -1585,7 +1585,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               if (!filtered.some((s: any) => s.id === "serv_rating_score" || (s.nome && s.nome.toLowerCase().includes("rating") && s.nome.toLowerCase().includes("score")))) {
                 filtered.splice(1, 0, {
                   id: "serv_rating_score",
-                  nome: "Melhoria e Adequação de Rating e Score",
+                  nome: "Estruturação Financeira Corporativa",
                   valor: scoreVal + ratingVal
                 });
               }

@@ -386,7 +386,7 @@ export default function FichaRatingCreditoForm({
 
       setTimeout(() => setSaveSuccess(null), 5000);
     } catch (err) {
-      console.error("Erro ao salvar ficha de rating:", err);
+      console.error("Erro ao salvar ficha de estruturação:", err);
       setSaveError(`Erro ao salvar os dados: ${(err as any)?.message || "verifique a conexão e tente novamente"}`);
     } finally {
       setSaving(false);
@@ -475,7 +475,7 @@ export default function FichaRatingCreditoForm({
             </div>
             <div className="min-w-0">
               <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wider font-mono block">
-                Etapa de Estruturação
+                {isDocumentalMode ? "Coleta de Documentos" : "Etapa de Estruturação"}
               </span>
               <h2 className="text-base sm:text-lg font-black text-slate-900 font-display truncate">
                 {isDocumentalMode ? "Ficha Documental do Cliente" : "Ficha de Estruturação Financeira Corporativa"}
@@ -492,7 +492,11 @@ export default function FichaRatingCreditoForm({
               ? "bg-rose-100 text-rose-800"
               : "bg-amber-100 text-amber-800"
           }`}>
-            {lead.fichaRatingCredito?.status === "aprovado" ? "Aprovado" : lead.fichaRatingCredito?.status === "em_analise" ? "Em Análise" : lead.fichaRatingCredito?.status === "ajuste_solicitado" ? "Ajuste Solicitado" : "Pendente"}
+            {lead.fichaRatingCredito?.status === "aprovado"
+              ? isDocumentalMode ? "Documentação Concluída" : "Aprovado"
+              : lead.fichaRatingCredito?.status === "em_analise"
+                ? isDocumentalMode ? "Em Validação" : "Em Análise"
+                : lead.fichaRatingCredito?.status === "ajuste_solicitado" ? "Ajuste Solicitado" : "Pendente"}
           </span>
         </div>
 
@@ -697,7 +701,7 @@ export default function FichaRatingCreditoForm({
                     Ajuste Solicitado pela Mesa Técnica
                   </h4>
                   <p className="text-[11px] text-amber-800">
-                    Alguns documentos necessitam de reenvio para prosseguimento da estruturação. Veja os itens abaixo:
+                    Alguns documentos necessitam de reenvio para prosseguimento da {isDocumentalMode ? "validação documental" : "estruturação"}. Veja os itens abaixo:
                   </p>
                 </div>
               </div>
