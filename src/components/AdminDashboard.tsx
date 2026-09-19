@@ -993,6 +993,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         servicos: defaultSanitized,
         mensalidades: DEFAULT_MENSALIDADES,
         assinaturaParceiro: DEFAULT_ASSINATURA_PARCEIRO,
+        contratosAssessoria: DEFAULT_CONTRATOS_ASSESSORIA,
+
         updatedAt: new Date().toISOString()
       });
 
