@@ -2683,7 +2683,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
    * com todos os serviços; com contrato assinado, gera o termo aditivo apenas
    * com os serviços que ainda não constam em nenhum documento assinado.
    */
-  const derivarDocumentoPendente = async (lead: any, assinados: any[]): Promise<any | null> => {
+  const derivarDocumentosPendentes = async (lead: any, assinados: any[]): Promise<any[]> => {
     const catalogo = await getCatalogoServicos();
     const lista = Array.isArray(lead?.servicosRecomendados) ? lead.servicosRecomendados : [];
 
