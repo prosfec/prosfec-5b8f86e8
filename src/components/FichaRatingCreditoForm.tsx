@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { 
-  FileText, 
   ShieldCheck, 
   CheckCircle2, 
   AlertCircle, 
@@ -10,10 +9,8 @@ import {
   Plus, 
   Trash2, 
   Lock, 
-  Eye, 
   Save, 
   Send, 
-  X, 
   FileCheck, 
   AlertTriangle,
   ChevronDown,
@@ -21,6 +18,7 @@ import {
   MessageSquare,
   HelpCircle,
   Award,
+  Sparkles,
   TrendingUp,
   Clock,
   DollarSign,
@@ -28,11 +26,11 @@ import {
   Link2,
   ExternalLink
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPessoal } from "../types";
-import { sanitizeFirestoreData, buildWhatsAppUrl } from "../utils";
+import { formatCurrencyBRL, sanitizeFirestoreData, buildWhatsAppUrl } from "../utils";
 
 /**
  * Campo de link de documento em nuvem (Google Drive, OneDrive, Dropbox...).
