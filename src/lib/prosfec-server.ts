@@ -1012,6 +1012,10 @@ export function createExpressApp() {
           relatorioPdfNome: r.data.relatorioPdfNome || "",
           relatorioPdfTamanho: r.data.relatorioPdfTamanho ?? null,
           relatorioPdfEnviadoEm: r.data.relatorioPdfEnviadoEm || "",
+          relatorioDepoisPdfUrl: r.data.relatorioDepoisPdfUrl || "",
+          relatorioDepoisPdfNome: r.data.relatorioDepoisPdfNome || "",
+          relatorioDepoisPdfTamanho: r.data.relatorioDepoisPdfTamanho ?? null,
+          relatorioDepoisPdfEnviadoEm: r.data.relatorioDepoisPdfEnviadoEm || "",
         }))
         .sort(
           (a: any, b: any) =>

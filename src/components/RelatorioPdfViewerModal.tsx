@@ -8,6 +8,7 @@ interface RelatorioPdfViewerModalProps {
   onClose: () => void;
   consulta: any;
   lead?: any;
+  variant?: "antes" | "depois";
 }
 
 export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = ({
@@ -15,13 +16,17 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
   onClose,
   consulta,
   lead,
+  variant = "antes",
 }) => {
   const isMobile = useIsMobile();
   const [previewLoaded, setPreviewLoaded] = useState(false);
   const [previewFailed, setPreviewFailed] = useState(false);
   const fallbackTimerRef = useRef<number | null>(null);
 
-  const url: string = consulta?.relatorioPdfUrl || "";
+  const isDepois = variant === "depois";
+  const url: string = isDepois
+    ? consulta?.relatorioDepoisPdfUrl || ""
+    : consulta?.relatorioPdfUrl || "";
 
   useEffect(() => {
     setPreviewLoaded(false);
@@ -53,7 +58,7 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
   const data = consulta.dataConsulta
     ? new Date(consulta.dataConsulta).toLocaleString("pt-BR")
     : "";
-  const downloadName = `PROSFEC_DIAGNOSTICO_360_${(documento || "relatorio").replace(/\D/g, "") || "relatorio"}.pdf`;
+  const downloadName = `PROSFEC_${isDepois ? "RESULTADO_FINAL" : "DIAGNOSTICO_360"}_${(documento || "relatorio").replace(/\D/g, "") || "relatorio"}.pdf`;
   const showDownloadCard = Boolean(url) && (isMobile || previewFailed);
 
   return (
@@ -64,7 +69,7 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
             <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
             <div className="min-w-0">
               <span className="font-extrabold text-[11px] sm:text-sm uppercase tracking-wider font-mono text-emerald-400 block truncate">
-                Laudo Oficial PROSFEC DIAGNÓSTICO 360
+                {isDepois ? "Resultado Final — Depois" : "Laudo Oficial — Antes"}
               </span>
               <span className="text-[10px] text-slate-400 font-mono block truncate">
                 {titular}
@@ -105,11 +110,12 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
                 <FileText className="w-8 h-8 text-amber-600" />
               </div>
               <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
-                Relatório em preparação pela equipe
+                {isDepois ? "Resultado final em preparação" : "Relatório em preparação pela equipe"}
               </h3>
               <p className="text-xs text-slate-500 max-w-md">
-                A consulta já foi executada. Assim que a equipe PROSFEC anexar o relatório
-                oficial em PDF, ele ficará disponível aqui para download.
+                {isDepois
+                  ? "Assim que a equipe PROSFEC anexar o resultado final em PDF, ele ficará disponível aqui."
+                  : "A consulta já foi executada. Assim que a equipe PROSFEC anexar o relatório oficial em PDF, ele ficará disponível aqui para download."}
               </p>
               <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5" />
@@ -124,11 +130,12 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
 
               <div className="space-y-2">
                 <h3 className="text-base sm:text-lg font-black text-slate-900 uppercase tracking-wider">
-                  Laudo Oficial PROSFEC DIAGNÓSTICO 360
+                  {isDepois ? "Resultado Final — Depois" : "Laudo Oficial — Antes"}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                  O documento abaixo contém o detalhamento oficial da consulta de crédito.
-                  Baixe o PDF completo para visualizar todas as informações.
+                  {isDepois
+                    ? "Este documento contém o resultado final entregue após a estruturação."
+                    : "O documento contém o detalhamento oficial da consulta de crédito realizada antes da estruturação."}
                 </p>
               </div>
 
@@ -167,7 +174,7 @@ export const RelatorioPdfViewerModal: React.FC<RelatorioPdfViewerModalProps> = (
               )}
               <iframe
                 src={url}
-                title="Laudo Oficial PROSFEC DIAGNÓSTICO 360"
+                title={isDepois ? "Resultado Final — Depois" : "Laudo Oficial — Antes"}
                 className="h-full w-full border-0"
                 onLoad={() => {
                   if (fallbackTimerRef.current !== null) {
