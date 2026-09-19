@@ -812,7 +812,7 @@ export default function LeadWorkspaceModal({
   const CREDIT_CATALOG_FALLBACK = [
     {
       code: "REDEBE_DIAGNOSTICO_360",
-      name: "Rating de Crédito + Diagnóstico Finan. 360",
+      name: "Estruturação Financeira Corporativa + Diagnóstico 360",
       originalPrice: 49.9,
       price: 69.86,
     },
@@ -1539,7 +1539,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
       : activePdfTab === "termo"
       ? "Termo de Reconhecimento de Honorarios"
       : activePdfTab === "rating_score"
-      ? "Contrato de Prestacao de Servicos - Rating e Score"
+      ? "Contrato de Prestacao de Servicos - Estruturacao Financeira Corporativa"
       : activePdfTab === "bacen"
       ? "Contrato de Prestacao de Servicos - BACEN e SCR"
       : "Termo de Contratacao de Servicos - RTB";

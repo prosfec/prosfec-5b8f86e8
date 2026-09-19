@@ -514,7 +514,7 @@ export default function FichaRatingAdmViewer({
               <option value="pendente">Pendente de envio dos documentos</option>
               <option value="em_analise">{isDocumentalMode ? "Em Validação Documental" : "Em Análise Técnica / Estruturação"}</option>
               <option value="ajuste_solicitado">Ajuste Solicitado</option>
-              <option value="aprovado">Aprovado / Dossiê Concluído</option>
+              <option value="aprovado">{isDocumentalMode ? "Documentação Concluída" : "Estruturação Concluída"}</option>
             </select>
           </div>
           <div className="sm:col-span-2">
@@ -525,7 +525,7 @@ export default function FichaRatingAdmViewer({
               type="text"
               value={observacoes}
               onChange={(event) => setObservacoes(event.target.value)}
-              placeholder="Ex: Pasta recebida. Validando informações com a contabilidade..."
+              placeholder="Ex: Documentos recebidos. Validando informações com a contabilidade..."
               className="w-full bg-slate-50/50 border border-slate-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 outline-hidden transition-all"
             />
           </div>
