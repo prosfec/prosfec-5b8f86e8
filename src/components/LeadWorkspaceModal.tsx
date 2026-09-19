@@ -4136,7 +4136,10 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                           <button
                             type="button"
-                            onClick={() => setViewingConsulta(consulta)}
+                            onClick={() => {
+                              setViewingConsultaVariant("antes");
+                              setViewingConsulta(consulta);
+                            }}
                             className="w-full px-3 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -5385,7 +5388,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
           {workspaceTab === "apta_bancaria" && (
             <div className="space-y-6">
               <Passo7DocumentalViewer
-                lead={lead as any}
+                lead={{ ...lead, aptoMesaCredito } as any}
                 consultas={leadConsultas}
                 loading={loadingConsultas}
                 error={consultasError}
