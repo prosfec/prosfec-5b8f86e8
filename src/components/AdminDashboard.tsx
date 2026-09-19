@@ -5655,20 +5655,20 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         Valores de Mensalidade (Assessoria)
                       </h3>
                       <p className="text-slate-500 text-[11px] mt-1">
-                        Valores mensais exibidos na vitrine de planos e na Etapa 4. Contratos já assinados mantêm o valor contratado.
+                        Valores mensais exibidos na vitrine de planos e na Etapa 4. Abaixo de cada preço, escreva o contrato completo daquele plano. Contratos já assinados mantêm o valor e o texto contratados.
                       </p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-5">
                       {([
-                        { key: "essential" as const, label: "Preço Mensal — Essential" },
-                        { key: "growth" as const, label: "Preço Mensal — Growth" },
-                        { key: "corporate" as const, label: "Preço Mensal — Corporate" },
+                        { key: "essential" as const, label: "Preço Mensal — Essential", plano: "Essential" },
+                        { key: "growth" as const, label: "Preço Mensal — Growth", plano: "Growth" },
+                        { key: "corporate" as const, label: "Preço Mensal — Corporate", plano: "Corporate" },
                       ]).map((f) => (
-                        <div key={f.key}>
+                        <div key={f.key} className="border border-slate-200 rounded-xl p-4 bg-slate-50/40">
                           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
                             {f.label}
                           </label>
-                          <div className="relative">
+                          <div className="relative max-w-xs">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold">R$</span>
                             <input
                               type="number"
@@ -5682,12 +5682,35 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   [f.key]: e.target.value === "" ? 0 : Number(e.target.value),
                                 }))
                               }
-                              className="w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-hidden transition-all disabled:opacity-60"
+                              className="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-hidden transition-all disabled:opacity-60"
                             />
                           </div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mt-4 mb-1.5">
+                            Contrato do plano — {f.plano}
+                          </label>
+                          <textarea
+                            rows={10}
+                            disabled={userRole === "contador"}
+                            value={editContratosAssessoria[f.key]?.texto || ""}
+                            onChange={(e) =>
+                              setEditContratosAssessoria((prev) => ({
+                                ...prev,
+                                [f.key]: { ...prev[f.key], texto: e.target.value },
+                              }))
+                            }
+                            placeholder={`Escreva aqui o contrato completo do plano ${f.plano} (objeto, escopo, prazo, pagamento, obrigações, rescisão, êxito, LGPD, foro). O sistema acrescenta automaticamente o cabeçalho com PROSFEC/DCS Tech & Finance, os dados do cliente, o quadro de valores e o bloco de assinatura eletrônica. Se ficar em branco, nenhum contrato de assessoria é exibido ao cliente.`}
+                            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 leading-relaxed focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-hidden transition-all disabled:opacity-60 font-mono"
+                          />
+                          <p className="text-[11px] text-slate-400 mt-1">
+                            {(editContratosAssessoria[f.key]?.texto || "").length} caracteres
+                            {(contratosAssessoriaSalvosRef.current[f.key]?.versao || 0) > 0
+                              ? ` · versão salva v${contratosAssessoriaSalvosRef.current[f.key]?.versao}`
+                              : " · nenhuma versão salva"}
+                          </p>
                         </div>
                       ))}
                     </div>
+
                   </div>
                   <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6">
                     <div className="mb-4">
