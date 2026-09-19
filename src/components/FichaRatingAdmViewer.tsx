@@ -28,7 +28,7 @@ const MELHORIAS_DISPONIVEIS = [
   "Adequação e Saneamento Cadastral",
   "Regularização e Desvinculação BACEN (SCR)",
   "Otimização de Índices de Liquidez no Balanço/DRE",
-  "Elevação de Score de Crédito e Rating Bancário",
+  "Otimização de Indicadores de Crédito",
   "Reestruturação de Endividamento de Curto Prazo",
   "Emissão de Parecer Técnico de Capacidade Financeira",
 ];
@@ -47,6 +47,7 @@ export default function FichaRatingAdmViewer({
   lead,
   onLeadUpdated,
 }: FichaRatingAdmViewerProps) {
+  const isDocumentalMode = lead.aptoMesaCredito === true;
   const ratingData: FichaRatingCredito | undefined = lead.fichaRatingCredito;
   const pastaDocumentosUrl = ratingData?.pastaDocumentosUrl || lead.linkDocumentos || "";
   const isUnlocked = Boolean(
@@ -79,7 +80,7 @@ export default function FichaRatingAdmViewer({
     ratingData?.conclusaoRating?.melhoriasAplicadas || [
       "Adequação e Saneamento Cadastral",
       "Regularização e Desvinculação BACEN (SCR)",
-      "Elevação de Score de Crédito e Rating Bancário",
+      "Otimização de Indicadores de Crédito",
     ],
   );
   const [parecerTecnico, setParecerTecnico] = useState(
@@ -87,7 +88,7 @@ export default function FichaRatingAdmViewer({
       "Após aplicação dos serviços de adequação de perfil de crédito e saneamento de apontamentos cadastrais, a empresa apresenta capacidade financeira robusta para captação de recursos junto aos agentes financeiros com taxa otimizada.",
   );
   const [analistaResponsavel, setAnalistaResponsavel] = useState(
-    ratingData?.conclusaoRating?.analistaResponsavel || "Mesa de Operações e Rating PROSFEC",
+    ratingData?.conclusaoRating?.analistaResponsavel || "Mesa de Operações PROSFEC",
   );
   const [saving, setSaving] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
@@ -139,7 +140,7 @@ export default function FichaRatingAdmViewer({
         liberarFichaRating: newState,
         pagamentoConfirmado: newState,
       });
-      showFeedback(newState ? "Ficha de Rating liberada com sucesso!" : "Ficha de Rating bloqueada.");
+      showFeedback(newState ? "Ficha liberada com sucesso!" : "Ficha bloqueada.");
     } catch (err) {
       console.error("Erro ao atualizar status de liberação:", err);
       showFeedback("Erro ao atualizar no Firestore.");
@@ -174,7 +175,7 @@ export default function FichaRatingAdmViewer({
       const docRef = doc(db, "leads", lead.id);
       await updateDoc(docRef, { fichaRatingCredito: sanitizeFirestoreData(updatedRating) });
       onLeadUpdated?.({ ...lead, fichaRatingCredito: updatedRating });
-      showFeedback("Dossiê de Rating salvo e atualizado com sucesso!");
+      showFeedback("Estruturação Financeira Corporativa salva com sucesso!");
     } catch (err: any) {
       console.error("Erro ao salvar avaliação de rating:", err);
       showFeedback(`Erro ao salvar no Firestore: ${err?.message || "falha desconhecida"}`);
@@ -213,7 +214,7 @@ export default function FichaRatingAdmViewer({
       await updateDoc(docRef, { fichaRatingCredito: sanitizeFirestoreData(updatedRating) });
       onLeadUpdated?.({ ...lead, fichaRatingCredito: updatedRating });
       setStatus("aprovado");
-      showFeedback("Parecer Técnico e Nota de Rating emitidos com sucesso!");
+      showFeedback("Parecer técnico da estruturação emitido com sucesso!");
     } catch (err: any) {
       console.error("Erro ao emitir parecer de rating:", err);
       showFeedback(`Erro ao salvar no Firestore: ${err?.message || "falha desconhecida"}`);
@@ -231,7 +232,9 @@ export default function FichaRatingAdmViewer({
 
     const companyName = lead.razaoSocial || lead.nome || "Cliente";
     let message = `Olá, *${companyName}*! Aqui é da Mesa de Operações e Crédito da *PROSFEC*.\n\n`;
-    message += "Estamos revisando os documentos da empresa para a estruturação do Dossiê de Rating Comercial.\n\n";
+    message += isDocumentalMode
+      ? "Estamos revisando os documentos da empresa para a análise da operação.\n\n"
+      : "Estamos revisando os documentos da empresa para a Estruturação Financeira Corporativa.\n\n";
     message += "Por favor, confirme se os links individuais dos documentos em PDF estão atualizados e com permissão de visualização para nossa equipe.\n";
     if (observacoes.trim()) {
       message += `\n*Orientação da análise:* ${observacoes.trim()}\n`;
@@ -274,7 +277,7 @@ export default function FichaRatingAdmViewer({
       </section>
       )}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-3 shadow-sm">
+      {!isDocumentalMode && <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-3 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-[10px] font-black uppercase tracking-wider font-mono text-slate-600">
             Passo 6 — Estruturação da Operação
@@ -307,17 +310,17 @@ export default function FichaRatingAdmViewer({
             ))}
           </ul>
         )}
-      </section>
+      </section>}
 
       <header className="bg-[#0A3D2E] text-white p-5 sm:p-6 rounded-xl shadow-sm border border-emerald-900/40">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-mono inline-flex items-center gap-1 mb-2">
               <ShieldCheck className="w-3.5 h-3.5" />
-              Mesa de Operações & Rating
+              {isDocumentalMode ? "Mesa de Operações & Documentação" : "Mesa de Operações & Estruturação Financeira"}
             </span>
             <h3 className="text-lg sm:text-xl font-black font-display tracking-tight text-white">
-              Dossiê & Ficha de Rating de Crédito
+              {isDocumentalMode ? "Conferência da Ficha Documental" : "Estruturação Financeira Corporativa"}
             </h3>
             <p className="text-xs font-medium text-emerald-300 mt-1">{lead.razaoSocial || lead.nome}</p>
           </div>
@@ -368,24 +371,24 @@ export default function FichaRatingAdmViewer({
         </motion.div>
       )}
 
-      <section className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-6">
+      {!isDocumentalMode && <section className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-6">
         <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div>
             <span className="text-xs font-black text-emerald-800 uppercase tracking-wider font-mono block">
-              Parecer Técnico & Nota de Rating Pós-Aplicação de Serviços
+              Parecer Técnico da Estruturação Financeira Corporativa
             </span>
             <p className="text-[11px] text-slate-500 mt-0.5">
               Preencha o veredito final da consultoria após a implementação das melhorias cadastrais e contábeis.
             </p>
           </div>
           <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded-full uppercase self-start sm:self-auto">
-            {currentFase === "concluido" ? "Rating concluído" : "Em aplicação / análise"}
+            {currentFase === "concluido" ? "Estruturação concluída" : "Em aplicação / análise"}
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">Nota de Rating Atribuída</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">Indicador de Crédito Atribuído</label>
             <select
               value={notaRating}
               onChange={(event) => setNotaRating(event.target.value)}
@@ -490,11 +493,11 @@ export default function FichaRatingAdmViewer({
               className="px-5 py-2.5 bg-[#0A3D2E] hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <Award className="w-4 h-4 text-emerald-400" />
-              <span>Concluir Rating & Emitir Parecer</span>
+              <span>Concluir Estruturação & Emitir Parecer</span>
             </button>
           </div>
         </div>
-      </section>
+      </section>}
 
       <section className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
         <span className="text-xs font-black text-slate-700 uppercase tracking-wider font-mono block">
@@ -502,14 +505,14 @@ export default function FichaRatingAdmViewer({
         </span>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Status do Dossiê de Rating</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">{isDocumentalMode ? "Status da Documentação" : "Status da Estruturação Financeira Corporativa"}</label>
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value as FichaRatingCredito["status"])}
               className="w-full bg-slate-50/50 border border-slate-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 outline-hidden transition-all"
             >
-              <option value="pendente">Pendente de envio da pasta</option>
-              <option value="em_analise">Em Análise Técnica / Estruturação</option>
+              <option value="pendente">Pendente de envio dos documentos</option>
+              <option value="em_analise">{isDocumentalMode ? "Em Validação Documental" : "Em Análise Técnica / Estruturação"}</option>
               <option value="ajuste_solicitado">Ajuste Solicitado</option>
               <option value="aprovado">Aprovado / Dossiê Concluído</option>
             </select>
@@ -535,7 +538,7 @@ export default function FichaRatingAdmViewer({
             className="px-5 py-2.5 bg-[#0A3D2E] hover:bg-[#072a20] text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>Salvar Informações do Rating</span>
+            <span>{isDocumentalMode ? "Salvar Conferência Documental" : "Salvar Estruturação Financeira"}</span>
           </button>
         </div>
       </section>
