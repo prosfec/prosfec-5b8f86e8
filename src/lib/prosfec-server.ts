@@ -2735,28 +2735,39 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       });
 
 
-    if (servicos.length === 0) return null;
+    if (servicos.length === 0) return [];
 
     const isAditivo = Boolean(contratoBase);
-    return {
-      id: isAditivo ? "aditivo_auto" : "avulso_auto",
-      tipo: isAditivo ? "aditivo" : "avulso",
-      titulo: isAditivo
-        ? "Termo Aditivo de Inclusão de Serviço Avulso"
-        : "Contrato de Prestação de Serviços Avulsos",
-      status: "aguardando_assinatura",
-      assinado: false,
-      servicos,
-      valorTotal: servicos.reduce((acc: number, s: any) => acc + Number(s.valor || 0), 0),
-      contratoOrigemId: contratoBase?.id || null,
-      contratoOrigemData: contratoBase?.assinaturaData || null,
-      dataCriacao: null,
-      assinaturaNome: null,
-      assinaturaCpf: "",
-      assinaturaData: null,
-      assinaturaIp: null,
-      assinaturaDispositivo: null,
-    };
+    const prefixo = isAditivo ? "aditivo_auto" : "avulso_auto";
+
+    // Um contrato completo e independente por serviço.
+    return servicos.map((s: any, idx: number) => {
+      const slug =
+        String(s.id || s.nome || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "_")
+          .replace(/^_+|_+$/g, "")
+          .slice(0, 48) || `item_${idx + 1}`;
+      return {
+        id: `${prefixo}__${slug}`,
+        tipo: isAditivo ? "aditivo" : "avulso",
+        titulo: `${isAditivo ? "Termo Aditivo" : "Contrato de Prestação de Serviços"} — ${s.nome}`,
+        status: "aguardando_assinatura",
+        assinado: false,
+        servicos: [s],
+        valorTotal: Number(s.valor || 0),
+        contratoOrigemId: contratoBase?.id || null,
+        contratoOrigemData: contratoBase?.assinaturaData || null,
+        dataCriacao: null,
+        assinaturaNome: null,
+        assinaturaCpf: "",
+        assinaturaData: null,
+        assinaturaIp: null,
+        assinaturaDispositivo: null,
+      };
+    });
   };
 
   app.get("/api/public/contrato/:leadId", async (req, res) => {
