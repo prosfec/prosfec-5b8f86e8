@@ -925,13 +925,31 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const sanitizedMensalidades = normalizeMensalidades(editMensalidades);
       const sanitizedAssinaturaParceiro = normalizeAssinaturaParceiro(editAssinaturaParceiro);
 
+      // Contratos de assessoria: incrementa a versão apenas dos planos cujo texto mudou
+      const normalizedContratos = normalizeContratosAssessoria(editContratosAssessoria);
+      const salvos = contratosAssessoriaSalvosRef.current;
+      const sanitizedContratos = (["essential", "growth", "corporate"] as PlanoAssessoriaKey[]).reduce(
+        (acc, key) => {
+          const antigo = salvos[key] || { texto: "", versao: 0 };
+          const novoTexto = normalizedContratos[key].texto;
+          acc[key] =
+            novoTexto === antigo.texto
+              ? { texto: antigo.texto, versao: antigo.versao }
+              : { texto: novoTexto, versao: (antigo.versao || 0) + 1 };
+          return acc;
+        },
+        {} as ContratosAssessoria
+      );
+
       const payload = cleanForFirestore({
         precos: sanitizedPrices,
         servicos: sanitizedServices,
         mensalidades: sanitizedMensalidades,
         assinaturaParceiro: sanitizedAssinaturaParceiro,
+        contratosAssessoria: sanitizedContratos,
         updatedAt: new Date().toISOString()
       });
+
 
       await setDoc(configRef, payload, { merge: true });
 
