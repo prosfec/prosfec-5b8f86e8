@@ -2779,8 +2779,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       if (!lead) return res.status(404).json({ error: "Contrato não encontrado." });
 
       const assinados = await listContratosAssinados(leadId);
-      const pendente = await derivarDocumentoPendente(lead, assinados);
-      const documentosAvulsos = [...assinados.map(publicContratoView), ...(pendente ? [pendente] : [])];
+      const pendentes = await derivarDocumentosPendentes(lead, assinados);
+      const documentosAvulsos = [...assinados.map(publicContratoView), ...pendentes];
 
       if (!lead.modeloContratacao && documentosAvulsos.length === 0) {
         return res.status(404).json({ error: "Contrato ainda não disponibilizado para assinatura." });
