@@ -4607,6 +4607,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
 
                 {/* SEÇÃO 1: CHECKLIST DA ETAPA 6 (ESTRUTURAÇÃO) — PROSFEC IA */}
+                {!fichaDocumentalMode && (
                 <div className="pf-workspace-section bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                     <div className="space-y-0.5">
