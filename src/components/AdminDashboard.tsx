@@ -468,7 +468,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
 
   const CREDIT_PRODUCTS = [
-    { code: "REDEBE_DIAGNOSTICO_360", name: "Rating de Crédito + Diagnóstico Finan. 360", defaultPrice: 49.90 }
+    { code: "REDEBE_DIAGNOSTICO_360", name: "Estruturação Financeira Corporativa + Diagnóstico 360", defaultPrice: 49.90 }
   ];
 
   useEffect(() => {
@@ -1585,7 +1585,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               if (!filtered.some((s: any) => s.id === "serv_rating_score" || (s.nome && s.nome.toLowerCase().includes("rating") && s.nome.toLowerCase().includes("score")))) {
                 filtered.splice(1, 0, {
                   id: "serv_rating_score",
-                  nome: "Melhoria e Adequação de Rating e Score",
+                  nome: "Estruturação Financeira Corporativa",
                   valor: scoreVal + ratingVal
                 });
               }
@@ -3377,7 +3377,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <option value="3">3. Consulta Diagnóstica</option>
                         <option value="4">4. Assinatura Termos</option>
                         <option value="5">5. Senhas GOV / Serasa</option>
-                        <option value="6">6. Estruturação Rating</option>
+                        <option value="6">6. Estruturação Financeira Corporativa</option>
                         <option value="7">7. Operação Apta</option>
                         <option value="8">8. Crédito Aprovado/Recusado</option>
                       </select>
@@ -3387,7 +3387,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   {/* Esteira de Rating Filter (Leads Only) */}
                   {activeTab === "leads" && (
                     <div>
-                      <label className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-1">Esteira Rating</label>
+                      <label className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-1">Esteira de Estruturação</label>
                       <select
                         value={ratingFilter}
                         onChange={(e) => setRatingFilter(e.target.value)}
@@ -3396,8 +3396,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <option value="todos">Todas as Fases</option>
                         <option value="aguardando_documentos">1. Aguardando Docs</option>
                         <option value="documentos_recebidos">2. Docs Recebidos</option>
-                        <option value="em_aplicacao">3. Em Aplicação</option>
-                        <option value="concluido">4. Concluído / Nota</option>
+                        <option value="em_aplicacao">3. Em Estruturação</option>
+                        <option value="concluido">4. Estruturação Concluída</option>
                       </select>
                     </div>
                   )}
@@ -5416,7 +5416,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           Catálogo de Serviços de Saneamento & Adequação
                         </h2>
                         <p className="text-slate-500 text-xs mt-1">
-                          Gerencie os serviços disponíveis no Diagnóstico/Workspace do Lead (Renegociação de Dívidas, Score, Rating, BACEN, Contabilidade, etc.) e ajuste seus valores de referência ou adicione novos serviços personalizados.
+                          Gerencie os serviços disponíveis no Diagnóstico/Workspace do Lead (Renegociação de Dívidas, Estruturação Financeira, BACEN, Contabilidade, entre outros) e ajuste seus valores de referência ou adicione novos serviços personalizados.
                         </p>
                       </div>
                     </div>

@@ -167,6 +167,7 @@ export default function FichaRatingCreditoForm({
   onUpdateLead,
   partnerWhatsapp
 }: FichaRatingCreditoFormProps) {
+  const isDocumentalMode = lead.aptoMesaCredito === true;
   // Initialize state with existing lead data or defaults
   const initialSocios: SocioRatingCPF[] = lead.fichaRatingCredito?.sociosCPF?.length
     ? lead.fichaRatingCredito.sociosCPF
@@ -377,13 +378,15 @@ export default function FichaRatingCreditoForm({
 
       setSaveSuccess(
         isFinalSubmission
-          ? "Ficha enviada com sucesso para a Central de Análise e Estruturação de Rating!"
+          ? isDocumentalMode
+            ? "Documentação enviada com sucesso para a Central de Análise!"
+            : "Ficha enviada com sucesso para a Central de Estruturação Financeira Corporativa!"
           : "Rascunho salvo com sucesso."
       );
 
       setTimeout(() => setSaveSuccess(null), 5000);
     } catch (err) {
-      console.error("Erro ao salvar ficha de rating:", err);
+      console.error("Erro ao salvar ficha de estruturação:", err);
       setSaveError(`Erro ao salvar os dados: ${(err as any)?.message || "verifique a conexão e tente novamente"}`);
     } finally {
       setSaving(false);
@@ -403,7 +406,7 @@ export default function FichaRatingCreditoForm({
               Módulo Bloqueado
             </span>
             <h2 className="text-base font-black text-slate-900 font-display">
-              Ficha de Cadastro de Rating Comercial
+              {isDocumentalMode ? "Ficha Documental do Cliente" : "Ficha de Estruturação Financeira Corporativa"}
             </h2>
           </div>
         </div>
@@ -413,10 +416,12 @@ export default function FichaRatingCreditoForm({
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="text-xs font-bold text-amber-950">
-                Aguardando confirmação de pagamento dos serviços de melhoria
+                {isDocumentalMode ? "Aguardando liberação da coleta documental" : "Aguardando confirmação de pagamento dos serviços de estruturação"}
               </p>
               <p className="text-xs text-amber-900/90 leading-relaxed">
-                O envio dos dados e anexos para estruturação do <strong>Rating Comercial de Crédito (CPF dos Sócios e CNPJ da Empresa)</strong> é liberado automaticamente após a identificação do pagamento dos serviços contratados pela Central PROSFEC.
+                {isDocumentalMode
+                  ? "O envio dos dados e documentos da empresa será liberado pela Central PROSFEC."
+                  : <>O envio dos dados e documentos para a <strong>Estruturação Financeira Corporativa dos sócios e da empresa</strong> é liberado após a identificação do pagamento dos serviços contratados.</>}
               </p>
             </div>
           </div>
@@ -442,7 +447,7 @@ export default function FichaRatingCreditoForm({
           <a
             href={
               partnerWhatsapp 
-                ? buildWhatsAppUrl(partnerWhatsapp, `Olá! Gostaria de confirmar o pagamento dos serviços de melhoria de crédito da empresa ${lead.razaoSocial || lead.nome} (CNPJ: ${lead.cnpj || ""}) para liberação da Ficha de Rating.`)
+                ? buildWhatsAppUrl(partnerWhatsapp, `Olá! Gostaria de solicitar a liberação da ${isDocumentalMode ? "Ficha Documental" : "Ficha de Estruturação Financeira Corporativa"} da empresa ${lead.razaoSocial || lead.nome} (CNPJ: ${lead.cnpj || ""}).`)
                 : "https://wa.me/5511999999999"
             }
             target="_blank"
@@ -470,10 +475,10 @@ export default function FichaRatingCreditoForm({
             </div>
             <div className="min-w-0">
               <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wider font-mono block">
-                Etapa de Estruturação
+                {isDocumentalMode ? "Coleta de Documentos" : "Etapa de Estruturação"}
               </span>
               <h2 className="text-base sm:text-lg font-black text-slate-900 font-display truncate">
-                Ficha de Cadastro de Rating
+                {isDocumentalMode ? "Ficha Documental do Cliente" : "Ficha de Estruturação Financeira Corporativa"}
               </h2>
             </div>
           </div>
@@ -487,7 +492,11 @@ export default function FichaRatingCreditoForm({
               ? "bg-rose-100 text-rose-800"
               : "bg-amber-100 text-amber-800"
           }`}>
-            {lead.fichaRatingCredito?.status === "aprovado" ? "Aprovado" : lead.fichaRatingCredito?.status === "em_analise" ? "Em Análise" : lead.fichaRatingCredito?.status === "ajuste_solicitado" ? "Ajuste Solicitado" : "Pendente"}
+            {lead.fichaRatingCredito?.status === "aprovado"
+              ? isDocumentalMode ? "Documentação Concluída" : "Aprovado"
+              : lead.fichaRatingCredito?.status === "em_analise"
+                ? isDocumentalMode ? "Em Validação" : "Em Análise"
+                : lead.fichaRatingCredito?.status === "ajuste_solicitado" ? "Ajuste Solicitado" : "Pendente"}
           </span>
         </div>
 
@@ -534,12 +543,19 @@ export default function FichaRatingCreditoForm({
             (lead.fichaRatingCredito?.progressoPercentual || 0) > 40 ? "documentos_recebidos" : "aguardando_documentos"
           );
 
-          const phases = [
-            { key: "aguardando_documentos", label: "1. Recolhimento", desc: "Envio de Documentos" },
-            { key: "documentos_recebidos", label: "2. Validação", desc: "Triagem Mesa PROSFEC" },
-            { key: "em_aplicacao", label: "3. Aplicação", desc: "Melhoria de Rating" },
-            { key: "concluido", label: "4. Conclusão", desc: "Parecer & Nota Emitidos" }
-          ];
+          const phases = isDocumentalMode
+            ? [
+                { key: "aguardando_documentos", label: "1. Recolhimento", desc: "Envio de Documentos" },
+                { key: "documentos_recebidos", label: "2. Recebimento", desc: "Documentos Recebidos" },
+                { key: "em_aplicacao", label: "3. Validação", desc: "Conferência Documental" },
+                { key: "concluido", label: "4. Conclusão", desc: "Documentação Concluída" },
+              ]
+            : [
+                { key: "aguardando_documentos", label: "1. Recolhimento", desc: "Envio de Documentos" },
+                { key: "documentos_recebidos", label: "2. Validação", desc: "Triagem Mesa PROSFEC" },
+                { key: "em_aplicacao", label: "3. Aplicação", desc: "Estruturação Financeira" },
+                { key: "concluido", label: "4. Conclusão", desc: "Parecer Técnico Emitido" },
+              ];
 
           const phaseIndex = phases.findIndex(p => p.key === currentFase);
           const activeIndex = phaseIndex >= 0 ? phaseIndex : 0;
@@ -549,7 +565,7 @@ export default function FichaRatingCreditoForm({
               <div className="flex items-center justify-between text-[11px] font-extrabold text-slate-700">
                 <span className="flex items-center gap-1.5 font-mono text-emerald-800">
                   <ShieldCheck className="w-4 h-4 text-[#00A86B]" />
-                  Fase Atual da Esteira de Rating:
+                  {isDocumentalMode ? "Fase Atual da Coleta Documental:" : "Fase Atual da Estruturação Financeira Corporativa:"}
                 </span>
                 <span className="bg-emerald-100/80 text-emerald-900 px-2 py-0.5 rounded-full font-mono font-black uppercase text-[10px]">
                   {phases[activeIndex]?.label}
@@ -590,7 +606,7 @@ export default function FichaRatingCreditoForm({
         })()}
 
         {/* Post-Service Technical Conclusion & Final Rating Card */}
-        {(lead.fichaRatingCredito?.conclusaoRating?.notaFinalRating || lead.fichaRatingCredito?.faseRating === "concluido") && (
+        {!isDocumentalMode && (lead.fichaRatingCredito?.conclusaoRating?.notaFinalRating || lead.fichaRatingCredito?.faseRating === "concluido") && (
           <div className="bg-[#0A3D2E] text-white rounded-xl p-5 sm:p-6 shadow-sm border border-emerald-800 relative overflow-hidden space-y-4">
             <div className="absolute right-0 top-0 opacity-10 pointer-events-none transform translate-x-4 -translate-y-4">
               <Award className="w-48 h-48 text-white" />
@@ -607,7 +623,7 @@ export default function FichaRatingCreditoForm({
                     Resultado Oficial Pós-Aplicação de Serviço
                   </span>
                   <h3 className="text-lg font-black text-white font-display">
-                    Parecer Técnico &amp; Rating Concluído
+                    Parecer Técnico da Estruturação Concluído
                   </h3>
                 </div>
               </div>
@@ -624,7 +640,7 @@ export default function FichaRatingCreditoForm({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 relative z-10">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/10">
-                <span className="text-[9px] uppercase font-mono text-emerald-200/80 block">Nota de Rating</span>
+                <span className="text-[9px] uppercase font-mono text-emerald-200/80 block">Indicador de Crédito</span>
                 <span className="text-2xl font-black text-white block mt-0.5 tracking-tight">
                   {lead.fichaRatingCredito?.conclusaoRating?.notaFinalRating || "Aprovado"}
                 </span>
@@ -682,10 +698,10 @@ export default function FichaRatingCreditoForm({
                 <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 animate-pulse" />
                 <div>
                   <h4 className="text-xs font-black uppercase tracking-wider text-amber-900">
-                    Ajuste Solicitado pela Mesa Técnica de Rating
+                    Ajuste Solicitado pela Mesa Técnica
                   </h4>
                   <p className="text-[11px] text-amber-800">
-                    Alguns documentos necessitam de reenvio para prosseguimento da estruturação. Veja os itens abaixo:
+                    Alguns documentos necessitam de reenvio para prosseguimento da {isDocumentalMode ? "validação documental" : "estruturação"}. Veja os itens abaixo:
                   </p>
                 </div>
               </div>
@@ -763,7 +779,7 @@ export default function FichaRatingCreditoForm({
             </div>
             <div>
               <h3 className="text-xs sm:text-sm font-black text-slate-900 font-display">
-                Dados para estruturação de Rating Comercial de Crédito CPF(Sócios)
+                {isDocumentalMode ? "Dados e Documentos dos Sócios" : "Dados dos Sócios para Estruturação Financeira Corporativa"}
               </h3>
               <span className="text-[11px] text-slate-500">
                 {socios.length} sócio(s) cadastrado(s)
@@ -1089,7 +1105,7 @@ export default function FichaRatingCreditoForm({
             </div>
             <div>
               <h3 className="text-xs sm:text-sm font-black text-slate-900 font-display">
-                Dados para estruturação de Rating Comercial de Crédito CNPJ(Empresa)
+                {isDocumentalMode ? "Documentos da Empresa" : "Dados da Empresa para Estruturação Financeira Corporativa"}
               </h3>
               <span className="text-[11px] text-slate-500">
                 Links individuais dos documentos fiscais, contábeis e societários em PDF
