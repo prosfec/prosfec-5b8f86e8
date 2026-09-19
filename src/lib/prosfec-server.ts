@@ -2800,24 +2800,57 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const documentos: any[] = [];
 
       if (lead.modeloContratacao) {
-        documentos.push({
-          id: "principal",
-          tipo: String(lead.modeloContratacao).toLowerCase() === "avulso" ? "principal_avulso" : "assessoria",
-          titulo:
-            String(lead.modeloContratacao).toLowerCase() === "avulso"
+        const isAvulsoPrincipal = String(lead.modeloContratacao).toLowerCase() === "avulso";
+
+        // Corpo do contrato de assessoria: texto congelado na assinatura ou o vigente no painel
+        let corpoAssessoria = "";
+        let versaoAssessoria = 0;
+        if (!isAvulsoPrincipal) {
+          if (lead.contratoAssinado && String(lead.contratoAssessoriaTexto || "").trim()) {
+            corpoAssessoria = String(lead.contratoAssessoriaTexto);
+            versaoAssessoria = Number(lead.contratoAssessoriaVersao || 0);
+          } else {
+            try {
+              const cfgAss: any = await getDocRest("configuracoes/precos_consultas");
+              const resolvido = contratoAssessoriaPorPlano(
+                lead.planoEscolhido,
+                normalizeContratosAssessoria(cfgAss?.contratosAssessoria)
+              );
+              corpoAssessoria = resolvido.texto;
+              versaoAssessoria = resolvido.versao;
+            } catch (cfgErr: any) {
+              console.warn("Falha ao carregar contrato de assessoria:", cfgErr?.message || cfgErr);
+            }
+          }
+        }
+
+        // Sem texto de contrato cadastrado para o plano, a assessoria não é exibida ao cliente
+        if (isAvulsoPrincipal || corpoAssessoria.trim()) {
+          documentos.push({
+            id: "principal",
+            tipo: isAvulsoPrincipal ? "principal_avulso" : "assessoria",
+            titulo: isAvulsoPrincipal
               ? "Contrato de Consultoria e Assessoria em Crédito Empresarial"
               : `Contrato de Assessoria — ${lead.planoEscolhido || "Assessoria"}`,
-          status: lead.contratoAssinado ? "assinado" : "aguardando_assinatura",
-          assinado: !!lead.contratoAssinado,
-          assinaturaNome: lead.contratoAssinadoNome || null,
-          assinaturaCpf: maskCpfPublic(lead.contratoAssinadoCpf),
-          assinaturaData: lead.contratoAssinadoData || null,
-          assinaturaIp: lead.contratoAssinadoIp || null,
-          assinaturaDispositivo: lead.contratoAssinadoDispositivo || null,
-        });
+            status: lead.contratoAssinado ? "assinado" : "aguardando_assinatura",
+            assinado: !!lead.contratoAssinado,
+            corpoContrato: isAvulsoPrincipal ? null : corpoAssessoria,
+            contratoVersao: isAvulsoPrincipal ? null : versaoAssessoria,
+            assinaturaNome: lead.contratoAssinadoNome || null,
+            assinaturaCpf: maskCpfPublic(lead.contratoAssinadoCpf),
+            assinaturaData: lead.contratoAssinadoData || null,
+            assinaturaIp: lead.contratoAssinadoIp || null,
+            assinaturaDispositivo: lead.contratoAssinadoDispositivo || null,
+          });
+        }
       }
 
       documentos.push(...documentosAvulsos);
+
+      if (documentos.length === 0) {
+        return res.status(404).json({ error: "Contrato ainda não disponibilizado para assinatura." });
+      }
+
 
       return res.json({
         success: true,
