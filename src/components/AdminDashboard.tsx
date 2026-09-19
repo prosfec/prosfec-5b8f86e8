@@ -1547,6 +1547,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           setCustomBasePrices(data.precos || {});
           setEditMensalidades(normalizeMensalidades(data.mensalidades));
           setEditAssinaturaParceiro(normalizeAssinaturaParceiro(data.assinaturaParceiro));
+          const contratosCarregados = normalizeContratosAssessoria(data.contratosAssessoria);
+          setEditContratosAssessoria(contratosCarregados);
+          contratosAssessoriaSalvosRef.current = contratosCarregados;
+
           if (data.servicos && Array.isArray(data.servicos) && data.servicos.length > 0) {
             // Remove obsolete items: "Diagnóstico de Crédito — CPF ou CNPJ", "Recarga do Painel de Oportunidade" e BACEN avulso legado
             const rawServs = data.servicos.filter((s: any) => 
