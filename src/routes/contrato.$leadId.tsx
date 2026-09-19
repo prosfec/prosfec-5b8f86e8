@@ -362,6 +362,9 @@ function ContratoPublicoPage() {
                 assinado={concluido}
                 assinaturaData={registro?.data || contrato?.contratoAssinadoData}
                 assinaturaIp={registro?.ip}
+                corpoContrato={docAtual?.corpoContrato}
+                contratoVersao={docAtual?.contratoVersao}
+
               />
             )}
           </div>

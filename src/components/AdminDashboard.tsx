@@ -383,8 +383,13 @@ import {
   normalizeMensalidades,
   DEFAULT_ASSINATURA_PARCEIRO,
   normalizeAssinaturaParceiro,
+  DEFAULT_CONTRATOS_ASSESSORIA,
+  normalizeContratosAssessoria,
+  type ContratosAssessoria,
+  type PlanoAssessoriaKey,
   type AssinaturaParceiro,
   type MensalidadesAssessoria
+
 } from "../utils/serviceUtils";
 export { DEFAULT_SERVICES_CATALOG };
 export type { ServiceCatalogItem };
@@ -458,6 +463,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [newServLinkPagamento, setNewServLinkPagamento] = useState("");
   const [editMensalidades, setEditMensalidades] = useState<MensalidadesAssessoria>(DEFAULT_MENSALIDADES);
   const [editAssinaturaParceiro, setEditAssinaturaParceiro] = useState<AssinaturaParceiro>(DEFAULT_ASSINATURA_PARCEIRO);
+  const [editContratosAssessoria, setEditContratosAssessoria] = useState<ContratosAssessoria>(DEFAULT_CONTRATOS_ASSESSORIA);
+  const contratosAssessoriaSalvosRef = useRef<ContratosAssessoria>(DEFAULT_CONTRATOS_ASSESSORIA);
+
 
   const CREDIT_PRODUCTS = [
     { code: "REDEBE_DIAGNOSTICO_360", name: "Rating de Crédito + Diagnóstico Finan. 360", defaultPrice: 49.90 }
@@ -917,13 +925,31 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const sanitizedMensalidades = normalizeMensalidades(editMensalidades);
       const sanitizedAssinaturaParceiro = normalizeAssinaturaParceiro(editAssinaturaParceiro);
 
+      // Contratos de assessoria: incrementa a versão apenas dos planos cujo texto mudou
+      const normalizedContratos = normalizeContratosAssessoria(editContratosAssessoria);
+      const salvos = contratosAssessoriaSalvosRef.current;
+      const sanitizedContratos = (["essential", "growth", "corporate"] as PlanoAssessoriaKey[]).reduce(
+        (acc, key) => {
+          const antigo = salvos[key] || { texto: "", versao: 0 };
+          const novoTexto = normalizedContratos[key].texto;
+          acc[key] =
+            novoTexto === antigo.texto
+              ? { texto: antigo.texto, versao: antigo.versao }
+              : { texto: novoTexto, versao: (antigo.versao || 0) + 1 };
+          return acc;
+        },
+        {} as ContratosAssessoria
+      );
+
       const payload = cleanForFirestore({
         precos: sanitizedPrices,
         servicos: sanitizedServices,
         mensalidades: sanitizedMensalidades,
         assinaturaParceiro: sanitizedAssinaturaParceiro,
+        contratosAssessoria: sanitizedContratos,
         updatedAt: new Date().toISOString()
       });
+
 
       await setDoc(configRef, payload, { merge: true });
 
@@ -934,6 +960,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setCustomServices(sanitizedServices);
       setEditMensalidades(sanitizedMensalidades);
       setEditAssinaturaParceiro(sanitizedAssinaturaParceiro);
+      setEditContratosAssessoria(sanitizedContratos);
+      contratosAssessoriaSalvosRef.current = sanitizedContratos;
+
       alert(`Tabela de preços de consultas e catálogo de serviços atualizada com sucesso!${updatedLeadsCount > 0 ? `\n\n${updatedLeadsCount} lead(s) cadastrados no painel tiveram seus serviços e comissões atualizados automaticamente.` : ''}`);
       await fetchData();
     } catch (err) {
@@ -964,6 +993,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         servicos: defaultSanitized,
         mensalidades: DEFAULT_MENSALIDADES,
         assinaturaParceiro: DEFAULT_ASSINATURA_PARCEIRO,
+        contratosAssessoria: DEFAULT_CONTRATOS_ASSESSORIA,
+
         updatedAt: new Date().toISOString()
       });
 
@@ -977,6 +1008,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setCustomServices(defaultSanitized);
       setEditMensalidades(DEFAULT_MENSALIDADES);
       setEditAssinaturaParceiro(DEFAULT_ASSINATURA_PARCEIRO);
+      setEditContratosAssessoria(DEFAULT_CONTRATOS_ASSESSORIA);
+      contratosAssessoriaSalvosRef.current = DEFAULT_CONTRATOS_ASSESSORIA;
+
       alert(`Preços e catálogo de serviços restaurados para o padrão!${updatedLeadsCount > 0 ? `\n\n${updatedLeadsCount} lead(s) sincronizados com o padrão.` : ''}`);
       await fetchData();
     } catch (err) {
@@ -1513,6 +1547,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           setCustomBasePrices(data.precos || {});
           setEditMensalidades(normalizeMensalidades(data.mensalidades));
           setEditAssinaturaParceiro(normalizeAssinaturaParceiro(data.assinaturaParceiro));
+          const contratosCarregados = normalizeContratosAssessoria(data.contratosAssessoria);
+          setEditContratosAssessoria(contratosCarregados);
+          contratosAssessoriaSalvosRef.current = contratosCarregados;
+
           if (data.servicos && Array.isArray(data.servicos) && data.servicos.length > 0) {
             // Remove obsolete items: "Diagnóstico de Crédito — CPF ou CNPJ", "Recarga do Painel de Oportunidade" e BACEN avulso legado
             const rawServs = data.servicos.filter((s: any) => 
@@ -5617,20 +5655,20 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         Valores de Mensalidade (Assessoria)
                       </h3>
                       <p className="text-slate-500 text-[11px] mt-1">
-                        Valores mensais exibidos na vitrine de planos e na Etapa 4. Contratos já assinados mantêm o valor contratado.
+                        Valores mensais exibidos na vitrine de planos e na Etapa 4. Abaixo de cada preço, escreva o contrato completo daquele plano. Contratos já assinados mantêm o valor e o texto contratados.
                       </p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-5">
                       {([
-                        { key: "essential" as const, label: "Preço Mensal — Essential" },
-                        { key: "growth" as const, label: "Preço Mensal — Growth" },
-                        { key: "corporate" as const, label: "Preço Mensal — Corporate" },
+                        { key: "essential" as const, label: "Preço Mensal — Essential", plano: "Essential" },
+                        { key: "growth" as const, label: "Preço Mensal — Growth", plano: "Growth" },
+                        { key: "corporate" as const, label: "Preço Mensal — Corporate", plano: "Corporate" },
                       ]).map((f) => (
-                        <div key={f.key}>
+                        <div key={f.key} className="border border-slate-200 rounded-xl p-4 bg-slate-50/40">
                           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
                             {f.label}
                           </label>
-                          <div className="relative">
+                          <div className="relative max-w-xs">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold">R$</span>
                             <input
                               type="number"
@@ -5644,12 +5682,35 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   [f.key]: e.target.value === "" ? 0 : Number(e.target.value),
                                 }))
                               }
-                              className="w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-hidden transition-all disabled:opacity-60"
+                              className="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-hidden transition-all disabled:opacity-60"
                             />
                           </div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mt-4 mb-1.5">
+                            Contrato do plano — {f.plano}
+                          </label>
+                          <textarea
+                            rows={10}
+                            disabled={userRole === "contador"}
+                            value={editContratosAssessoria[f.key]?.texto || ""}
+                            onChange={(e) =>
+                              setEditContratosAssessoria((prev) => ({
+                                ...prev,
+                                [f.key]: { ...prev[f.key], texto: e.target.value },
+                              }))
+                            }
+                            placeholder={`Escreva aqui o contrato completo do plano ${f.plano} (objeto, escopo, prazo, pagamento, obrigações, rescisão, êxito, LGPD, foro). O sistema acrescenta automaticamente o cabeçalho com PROSFEC/DCS Tech & Finance, os dados do cliente, o quadro de valores e o bloco de assinatura eletrônica. Se ficar em branco, nenhum contrato de assessoria é exibido ao cliente.`}
+                            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 leading-relaxed focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-hidden transition-all disabled:opacity-60 font-mono"
+                          />
+                          <p className="text-[11px] text-slate-400 mt-1">
+                            {(editContratosAssessoria[f.key]?.texto || "").length} caracteres
+                            {(contratosAssessoriaSalvosRef.current[f.key]?.versao || 0) > 0
+                              ? ` · versão salva v${contratosAssessoriaSalvosRef.current[f.key]?.versao}`
+                              : " · nenhuma versão salva"}
+                          </p>
                         </div>
                       ))}
                     </div>
+
                   </div>
                   <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6">
                     <div className="mb-4">

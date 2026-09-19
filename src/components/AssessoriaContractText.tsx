@@ -3,8 +3,10 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  *
- * Texto jurídico do Contrato de Assessoria Financeira Corporativa (12 meses),
- * com injeção dinâmica dos dados do lead e do signatário.
+ * Contrato de Assessoria Financeira Corporativa (12 meses).
+ * O corpo do contrato é escrito pelo Administrador, por plano, no painel
+ * "Preços & Serviços". O sistema gera automaticamente o cabeçalho das partes,
+ * o quadro de plano/valores e os blocos de assinatura eletrônica.
  */
 
 import React from "react";
@@ -15,39 +17,6 @@ const CONTRATADA_TEXTO =
 
 const PRAZO = "12 (doze) meses";
 const FORMA_PAGAMENTO = "Recorrente via Cartão de Crédito / InfinitePay";
-const FORO = "São Luís/MA";
-const VERSAO_CONTRATO = "v2 — Assessoria 12 meses";
-
-const ENTREGAVEIS_ESSENTIAL = [
-  "Serviço de Estruturação Completa: englobando Reabilitação de Crédito, Melhoria de Rating e Score, e mapeamento de pendências",
-  "Diagnóstico Estratégico Inicial",
-  "Adequação de Perfil e Dossiê Completo",
-  "Implantação de Gateway de pagamento com Sistema de Gestão Financeira integrado",
-  "Monitoramento Contínuo por 12 meses",
-];
-
-const ENTREGAVEIS_GROWTH = [
-  "Serviço de Estruturação Completa: englobando Reabilitação de Crédito, Melhoria de Rating e Score, e mapeamento de pendências",
-  "Todos os itens do plano Essential",
-  "Auditoria Fiscal e Contábil",
-  "Criação de Site Institucional",
-  "Implantação de Automação de WhatsApp",
-];
-
-const ENTREGAVEIS_CORPORATE = [
-  "Serviço de Estruturação Completa: englobando Reabilitação de Crédito, Melhoria de Rating e Score, e mapeamento de pendências",
-  "Todos os itens do plano Growth",
-  "Auditoria Financeira profunda",
-  "Projeto Comercial Estruturado (Bancos Suíços)",
-  "Atendimento Master com SLA de 12 horas",
-];
-
-function entregaveisPorPlano(plano?: string): string[] {
-  const p = String(plano || "").toLowerCase();
-  if (p.includes("corporate")) return ENTREGAVEIS_CORPORATE;
-  if (p.includes("growth")) return ENTREGAVEIS_GROWTH;
-  return ENTREGAVEIS_ESSENTIAL;
-}
 
 function capitalizar(texto?: string): string {
   const t = String(texto || "").trim();
@@ -70,6 +39,32 @@ function formatData(d: Date): string {
   return d.toLocaleDateString("pt-BR");
 }
 
+/** Renderiza o corpo digitado pelo ADM preservando parágrafos e destacando títulos. */
+function CorpoDigitado({ texto }: { texto: string }) {
+  const linhas = String(texto || "").split(/\r?\n/);
+  return (
+    <>
+      {linhas.map((linha, i) => {
+        const t = linha.trim();
+        if (!t) return <div key={i} className="h-2" />;
+        const semAcento = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const ehTitulo =
+          t.length <= 120 &&
+          /[A-Za-zÁ-Úá-ú]/.test(t) &&
+          semAcento === semAcento.toUpperCase();
+        if (ehTitulo) {
+          return (
+            <h3 key={i} className="font-bold uppercase text-slate-900 pt-2">
+              {t}
+            </h3>
+          );
+        }
+        return <p key={i}>{t}</p>;
+      })}
+    </>
+  );
+}
+
 interface AssessoriaContractTextProps {
   leadId?: string;
   razaoSocial?: string;
@@ -82,6 +77,8 @@ interface AssessoriaContractTextProps {
   assinado?: boolean;
   assinaturaData?: string | null;
   assinaturaIp?: string | null;
+  corpoContrato?: string | null;
+  contratoVersao?: number | null;
 }
 
 export default function AssessoriaContractText({
@@ -96,14 +93,17 @@ export default function AssessoriaContractText({
   assinado,
   assinaturaData,
   assinaturaIp,
+  corpoContrato,
+  contratoVersao,
 }: AssessoriaContractTextProps) {
   const plano = capitalizar(planoEscolhido);
   const mensal = Number(valorMensalidade || 0);
   const total = mensal * 12;
-  const entregaveis = entregaveisPorPlano(planoEscolhido);
   const enderecoCliente = String(endereco || "").trim() || "endereço não informado";
   const rep = String(representante || "").trim() || "[a preencher na assinatura]";
   const repCpf = String(representanteCpf || "").trim() || "[a preencher na assinatura]";
+  const corpo = String(corpoContrato || "").trim();
+  const versaoContrato = `${plano} — v${Number(contratoVersao || 0)}`;
 
   const inicioDate = assinado && assinaturaData ? new Date(assinaturaData) : new Date();
   const terminoDate = new Date(inicioDate);
@@ -122,7 +122,7 @@ export default function AssessoriaContractText({
   return (
     <article className="text-sm text-slate-700 text-justify space-y-4 leading-relaxed">
       <h2 className="text-base font-extrabold uppercase text-slate-900 text-center">
-        Contrato de Prestação de Serviços de Assessoria Financeira Corporativa
+        Contrato de Prestação de Serviços de Assessoria Financeira Corporativa — {plano}
       </h2>
 
       <p>Pelo presente instrumento, de um lado:</p>
@@ -136,30 +136,10 @@ export default function AssessoriaContractText({
       </p>
       <p>
         têm entre si contratado o presente <strong>Contrato de Prestação de Serviços de Assessoria
-        Financeira Corporativa</strong>, conforme as condições abaixo.
+        Financeira Corporativa — {plano}</strong>, conforme as condições abaixo.
       </p>
 
-      <H>Cláusula 1ª – Do Objeto</H>
-      <p>
-        1.1. O presente contrato tem por objeto a prestação de serviços de Assessoria Financeira e
-        Creditícia Corporativa, pelo prazo contratado, visando acompanhar, analisar e orientar a
-        CONTRATANTE quanto à sua organização financeira, perfil creditício, relacionamento bancário
-        e oportunidades de fomento.
-      </p>
-      <p>
-        1.2. A Assessoria poderá envolver análises, orientações, acompanhamento, planejamento e
-        execução de medidas compatíveis com o plano contratado e com a situação da CONTRATANTE.
-      </p>
-      <p>
-        1.3. O serviço poderá compreender, conforme o plano contratado e a elegibilidade da
-        CONTRATANTE: a) estruturação e reabilitação de crédito; b) diagnóstico financeiro e
-        creditício inicial; c) análise do perfil financeiro e bancário; d) mapeamento de informações
-        cadastrais e restrições; e) melhoria e análise de Score/Rating; f) elaboração de plano
-        estratégico; g) monitoramento contínuo.
-      </p>
-
-      <H>Cláusula 2ª – Do Plano e do Escopo</H>
-      <p>2.1. A CONTRATANTE adere ao seguinte plano:</p>
+      <H>Do Plano Contratado</H>
       <p>
         <strong>Plano:</strong> {plano}
         <br />
@@ -169,218 +149,30 @@ export default function AssessoriaContractText({
         <br />
         <strong>Valor Total:</strong> {formatBRL(total)}
         <br />
+        <strong>Início:</strong> {dataInicio}
+        <br />
+        <strong>Término:</strong> {dataTermino}
+        <br />
         <strong>Forma de Pagamento:</strong> {FORMA_PAGAMENTO}
       </p>
-      <p>
-        <strong>Escopo contratado:</strong>
-      </p>
-      <ul className="list-disc pl-6 space-y-1">
-        {entregaveis.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-      <p>
-        2.2. O escopo acima integra este contrato e define os serviços abrangidos pela Assessoria.
-      </p>
-      <p>
-        2.3. Quando previsto no plano, o Diagnóstico Estratégico Inicial estará incluído na
-        Assessoria, constituindo a primeira etapa do acompanhamento.
-      </p>
-      <p>
-        2.4. O diagnóstico servirá de base para a definição das prioridades e do plano de ação a ser
-        acompanhado durante a vigência contratual.
-      </p>
 
-      <H>Cláusula 3ª – Da Obrigação de Meio</H>
-      <p>
-        3.1. A atuação da PROSFEC constitui obrigação de meio, não havendo garantia de resultado
-        específico.
-      </p>
-      <p>3.2. A CONTRATADA não garante:</p>
-      <p>I – aprovação ou liberação de crédito;</p>
-      <p>II – determinado valor de crédito;</p>
-      <p>III – aumento ou alteração específica de Score ou Rating;</p>
-      <p>
-        IV – exclusão de restrições, apontamentos ou pendências que dependam de terceiros,
-        pagamento, negociação ou decisão administrativa ou judicial;
-      </p>
-      <p>V – aprovação em programas ou linhas de crédito específicas.</p>
-      <p>
-        3.3. As decisões de concessão de crédito, alteração de registros e demais resultados
-        dependentes de terceiros permanecem exclusivamente sob responsabilidade das respectivas
-        instituições ou órgãos.
-      </p>
+      {corpo ? (
+        <div className="space-y-3">
+          <CorpoDigitado texto={corpo} />
+        </div>
+      ) : (
+        <p className="italic text-slate-500">
+          O texto deste contrato ainda não foi disponibilizado.
+        </p>
+      )}
 
-      <H>Cláusula 4ª – Das Responsabilidades da Contratada</H>
-      <p>4.1. São responsabilidades da CONTRATADA:</p>
-      <p>I – prestar os serviços previstos no plano contratado;</p>
-      <p>II – realizar as análises e acompanhamentos pertinentes ao escopo;</p>
-      <p>III – fornecer orientações e recomendações compatíveis com as informações disponíveis;</p>
-      <p>IV – acompanhar a evolução das demandas durante a vigência contratual;</p>
-      <p>V – manter sigilo sobre as informações recebidas da CONTRATANTE.</p>
-
-      <H>Cláusula 5ª – Das Responsabilidades da Contratante</H>
-      <p>5.1. São responsabilidades da CONTRATANTE:</p>
-      <p>I – fornecer informações verdadeiras, completas e atualizadas;</p>
-      <p>II – disponibilizar os documentos necessários;</p>
-      <p>III – fornecer autorizações necessárias para consultas e procedimentos;</p>
-      <p>IV – cumprir os pagamentos nas datas contratadas;</p>
-      <p>V – responder às solicitações necessárias à execução dos serviços;</p>
+      <H>Da Assinatura Eletrônica</H>
       <p>
-        VI – comunicar alterações relevantes em sua situação financeira, cadastral ou societária.
-      </p>
-      <p>
-        5.2. A CONTRATADA não será responsabilizada por prejuízos decorrentes de informações
-        incorretas, incompletas, desatualizadas ou omitidas pela CONTRATANTE.
-      </p>
-
-      <H>Cláusula 6ª – Dos Serviços Não Inclusos</H>
-      <p>
-        6.1. Serviços que não estejam expressamente previstos no plano contratado poderão ser
-        cobrados separadamente.
-      </p>
-      <p>6.2. Poderão constituir serviços adicionais, entre outros:</p>
-      <p>I – serviços jurídicos ou contenciosos;</p>
-      <p>II – honorários advocatícios;</p>
-      <p>III – honorários de êxito;</p>
-      <p>IV – custas, taxas e despesas de terceiros;</p>
-      <p>V – contratação de produtos ou operações financeiras;</p>
-      <p>VI – serviços especializados não previstos no plano.</p>
-      <p>6.3. Qualquer serviço adicional dependerá de prévia concordância da CONTRATANTE.</p>
-
-      <H>Cláusula 7ª – Do Prazo e Pagamento</H>
-      <p>
-        7.1. O presente contrato terá prazo determinado de {PRAZO}, iniciando-se em {dataInicio} e
-        encerrando-se em {dataTermino}.
-      </p>
-      <p>
-        7.2. O pagamento será realizado de forma recorrente, conforme o meio de pagamento escolhido
-        pela CONTRATANTE.
-      </p>
-      <p>
-        7.3. A cobrança mensal corresponde às parcelas do contrato de 12 meses e não caracteriza
-        contratação mensal independente.
-      </p>
-      <p>
-        7.4. O atraso no pagamento poderá acarretar multa de 2% sobre o valor vencido e juros de 1%
-        ao mês, além da suspensão dos serviços até a regularização.
-      </p>
-
-      <H>Cláusula 8ª – Da Rescisão Antecipada</H>
-      <p>
-        8.1. Em razão do prazo determinado e dos custos de implantação, diagnóstico, estruturação e
-        disponibilização da Assessoria, a rescisão antecipada e imotivada pela CONTRATANTE antes do
-        término dos 12 meses sujeitará a CONTRATANTE à multa correspondente a 50% (cinquenta por
-        cento) das mensalidades vincendas.
-      </p>
-      <p>
-        8.2. A multa será calculada sobre as parcelas que ainda não tiverem vencido na data da
-        rescisão.
-      </p>
-      <p>8.3. A rescisão não elimina a obrigação de pagamento de valores já vencidos.</p>
-      <p>8.4. A cláusula penal observará os limites previstos na legislação aplicável.</p>
-
-      <H>Cláusula 9ª – Dos Honorários de Êxito e Forma de Pagamento</H>
-      <p>
-        Sem prejuízo do pagamento pontual das mensalidades pactuadas na Cláusula
-        Segunda, caso o acompanhamento estratégico resulte na aprovação e efetiva
-        liberação de crédito(s) em favor da CONTRATANTE, aplicar-se-ão as
-        seguintes regras de honorários de êxito:
-      </p>
-      <p>
-        9.1. A remuneração adicional da CONTRATADA, nesta hipótese, adota o
-        modelo de ÊXITO. A CONTRATANTE pagará à CONTRATADA honorários de êxito
-        correspondentes a 5% (cinco por cento) sobre o valor bruto do crédito
-        efetivamente aprovado, contratado e liberado pela instituição financeira.
-      </p>
-      <p>
-        §1º Fato Gerador: O fato gerador da obrigação de pagamento é a efetiva
-        disponibilização, crédito, liberação ou desembolso dos recursos na conta
-        bancária da CONTRATANTE ou de seus sócios/garantidores por ela indicados.
-      </p>
-      <p>
-        §2º Prazo de Pagamento: Os honorários deverão ser pagos pela CONTRATANTE
-        em até 2 (dois) dias úteis contados da efetiva liberação dos recursos na
-        conta, via PIX ou transferência bancária para a conta oficial da
-        CONTRATADA.
-      </p>
-      <p>
-        §3º Liberações Parciais: Em caso de liberação parcelada ou em tranches,
-        os honorários de 5% incidirão proporcionalmente sobre o valor de cada
-        parcela disponibilizada.
-      </p>
-      <p>
-        §4º Isenção Prévia: Não haverá qualquer cobrança antecipada de taxa de
-        cadastro, análise documental, consulta ou abertura de crédito antes da
-        liberação efetiva do valor.
-      </p>
-
-      <H>Cláusula 10ª – Da Cláusula Anti-Burla e Boa-Fé Contratual</H>
-      <p>
-        10.1. Caso a CONTRATANTE, após a montagem do dossiê, encaminhamento de
-        proposta ou aprovação do crédito viabilizado pela assessoria da
-        CONTRATADA, tente omitir a liberação dos recursos, cancelar este contrato
-        de má-fé ou efetuar a contratação/desembolso diretamente com o agente
-        financeiro para eximir-se do pagamento dos honorários, a comissão de 5%
-        (cinco por cento) sobre o valor total viabilizado permanecerá
-        integralmente devida.
-      </p>
-      <p>
-        Parágrafo Único. Na hipótese descrita no caput, incidirá ainda multa
-        compensatória infracontratual de 10% (dez por cento) sobre o valor total
-        do crédito aprovado, sem prejuízo da cobrança judicial de honorários e
-        perdas e danos.
-      </p>
-
-      <H>Cláusula 11ª – Da Confidencialidade e Proteção de Dados</H>
-      <p>
-        11.1. A CONTRATADA compromete-se a manter sigilo sobre as informações e documentos recebidos
-        em razão da execução dos serviços.
-      </p>
-      <p>
-        11.2. As partes comprometem-se a observar a legislação aplicável à proteção de dados
-        pessoais, especialmente a Lei nº 13.709/2018 – LGPD.
-      </p>
-      <p>
-        11.3. A CONTRATANTE autoriza o tratamento dos dados necessários à execução dos serviços
-        contratados, observadas as finalidades e bases legais aplicáveis.
-      </p>
-
-      <H>Cláusula 12ª – Da Plataforma PROSFEC</H>
-      <p>
-        12.1. Quando previsto no plano, a CONTRATANTE terá acesso à plataforma PROSFEC durante a
-        vigência do contrato.
-      </p>
-      <p>
-        12.2. A plataforma poderá disponibilizar informações, documentos, indicadores, tarefas,
-        relatórios, comunicações e acompanhamento da evolução da Assessoria.
-      </p>
-      <p>12.3. O acesso é pessoal e não poderá ser compartilhado indevidamente com terceiros.</p>
-      <p>
-        12.4. A plataforma, sua tecnologia, metodologia, marca, estrutura e demais recursos
-        permanecem de propriedade da PROSFEC ou de seus respectivos titulares.
-      </p>
-
-      <H>Cláusula 13ª – Da Assinatura Eletrônica</H>
-      <p>
-        13.1. As partes reconhecem como válida a assinatura e formalização eletrônica deste contrato
-        por meio da plataforma PROSFEC.
-      </p>
-      <p>13.2. O sistema poderá registrar, para fins de comprovação da contratação:</p>
-      <ul className="list-disc pl-6 space-y-1">
-        <li>nome do signatário;</li>
-        <li>CPF/CNPJ;</li>
-        <li>data e horário;</li>
-        <li>endereço IP;</li>
-        <li>identificação da sessão ou dispositivo, quando disponível;</li>
-        <li>versão do contrato aceita;</li>
-        <li>registro eletrônico do aceite;</li>
-        <li>ID da assinatura ou transação;</li>
-        <li>demais informações técnicas disponíveis.</li>
-      </ul>
-      <p>
-        13.3. Os registros eletrônicos poderão ser utilizados como elementos de comprovação da
-        manifestação de vontade das partes, observada a legislação aplicável.
+        As partes reconhecem como válida a assinatura e formalização eletrônica deste contrato por
+        meio da plataforma PROSFEC, podendo o sistema registrar, para fins de comprovação da
+        contratação: nome do signatário, CPF/CNPJ, data e horário, endereço IP, identificação da
+        sessão ou dispositivo, versão do contrato aceita, registro eletrônico do aceite e ID da
+        assinatura.
       </p>
       <p>
         <strong>Signatário:</strong> {rep}
@@ -393,27 +185,8 @@ export default function AssessoriaContractText({
         <br />
         <strong>ID da Assinatura:</strong> {idAssinatura}
         <br />
-        <strong>Versão do Contrato:</strong> {VERSAO_CONTRATO}
+        <strong>Versão do Contrato:</strong> {versaoContrato}
       </p>
-
-      <H>Cláusula 14ª – Das Disposições Finais</H>
-      <p>
-        14.1. A contratação da Assessoria não garante aprovação de crédito, concessão de
-        financiamento ou qualquer resultado específico dependente de terceiros.
-      </p>
-      <p>
-        14.2. A CONTRATANTE permanece responsável pelas decisões tomadas com base nas orientações
-        recebidas e pela veracidade das informações fornecidas.
-      </p>
-      <p>
-        14.3. Eventuais alterações deste contrato deverão ser formalizadas por meio eletrônico ou
-        outro meio válido.
-      </p>
-      <p>
-        14.4. Fica eleito o foro de {FORO}, ressalvadas as hipóteses de competência legal
-        obrigatória, para dirimir eventuais questões decorrentes deste contrato.
-      </p>
-      <p>E, estando de acordo, as partes manifestam seu aceite eletrônico.</p>
 
       <div className="border-t border-slate-200 pt-4">
         <h3 className="font-bold uppercase text-slate-900">Dados da Contratação</h3>
@@ -445,8 +218,7 @@ export default function AssessoriaContractText({
         <p className="mt-2">
           Ao realizar o aceite eletrônico, a CONTRATANTE declara que leu e concorda com todas as
           condições deste contrato, especialmente quanto ao escopo dos serviços, prazo de 12 meses,
-          forma de pagamento, obrigação de meio, ausência de garantia de resultado e condições de
-          rescisão antecipada.
+          forma de pagamento e condições de rescisão.
         </p>
         <p className="mt-2">
           <strong>Status:</strong> {assinado ? "ASSINADO" : "Aguardando aceite"}

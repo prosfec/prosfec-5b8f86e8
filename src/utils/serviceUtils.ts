@@ -640,3 +640,57 @@ export function normalizeAssinaturaParceiro(raw: any): AssinaturaParceiro {
     master: pick(raw?.master, DEFAULT_ASSINATURA_PARCEIRO.master),
   };
 }
+
+// ============================================================
+// CONTRATOS DA ASSESSORIA (texto completo por plano, definido pelo ADM)
+// ============================================================
+
+export type PlanoAssessoriaKey = "essential" | "growth" | "corporate";
+
+export interface ContratoAssessoriaTexto {
+  texto: string;
+  versao: number;
+}
+
+export type ContratosAssessoria = Record<PlanoAssessoriaKey, ContratoAssessoriaTexto>;
+
+export const DEFAULT_CONTRATOS_ASSESSORIA: ContratosAssessoria = {
+  essential: { texto: "", versao: 0 },
+  growth: { texto: "", versao: 0 },
+  corporate: { texto: "", versao: 0 },
+};
+
+const MAX_CONTRATO_ASSESSORIA_CHARS = 60000;
+
+/** Normaliza os textos de contrato por plano vindos do Firestore. */
+export function normalizeContratosAssessoria(raw: any): ContratosAssessoria {
+  const pick = (v: any): ContratoAssessoriaTexto => {
+    const texto = String(v?.texto ?? "").slice(0, MAX_CONTRATO_ASSESSORIA_CHARS);
+    const versaoNum = Number(v?.versao);
+    return { texto, versao: Number.isFinite(versaoNum) && versaoNum >= 0 ? Math.floor(versaoNum) : 0 };
+  };
+  return {
+    essential: pick(raw?.essential),
+    growth: pick(raw?.growth),
+    corporate: pick(raw?.corporate),
+  };
+}
+
+/** Descobre a chave do plano a partir do rótulo salvo no lead. */
+export function planoAssessoriaKey(planoEscolhido?: string): PlanoAssessoriaKey | null {
+  const p = String(planoEscolhido || "").toLowerCase();
+  if (p.includes("corporate")) return "corporate";
+  if (p.includes("growth")) return "growth";
+  if (p.includes("essential")) return "essential";
+  return null;
+}
+
+/** Texto de contrato vigente para o plano escolhido pelo lead. */
+export function contratoAssessoriaPorPlano(
+  planoEscolhido: string | undefined,
+  contratos: ContratosAssessoria
+): ContratoAssessoriaTexto {
+  const key = planoAssessoriaKey(planoEscolhido);
+  if (!key) return { texto: "", versao: 0 };
+  return contratos[key] || { texto: "", versao: 0 };
+}
