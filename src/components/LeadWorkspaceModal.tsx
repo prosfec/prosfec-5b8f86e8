@@ -4953,6 +4953,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </p>
                   </div>
                 </div>
+                )}
 
                 {/* SEÇÃO 2: SIMULADOR & PROPOSTA DE CRÉDITO GOVERNAMENTAL */}
                 <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
