@@ -383,8 +383,13 @@ import {
   normalizeMensalidades,
   DEFAULT_ASSINATURA_PARCEIRO,
   normalizeAssinaturaParceiro,
+  DEFAULT_CONTRATOS_ASSESSORIA,
+  normalizeContratosAssessoria,
+  type ContratosAssessoria,
+  type PlanoAssessoriaKey,
   type AssinaturaParceiro,
   type MensalidadesAssessoria
+
 } from "../utils/serviceUtils";
 export { DEFAULT_SERVICES_CATALOG };
 export type { ServiceCatalogItem };
@@ -458,6 +463,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [newServLinkPagamento, setNewServLinkPagamento] = useState("");
   const [editMensalidades, setEditMensalidades] = useState<MensalidadesAssessoria>(DEFAULT_MENSALIDADES);
   const [editAssinaturaParceiro, setEditAssinaturaParceiro] = useState<AssinaturaParceiro>(DEFAULT_ASSINATURA_PARCEIRO);
+  const [editContratosAssessoria, setEditContratosAssessoria] = useState<ContratosAssessoria>(DEFAULT_CONTRATOS_ASSESSORIA);
+  const contratosAssessoriaSalvosRef = useRef<ContratosAssessoria>(DEFAULT_CONTRATOS_ASSESSORIA);
+
 
   const CREDIT_PRODUCTS = [
     { code: "REDEBE_DIAGNOSTICO_360", name: "Rating de Crédito + Diagnóstico Finan. 360", defaultPrice: 49.90 }
