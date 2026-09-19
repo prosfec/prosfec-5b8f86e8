@@ -1199,6 +1199,28 @@ export default function FichaRatingCreditoForm({
                   hint="Cole o link que abre este documento em PDF e libere o acesso para visualização."
                 />
 
+                <DocLinkInput
+                  label="Extrato Bancário PJ — últimos 90 dias (PDF)"
+                  required
+                  value={dadosCNPJ.extratoBancarioPjPdf}
+                  onChange={(url) => handleCNPJLinkChange("extratoBancarioPjPdf", url, "Extrato Bancário PJ 90 dias")}
+                  hint="Cole o link que abre este documento em PDF e libere o acesso para visualização."
+                />
+
+                <DocLinkInput
+                  label="PGDAS — Declaração do mês atual e recibo (Opcional)"
+                  value={dadosCNPJ.pgdasPdf}
+                  onChange={(url) => handleCNPJLinkChange("pgdasPdf", url, "PGDAS")}
+                  hint="Somente para empresas do Simples Nacional. Cole o link que abre o PDF liberado para visualização."
+                />
+
+                <DocLinkInput
+                  label="DEFIS — Declaração e recibo (Opcional)"
+                  value={dadosCNPJ.defisPdf}
+                  onChange={(url) => handleCNPJLinkChange("defisPdf", url, "DEFIS")}
+                  hint="Somente para empresas do Simples Nacional. Cole o link que abre o PDF liberado para visualização."
+                />
+
               </div>
             </div>
 
