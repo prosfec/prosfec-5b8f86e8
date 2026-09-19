@@ -1050,6 +1050,21 @@ export default function FichaRatingCreditoForm({
                       hint="Recomendamos Google Drive. Certifique-se de configurar o compartilhamento como 'Qualquer pessoa com o link pode visualizar', senão o time da Prosfec não conseguirá abrir."
                     />
 
+                    <DocLinkInput
+                      label="IRPF — Declaração (PDF)"
+                      required
+                      value={(socios[activeSocioTab] as any).irpfDeclaracao}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "irpfDeclaracao" as any, url, "IRPF - Declaração")}
+                      hint="Cole o link que abre a declaração de IRPF deste sócio em PDF, liberada para visualização."
+                    />
+
+                    <DocLinkInput
+                      label="IRPF — Recibo de Entrega (PDF)"
+                      required
+                      value={(socios[activeSocioTab] as any).irpfRecibo}
+                      onChange={(url) => handleSocioLinkChange(activeSocioTab, "irpfRecibo" as any, url, "IRPF - Recibo de Entrega")}
+                      hint="Cole o link que abre o recibo de entrega do IRPF deste sócio em PDF, liberado para visualização."
+                    />
 
                   </div>
                 </div>

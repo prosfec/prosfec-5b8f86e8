@@ -289,6 +289,10 @@ export interface SocioRatingCPF {
   selfieComDocumentoNome?: string;
   fotoTituloEleitor?: string;
   fotoTituloEleitorNome?: string;
+  irpfDeclaracao?: string;
+  irpfDeclaracaoNome?: string;
+  irpfRecibo?: string;
+  irpfReciboNome?: string;
 }
 
 export interface DadosRatingCNPJ {
@@ -313,6 +317,12 @@ export interface DadosRatingCNPJ {
   drePdfNome?: string;
   balancoPatrimonialPdf?: string;
   balancoPatrimonialPdfNome?: string;
+  pgdasPdf?: string;
+  pgdasPdfNome?: string;
+  defisPdf?: string;
+  defisPdfNome?: string;
+  extratoBancarioPjPdf?: string;
+  extratoBancarioPjPdfNome?: string;
 
   // Módulo RTB - Cédula de Crédito Bancário (CCB) em PDF
   ccbContratoPdf?: string;
