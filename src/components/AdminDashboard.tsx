@@ -3733,7 +3733,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   className="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-2.5 py-1.5 text-[10px] font-black text-emerald-800 hover:bg-emerald-100 transition-colors"
                                   title={lead.fichaRatingCredito?.pastaDocumentosUrl || (lead as any).linkDocumentos}
                                 >
-                                  <span className="uppercase tracking-wider">Pasta de Documentos</span>
+                                  <span className="uppercase tracking-wider">Pasta de Documentos — Histórico</span>
                                   <span className="underline">Abrir</span>
                                 </a>
                               )}
