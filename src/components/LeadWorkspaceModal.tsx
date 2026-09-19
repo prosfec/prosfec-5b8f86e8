@@ -4477,6 +4477,9 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
             const concluidasCount = subEtapasPasso6.filter(s => s.concluida).length;
             const totalSubEtapas = subEtapasPasso6.length;
             const pctConcluido = totalSubEtapas > 0 ? Math.round((concluidasCount / totalSubEtapas) * 100) : 0;
+            // Lead já apto para a mesa de crédito: o Passo 6 vira coleta documental + proposta
+            const fichaDocumentalMode = aptoMesaCredito === true;
+            const pctFichaDocumental = Number((lead as any).fichaRatingCredito?.progressoPercentual || 0);
 
             return (
               <div className="space-y-6 animate-fade-in">
