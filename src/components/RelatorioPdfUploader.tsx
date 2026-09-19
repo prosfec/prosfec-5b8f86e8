@@ -144,7 +144,7 @@ export const RelatorioPdfUploader: React.FC<RelatorioPdfUploaderProps> = ({
   };
 
   return (
-    <div className={compact ? "space-y-2 border-t border-line-soft pt-3" : "space-y-2 rounded-xl border border-line-soft bg-surface-raised p-3"}>
+    <div className={compact ? "space-y-2 border-t border-slate-200 pt-3" : "space-y-2 rounded-xl border border-slate-200 bg-white p-3"}>
       {!compact && <div className="flex items-center justify-between gap-2">
         <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">
           {isDepois ? "Resultado final (PDF) — equipe" : "Relatório oficial (PDF) — equipe"}
