@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { 
   FileText, 
   ShieldCheck, 
-  Upload, 
   CheckCircle2, 
   AlertCircle, 
   User, 
@@ -22,22 +21,18 @@ import {
   MessageSquare,
   HelpCircle,
   Award,
-  Sparkles,
   TrendingUp,
   Clock,
-  Scale,
   DollarSign,
   ShieldAlert,
-  RotateCw,
   Link2,
   ExternalLink
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPessoal, AnaliseRTB } from "../types";
-import { formatCurrencyBRL, sanitizeFirestoreData, validateUploadedFile, buildWhatsAppUrl } from "../utils";
-import RTBAuditoriaViewerModal from "./RTBAuditoriaViewerModal";
+import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPessoal } from "../types";
+import { sanitizeFirestoreData, buildWhatsAppUrl } from "../utils";
 
 /**
  * Campo de link de documento em nuvem (Google Drive, OneDrive, Dropbox...).
@@ -196,20 +191,12 @@ export default function FichaRatingCreditoForm({
 
   const [socios, setSocios] = useState<SocioRatingCPF[]>(initialSocios);
   const [dadosCNPJ, setDadosCNPJ] = useState<DadosRatingCNPJ>(initialCNPJ);
-  const [pastaDocumentosUrl, setPastaDocumentosUrl] = useState<string>(lead.fichaRatingCredito?.pastaDocumentosUrl || "");
   const [openSection, setOpenSection] = useState<"cpf" | "cnpj" | "both">("both");
   const [activeSocioTab, setActiveSocioTab] = useState<number>(0);
   
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [previewFile, setPreviewFile] = useState<{ name: string; url: string; isPdf?: boolean } | null>(null);
-
-  // RTB (Recuperação de Tarifa Bancária) State
-  const [analiseRTB, setAnaliseRTB] = useState<AnaliseRTB | null>(lead.analiseRTB || null);
-  const [analisandoRTB, setAnalisandoRTB] = useState(false);
-  const [showRTBModal, setShowRTBModal] = useState(false);
-  const [rtbError, setRtbError] = useState<string | null>(null);
 
   // Sync state if lead prop changes
   useEffect(() => {
@@ -220,64 +207,8 @@ export default function FichaRatingCreditoForm({
       if (lead.fichaRatingCredito.dadosCNPJ) {
         setDadosCNPJ(lead.fichaRatingCredito.dadosCNPJ);
       }
-      if (typeof lead.fichaRatingCredito.pastaDocumentosUrl === "string") {
-        setPastaDocumentosUrl(lead.fichaRatingCredito.pastaDocumentosUrl);
-      }
     }
-    if (lead.analiseRTB) {
-      setAnaliseRTB(lead.analiseRTB);
-    }
-  }, [lead.id, lead.analiseRTB]);
-
-  // Handler to trigger PROSFEC IA RTB Audit
-  const handleAnalisarCCBComIA = async () => {
-    if (!dadosCNPJ.ccbContratoPdf) {
-      setSaveError("Por favor, selecione e anexe primeiro o arquivo em PDF da CCB (Cédula de Crédito Bancário).");
-      return;
-    }
-
-    setAnalisandoRTB(true);
-    setRtbError(null);
-    setSaveError(null);
-
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error("Sua sessão expirou. Entre novamente para continuar.");
-      const response = await fetch("/api/credit/analise-rtb-ccb", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}` },
-        body: JSON.stringify({
-          leadId: lead.id,
-          ccbBase64: dadosCNPJ.ccbContratoPdf,
-          nomeArquivo: dadosCNPJ.ccbContratoPdfNome || "CCB_Contrato_Bancario.pdf",
-          bancoInformado: dadosCNPJ.ccbBancoEmissor || lead.bancoPrincipal,
-          valorInformado: dadosCNPJ.ccbValorContrato || lead.limiteEstimado
-        })
-      });
-
-      const resData = await response.json();
-
-      if (!response.ok || !resData.success) {
-        throw new Error(resData.error || "Falha na análise pericial da CCB pela PROSFEC IA.");
-      }
-
-      setAnaliseRTB(resData.analiseRTB);
-      setSaveSuccess("Perícia pericial da CCB concluída com sucesso pela PROSFEC IA!");
-      setShowRTBModal(true);
-
-      if (onUpdateLead) {
-        onUpdateLead({
-          ...lead,
-          analiseRTB: resData.analiseRTB
-        });
-      }
-    } catch (err: any) {
-      console.error("Erro na análise RTB:", err);
-      setRtbError(err.message || "Erro ao conectar com a PROSFEC IA para auditoria da CCB.");
-    } finally {
-      setAnalisandoRTB(false);
-    }
-  };
+  }, [lead.id]);
 
   // Format currency R$ input
   const handleCurrencyChange = (val: string, setter: (formatted: string) => void) => {
@@ -288,21 +219,6 @@ export default function FichaRatingCreditoForm({
     }
     const num = Number(numbers) / 100;
     setter(num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }));
-  };
-
-  // Convert File to Base64
-  const readFileAsBase64 = (file: File): Promise<{ base64: string; name: string }> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        resolve({
-          base64: reader.result as string,
-          name: file.name
-        });
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   };
 
   // Grava o LINK do documento do sócio (mesmo campo do Firestore, agora com URL)
@@ -341,36 +257,6 @@ export default function FichaRatingCreditoForm({
       [`${String(fieldName)}Nome`]: value ? `${label} (link externo)` : ""
     }));
   };
-
-
-  // Upload handler for CNPJ documents (strictly validating PDF if field is a PDF field)
-  const handleCNPJFileUpload = async (
-    fieldName: keyof DadosRatingCNPJ,
-    file: File | null,
-    isStrictPdf: boolean = false
-  ) => {
-    if (!file) return;
-    setSaveError(null);
-
-    const validation = await validateUploadedFile(file, isStrictPdf ? ["pdf"] : ["pdf", "image"], 15);
-    if (!validation.valid) {
-      setSaveError(validation.error || "Arquivo inválido para este campo.");
-      return;
-    }
-
-    try {
-      const { base64, name } = await readFileAsBase64(file);
-      setDadosCNPJ(prev => ({
-        ...prev,
-        [fieldName]: base64,
-        [`${String(fieldName)}Nome`]: name
-      }));
-    } catch (err) {
-      console.error("Erro ao processar arquivo CNPJ:", err);
-      setSaveError("Erro ao processar o arquivo. Tente novamente.");
-    }
-  };
-
   // Add a new Socio
   const handleAddSocio = () => {
     const nextNum = socios.length + 1;
@@ -465,8 +351,6 @@ export default function FichaRatingCreditoForm({
       ...(lead.fichaRatingCredito || {}),
       sociosCPF: socios,
       dadosCNPJ: dadosCNPJ,
-      pastaDocumentosUrl: pastaDocumentosUrl || "",
-      pastaDocumentosAtualizadoEm: pastaDocumentosUrl ? now : (lead.fichaRatingCredito?.pastaDocumentosAtualizadoEm || ""),
       status: isFinalSubmission ? "em_analise" : (lead.fichaRatingCredito?.status || "pendente"),
       faseRating: isFinalSubmission ? "documentos_recebidos" : (lead.fichaRatingCredito?.faseRating || "aguardando_documentos"),
       dataEnvio: isFinalSubmission ? now : (lead.fichaRatingCredito?.dataEnvio || ""),
@@ -478,14 +362,11 @@ export default function FichaRatingCreditoForm({
       // Gravação direta: o parceiro/admin está autenticado no Firebase.
       await updateDoc(doc(db, "leads", lead.id), {
         fichaRatingCredito: sanitizeFirestoreData(currentRating),
-        // Espelho na raiz do lead para leitura rápida no painel do Admin
-        linkDocumentos: pastaDocumentosUrl || "",
         updated_at: now
       });
 
       const updatedLead = {
         ...lead,
-        linkDocumentos: pastaDocumentosUrl || "",
         fichaRatingCredito: currentRating
       };
 
@@ -621,25 +502,6 @@ export default function FichaRatingCreditoForm({
               style={{ width: `${progress}%` }}
             />
           </div>
-        </div>
-
-        {/* Link único da pasta de documentos (Drive, Dropbox, OneDrive) */}
-        <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2">
-          <div className="flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-emerald-700 shrink-0" />
-            <span className="text-[11px] font-black text-emerald-900 uppercase tracking-wide font-mono">
-              Link da Pasta de Documentos
-            </span>
-          </div>
-          <p className="text-[11px] text-emerald-900/80 leading-relaxed">
-            Cole o link da pasta compartilhada (Google Drive, Dropbox, OneDrive) com todos os documentos do cliente. Garanta que a permissão de acesso esteja liberada para a Central PROSFEC.
-          </p>
-          <DocLinkInput
-            label="Pasta compartilhada do cliente"
-            value={pastaDocumentosUrl}
-            onChange={setPastaDocumentosUrl}
-            hint="Ex.: https://drive.google.com/drive/folders/..."
-          />
         </div>
 
         {saveSuccess && (
@@ -1214,7 +1076,7 @@ export default function FichaRatingCreditoForm({
                 Dados para estruturação de Rating Comercial de Crédito CNPJ(Empresa)
               </h3>
               <span className="text-[11px] text-slate-500">
-                Anexos fiscais, contábeis e societários (PDFs)
+                Links individuais dos documentos fiscais, contábeis e societários em PDF
               </span>
             </div>
           </div>
@@ -1260,12 +1122,16 @@ export default function FichaRatingCreditoForm({
             <div className="space-y-3 pt-3 border-t border-slate-100">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-slate-700 uppercase tracking-wider font-mono">
-                  Anexos Obrigatórios da Empresa (Apenas formato PDF)
+                  Documentos Obrigatórios da Empresa
                 </span>
                 <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-mono">
-                  .PDF Obrigatório
+                  Link individual do PDF
                 </span>
               </div>
+
+              <p className="text-[11px] text-slate-600 leading-relaxed">
+                Informe abaixo o link individual de cada documento em PDF. Garanta que cada link esteja liberado para visualização pela Central PROSFEC.
+              </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
 
@@ -1274,6 +1140,7 @@ export default function FichaRatingCreditoForm({
                   required
                   value={dadosCNPJ.cartaoCnpjPdf}
                   onChange={(url) => handleCNPJLinkChange("cartaoCnpjPdf", url, "Cartão CNPJ")}
+                  hint="Cole o link que abre este documento em PDF e libere o acesso para visualização."
                 />
 
                 <DocLinkInput
@@ -1281,6 +1148,7 @@ export default function FichaRatingCreditoForm({
                   required
                   value={dadosCNPJ.contratoSocialPdf}
                   onChange={(url) => handleCNPJLinkChange("contratoSocialPdf", url, "Contrato Social")}
+                  hint="Cole o link que abre este documento em PDF e libere o acesso para visualização."
                 />
 
                 <DocLinkInput
@@ -1288,6 +1156,7 @@ export default function FichaRatingCreditoForm({
                   required
                   value={dadosCNPJ.comprovanteResidenciaPdf}
                   onChange={(url) => handleCNPJLinkChange("comprovanteResidenciaPdf", url, "Comprovante de Residência")}
+                  hint="Cole o link que abre este documento em PDF e libere o acesso para visualização."
                 />
 
                 <DocLinkInput
@@ -1295,6 +1164,7 @@ export default function FichaRatingCreditoForm({
                   required
                   value={dadosCNPJ.faturamento12MesesPdf}
                   onChange={(url) => handleCNPJLinkChange("faturamento12MesesPdf", url, "Faturamento 12 Meses")}
+                  hint="Cole o link que abre este documento em PDF e libere o acesso para visualização."
                 />
 
                 <DocLinkInput
@@ -1302,6 +1172,7 @@ export default function FichaRatingCreditoForm({
                   required
                   value={dadosCNPJ.drePdf}
                   onChange={(url) => handleCNPJLinkChange("drePdf", url, "DRE")}
+                  hint="Cole o link que abre este documento em PDF e libere o acesso para visualização."
                 />
 
                 <DocLinkInput
@@ -1309,146 +1180,8 @@ export default function FichaRatingCreditoForm({
                   required
                   value={dadosCNPJ.balancoPatrimonialPdf}
                   onChange={(url) => handleCNPJLinkChange("balancoPatrimonialPdf", url, "Balanço Patrimonial")}
+                  hint="Cole o link que abre este documento em PDF e libere o acesso para visualização."
                 />
-
-
-                {/* RTB - Recuperação de Tarifa Bancária (Cédula de Crédito Bancário - CCB) */}
-                <div className="p-4 bg-linear-to-br from-emerald-900/10 via-teal-900/5 to-slate-50 rounded-2xl border-2 border-emerald-600/30 space-y-3 relative overflow-hidden">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <Scale className="w-4 h-4 text-emerald-700 shrink-0" />
-                        <span className="text-xs font-black text-slate-900">
-                          CCB - Cédula de Crédito Bancário (PDF)
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-600 font-medium">
-                        Serviço RTB: Auditoria pericial de tarifas abusivas e TAC/TEC com a PROSFEC IA
-                      </p>
-                    </div>
-                    {dadosCNPJ.ccbContratoPdf ? (
-                      <span className="text-[10px] bg-emerald-700 text-white font-extrabold px-2.5 py-0.5 rounded-full shrink-0 shadow-xs">
-                        CCB Anexada
-                      </span>
-                    ) : (
-                      <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full shrink-0">
-                        Opcional p/ RTB
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Informações Complementares Opcionais */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      placeholder="Banco Emissor (ex: Santander, BB...)"
-                      value={dadosCNPJ.ccbBancoEmissor || ""}
-                      onChange={(e) => setDadosCNPJ(prev => ({ ...prev, ccbBancoEmissor: e.target.value }))}
-                      className="w-full bg-white border border-slate-200 text-slate-800 text-[11px] rounded-xl px-2.5 py-1.5 focus:outline-hidden focus:border-emerald-600 font-medium"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Valor CCB (ex: R$ 150.000)"
-                      value={dadosCNPJ.ccbValorContrato ? `R$ ${Number(dadosCNPJ.ccbValorContrato).toLocaleString('pt-BR')}` : ""}
-                      onChange={(e) => {
-                        const num = Number(e.target.value.replace(/\D/g, ''));
-                        setDadosCNPJ(prev => ({ ...prev, ccbValorContrato: num || undefined }));
-                      }}
-                      className="w-full bg-white border border-slate-200 text-slate-800 text-[11px] rounded-xl px-2.5 py-1.5 focus:outline-hidden focus:border-emerald-600 font-medium"
-                    />
-                  </div>
-
-                  {/* File Upload Selector */}
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 border border-emerald-300 text-slate-800 text-xs font-bold py-2.5 px-3 rounded-xl cursor-pointer transition-all truncate shadow-xs">
-                      <Upload className="w-4 h-4 shrink-0 text-emerald-600" />
-                      <span className="truncate">{dadosCNPJ.ccbContratoPdfNome || "Selecionar PDF da CCB / Contrato"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleCNPJFileUpload("ccbContratoPdf", e.target.files?.[0] || null, true)}
-                      />
-                    </label>
-                    {dadosCNPJ.ccbContratoPdf && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile({
-                          name: dadosCNPJ.ccbContratoPdfNome || "CCB Contrato Bancário",
-                          url: dadosCNPJ.ccbContratoPdf!,
-                          isPdf: true
-                        })}
-                        className="p-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        title="Visualizar PDF"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Trigger Button: Analisar CCB com PROSFEC IA */}
-                  {dadosCNPJ.ccbContratoPdf && (
-                    <div className="pt-1">
-                      <button
-                        type="button"
-                        onClick={handleAnalisarCCBComIA}
-                        disabled={analisandoRTB}
-                        className="w-full py-2.5 px-4 bg-linear-to-r from-[#0A3D2E] via-teal-800 to-emerald-700 hover:from-[#082f23] hover:to-emerald-800 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-98"
-                      >
-                        {analisandoRTB ? (
-                          <>
-                            <RotateCw className="w-4 h-4 animate-spin text-emerald-300" />
-                            <span>PROSFEC IA Analisando Cláusulas da CCB...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4 text-emerald-300" />
-                            <span>{analiseRTB ? "Reanalisar CCB com PROSFEC IA" : "Analisar CCB com PROSFEC IA"}</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* RTB Result Card Banner */}
-                  {analiseRTB && (
-                    <div className="p-3 bg-white rounded-xl border border-emerald-300 shadow-xs space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase font-black tracking-wider text-emerald-700 flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          Laudo RTB Disponível
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          {analiseRTB.protocoloLaudo}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <span className="text-[10px] text-slate-500 font-bold block">Potencial de Restituição:</span>
-                          <span className="text-base font-black text-emerald-700">
-                            {formatCurrencyBRL(analiseRTB.potencialRecuperacaoTotal)}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setShowRTBModal(true)}
-                          className="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-extrabold text-[11px] rounded-lg transition-all flex items-center gap-1 cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          Ver Laudo Completo
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {rtbError && (
-                    <p className="text-[11px] text-rose-600 font-bold flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                      {rtbError}
-                    </p>
-                  )}
-                </div>
 
               </div>
             </div>
@@ -1485,75 +1218,6 @@ export default function FichaRatingCreditoForm({
           )}
         </button>
       </div>
-
-      {/* Modal Preview File */}
-      <AnimatePresence>
-        {previewFile && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl p-5 max-w-2xl w-full shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col"
-            >
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                <div className="flex items-center gap-2 truncate">
-                  <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 truncate">
-                    {previewFile.name}
-                  </h4>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPreviewFile(null)}
-                  className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-auto flex items-center justify-center p-2 bg-slate-50 rounded-2xl border border-slate-100 min-h-[300px]">
-                {previewFile.isPdf || previewFile.url.startsWith("data:application/pdf") ? (
-                  <iframe
-                    src={previewFile.url}
-                    title={previewFile.name}
-                    className="w-full h-[450px] rounded-xl border-0"
-                  />
-                ) : (
-                  <img
-                    src={previewFile.url}
-                    alt={previewFile.name}
-                    className="max-h-[450px] w-auto object-contain rounded-xl shadow-xs"
-                  />
-                )}
-              </div>
-
-              <div className="pt-3 flex justify-end">
-                <a
-                  href={previewFile.url}
-                  download={previewFile.name}
-                  className="px-4 py-2 bg-[#0A3D2E] hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all"
-                >
-                  Baixar Arquivo
-                </a>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Modal Laudo Pericial RTB */}
-      <AnimatePresence>
-        {showRTBModal && analiseRTB && (
-          <RTBAuditoriaViewerModal
-            analiseRTB={analiseRTB}
-            razaoSocial={lead.razaoSocial || lead.nome}
-            cnpj={lead.cnpj}
-            ccbPdfUrl={dadosCNPJ.ccbContratoPdf}
-            onClose={() => setShowRTBModal(false)}
-          />
-        )}
-      </AnimatePresence>
 
     </div>
   );
