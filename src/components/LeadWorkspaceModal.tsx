@@ -4496,10 +4496,14 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </div>
                     <h3 className="font-display font-extrabold text-lg sm:text-xl text-white flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-emerald-400" />
-                      Estruturação da Operação & Melhoria de Perfil de Crédito
+                      {fichaDocumentalMode
+                        ? "Ficha Documental & Projeto Empresarial"
+                        : "Estruturação da Operação & Melhoria de Perfil de Crédito"}
                     </h3>
                     <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                      Central unificada do parceiro: acompanhe todas as ações técnicas de adequação cadastral configuradas pela PROSFEC IA, execute simulações em linhas governamentais e audite o histórico da operação em tempo real.
+                      {fichaDocumentalMode
+                        ? "Empresa apta para análise de crédito bancária: reúna os links dos documentos do cliente e lance a proposta da operação."
+                        : "Central unificada do parceiro: acompanhe todas as ações técnicas de adequação cadastral configuradas pela PROSFEC IA, execute simulações em linhas governamentais e audite o histórico da operação em tempo real."}
                     </p>
                   </div>
 
