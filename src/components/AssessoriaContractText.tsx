@@ -160,6 +160,12 @@ export default function AssessoriaContractText({
         <div className="space-y-3">
           <CorpoDigitado texto={corpo} />
         </div>
+      ) : assinado ? (
+        <p className="italic text-slate-500">
+          Este contrato foi assinado eletronicamente em versão anterior da plataforma, nas
+          condições de plano, mensalidade e prazo indicadas acima. Para obter a via integral do
+          texto assinado, solicite à administração PROSFEC.
+        </p>
       ) : (
         <p className="italic text-slate-500">
           O texto deste contrato ainda não foi disponibilizado.

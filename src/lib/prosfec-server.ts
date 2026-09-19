@@ -2806,8 +2806,10 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         let corpoAssessoria = "";
         let versaoAssessoria = 0;
         if (!isAvulsoPrincipal) {
-          if (lead.contratoAssinado && String(lead.contratoAssessoriaTexto || "").trim()) {
-            corpoAssessoria = String(lead.contratoAssessoriaTexto);
+          if (lead.contratoAssinado) {
+            // Contrato assinado é imutável: usa somente o texto congelado na assinatura.
+            // Assinaturas anteriores a este recurso não possuem texto congelado.
+            corpoAssessoria = String(lead.contratoAssessoriaTexto || "");
             versaoAssessoria = Number(lead.contratoAssessoriaVersao || 0);
           } else {
             try {
@@ -2824,8 +2826,9 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           }
         }
 
-        // Sem texto de contrato cadastrado para o plano, a assessoria não é exibida ao cliente
-        if (isAvulsoPrincipal || corpoAssessoria.trim()) {
+        // Contrato já assinado sempre é exibido. Sem assinatura e sem texto cadastrado
+        // para o plano, a assessoria não é exibida ao cliente.
+        if (isAvulsoPrincipal || lead.contratoAssinado || corpoAssessoria.trim()) {
           documentos.push({
             id: "principal",
             tipo: isAvulsoPrincipal ? "principal_avulso" : "assessoria",
