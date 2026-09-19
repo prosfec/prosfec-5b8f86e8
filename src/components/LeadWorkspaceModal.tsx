@@ -4509,8 +4509,14 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                   <div className="flex flex-wrap md:flex-col items-start md:items-end gap-2 shrink-0">
                     <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-left md:text-right">
-                      <span className="text-[9px] uppercase font-black tracking-wider text-emerald-300 block">Progresso da Estruturação</span>
-                      <span className="text-base font-black text-white font-mono">{concluidasCount}/{totalSubEtapas} Concluídas ({pctConcluido}%)</span>
+                      <span className="text-[9px] uppercase font-black tracking-wider text-emerald-300 block">
+                        {fichaDocumentalMode ? "Progresso da Ficha Documental" : "Progresso da Estruturação"}
+                      </span>
+                      <span className="text-base font-black text-white font-mono">
+                        {fichaDocumentalMode
+                          ? `${pctFichaDocumental}% preenchida`
+                          : `${concluidasCount}/${totalSubEtapas} Concluídas (${pctConcluido}%)`}
+                      </span>
                     </div>
                     <button
                       onClick={copyLeadProposalToClipboard}
