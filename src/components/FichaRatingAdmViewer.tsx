@@ -113,7 +113,7 @@ export default function FichaRatingAdmViewer({
     ) {
       return "em_aplicacao";
     }
-    if (pastaDocumentosUrl) return "documentos_recebidos";
+    if (ratingData?.dataEnvio || ratingData?.progressoPercentual) return "documentos_recebidos";
     return "aguardando_documentos";
   };
 
@@ -231,12 +231,8 @@ export default function FichaRatingAdmViewer({
 
     const companyName = lead.razaoSocial || lead.nome || "Cliente";
     let message = `Olá, *${companyName}*! Aqui é da Mesa de Operações e Crédito da *PROSFEC*.\n\n`;
-    message += "Estamos revisando a pasta de documentos da empresa para a estruturação do Dossiê de Rating Comercial.\n\n";
-    if (pastaDocumentosUrl) {
-      message += "Por favor, confirme se o link da pasta está atualizado e com permissão de acesso para nossa equipe.\n";
-    } else {
-      message += "Ainda precisamos do link da pasta de documentos (Google Drive, OneDrive ou Dropbox) com acesso liberado para nossa equipe.\n";
-    }
+    message += "Estamos revisando os documentos da empresa para a estruturação do Dossiê de Rating Comercial.\n\n";
+    message += "Por favor, confirme se os links individuais dos documentos em PDF estão atualizados e com permissão de visualização para nossa equipe.\n";
     if (observacoes.trim()) {
       message += `\n*Orientação da análise:* ${observacoes.trim()}\n`;
     }
@@ -251,48 +247,32 @@ export default function FichaRatingAdmViewer({
 
   return (
     <div className="space-y-6 text-left">
-      <section
-        className={`rounded-xl border p-5 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center gap-4 shadow-sm ${
-          pastaDocumentosUrl
-            ? "bg-emerald-50 border-emerald-200"
-            : "bg-amber-50 border-amber-200"
-        }`}
-      >
+      {pastaDocumentosUrl && (
+      <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center gap-4 shadow-sm">
         <div className="flex items-start gap-3 min-w-0">
-          <div
-            className={`p-2.5 rounded-xl shrink-0 ${
-              pastaDocumentosUrl ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-            }`}
-          >
+          <div className="p-2.5 rounded-xl shrink-0 bg-emerald-100 text-emerald-700">
             <FolderOpen className="w-5 h-5" />
           </div>
           <div className="min-w-0">
             <span className="text-[10px] font-black uppercase tracking-wider font-mono text-slate-600 block">
-              Pasta de Documentos do Cliente
+              Pasta de Documentos do Cliente — Histórico
             </span>
-            {pastaDocumentosUrl ? (
-              <p className="text-xs font-bold text-emerald-900 truncate" title={pastaDocumentosUrl}>
-                {pastaDocumentosUrl}
-              </p>
-            ) : (
-              <p className="text-xs font-bold text-amber-900">
-                Nenhum link de pasta informado pelo parceiro até o momento.
-              </p>
-            )}
+            <p className="text-xs font-bold text-emerald-900 truncate" title={pastaDocumentosUrl}>
+              {pastaDocumentosUrl}
+            </p>
           </div>
         </div>
-        {pastaDocumentosUrl && (
-          <a
-            href={pastaDocumentosUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center justify-center gap-1.5 shrink-0"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Abrir pasta
-          </a>
-        )}
+        <a
+          href={pastaDocumentosUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center justify-center gap-1.5 shrink-0"
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+          Abrir pasta antiga
+        </a>
       </section>
+      )}
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-3 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -360,7 +340,7 @@ export default function FichaRatingAdmViewer({
               type="button"
               onClick={handleGenerateWhatsAppPendencias}
               className="px-3.5 py-2 bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-md transition-all active:scale-97"
-              title="Solicitar acesso ou correções na pasta via WhatsApp"
+              title="Solicitar acesso ou correções nos documentos via WhatsApp"
             >
               <Phone className="w-3.5 h-3.5 fill-current" />
               <span>Cobrar Pendências WhatsApp</span>
