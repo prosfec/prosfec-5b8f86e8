@@ -2636,13 +2636,19 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       .sort((a: any, b: any) => String(a.assinaturaData || a.dataCriacao || "").localeCompare(String(b.assinaturaData || b.dataCriacao || "")));
   };
 
-  const publicContratoView = (c: any) => ({
-    id: c.id,
-    tipo: c.tipo === "aditivo" ? "aditivo" : "avulso",
-    titulo:
+  const publicContratoView = (c: any) => {
+    const servicos = Array.isArray(c.servicos) ? c.servicos : [];
+    const nomeUnico = servicos.length === 1 ? String(servicos[0]?.nome || "").trim() : "";
+    const base =
       c.tipo === "aditivo"
         ? "Termo Aditivo de Inclusão de Serviço Avulso"
-        : "Contrato de Prestação de Serviços Avulsos",
+        : "Contrato de Prestação de Serviços Avulsos";
+    return {
+    id: c.id,
+    tipo: c.tipo === "aditivo" ? "aditivo" : "avulso",
+    titulo: nomeUnico
+      ? `${c.tipo === "aditivo" ? "Termo Aditivo" : "Contrato de Prestação de Serviços"} — ${nomeUnico}`
+      : base,
     status: c.status,
     servicos: Array.isArray(c.servicos) ? c.servicos : [],
     valorTotal: Number(c.valorTotal || 0),
