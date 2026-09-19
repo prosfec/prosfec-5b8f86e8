@@ -2636,13 +2636,19 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       .sort((a: any, b: any) => String(a.assinaturaData || a.dataCriacao || "").localeCompare(String(b.assinaturaData || b.dataCriacao || "")));
   };
 
-  const publicContratoView = (c: any) => ({
-    id: c.id,
-    tipo: c.tipo === "aditivo" ? "aditivo" : "avulso",
-    titulo:
+  const publicContratoView = (c: any) => {
+    const servicos = Array.isArray(c.servicos) ? c.servicos : [];
+    const nomeUnico = servicos.length === 1 ? String(servicos[0]?.nome || "").trim() : "";
+    const base =
       c.tipo === "aditivo"
         ? "Termo Aditivo de Inclusão de Serviço Avulso"
-        : "Contrato de Prestação de Serviços Avulsos",
+        : "Contrato de Prestação de Serviços Avulsos";
+    return {
+    id: c.id,
+    tipo: c.tipo === "aditivo" ? "aditivo" : "avulso",
+    titulo: nomeUnico
+      ? `${c.tipo === "aditivo" ? "Termo Aditivo" : "Contrato de Prestação de Serviços"} — ${nomeUnico}`
+      : base,
     status: c.status,
     servicos: Array.isArray(c.servicos) ? c.servicos : [],
     valorTotal: Number(c.valorTotal || 0),
@@ -2655,7 +2661,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     assinaturaData: c.assinaturaData || null,
     assinaturaIp: c.assinaturaIp || null,
     assinaturaDispositivo: c.assinaturaDispositivo || null,
-  });
+    };
+  };
 
   /** Catálogo de serviços vigente (cláusulas escritas em "Preços e Serviços"). */
   const getCatalogoServicos = async (): Promise<any[]> => {
@@ -2676,7 +2683,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
    * com todos os serviços; com contrato assinado, gera o termo aditivo apenas
    * com os serviços que ainda não constam em nenhum documento assinado.
    */
-  const derivarDocumentoPendente = async (lead: any, assinados: any[]): Promise<any | null> => {
+  const derivarDocumentosPendentes = async (lead: any, assinados: any[]): Promise<any[]> => {
     const catalogo = await getCatalogoServicos();
     const lista = Array.isArray(lead?.servicosRecomendados) ? lead.servicosRecomendados : [];
 
@@ -2728,28 +2735,39 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       });
 
 
-    if (servicos.length === 0) return null;
+    if (servicos.length === 0) return [];
 
     const isAditivo = Boolean(contratoBase);
-    return {
-      id: isAditivo ? "aditivo_auto" : "avulso_auto",
-      tipo: isAditivo ? "aditivo" : "avulso",
-      titulo: isAditivo
-        ? "Termo Aditivo de Inclusão de Serviço Avulso"
-        : "Contrato de Prestação de Serviços Avulsos",
-      status: "aguardando_assinatura",
-      assinado: false,
-      servicos,
-      valorTotal: servicos.reduce((acc: number, s: any) => acc + Number(s.valor || 0), 0),
-      contratoOrigemId: contratoBase?.id || null,
-      contratoOrigemData: contratoBase?.assinaturaData || null,
-      dataCriacao: null,
-      assinaturaNome: null,
-      assinaturaCpf: "",
-      assinaturaData: null,
-      assinaturaIp: null,
-      assinaturaDispositivo: null,
-    };
+    const prefixo = isAditivo ? "aditivo_auto" : "avulso_auto";
+
+    // Um contrato completo e independente por serviço.
+    return servicos.map((s: any, idx: number) => {
+      const slug =
+        String(s.id || s.nome || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "_")
+          .replace(/^_+|_+$/g, "")
+          .slice(0, 48) || `item_${idx + 1}`;
+      return {
+        id: `${prefixo}__${slug}`,
+        tipo: isAditivo ? "aditivo" : "avulso",
+        titulo: `${isAditivo ? "Termo Aditivo" : "Contrato de Prestação de Serviços"} — ${s.nome}`,
+        status: "aguardando_assinatura",
+        assinado: false,
+        servicos: [s],
+        valorTotal: Number(s.valor || 0),
+        contratoOrigemId: contratoBase?.id || null,
+        contratoOrigemData: contratoBase?.assinaturaData || null,
+        dataCriacao: null,
+        assinaturaNome: null,
+        assinaturaCpf: "",
+        assinaturaData: null,
+        assinaturaIp: null,
+        assinaturaDispositivo: null,
+      };
+    });
   };
 
   app.get("/api/public/contrato/:leadId", async (req, res) => {
@@ -2761,8 +2779,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       if (!lead) return res.status(404).json({ error: "Contrato não encontrado." });
 
       const assinados = await listContratosAssinados(leadId);
-      const pendente = await derivarDocumentoPendente(lead, assinados);
-      const documentosAvulsos = [...assinados.map(publicContratoView), ...(pendente ? [pendente] : [])];
+      const pendentes = await derivarDocumentosPendentes(lead, assinados);
+      const documentosAvulsos = [...assinados.map(publicContratoView), ...pendentes];
 
       if (!lead.modeloContratacao && documentosAvulsos.length === 0) {
         return res.status(404).json({ error: "Contrato ainda não disponibilizado para assinatura." });
@@ -3125,53 +3143,63 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       }
 
       const assinarDocumento = async (alvo: string) => {
-        // Documento derivado automaticamente dos serviços do Passo 3
-        if (alvo === "avulso_auto" || alvo === "aditivo_auto") {
+        // Documentos derivados automaticamente dos serviços do Passo 3
+        // (um contrato completo por serviço: avulso_auto__<slug> / aditivo_auto__<slug>).
+        if (alvo.startsWith("avulso_auto") || alvo.startsWith("aditivo_auto")) {
           const leadAuto = await getDocRest(`leads/${leadId}`);
           if (!leadAuto) throw new AssinaturaErro(404, "Contrato não encontrado.");
 
           const assinadosAuto = await listContratosAssinados(leadId);
-          const derivado = await derivarDocumentoPendente(leadAuto, assinadosAuto);
-          if (!derivado) {
+          const derivados = await derivarDocumentosPendentes(leadAuto, assinadosAuto);
+          const sufixo = alvo.includes("__") ? alvo.split("__")[1] : "";
+          const alvosDerivados = sufixo
+            ? derivados.filter((d: any) => String(d.id).endsWith(`__${sufixo}`))
+            : derivados;
+
+          if (alvosDerivados.length === 0) {
             if (multiplos) return;
             throw new AssinaturaErro(409, "Não há serviços pendentes de contratação.");
           }
 
           const socio = Array.isArray(leadAuto.socios) && leadAuto.socios.length > 0 ? leadAuto.socios[0] : null;
-          const novoContrato: Record<string, any> = cleanForFirestore({
-            leadId,
-            tipo: derivado.tipo,
-            status: "assinado",
-            servicos: derivado.servicos,
-            valorTotal: Number(derivado.valorTotal || 0),
-            contratoOrigemId: derivado.contratoOrigemId || null,
-            contratoOrigemData: derivado.contratoOrigemData || null,
-            cliente: {
-              razaoSocial: leadAuto.nomeEmpresa || leadAuto.razaoSocial || "",
-              cnpj: leadAuto.cnpj || "",
-              endereco: [leadAuto.endereco, leadAuto.cidade, leadAuto.uf || leadAuto.estado]
-                .filter(Boolean)
-                .join(", "),
-              representante: socio?.nome || leadAuto.nomeContato || leadAuto.nome || "",
-              representanteCpf: socio?.cpf || leadAuto.cpf || "",
-            },
-            dataCriacao: nowIso,
-            assinaturaNome: nome,
-            assinaturaCpf: cpf,
-            assinaturaData: nowIso,
-            assinaturaIp: ip,
-            assinaturaDispositivo: dispositivo,
-            assinaturaDesenho: assinatura,
-          });
 
-          const criado = await createDocRest("contratos", novoContrato);
+          for (const derivado of alvosDerivados) {
+            const novoContrato: Record<string, any> = cleanForFirestore({
+              leadId,
+              tipo: derivado.tipo,
+              status: "assinado",
+              titulo: derivado.titulo,
+              servicos: derivado.servicos,
+              valorTotal: Number(derivado.valorTotal || 0),
+              contratoOrigemId: derivado.contratoOrigemId || null,
+              contratoOrigemData: derivado.contratoOrigemData || null,
+              cliente: {
+                razaoSocial: leadAuto.nomeEmpresa || leadAuto.razaoSocial || "",
+                cnpj: leadAuto.cnpj || "",
+                endereco: [leadAuto.endereco, leadAuto.cidade, leadAuto.uf || leadAuto.estado]
+                  .filter(Boolean)
+                  .join(", "),
+                representante: socio?.nome || leadAuto.nomeContato || leadAuto.nome || "",
+                representanteCpf: socio?.cpf || leadAuto.cpf || "",
+              },
+              dataCriacao: nowIso,
+              assinaturaNome: nome,
+              assinaturaCpf: cpf,
+              assinaturaData: nowIso,
+              assinaturaIp: ip,
+              assinaturaDispositivo: dispositivo,
+              assinaturaDesenho: assinatura,
+            });
 
-          assinados.push({
-            id: (criado as any)?.id || alvo,
-            tipo: derivado.tipo,
-            titulo: derivado.tipo === "aditivo" ? "Termo Aditivo" : "Contrato Avulso de Serviços",
-            valorTotal: Number(derivado.valorTotal || 0),
-          });
+            const criado = await createDocRest("contratos", novoContrato);
+
+            assinados.push({
+              id: (criado as any)?.id || derivado.id,
+              tipo: derivado.tipo,
+              titulo: derivado.titulo,
+              valorTotal: Number(derivado.valorTotal || 0),
+            });
+          }
           return;
         }
 
@@ -3203,7 +3231,9 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           assinados.push({
             id: alvo,
             tipo: String(contrato.tipo || "avulso"),
-            titulo: contrato.tipo === "aditivo" ? "Termo Aditivo" : "Contrato Avulso de Serviços",
+            titulo:
+              contrato.titulo ||
+              (contrato.tipo === "aditivo" ? "Termo Aditivo" : "Contrato Avulso de Serviços"),
             valorTotal: Number(contrato.valorTotal || 0),
           });
           return;

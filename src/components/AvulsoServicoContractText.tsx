@@ -3,9 +3,11 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  *
- * Contrato de Prestação de Serviços Avulsos: cláusulas gerais + um bloco de
- * cláusulas específicas por serviço contratado. As cláusulas de cada serviço
- * são congeladas no momento da geração do contrato.
+ * Contrato de Prestação de Serviços Avulsos. Quando há um único serviço
+ * vinculado, o documento é um contrato completo e independente daquele
+ * serviço: descrição do serviço seguida imediatamente das cláusulas
+ * específicas escritas no catálogo do ADM. As cláusulas são congeladas no
+ * momento da geração/assinatura do contrato.
  */
 
 import React from "react";
@@ -58,6 +60,10 @@ export function ClausulasServico({ texto }: { texto?: string }) {
   );
 }
 
+/** Rótulo do valor do serviço (contratos de êxito não têm custo inicial). */
+export const valorServicoTexto = (v: any) =>
+  Number(v || 0) > 0 ? brl(v) : "Sem custo inicial (remuneração por êxito)";
+
 export default function AvulsoServicoContractText({
   razaoSocial,
   cnpj,
@@ -80,10 +86,16 @@ export default function AvulsoServicoContractText({
       ? valorTotal
       : lista.reduce((acc, s) => acc + Number(s?.valor || 0), 0);
 
+  const unico = lista.length === 1;
+  const servico = unico ? lista[0] : null;
+  const nomeServico = String(servico?.nome || "Serviço").trim();
+
   return (
     <article className="text-sm text-slate-700 text-justify space-y-4 leading-relaxed">
       <h2 className="text-base font-extrabold uppercase text-slate-900 text-center">
-        Contrato de Prestação de Serviços Avulsos
+        {unico
+          ? `Contrato de Prestação de Serviços — ${nomeServico}`
+          : "Contrato de Prestação de Serviços Avulsos"}
       </h2>
 
       {(numeroContrato || dataGeracao) && (
@@ -108,52 +120,85 @@ export default function AvulsoServicoContractText({
         <strong>CONTRATADA:</strong> {CONTRATADA_TEXTO_AVULSO}.
       </p>
 
-      <H>Cláusula 2ª – Do Objeto</H>
-      <p>
-        2.1. O presente contrato tem por objeto a prestação, pela CONTRATADA, dos serviços avulsos
-        relacionados no quadro de valores desta avença, executados de forma independente e autônoma
-        em relação a qualquer contrato de assessoria mensal eventualmente mantido entre as partes.
-      </p>
-      <p>
-        2.2. Cada serviço contratado é regido pelas cláusulas gerais deste instrumento e,
-        cumulativamente, pelas cláusulas específicas constantes da Cláusula 6ª.
-      </p>
+      {unico ? (
+        <>
+          <H>Cláusula 2ª – Do Objeto e das Cláusulas Específicas do Serviço</H>
+          <p>
+            2.1. O presente contrato tem por objeto a prestação, pela CONTRATADA, do serviço{" "}
+            <strong>{nomeServico}</strong>
+            {servico?.templateId ? ` (${servico.templateId}_V${Number(servico.templateVersao || 1)})` : ""}
+            , executado de forma independente e autônoma em relação a qualquer outro contrato mantido
+            entre as partes.
+          </p>
+          {String(servico?.descricao || "").trim() && (
+            <p>
+              <strong>Descrição do serviço:</strong> {String(servico?.descricao).trim()}
+            </p>
+          )}
+          <p>
+            2.2. O serviço rege-se pelas cláusulas gerais deste instrumento e, cumulativamente, pelas
+            cláusulas específicas abaixo:
+          </p>
+          <div className="space-y-2 border-l-2 border-slate-200 pl-3">
+            <ClausulasServico texto={servico?.clausulas} />
+          </div>
 
-      <H>Cláusula 3ª – Do Quadro de Valores</H>
-      {lista.length === 0 ? (
-        <p>Nenhum serviço vinculado a este contrato.</p>
+          <H>Cláusula 3ª – Do Valor</H>
+          <p>
+            3.1. Pela prestação do serviço objeto deste contrato, a CONTRATANTE pagará à CONTRATADA o
+            valor de <strong>{valorServicoTexto(servico?.valor)}</strong>.
+          </p>
+        </>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs border border-slate-200">
-            <thead>
-              <tr className="bg-slate-50 text-slate-600 uppercase tracking-wider">
-                <th className="text-left p-2 border-b border-slate-200">Serviço</th>
-                <th className="text-right p-2 border-b border-slate-200 w-32">Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lista.map((s, i) => (
-                <tr key={s?.id || i} className="border-b border-slate-100">
-                  <td className="p-2 align-top">
-                    <span className="font-semibold text-slate-900">{s?.nome || "Serviço"}</span>
-                    {s?.templateId && (
-                      <span className="block text-[10px] text-slate-400">
-                        {s.templateId}_V{Number(s.templateVersao || 1)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-2 text-right align-top font-bold text-slate-900">
-                    {Number(s?.valor || 0) > 0 ? brl(s?.valor) : "Sem custo inicial (êxito)"}
-                  </td>
-                </tr>
-              ))}
-              <tr className="bg-slate-50">
-                <td className="p-2 font-bold uppercase text-slate-700">Total</td>
-                <td className="p-2 text-right font-extrabold text-slate-900">{brl(total)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <>
+          <H>Cláusula 2ª – Do Objeto</H>
+          <p>
+            2.1. O presente contrato tem por objeto a prestação, pela CONTRATADA, dos serviços avulsos
+            relacionados no quadro de valores desta avença, executados de forma independente e autônoma
+            em relação a qualquer contrato de assessoria mensal eventualmente mantido entre as partes.
+          </p>
+          <p>
+            2.2. Cada serviço contratado é regido pelas cláusulas gerais deste instrumento e,
+            cumulativamente, pelas cláusulas específicas constantes da Cláusula 6ª.
+          </p>
+
+          <H>Cláusula 3ª – Do Quadro de Valores</H>
+          {lista.length === 0 ? (
+            <p>Nenhum serviço vinculado a este contrato.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border border-slate-200">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-600 uppercase tracking-wider">
+                    <th className="text-left p-2 border-b border-slate-200">Serviço</th>
+                    <th className="text-right p-2 border-b border-slate-200 w-32">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lista.map((s, i) => (
+                    <tr key={s?.id || i} className="border-b border-slate-100">
+                      <td className="p-2 align-top">
+                        <span className="font-semibold text-slate-900">{s?.nome || "Serviço"}</span>
+                        {s?.templateId && (
+                          <span className="block text-[10px] text-slate-400">
+                            {s.templateId}_V{Number(s.templateVersao || 1)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-2 text-right align-top font-bold text-slate-900">
+                        {Number(s?.valor || 0) > 0 ? brl(s?.valor) : "Sem custo inicial (êxito)"}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="bg-slate-50">
+                    <td className="p-2 font-bold uppercase text-slate-700">Total</td>
+                    <td className="p-2 text-right font-extrabold text-slate-900">{brl(total)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
 
       <H>Cláusula 4ª – Do Pagamento</H>
@@ -178,49 +223,53 @@ export default function AvulsoServicoContractText({
         de instituições financeiras, credores, bureaus de crédito ou órgãos públicos.
       </p>
 
-      <H>Cláusula 6ª – Das Cláusulas Específicas por Serviço</H>
-      {lista.length === 0 ? (
-        <p>Não há cláusulas específicas por ausência de serviços vinculados.</p>
-      ) : (
-        lista.map((s, i) => (
-          <section key={s?.id || `cl-${i}`} className="space-y-2">
-            <h4 className="font-bold text-slate-900">
-              6.{i + 1}. {s?.nome || "Serviço"}
-              {s?.templateId ? (
-                <span className="ml-2 text-[10px] font-normal text-slate-400">
-                  ({s.templateId}_V{Number(s.templateVersao || 1)})
-                </span>
-              ) : null}
-            </h4>
-            <ClausulasServico texto={s?.clausulas} />
-          </section>
-        ))
+      {!unico && (
+        <>
+          <H>Cláusula 6ª – Das Cláusulas Específicas por Serviço</H>
+          {lista.length === 0 ? (
+            <p>Não há cláusulas específicas por ausência de serviços vinculados.</p>
+          ) : (
+            lista.map((s, i) => (
+              <section key={s?.id || `cl-${i}`} className="space-y-2">
+                <h4 className="font-bold text-slate-900">
+                  6.{i + 1}. {s?.nome || "Serviço"}
+                  {s?.templateId ? (
+                    <span className="ml-2 text-[10px] font-normal text-slate-400">
+                      ({s.templateId}_V{Number(s.templateVersao || 1)})
+                    </span>
+                  ) : null}
+                </h4>
+                <ClausulasServico texto={s?.clausulas} />
+              </section>
+            ))
+          )}
+        </>
       )}
 
-      <H>Cláusula 7ª – Da Confidencialidade e Proteção de Dados (LGPD)</H>
+      <H>Cláusula {unico ? "6ª" : "7ª"} – Da Confidencialidade e Proteção de Dados (LGPD)</H>
       <p>
-        7.1. A CONTRATADA tratará os dados pessoais e empresariais da CONTRATANTE estritamente para a
-        finalidade de execução dos serviços contratados, nos termos da Lei nº 13.709/2018, adotando
-        medidas técnicas de segurança e mantendo o dever de sigilo, vedada a comercialização com
-        terceiros.
+        {unico ? "6.1." : "7.1."} A CONTRATADA tratará os dados pessoais e empresariais da CONTRATANTE
+        estritamente para a finalidade de execução dos serviços contratados, nos termos da Lei nº
+        13.709/2018, adotando medidas técnicas de segurança e mantendo o dever de sigilo, vedada a
+        comercialização com terceiros.
       </p>
 
-      <H>Cláusula 8ª – Da Inclusão de Novos Serviços</H>
+      <H>Cláusula {unico ? "7ª" : "8ª"} – Da Inclusão de Novos Serviços</H>
       <p>
-        8.1. A contratação de serviços adicionais após a assinatura deste contrato será formalizada
-        por meio de TERMO ADITIVO DE INCLUSÃO DE SERVIÇO AVULSO, que integrará este instrumento para
-        todos os fins, permanecendo o presente contrato inalterado em seu conteúdo original.
+        {unico ? "7.1." : "8.1."} A contratação de serviços adicionais após a assinatura deste contrato
+        será formalizada por meio de contrato próprio ou TERMO ADITIVO DE INCLUSÃO DE SERVIÇO AVULSO,
+        permanecendo o presente contrato inalterado em seu conteúdo original.
       </p>
 
-      <H>Cláusula 9ª – Da Assinatura Eletrônica e do Foro</H>
+      <H>Cláusula {unico ? "8ª" : "9ª"} – Da Assinatura Eletrônica e do Foro</H>
       <p>
-        9.1. As partes reconhecem a plena validade e eficácia jurídica da assinatura deste contrato
-        por meios eletrônicos e digitais, nos termos da MP nº 2.200-2/2001 e da Lei nº 14.063/2020,
-        sendo registrados data, hora, endereço IP e dispositivo do signatário.
+        {unico ? "8.1." : "9.1."} As partes reconhecem a plena validade e eficácia jurídica da
+        assinatura deste contrato por meios eletrônicos e digitais, nos termos da MP nº 2.200-2/2001 e
+        da Lei nº 14.063/2020, sendo registrados data, hora, endereço IP e dispositivo do signatário.
       </p>
       <p>
-        9.2. Fica eleito o foro da comarca de São Luís - MA para dirimir eventuais litígios
-        decorrentes deste instrumento, com renúncia expressa a qualquer outro.
+        {unico ? "8.2." : "9.2."} Fica eleito o foro da comarca de São Luís - MA para dirimir eventuais
+        litígios decorrentes deste instrumento, com renúncia expressa a qualquer outro.
       </p>
     </article>
   );
