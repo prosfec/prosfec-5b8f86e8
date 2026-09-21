@@ -33,9 +33,34 @@ import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPe
 import { formatCurrencyBRL, sanitizeFirestoreData, buildWhatsAppUrl } from "../utils";
 
 /**
+ * Abre em nova aba um anexo legado gravado em base64 (data:...), convertendo para Blob.
+ */
+const openLegacyBase64 = (dataUrl: string, label: string) => {
+  try {
+    const [header, base64] = dataUrl.split(",");
+    const mime = /data:([^;]+)/.exec(header || "")?.[1] || "application/octet-stream";
+    const binary = atob(base64 || "");
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blobUrl = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    const win = window.open(blobUrl, "_blank", "noopener,noreferrer");
+    if (!win) {
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${label.replace(/[^\w\-]+/g, "_")}`;
+      a.click();
+    }
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+  } catch {
+    alert("Não foi possível abrir o arquivo anexado.");
+  }
+};
+
+/**
  * Campo de link de documento em nuvem (Google Drive, OneDrive, Dropbox...).
  * Substitui o antigo upload em base64 — grava apenas a URL no mesmo campo do Firestore.
  */
+
 const DocLinkInput = ({
   label,
   value,
