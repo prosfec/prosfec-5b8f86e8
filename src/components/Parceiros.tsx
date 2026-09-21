@@ -373,12 +373,6 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                           </span>
                           <span><strong>Consultas de Crédito:</strong> Desconto especial em Rating e Diagnóstico</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-slate-700 leading-snug">
-                          <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
-                          </span>
-                          <span><strong>Link de Afiliado Exclusivo:</strong> Ganhe comissão de 30% indicando novos parceiros</span>
-                        </li>
                         <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
                           <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
@@ -499,12 +493,6 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                           </span>
                           <span><strong>Treinamento 2x por semana:</strong> Mentoria e técnicas de vendas de crédito corporativo</span>
                         </li>
-                        <li className="flex items-start gap-2.5 text-xs text-zinc-300 leading-snug">
-                          <span className="text-[#1A7F5A] bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
-                          </span>
-                          <span><strong>Link de Afiliado Exclusivo:</strong> Ganhe 30% de comissão por Executive indicado</span>
-                        </li>
                       </ul>
                     </div>
                   </div>
@@ -613,12 +601,6 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
                             <Check className="w-3.5 h-3.5" strokeWidth={2} />
                           </span>
                           <span><strong>Suporte & Mentoria da Mesa VIP:</strong> Treinamento de equipe e suporte em operações estruturadas</span>
-                        </li>
-                        <li className="flex items-start gap-2.5 text-xs text-slate-700 leading-snug">
-                          <span className="text-emerald-600 bg-emerald-50 rounded-full p-0.5 shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" strokeWidth={2} />
-                          </span>
-                          <span><strong>Link de Afiliado Exclusivo:</strong> Ganhe 30% de comissão por Master indicado</span>
                         </li>
                       </ul>
                     </div>
