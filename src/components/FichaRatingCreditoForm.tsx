@@ -33,9 +33,34 @@ import { Lead, FichaRatingCredito, SocioRatingCPF, DadosRatingCNPJ, ReferenciaPe
 import { formatCurrencyBRL, sanitizeFirestoreData, buildWhatsAppUrl } from "../utils";
 
 /**
+ * Abre em nova aba um anexo legado gravado em base64 (data:...), convertendo para Blob.
+ */
+const openLegacyBase64 = (dataUrl: string, label: string) => {
+  try {
+    const [header, base64] = dataUrl.split(",");
+    const mime = /data:([^;]+)/.exec(header || "")?.[1] || "application/octet-stream";
+    const binary = atob(base64 || "");
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blobUrl = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    const win = window.open(blobUrl, "_blank", "noopener,noreferrer");
+    if (!win) {
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${label.replace(/[^\w\-]+/g, "_")}`;
+      a.click();
+    }
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+  } catch {
+    alert("Não foi possível abrir o arquivo anexado.");
+  }
+};
+
+/**
  * Campo de link de documento em nuvem (Google Drive, OneDrive, Dropbox...).
  * Substitui o antigo upload em base64 — grava apenas a URL no mesmo campo do Firestore.
  */
+
 const DocLinkInput = ({
   label,
   value,
@@ -75,9 +100,10 @@ const DocLinkInput = ({
 
       {isLegacyBase64 ? (
         <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5 font-medium">
-          Arquivo antigo anexado. Limpe e cole o link do documento na nuvem.
+          Arquivo antigo anexado. Abra para conferir ou limpe e cole o link do documento na nuvem.
         </p>
       ) : (
+
         <input
           type="url"
           inputMode="url"
@@ -111,6 +137,16 @@ const DocLinkInput = ({
 
       {current && (
         <div className="flex items-center gap-1.5">
+          {isLegacyBase64 && (
+            <button
+              type="button"
+              onClick={() => openLegacyBase64(current, label)}
+              className="flex-1 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-200 text-slate-700 hover:text-amber-700 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Abrir arquivo anexado
+            </button>
+          )}
           {!isInvalid && !isLegacyBase64 && (
             <a
               href={current}
@@ -122,6 +158,7 @@ const DocLinkInput = ({
               Testar link
             </a>
           )}
+
           <button
             type="button"
             onClick={() => onChange("")}
