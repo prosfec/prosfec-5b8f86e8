@@ -112,6 +112,16 @@ const DocLinkInput = ({
 
       {current && (
         <div className="flex items-center gap-1.5">
+          {isLegacyBase64 && (
+            <button
+              type="button"
+              onClick={() => openLegacyBase64(current, label)}
+              className="flex-1 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-200 text-slate-700 hover:text-amber-700 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Abrir arquivo anexado
+            </button>
+          )}
           {!isInvalid && !isLegacyBase64 && (
             <a
               href={current}
@@ -123,6 +133,7 @@ const DocLinkInput = ({
               Testar link
             </a>
           )}
+
           <button
             type="button"
             onClick={() => onChange("")}
