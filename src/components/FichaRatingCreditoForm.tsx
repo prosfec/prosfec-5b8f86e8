@@ -43,11 +43,21 @@ const openLegacyBase64 = (dataUrl: string, label: string) => {
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     const blobUrl = URL.createObjectURL(new Blob([bytes], { type: mime }));
-    const win = window.open(blobUrl, "_blank", "noopener,noreferrer");
+    // Sem "noopener": com esse recurso window.open sempre retorna null,
+    // o que dispararia o fallback de download mesmo com a aba aberta com sucesso.
+    const win = window.open(blobUrl, "_blank");
     if (!win) {
+      // Popup bloqueado: baixa o arquivo com a extensão correta do tipo MIME.
+      const extByMime: Record<string, string> = {
+        "application/pdf": "pdf",
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+      };
+      const ext = extByMime[mime] || "bin";
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = `${label.replace(/[^\w\-]+/g, "_")}`;
+      a.download = `${label.replace(/[^\w\-]+/g, "_")}.${ext}`;
       a.click();
     }
     setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
