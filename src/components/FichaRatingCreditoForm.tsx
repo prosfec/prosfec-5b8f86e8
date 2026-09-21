@@ -75,9 +75,10 @@ const DocLinkInput = ({
 
       {isLegacyBase64 ? (
         <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5 font-medium">
-          Arquivo antigo anexado. Limpe e cole o link do documento na nuvem.
+          Arquivo antigo anexado. Abra para conferir ou limpe e cole o link do documento na nuvem.
         </p>
       ) : (
+
         <input
           type="url"
           inputMode="url"
