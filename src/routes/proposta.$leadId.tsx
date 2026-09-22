@@ -516,85 +516,142 @@ function PropostaPublicaPage() {
             <div className="min-w-0">
               <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
                 <FolderCheck className="w-4 h-4 text-emerald-600" />
-                Execução dos Serviços & Documentação
+                {aptoMesaCredito
+                  ? "Evolução do Recolhimento Documental"
+                  : "Execução dos Serviços & Documentação"}
               </h2>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Andamento das ações técnicas executadas pela equipe PROSFEC.
+                {aptoMesaCredito
+                  ? "Acompanhe a entrega e a validação dos documentos da sua empresa."
+                  : "Andamento das ações técnicas executadas pela equipe PROSFEC."}
               </p>
             </div>
           </div>
 
           <div className="p-5 sm:p-6 space-y-5">
-            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-emerald-600 to-[#00A86B] h-2.5 rounded-full transition-all duration-500"
-                style={{ width: `${Math.max(5, acompanhamento?.progresso?.percentual || 0)}%` }}
-              />
-            </div>
-
-            {subEtapas.length === 0 ? (
-              <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                As ações de estruturação estão sendo definidas pela equipe.
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {subEtapas.map((sub: any, idx: number) => (
+            {aptoMesaCredito ? (
+              <>
+                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                   <div
-                    key={`sub-${idx}`}
-                    className={`flex flex-wrap items-center gap-3 p-3.5 rounded-2xl border ${
-                      sub.concluida
-                        ? "bg-emerald-50/40 border-emerald-200/80"
-                        : "bg-white border-slate-200"
-                    }`}
-                  >
-                    {sub.concluida ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    ) : (
-                      <Circle className="w-4 h-4 text-slate-300 shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-[180px]">
-                      <span
-                        className={`block text-xs font-semibold ${
-                          sub.concluida ? "line-through text-slate-400" : "text-slate-800"
-                        }`}
-                      >
-                        {sub.titulo}
-                      </span>
-                      {sub.descricao ? (
-                        <span className="block text-[11px] text-slate-500 mt-0.5 whitespace-pre-line">
-                          {sub.descricao}
-                        </span>
-                      ) : null}
+                    className="bg-gradient-to-r from-emerald-600 to-[#00A86B] h-2.5 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.max(5, progressoDocs)}%` }}
+                  />
+                </div>
+
+                <div className="space-y-2.5">
+                  {docsCampos.length === 0 ? (
+                    <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                      A lista de documentos será publicada aqui pela equipe.
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
-                      {sub.valor > 0 && (
-                        <span className="text-[10px] font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                          {formatBRL(sub.valor)}
-                        </span>
-                      )}
-                      {sub.porDemanda ? (
-                        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
-                          Contratado por demanda
-                        </span>
-                      ) : sub.semCustoInicial ? (
-                        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-blue-50 text-blue-800 border-blue-200">
-                          Sem custo inicial
-                        </span>
-                      ) : (
-                        <span
-                          className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border ${
-                            sub.pago
-                              ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                              : "bg-amber-50 text-amber-800 border-amber-200"
+                  ) : (
+                    docsCampos.map((d: any) => {
+                      const enviado = !!docsCliente[d.key];
+                      return (
+                        <div
+                          key={`doc-${d.key}`}
+                          className={`flex flex-wrap items-center gap-3 p-3.5 rounded-2xl border ${
+                            enviado
+                              ? "bg-emerald-50/40 border-emerald-200/80"
+                              : "bg-white border-slate-200"
                           }`}
                         >
-                          {sub.pago ? "Pago" : "Aguardando pagamento"}
-                        </span>
-                      )}
-                    </div>
+                          {enviado ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          ) : (
+                            <Circle className="w-4 h-4 text-slate-300 shrink-0" />
+                          )}
+                          <span className="flex-1 min-w-[180px] text-xs font-semibold text-slate-800">
+                            {d.label}
+                          </span>
+                          <span
+                            className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border shrink-0 ${
+                              enviado
+                                ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                : "bg-amber-50 text-amber-800 border-amber-200"
+                            }`}
+                          >
+                            {enviado ? "Recebido" : "Pendente"}
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-emerald-600 to-[#00A86B] h-2.5 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.max(5, acompanhamento?.progresso?.percentual || 0)}%` }}
+                  />
+                </div>
+
+                {subEtapas.length === 0 ? (
+                  <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    As ações de estruturação estão sendo definidas pela equipe.
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {subEtapas.map((sub: any, idx: number) => (
+                      <div
+                        key={`sub-${idx}`}
+                        className={`flex flex-wrap items-center gap-3 p-3.5 rounded-2xl border ${
+                          sub.concluida
+                            ? "bg-emerald-50/40 border-emerald-200/80"
+                            : "bg-white border-slate-200"
+                        }`}
+                      >
+                        {sub.concluida ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        ) : (
+                          <Circle className="w-4 h-4 text-slate-300 shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-[180px]">
+                          <span
+                            className={`block text-xs font-semibold ${
+                              sub.concluida ? "line-through text-slate-400" : "text-slate-800"
+                            }`}
+                          >
+                            {sub.titulo}
+                          </span>
+                          {sub.descricao ? (
+                            <span className="block text-[11px] text-slate-500 mt-0.5 whitespace-pre-line">
+                              {sub.descricao}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                          {sub.valor > 0 && (
+                            <span className="text-[10px] font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                              {formatBRL(sub.valor)}
+                            </span>
+                          )}
+                          {sub.porDemanda ? (
+                            <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-indigo-50 text-indigo-800 border-indigo-200">
+                              Contratado por demanda
+                            </span>
+                          ) : sub.semCustoInicial ? (
+                            <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border bg-blue-50 text-blue-800 border-blue-200">
+                              Sem custo inicial
+                            </span>
+                          ) : (
+                            <span
+                              className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border ${
+                                sub.pago
+                                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                  : "bg-amber-50 text-amber-800 border-amber-200"
+                              }`}
+                            >
+                              {sub.pago ? "Pago" : "Aguardando pagamento"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
 
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
