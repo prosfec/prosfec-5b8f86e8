@@ -3596,6 +3596,50 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         (lead.creditLineCode && (GOVERNMENT_CREDIT_LINES as any)[lead.creditLineCode]) ||
         null;
 
+      // ---- Laudos do Diagnóstico 360 (somente os PDFs anexados pela equipe) ----
+      const maskDocPublic = (raw: any) => {
+        const d = String(raw || "").replace(/\D/g, "");
+        if (d.length === 14) return maskCnpjPublic(d);
+        if (d.length === 11) return maskCpfPublic(d);
+        return "";
+      };
+
+      let laudos: any[] = [];
+      try {
+        const rowsLaudos = await runQueryRest("consultas_realizadas", {
+          fieldFilter: {
+            field: { fieldPath: "leadId" },
+            op: "EQUAL",
+            value: { stringValue: leadId },
+          },
+        });
+        laudos = (rowsLaudos || [])
+          .filter((r: any) => r && r.data && !String(r.id).startsWith("ia_diagnostico_"))
+          .map((r: any) => ({
+            id: String(r.id),
+            documentoNome: String(r.data.documentoNome || "").slice(0, 160),
+            documentoMascarado: maskDocPublic(r.data.documento),
+            dataConsulta: r.data.dataConsulta || "",
+            relatorioPdfUrl: String(r.data.relatorioPdfUrl || ""),
+            relatorioPdfNome: String(r.data.relatorioPdfNome || ""),
+            relatorioDepoisPdfUrl: String(r.data.relatorioDepoisPdfUrl || ""),
+            relatorioDepoisPdfNome: String(r.data.relatorioDepoisPdfNome || ""),
+          }))
+          .sort(
+            (a: any, b: any) =>
+              new Date(a.dataConsulta || 0).getTime() - new Date(b.dataConsulta || 0).getTime(),
+          );
+      } catch (e: any) {
+        console.warn("Proposta pública: falha ao carregar laudos:", e?.message || e);
+        laudos = [];
+      }
+
+      const creditoRecusado =
+        String(lead.status || "") === "recusado" ||
+        String(lead.resultadoAnaliseCredito || "") === "recusado";
+      const valorAprovado = creditoRecusado ? 0 : Number(lead.valorAprovado || 0) || 0;
+
+
       return res.json({
         success: true,
         proposta: {
@@ -3630,6 +3674,11 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           documentosCampos: DOCUMENTOS_PROPOSTA,
           documentosCliente: docsEnviados,
           documentosClienteAtualizadoEm: lead.documentosClienteAtualizadoEm || null,
+          laudos,
+          contratoAssinado: !!lead.contratoAssinado,
+          contratoAssinadoData: lead.contratoAssinadoData || null,
+          creditoRecusado,
+          valorAprovado,
         },
       });
     } catch (err: any) {
