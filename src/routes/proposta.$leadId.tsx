@@ -150,9 +150,33 @@ function PropostaPublicaPage() {
     proposta?.documentosCliente && typeof proposta.documentosCliente === "object"
       ? proposta.documentosCliente
       : {};
-  const docsRecebidos = docsCampos.filter((d: any) => !!docsCliente[d?.key]).length;
+  const dossie: any[] = Array.isArray(proposta?.dossieDocumental)
+    ? proposta.dossieDocumental
+    : [];
+  const dossieGrupos: Array<{ grupo: string; itens: any[] }> = [];
+  for (const item of dossie) {
+    const nomeGrupo = String(item?.grupo || "Documentos");
+    let bloco = dossieGrupos.find((g) => g.grupo === nomeGrupo);
+    if (!bloco) {
+      bloco = { grupo: nomeGrupo, itens: [] };
+      dossieGrupos.push(bloco);
+    }
+    bloco.itens.push(item);
+  }
+  const docsRecebidos =
+    dossie.length > 0
+      ? Number(proposta?.dossieRecebidos || 0)
+      : docsCampos.filter((d: any) => !!docsCliente[d?.key]).length;
+  const docsTotal =
+    dossie.length > 0
+      ? Number(proposta?.dossieTotalObrigatorios || 0)
+      : docsCampos.length;
   const progressoDocs =
-    docsCampos.length > 0 ? Math.round((docsRecebidos / docsCampos.length) * 100) : 0;
+    dossie.length > 0
+      ? Number(proposta?.dossieProgresso || 0)
+      : docsCampos.length > 0
+        ? Math.round((docsRecebidos / docsCampos.length) * 100)
+        : 0;
 
   const dataHoraBR = (iso: any) => {
     try {
