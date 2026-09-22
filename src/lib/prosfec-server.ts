@@ -3606,14 +3606,58 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
       let laudos: any[] = [];
       try {
-        const rowsLaudos = await runQueryRest("consultas_realizadas", {
-          fieldFilter: {
-            field: { fieldPath: "leadId" },
-            op: "EQUAL",
-            value: { stringValue: leadId },
-          },
-        });
-        laudos = (rowsLaudos || [])
+        const rowsById = new Map<string, any>();
+
+        try {
+          const rowsByLead = await runQueryRest("consultas_realizadas", {
+            fieldFilter: {
+              field: { fieldPath: "leadId" },
+              op: "EQUAL",
+              value: { stringValue: leadId },
+            },
+          });
+          (rowsByLead || []).forEach((r: any) => r && rowsById.set(String(r.id), r));
+        } catch (e: any) {
+          console.warn("Proposta pública: laudos por leadId falhou:", e?.message || e);
+        }
+
+        // Diagnósticos antigos foram gravados pelo documento (CNPJ/CPF dos sócios),
+        // sem o vínculo de leadId — busca cruzada garante que apareçam no link.
+        const docsToMatch: string[] = [];
+        const cnpjClean = String(lead.cnpj || "").replace(/\D/g, "");
+        if (cnpjClean) docsToMatch.push(cnpjClean);
+        if (Array.isArray(lead.socios)) {
+          lead.socios.forEach((s: any) => {
+            const cpf = String(s?.cpf || "").replace(/\D/g, "");
+            if (cpf) docsToMatch.push(cpf);
+          });
+        }
+
+        if (docsToMatch.length) {
+          try {
+            const rowsByDoc = await runQueryRest("consultas_realizadas", {
+              fieldFilter: {
+                field: { fieldPath: "documento" },
+                op: "IN",
+                value: {
+                  arrayValue: {
+                    values: docsToMatch.slice(0, 10).map((d) => ({ stringValue: d })),
+                  },
+                },
+              },
+            });
+            (rowsByDoc || []).forEach((r: any) => {
+              if (!r) return;
+              const owner = String(r.data?.leadId || "");
+              if (owner && owner !== leadId) return; // consulta pertence a outro lead
+              if (!rowsById.has(String(r.id))) rowsById.set(String(r.id), r);
+            });
+          } catch (e: any) {
+            console.warn("Proposta pública: laudos por documento falhou:", e?.message || e);
+          }
+        }
+
+        laudos = Array.from(rowsById.values())
           .filter((r: any) => r && r.data && !String(r.id).startsWith("ia_diagnostico_"))
           .map((r: any) => ({
             id: String(r.id),
