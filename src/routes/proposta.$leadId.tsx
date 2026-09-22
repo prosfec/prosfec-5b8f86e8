@@ -217,7 +217,9 @@ function PropostaPublicaPage() {
           <div className="min-w-0">
             <span className="block font-black tracking-[0.2em] text-sm uppercase">PROSFEC</span>
             <span className="block text-[11px] text-emerald-200/90 truncate">
-              Estruturação da Operação & Melhoria de Perfil de Crédito
+              {aptoMesaCredito
+                ? "Ficha Documental & Preparação para Mesa de Crédito"
+                : "Estruturação da Operação & Melhoria de Perfil de Crédito"}
               {proposta?.nomeEmpresa ? ` • ${proposta.nomeEmpresa}` : ""}
             </span>
           </div>
