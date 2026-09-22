@@ -8490,10 +8490,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     href={waUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="w-full px-3 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                                    className="w-full px-3 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[44px]"
                                   >
                                     <Send className="w-3.5 h-3.5 text-white fill-current" />
                                     Iniciar Prospecção no WhatsApp
+                                    <Zap className="w-3.5 h-3.5 text-amber-300 fill-current" />
                                   </a>
                                 ) : (
                                   <span className="w-full block text-center text-[10px] text-slate-400 font-bold bg-slate-50 border border-slate-100 py-1.5 rounded-xl select-none">
