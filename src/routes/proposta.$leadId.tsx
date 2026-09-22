@@ -293,7 +293,7 @@ function PropostaPublicaPage() {
             </span>
             <span className="text-base font-black text-white font-mono">
               {aptoMesaCredito
-                ? `${docsRecebidos}/${docsCampos.length} recebidos (${progressoDocs}%)`
+                ? `${docsRecebidos}/${docsTotal} recebidos (${progressoDocs}%)`
                 : `${acompanhamento?.progresso?.concluidas || 0}/${acompanhamento?.progresso?.total || 0} concluídas (${acompanhamento?.progresso?.percentual || 0}%)`}
             </span>
           </div>
