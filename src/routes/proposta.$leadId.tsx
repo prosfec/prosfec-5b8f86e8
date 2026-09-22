@@ -150,9 +150,33 @@ function PropostaPublicaPage() {
     proposta?.documentosCliente && typeof proposta.documentosCliente === "object"
       ? proposta.documentosCliente
       : {};
-  const docsRecebidos = docsCampos.filter((d: any) => !!docsCliente[d?.key]).length;
+  const dossie: any[] = Array.isArray(proposta?.dossieDocumental)
+    ? proposta.dossieDocumental
+    : [];
+  const dossieGrupos: Array<{ grupo: string; itens: any[] }> = [];
+  for (const item of dossie) {
+    const nomeGrupo = String(item?.grupo || "Documentos");
+    let bloco = dossieGrupos.find((g) => g.grupo === nomeGrupo);
+    if (!bloco) {
+      bloco = { grupo: nomeGrupo, itens: [] };
+      dossieGrupos.push(bloco);
+    }
+    bloco.itens.push(item);
+  }
+  const docsRecebidos =
+    dossie.length > 0
+      ? Number(proposta?.dossieRecebidos || 0)
+      : docsCampos.filter((d: any) => !!docsCliente[d?.key]).length;
+  const docsTotal =
+    dossie.length > 0
+      ? Number(proposta?.dossieTotalObrigatorios || 0)
+      : docsCampos.length;
   const progressoDocs =
-    docsCampos.length > 0 ? Math.round((docsRecebidos / docsCampos.length) * 100) : 0;
+    dossie.length > 0
+      ? Number(proposta?.dossieProgresso || 0)
+      : docsCampos.length > 0
+        ? Math.round((docsRecebidos / docsCampos.length) * 100)
+        : 0;
 
   const dataHoraBR = (iso: any) => {
     try {
@@ -269,7 +293,7 @@ function PropostaPublicaPage() {
             </span>
             <span className="text-base font-black text-white font-mono">
               {aptoMesaCredito
-                ? `${docsRecebidos}/${docsCampos.length} recebidos (${progressoDocs}%)`
+                ? `${docsRecebidos}/${docsTotal} recebidos (${progressoDocs}%)`
                 : `${acompanhamento?.progresso?.concluidas || 0}/${acompanhamento?.progresso?.total || 0} concluídas (${acompanhamento?.progresso?.percentual || 0}%)`}
             </span>
           </div>
@@ -570,45 +594,84 @@ function PropostaPublicaPage() {
                   />
                 </div>
 
-                <div className="space-y-2.5">
-                  {docsCampos.length === 0 ? (
-                    <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                      A lista de documentos será publicada aqui pela equipe.
-                    </div>
-                  ) : (
-                    docsCampos.map((d: any) => {
-                      const enviado = !!docsCliente[d.key];
+                {dossieGrupos.length > 0 ? (
+                  <div className="space-y-6">
+                    {dossieGrupos.map((g) => {
+                      const recebidosGrupo = g.itens.filter((i: any) => i.recebido).length;
                       return (
-                        <div
-                          key={`doc-${d.key}`}
-                          className={`flex flex-wrap items-center gap-3 p-3.5 rounded-2xl border ${
-                            enviado
-                              ? "bg-emerald-50/40 border-emerald-200/80"
-                              : "bg-white border-slate-200"
-                          }`}
-                        >
-                          {enviado ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          ) : (
-                            <Circle className="w-4 h-4 text-slate-300 shrink-0" />
-                          )}
-                          <span className="flex-1 min-w-[180px] text-xs font-semibold text-slate-800">
-                            {d.label}
-                          </span>
-                          <span
-                            className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border shrink-0 ${
-                              enviado
-                                ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                : "bg-amber-50 text-amber-800 border-amber-200"
-                            }`}
-                          >
-                            {enviado ? "Recebido" : "Pendente"}
-                          </span>
+                        <div key={`grupo-${g.grupo}`} className="space-y-2.5">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-[11px] font-black uppercase tracking-wider text-slate-600">
+                              {g.grupo}
+                            </span>
+                            <span className="text-[10px] font-extrabold font-mono text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-lg">
+                              {recebidosGrupo}/{g.itens.length}
+                            </span>
+                          </div>
+
+                          {g.itens.map((d: any) => {
+                            const enviado = !!d.recebido;
+                            const rejeitado = d.status === "rejeitado";
+                            const aprovado = d.status === "aprovado";
+                            return (
+                              <div
+                                key={`dossie-${d.key}`}
+                                className={`flex flex-wrap items-center gap-3 p-3.5 rounded-2xl border ${
+                                  rejeitado
+                                    ? "bg-rose-50/60 border-rose-200"
+                                    : enviado
+                                      ? "bg-emerald-50/40 border-emerald-200/80"
+                                      : "bg-white border-slate-200"
+                                }`}
+                              >
+                                {enviado && !rejeitado ? (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                ) : (
+                                  <Circle
+                                    className={`w-4 h-4 shrink-0 ${
+                                      rejeitado ? "text-rose-400" : "text-slate-300"
+                                    }`}
+                                  />
+                                )}
+                                <span className="flex-1 min-w-[180px] text-xs font-semibold text-slate-800">
+                                  {d.label}
+                                  {!d.obrigatorio ? (
+                                    <span className="ml-1.5 text-[10px] font-bold text-slate-400">
+                                      (quando aplicável)
+                                    </span>
+                                  ) : null}
+                                </span>
+                                <span
+                                  className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border shrink-0 ${
+                                    rejeitado
+                                      ? "bg-rose-100 text-rose-800 border-rose-300"
+                                      : aprovado
+                                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                        : enviado
+                                          ? "bg-sky-50 text-sky-800 border-sky-200"
+                                          : "bg-amber-50 text-amber-800 border-amber-200"
+                                  }`}
+                                >
+                                  {rejeitado
+                                    ? "Reenviar"
+                                    : aprovado
+                                      ? "Validado"
+                                      : enviado
+                                        ? "Recebido"
+                                        : "Pendente"}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       );
-                    })
-                  )}
-                </div>
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    A lista de documentos será publicada aqui pela equipe.
+                  </div>
+                )}
               </>
             ) : (
               <>

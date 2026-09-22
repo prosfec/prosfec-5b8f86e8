@@ -3512,6 +3512,96 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         if (typeof v === "string" && v.trim()) docsEnviados[d.key] = v.trim();
       }
 
+      // ---------------------------------------------------------------
+      // Dossiê documental completo (espelho exato da Ficha Documental)
+      // ---------------------------------------------------------------
+      const fichaDoc: any =
+        lead.fichaRatingCredito && typeof lead.fichaRatingCredito === "object"
+          ? lead.fichaRatingCredito
+          : {};
+      const dadosCNPJDoc: any =
+        fichaDoc.dadosCNPJ && typeof fichaDoc.dadosCNPJ === "object" ? fichaDoc.dadosCNPJ : {};
+      const sociosDoc: any[] = Array.isArray(fichaDoc.socios) ? fichaDoc.socios : [];
+      const validacoesDoc: any =
+        fichaDoc.validacoesDocumentos && typeof fichaDoc.validacoesDocumentos === "object"
+          ? fichaDoc.validacoesDocumentos
+          : {};
+
+      const temLink = (v: any) => typeof v === "string" && v.trim().length > 0;
+
+      const CNPJ_DOCS: Array<{ campo: string; label: string; obrigatorio: boolean }> = [
+        { campo: "cartaoCnpjPdf", label: "Cartão CNPJ (PDF)", obrigatorio: true },
+        { campo: "contratoSocialPdf", label: "Contrato Social / Última alteração (PDF)", obrigatorio: true },
+        { campo: "comprovanteResidenciaPdf", label: "Comprovante de endereço da empresa (PDF)", obrigatorio: true },
+        { campo: "faturamento12MesesPdf", label: "Faturamento dos últimos 12 meses (PDF)", obrigatorio: true },
+        { campo: "drePdf", label: "DRE — Demonstração do Resultado do Exercício (PDF)", obrigatorio: true },
+        { campo: "balancoPatrimonialPdf", label: "Balanço Patrimonial (PDF)", obrigatorio: true },
+        { campo: "extratoBancarioPjPdf", label: "Extrato bancário PJ — últimos 90 dias (PDF)", obrigatorio: true },
+        { campo: "pgdasPdf", label: "PGDAS — Declaração do mês atual e recibo (opcional)", obrigatorio: false },
+        { campo: "defisPdf", label: "DEFIS — Declaração e recibo (opcional)", obrigatorio: false },
+        { campo: "documentoFotoFrenteTodosSocios", label: "Documento com foto dos sócios — Frente", obrigatorio: true },
+        { campo: "documentoFotoVersoTodosSocios", label: "Documento com foto dos sócios — Verso", obrigatorio: true },
+        { campo: "selfieTodosSocios", label: "Selfie dos sócios", obrigatorio: true },
+      ];
+
+      const SOCIO_DOCS: Array<{ campo: string; label: string; obrigatorio: boolean }> = [
+        { campo: "fotoCnhRgFrente", label: "CNH ou RG (Frente)", obrigatorio: true },
+        { campo: "fotoCnhRgVerso", label: "CNH ou RG (Verso)", obrigatorio: true },
+        { campo: "selfieComDocumento", label: "Selfie segurando o documento", obrigatorio: true },
+        { campo: "fotoTituloEleitor", label: "Título de eleitor", obrigatorio: true },
+        { campo: "irpfDeclaracao", label: "IRPF — Declaração de ajuste anual (PDF)", obrigatorio: true },
+        { campo: "irpfRecibo", label: "IRPF — Recibo de entrega (PDF)", obrigatorio: true },
+      ];
+
+      const statusValidacao = (campo: string) => {
+        const v = validacoesDoc?.[campo];
+        const s = String(v?.status || "").toLowerCase();
+        if (s === "aprovado") return "aprovado";
+        if (s === "rejeitado") return "rejeitado";
+        return "";
+      };
+
+      const dossieDocumental: Array<{
+        key: string;
+        label: string;
+        grupo: string;
+        obrigatorio: boolean;
+        recebido: boolean;
+        status: string;
+      }> = [];
+
+      for (const d of CNPJ_DOCS) {
+        dossieDocumental.push({
+          key: `cnpj.${d.campo}`,
+          label: d.label,
+          grupo: "Documentos da Empresa (CNPJ)",
+          obrigatorio: d.obrigatorio,
+          recebido: temLink(dadosCNPJDoc[d.campo]),
+          status: statusValidacao(d.campo),
+        });
+      }
+
+      sociosDoc.forEach((socio: any, idx: number) => {
+        const nomeSocio = String(socio?.nome || "").trim() || `Sócio ${idx + 1}`;
+        for (const d of SOCIO_DOCS) {
+          dossieDocumental.push({
+            key: `socio${idx}.${d.campo}`,
+            label: `${nomeSocio} — ${d.label}`,
+            grupo: "Documentos dos Sócios (CPF)",
+            obrigatorio: d.obrigatorio,
+            recebido: temLink(socio?.[d.campo]),
+            status: statusValidacao(`socio_${idx}_${d.campo}`),
+          });
+        }
+      });
+
+      const dossieObrigatorios = dossieDocumental.filter((d) => d.obrigatorio);
+      const dossieRecebidos = dossieObrigatorios.filter((d) => d.recebido).length;
+      const dossieProgresso =
+        dossieObrigatorios.length > 0
+          ? Math.round((dossieRecebidos / dossieObrigatorios.length) * 100)
+          : 0;
+
       const prop = lead.propostaNegociada && typeof lead.propostaNegociada === "object"
         ? lead.propostaNegociada
         : null;
@@ -3718,6 +3808,10 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           documentosCampos: DOCUMENTOS_PROPOSTA,
           documentosCliente: docsEnviados,
           documentosClienteAtualizadoEm: lead.documentosClienteAtualizadoEm || null,
+          dossieDocumental,
+          dossieProgresso,
+          dossieRecebidos,
+          dossieTotalObrigatorios: dossieObrigatorios.length,
           laudos,
           contratoAssinado: !!lead.contratoAssinado,
           contratoAssinadoData: lead.contratoAssinadoData || null,
