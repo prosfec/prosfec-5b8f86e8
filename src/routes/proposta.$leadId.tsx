@@ -377,10 +377,25 @@ function PropostaPublicaPage() {
 
             <div className="space-y-3 border-t border-slate-100 pt-5">
               <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                Serviços recomendados e investimento
+                {aptoMesaCredito
+                  ? "Plano de ação indicado"
+                  : "Serviços recomendados e investimento"}
               </span>
 
-              {!temServicos ? (
+              {aptoMesaCredito ? (
+                <div className="flex items-start gap-3 bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-black text-emerald-900">
+                      Sem necessidade de serviços de estruturação
+                    </h3>
+                    <p className="text-xs text-emerald-800/80 mt-1">
+                      O diagnóstico confirmou que sua empresa já está em conformidade. O próximo
+                      passo é apenas o recolhimento e a validação da documentação (Etapa 4).
+                    </p>
+                  </div>
+                </div>
+              ) : !temServicos ? (
                 <div className="flex items-start gap-3">
                   <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <div>
