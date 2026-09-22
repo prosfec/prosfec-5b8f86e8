@@ -7750,10 +7750,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         href={waUrl}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="w-full sm:w-auto px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer shadow-xs whitespace-nowrap"
+                                        className="w-full sm:w-auto min-h-[44px] px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer shadow-xs whitespace-nowrap"
                                       >
+                                        <Zap className="w-3.5 h-3.5 text-amber-300" />
                                         <Send className="w-3 h-3 text-white fill-current" />
-                                        Iniciar Prospecção
+                                        Iniciar Prospecção no WhatsApp
                                       </a>
                                     )}
                                   </div>
