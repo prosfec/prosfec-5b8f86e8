@@ -287,7 +287,7 @@ function PropostaPublicaPage() {
           </div>
         )}
 
-        {/* Bloco 1 — Acompanhamento (somente leitura) */}
+        {/* Bloco 1 — Diagnóstico técnico & escopo de serviços com preços */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
@@ -295,8 +295,228 @@ function PropostaPublicaPage() {
             </span>
             <div className="min-w-0">
               <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                <ListChecks className="w-4 h-4 text-emerald-600" />
-                Acompanhamento da Operação
+                <FileText className="w-4 h-4 text-emerald-600" />
+                Diagnóstico 360 & Plano de Ação
+              </h2>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Laudos oficiais da auditoria e serviços indicados pela mesa técnica.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-5 sm:p-6 space-y-5">
+            <div className="space-y-2.5">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                Laudos e consultas efetuadas
+              </span>
+              {laudosAntes.length === 0 ? (
+                <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  Os laudos da auditoria serão disponibilizados aqui assim que forem emitidos.
+                </div>
+              ) : (
+                laudosAntes.map((l: any) => (
+                  <LaudoCard key={`antes-${l.id}`} laudo={l} tipo="antes" />
+                ))
+              )}
+            </div>
+
+            <div className="space-y-3 border-t border-slate-100 pt-5">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                Serviços recomendados e investimento
+              </span>
+
+              {!temServicos ? (
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-black text-slate-800">Proposta em preparação</h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Nossa equipe está finalizando seu plano de ação. Assim que estiver pronto, os
+                      serviços e valores aparecerão aqui neste mesmo link.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {servicos.map((s: any, idx: number) => (
+                    <div
+                      key={`pay-${s.id || idx}`}
+                      className="p-4 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <h3 className="text-xs font-extrabold text-slate-800">{s.nome}</h3>
+                        {s.descricao ? (
+                          <p className="text-[11px] text-slate-500 mt-0.5">{s.descricao}</p>
+                        ) : null}
+                        <span className="text-[11px] text-emerald-700 font-black font-mono">
+                          {formatBRL(s.valor)}
+                        </span>
+                      </div>
+
+                      {s.pago ? (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-2 rounded-xl shrink-0">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Pago
+                        </span>
+                      ) : !contratoAssinado ? (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200 px-3 py-2 rounded-xl shrink-0 cursor-not-allowed">
+                          <Lock className="w-3.5 h-3.5" />
+                          Pagamento liberado após a assinatura
+                        </span>
+                      ) : s.linkPagamento ? (
+                        <a
+                          href={s.linkPagamento}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-sm shrink-0"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          Realizar Pagamento
+                        </a>
+                      ) : (
+                        <span className="text-[11px] text-slate-500 italic shrink-0">
+                          Pagamento combinado com a equipe
+                        </span>
+                      )}
+                    </div>
+                  ))}
+
+                  {!contratoAssinado && (
+                    <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-slate-400" />
+                      Os pagamentos são liberados após a assinatura eletrônica do contrato (Etapa 2).
+                    </p>
+                  )}
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-500">
+                      Total
+                    </span>
+                    <span className="text-lg font-black text-slate-900 font-mono">
+                      {formatBRL(proposta?.total || 0)}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Bloco 2 — Assinatura eletrônica do contrato */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
+              2
+            </span>
+            <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              Assinatura do Contrato
+            </h2>
+          </div>
+
+          <div className="p-5 sm:p-6">
+            {contratoAssinado ? (
+              <div className="flex items-start gap-3 bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-black text-emerald-900">
+                    Contrato assinado digitalmente
+                  </h3>
+                  <p className="text-xs text-emerald-800/80 mt-1">
+                    {contratoAssinadoData
+                      ? `Confirmado em ${dataHoraBR(contratoAssinadoData)}.`
+                      : "Assinatura confirmada."}{" "}
+                    Os pagamentos dos serviços já estão liberados na Etapa 1.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50/60 border border-amber-200 rounded-2xl p-4">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-black text-amber-900">Assinatura pendente</h3>
+                  <p className="text-xs text-amber-800/80 mt-1">
+                    Assine o contrato eletronicamente para liberar os pagamentos e iniciar a
+                    execução dos serviços.
+                  </p>
+                </div>
+                <a
+                  href={`/contrato/${leadId}`}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-sm shrink-0"
+                >
+                  <FileText className="w-4 h-4" />
+                  Assinar Contrato Online
+                </a>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Bloco 3 — Linha do tempo da operação */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
+              3
+            </span>
+            <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
+              <ListChecks className="w-4 h-4 text-emerald-600" />
+              Linha do Tempo da Operação
+            </h2>
+          </div>
+
+          <div className="p-5 sm:p-6">
+            {etapasLabels.length === 0 ? (
+              <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                A esteira da sua operação será exibida aqui.
+              </div>
+            ) : (
+              <ol className="space-y-1.5">
+                {etapasLabels.map((label: string, i: number) => {
+                  const num = i + 1;
+                  const concluida = num < etapaAtual;
+                  const atual = num === etapaAtual;
+                  return (
+                    <li key={label} className="flex items-center gap-2.5">
+                      <span
+                        className={`w-5 h-5 rounded-full text-[9px] font-black flex items-center justify-center shrink-0 ${
+                          concluida
+                            ? "bg-emerald-600 text-white"
+                            : atual
+                              ? "bg-amber-400 text-slate-900"
+                              : "bg-slate-100 text-slate-400 border border-slate-200"
+                        }`}
+                      >
+                        {num}
+                      </span>
+                      <span
+                        className={`text-[11px] ${
+                          atual
+                            ? "font-black text-slate-900"
+                            : concluida
+                              ? "text-slate-500"
+                              : "text-slate-400"
+                        }`}
+                      >
+                        {label}
+                        {atual ? " • em andamento" : ""}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </div>
+        </section>
+
+        {/* Bloco 4 — Execução dos serviços & documentação */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
+              4
+            </span>
+            <div className="min-w-0">
+              <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                <FolderCheck className="w-4 h-4 text-emerald-600" />
+                Execução dos Serviços & Documentação
               </h2>
               <p className="text-[11px] text-slate-500 mt-0.5">
                 Andamento das ações técnicas executadas pela equipe PROSFEC.
@@ -377,7 +597,6 @@ function PropostaPublicaPage() {
               </div>
             )}
 
-            {/* Situação da documentação */}
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
               <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                 <FolderCheck className="w-4 h-4 text-[#00A86B]" />
@@ -395,62 +614,19 @@ function PropostaPublicaPage() {
                 </span>
               )}
             </div>
-
-            {/* Linha do tempo das etapas */}
-            {etapasLabels.length > 0 && (
-              <div className="border-t border-slate-100 pt-4 space-y-2">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                  Linha do tempo da operação
-                </span>
-                <ol className="space-y-1.5">
-                  {etapasLabels.map((label: string, i: number) => {
-                    const num = i + 1;
-                    const concluida = num < etapaAtual;
-                    const atual = num === etapaAtual;
-                    return (
-                      <li key={label} className="flex items-center gap-2.5">
-                        <span
-                          className={`w-5 h-5 rounded-full text-[9px] font-black flex items-center justify-center shrink-0 ${
-                            concluida
-                              ? "bg-emerald-600 text-white"
-                              : atual
-                                ? "bg-amber-400 text-slate-900"
-                                : "bg-slate-100 text-slate-400 border border-slate-200"
-                          }`}
-                        >
-                          {num}
-                        </span>
-                        <span
-                          className={`text-[11px] ${
-                            atual
-                              ? "font-black text-slate-900"
-                              : concluida
-                                ? "text-slate-500"
-                                : "text-slate-400"
-                          }`}
-                        >
-                          {label}
-                          {atual ? " • em andamento" : ""}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </div>
-            )}
           </div>
         </section>
 
-        {/* Bloco 2 — Simulação (somente leitura) */}
+        {/* Bloco 5 — Simulação de elegibilidade */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
-              2
+              5
             </span>
             <div className="min-w-0">
               <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
                 <Calculator className="w-4 h-4 text-emerald-600" />
-                Simulação & Proposta de Linha Governamental
+                Simulação de Elegibilidade
                 {simulacao?.creditLineCode ? ` (${simulacao.creditLineCode})` : ""}
               </h2>
               {simulacao?.creditLineName ? (
@@ -474,10 +650,16 @@ function PropostaPublicaPage() {
             </div>
           ) : (
             <div className="p-5 sm:p-6 space-y-5">
-              <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-slate-400" />
-                Condições técnicas definidas pela equipe PROSFEC — apenas leitura.
-              </p>
+              <div className="flex items-start gap-2.5 bg-amber-50/70 border border-amber-200 rounded-2xl p-3.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-900 leading-relaxed">
+                  <strong className="font-black uppercase tracking-wider">Aviso importante:</strong>{" "}
+                  esta simulação representa uma análise técnica de elegibilidade e capacidade
+                  estimada, não constituindo aprovação prévia de crédito. Os valores exatos de
+                  crédito liberado, taxas e prazos dependem da deliberação final da instituição
+                  financeira concedente.
+                </p>
+              </div>
 
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                 <ReadField label="Valor desejado" value={formatBRL(simulacao.valorDesejado)} />
@@ -573,78 +755,104 @@ function PropostaPublicaPage() {
           )}
         </section>
 
-        {/* Bloco 3 — Serviços e pagamento */}
+        {/* Bloco 6 — Resultado da estruturação */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
-              3
+              6
             </span>
-            <h2 className="font-black text-sm uppercase tracking-wider text-slate-900">
-              Serviços e pagamento
+            <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
+              <FolderCheck className="w-4 h-4 text-emerald-600" />
+              Resultado da Estruturação
             </h2>
           </div>
 
-          {!temServicos ? (
-            <div className="p-6 flex items-start gap-3">
-              <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <h3 className="text-sm font-black text-slate-800">Proposta em preparação</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Nossa equipe está finalizando seu plano de ação. Assim que estiver pronto, os
-                  serviços e valores aparecerão aqui neste mesmo link.
+          <div className="p-5 sm:p-6 space-y-4">
+            {aptoMesaCredito ? (
+              <div className="flex items-start gap-3 bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-emerald-900 leading-relaxed">
+                  A documentação da sua empresa foi validada e aceita pela Mesa de Operações
+                  PROSFEC e segue para a análise de crédito bancária.
                 </p>
               </div>
-            </div>
-          ) : (
-            <div className="p-5 sm:p-6 space-y-3">
-              {servicos.map((s: any, idx: number) => (
-                <div
-                  key={`pay-${s.id || idx}`}
-                  className="p-4 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
-                  <div className="min-w-0">
-                    <h3 className="text-xs font-extrabold text-slate-800">{s.nome}</h3>
-                    {s.descricao ? (
-                      <p className="text-[11px] text-slate-500 mt-0.5">{s.descricao}</p>
-                    ) : null}
-                    <span className="text-[11px] text-emerald-700 font-black font-mono">
-                      {formatBRL(s.valor)}
-                    </span>
-                  </div>
-
-                  {s.pago ? (
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-2 rounded-xl shrink-0">
-                      <CheckCircle2 className="w-4 h-4" />
-                      Pago
-                    </span>
-                  ) : s.linkPagamento ? (
-                    <a
-                      href={s.linkPagamento}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-sm shrink-0"
-                    >
-                      <CreditCard className="w-4 h-4" />
-                      Realizar Pagamento
-                    </a>
+            ) : laudosDepois.length === 0 ? (
+              <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                O comparativo do resultado será publicado após a aplicação dos serviços.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2.5">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                    Antes da estruturação
+                  </span>
+                  {laudosAntes.length === 0 ? (
+                    <div className="text-center py-5 text-[11px] text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                      Sem laudo inicial disponível.
+                    </div>
                   ) : (
-                    <span className="text-[11px] text-slate-500 italic shrink-0">
-                      Pagamento combinado com a equipe
-                    </span>
+                    laudosAntes.map((l: any) => (
+                      <LaudoCard key={`cmp-antes-${l.id}`} laudo={l} tipo="antes" />
+                    ))
                   )}
                 </div>
-              ))}
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-500">
-                  Total
-                </span>
-                <span className="text-lg font-black text-slate-900 font-mono">
-                  {formatBRL(proposta?.total || 0)}
-                </span>
+                <div className="space-y-2.5">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                    Depois da estruturação
+                  </span>
+                  {laudosDepois.map((l: any) => (
+                    <LaudoCard key={`cmp-depois-${l.id}`} laudo={l} tipo="depois" />
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </section>
+
+        {/* Bloco 7 — Desfecho da mesa de crédito */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
+              7
+            </span>
+            <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-emerald-600" />
+              Desfecho da Mesa de Crédito
+            </h2>
+          </div>
+
+          <div className="p-5 sm:p-6">
+            {creditoRecusado ? (
+              <div className="flex items-start gap-3 bg-rose-50/70 border border-rose-200 rounded-2xl p-4">
+                <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-black text-rose-900">Operação não aprovada</h3>
+                  <p className="text-xs text-rose-800/80 mt-1">
+                    A instituição financeira não aprovou a operação neste momento. Fale com o
+                    consultor responsável para conhecer as alternativas e os próximos passos.
+                  </p>
+                </div>
+              </div>
+            ) : valorAprovado > 0 ? (
+              <div className="bg-[#0A3D2E] text-white rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-[10px] uppercase font-black tracking-wider text-emerald-300 block">
+                    Crédito aprovado
+                  </span>
+                  <span className="text-2xl font-black font-mono">{formatBRL(valorAprovado)}</span>
+                </div>
+                <CheckCircle2 className="w-8 h-8 text-emerald-300 shrink-0" />
+              </div>
+            ) : (
+              <div className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <Clock className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-slate-600">
+                  Operação em análise junto às instituições financeiras. O resultado será publicado
+                  aqui neste mesmo link.
+                </p>
+              </div>
+            )}
+          </div>
         </section>
 
 
