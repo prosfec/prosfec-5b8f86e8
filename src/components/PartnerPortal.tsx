@@ -7539,8 +7539,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               const leadCnpj = lead.cnpj || lead.cnpjDetails?.cnpj || "";
                               const isFetchingCnpj = cnpjQueryLoading[lead.id];
 
-                              const lineName = lead.creditLineCode || lead.propostaNegociada?.creditLineCode || lead.result?.creditLineCode || "Pronampe";
-                              const messageText = `Olá! Sou consultor credenciado PROSFEC fomento. Identifiquei que a ${lead.nomeEmpresa} possui excelente pontuação cadastral e pode ter direito de pleitear a linha de crédito ${lineName} com juros reduzidos para capital de giro este ano. Gostaria de realizar uma rápida simulação sem custo de forma 100% online? Acesse nosso portal oficial ou fale comigo para simular: ${getAppDomain()}?ref=${currentPartner?.id || ""}`;
+                              const messageText = `Olá, tudo bem?\n\nSou especialista da Prosfec, assessoria financeira corporativa.\n\nSua empresa (${lead.nomeEmpresa}) foi pré-selecionada para receber a nossa Auditoria Estrutural e Societária de forma 100% subsidiada.\n\nO subsídio funciona por meio do nosso programa de eficiência energética compartilhada: sua empresa ativa uma economia de até 27% na fatura de luz (sem investimento ou obras) e nós cobrimos todos os custos do seu diagnóstico financeiro completo.\n\nVocê pode simular a economia e ativar o benefício diretamente por aqui:\nhttps://raioenergy.com/r/XN8NN5AWFG\n\nConsigo te apresentar os números dessa economia em 5 minutinhos hoje?`;
                               const waUrl = hasPhone 
                                 ? buildWhatsAppUrl(lead.telefone, messageText)
                                 : "#";
@@ -7751,10 +7750,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         href={waUrl}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="w-full sm:w-auto px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer shadow-xs whitespace-nowrap"
+                                        className="w-full sm:w-auto min-h-[44px] px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer shadow-xs whitespace-nowrap"
                                       >
+                                        <Zap className="w-3.5 h-3.5 text-amber-300" />
                                         <Send className="w-3 h-3 text-white fill-current" />
-                                        Iniciar Prospecção
+                                        Iniciar Prospecção no WhatsApp
                                       </a>
                                     )}
                                   </div>
