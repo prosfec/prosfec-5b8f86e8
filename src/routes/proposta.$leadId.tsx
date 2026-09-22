@@ -135,6 +135,65 @@ function PropostaPublicaPage() {
     ? acompanhamento.etapasLabels
     : [];
   const etapaAtual: number = Number(acompanhamento?.etapaAtual || 1) || 1;
+  const laudos: any[] = Array.isArray(proposta?.laudos) ? proposta.laudos : [];
+  const laudosAntes = laudos.filter((l: any) => l.relatorioPdfUrl);
+  const laudosDepois = laudos.filter((l: any) => l.relatorioDepoisPdfUrl);
+  const contratoAssinado = proposta?.contratoAssinado === true;
+  const contratoAssinadoData = proposta?.contratoAssinadoData || null;
+  const creditoRecusado = proposta?.creditoRecusado === true;
+  const valorAprovado = Number(proposta?.valorAprovado || 0) || 0;
+  const aptoMesaCredito = proposta?.aptoMesaCredito === true;
+
+  const dataHoraBR = (iso: any) => {
+    try {
+      const d = new Date(iso);
+      return `${d.toLocaleDateString("pt-BR")} às ${d.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    } catch {
+      return "";
+    }
+  };
+
+  const LaudoCard = ({ laudo, tipo }: { laudo: any; tipo: "antes" | "depois" }) => {
+    const url = tipo === "antes" ? laudo.relatorioPdfUrl : laudo.relatorioDepoisPdfUrl;
+    const nome = tipo === "antes" ? laudo.relatorioPdfNome : laudo.relatorioDepoisPdfNome;
+    return (
+      <div className="p-4 border border-slate-200 rounded-2xl bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-xs font-extrabold text-slate-800 truncate">
+            {laudo.documentoNome || "Relatório de auditoria"}
+          </h3>
+          <span className="block text-[11px] text-slate-500 font-mono">
+            {laudo.documentoMascarado || "—"}
+            {laudo.dataConsulta
+              ? ` • ${new Date(laudo.dataConsulta).toLocaleDateString("pt-BR")}`
+              : ""}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[11px] font-black uppercase tracking-wider transition-all"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            Visualizar
+          </a>
+          <a
+            href={url}
+            download={nome || undefined}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 text-[11px] font-black uppercase tracking-wider hover:bg-slate-50 transition-all"
+          >
+            Baixar PDF
+          </a>
+        </div>
+      </div>
+    );
+  };
+
 
   const ReadField = ({ label, value }: { label: string; value: string }) => (
     <div className="space-y-1">
