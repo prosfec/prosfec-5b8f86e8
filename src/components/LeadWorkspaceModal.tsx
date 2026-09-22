@@ -3850,13 +3850,15 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     Execute a consulta de crédito e visualize o relatório oficial PROSFEC DIAGNÓSTICO 360 anexado pela equipe, documento por documento.
                   </p>
                 </div>
-                <button
-                  onClick={handleCopiarLinkProposta}
-                  className="px-3.5 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-black rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  {linkPropostaCopiado ? "Link copiado!" : "Copiar Link de Acompanhamento (Cliente)"}
-                </button>
+                {leadConsultas.some((c: any) => c?.relatorioPdfUrl) && (
+                  <button
+                    onClick={handleCopiarLinkProposta}
+                    className="px-3.5 py-2 bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-black rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    {linkPropostaCopiado ? "Link copiado!" : "Copiar Link de Acompanhamento (Cliente)"}
+                  </button>
+                )}
               </div>
 
               {/* Grid 1: Documents & Run Credit query */}
@@ -4534,13 +4536,6 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     >
                       <Copy className="w-3.5 h-3.5" />
                       {copiedProposalReport ? "Copiado!" : "Copiar Proposta WhatsApp"}
-                    </button>
-                    <button
-                      onClick={handleCopiarLinkProposta}
-                      className="px-3.5 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                      {linkPropostaCopiado ? "Link copiado!" : "Copiar Link da Proposta para o Cliente"}
                     </button>
 
                   </div>
