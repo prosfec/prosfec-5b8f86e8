@@ -143,6 +143,16 @@ function PropostaPublicaPage() {
   const creditoRecusado = proposta?.creditoRecusado === true;
   const valorAprovado = Number(proposta?.valorAprovado || 0) || 0;
   const aptoMesaCredito = proposta?.aptoMesaCredito === true;
+  const docsCampos: any[] = Array.isArray(proposta?.documentosCampos)
+    ? proposta.documentosCampos
+    : [];
+  const docsCliente: Record<string, string> =
+    proposta?.documentosCliente && typeof proposta.documentosCliente === "object"
+      ? proposta.documentosCliente
+      : {};
+  const docsRecebidos = docsCampos.filter((d: any) => !!docsCliente[d?.key]).length;
+  const progressoDocs =
+    docsCampos.length > 0 ? Math.round((docsRecebidos / docsCampos.length) * 100) : 0;
 
   const dataHoraBR = (iso: any) => {
     try {
