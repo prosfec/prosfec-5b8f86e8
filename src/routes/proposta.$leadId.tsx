@@ -239,7 +239,9 @@ function PropostaPublicaPage() {
               ) : null}
             </div>
             <h1 className="font-display font-extrabold text-lg sm:text-xl text-white">
-              Estruturação da Operação & Melhoria de Perfil de Crédito
+              {aptoMesaCredito
+                ? "Ficha Documental & Preparação para Mesa de Crédito"
+                : "Estruturação da Operação & Melhoria de Perfil de Crédito"}
             </h1>
             <p className="text-xs text-slate-300 leading-relaxed">
               {proposta?.nomeEmpresa || "Sua empresa"}
@@ -249,11 +251,14 @@ function PropostaPublicaPage() {
 
           <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-left md:text-right shrink-0">
             <span className="text-[9px] uppercase font-black tracking-wider text-emerald-300 block">
-              Progresso da Estruturação
+              {aptoMesaCredito
+                ? "Progresso do Recolhimento Documental"
+                : "Progresso da Estruturação"}
             </span>
             <span className="text-base font-black text-white font-mono">
-              {acompanhamento?.progresso?.concluidas || 0}/{acompanhamento?.progresso?.total || 0}{" "}
-              concluídas ({acompanhamento?.progresso?.percentual || 0}%)
+              {aptoMesaCredito
+                ? `${docsRecebidos}/${docsCampos.length} recebidos (${progressoDocs}%)`
+                : `${acompanhamento?.progresso?.concluidas || 0}/${acompanhamento?.progresso?.total || 0} concluídas (${acompanhamento?.progresso?.percentual || 0}%)`}
             </span>
           </div>
         </div>
