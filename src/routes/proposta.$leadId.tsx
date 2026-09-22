@@ -287,6 +287,61 @@ function PropostaPublicaPage() {
           </div>
         )}
 
+        {/* Linha do tempo da operação (visão geral) */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <span className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+              <ListChecks className="w-4 h-4" />
+            </span>
+            <h2 className="font-black text-sm uppercase tracking-wider text-slate-900">
+              Linha do Tempo da Operação
+            </h2>
+          </div>
+
+          <div className="p-5 sm:p-6">
+            {etapasLabels.length === 0 ? (
+              <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                A esteira da sua operação será exibida aqui.
+              </div>
+            ) : (
+              <ol className="space-y-1.5">
+                {etapasLabels.map((label: string, i: number) => {
+                  const num = i + 1;
+                  const concluida = num < etapaAtual;
+                  const atual = num === etapaAtual;
+                  return (
+                    <li key={label} className="flex items-center gap-2.5">
+                      <span
+                        className={`w-5 h-5 rounded-full text-[9px] font-black flex items-center justify-center shrink-0 ${
+                          concluida
+                            ? "bg-emerald-600 text-white"
+                            : atual
+                              ? "bg-amber-400 text-slate-900"
+                              : "bg-slate-100 text-slate-400 border border-slate-200"
+                        }`}
+                      >
+                        {num}
+                      </span>
+                      <span
+                        className={`text-[11px] ${
+                          atual
+                            ? "font-black text-slate-900"
+                            : concluida
+                              ? "text-slate-500"
+                              : "text-slate-400"
+                        }`}
+                      >
+                        {label}
+                        {atual ? " • em andamento" : ""}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </div>
+        </section>
+
         {/* Bloco 1 — Diagnóstico técnico & escopo de serviços com preços */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
@@ -451,61 +506,6 @@ function PropostaPublicaPage() {
           </div>
         </section>
 
-        {/* Bloco 3 — Linha do tempo da operação */}
-        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-            <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
-              3
-            </span>
-            <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
-              <ListChecks className="w-4 h-4 text-emerald-600" />
-              Linha do Tempo da Operação
-            </h2>
-          </div>
-
-          <div className="p-5 sm:p-6">
-            {etapasLabels.length === 0 ? (
-              <div className="text-center py-6 text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                A esteira da sua operação será exibida aqui.
-              </div>
-            ) : (
-              <ol className="space-y-1.5">
-                {etapasLabels.map((label: string, i: number) => {
-                  const num = i + 1;
-                  const concluida = num < etapaAtual;
-                  const atual = num === etapaAtual;
-                  return (
-                    <li key={label} className="flex items-center gap-2.5">
-                      <span
-                        className={`w-5 h-5 rounded-full text-[9px] font-black flex items-center justify-center shrink-0 ${
-                          concluida
-                            ? "bg-emerald-600 text-white"
-                            : atual
-                              ? "bg-amber-400 text-slate-900"
-                              : "bg-slate-100 text-slate-400 border border-slate-200"
-                        }`}
-                      >
-                        {num}
-                      </span>
-                      <span
-                        className={`text-[11px] ${
-                          atual
-                            ? "font-black text-slate-900"
-                            : concluida
-                              ? "text-slate-500"
-                              : "text-slate-400"
-                        }`}
-                      >
-                        {label}
-                        {atual ? " • em andamento" : ""}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-          </div>
-        </section>
 
         {/* Bloco 4 — Execução dos serviços & documentação */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
