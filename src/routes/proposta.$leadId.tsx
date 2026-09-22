@@ -763,7 +763,7 @@ function PropostaPublicaPage() {
             </span>
             <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
               <FolderCheck className="w-4 h-4 text-emerald-600" />
-              Resultado da Estruturação
+              {aptoMesaCredito ? "Validação Documental" : "Resultado da Estruturação"}
             </h2>
           </div>
 
