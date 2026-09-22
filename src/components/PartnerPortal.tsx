@@ -113,7 +113,8 @@ import {
   XCircle,
   ArrowLeft,
   ArrowRight,
-  QrCode
+  QrCode,
+  Zap
 } from "lucide-react";
 
 interface Announcement {
