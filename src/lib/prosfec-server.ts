@@ -3674,6 +3674,11 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           documentosCampos: DOCUMENTOS_PROPOSTA,
           documentosCliente: docsEnviados,
           documentosClienteAtualizadoEm: lead.documentosClienteAtualizadoEm || null,
+          laudos,
+          contratoAssinado: !!lead.contratoAssinado,
+          contratoAssinadoData: lead.contratoAssinadoData || null,
+          creditoRecusado,
+          valorAprovado,
         },
       });
     } catch (err: any) {
