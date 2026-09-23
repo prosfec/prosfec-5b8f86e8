@@ -76,7 +76,8 @@ import {
   Building,
   Gauge,
   Wallet,
-  Percent
+  Percent,
+  Zap
 } from "lucide-react";
 import LeadStepTimeline from "./LeadStepTimeline";
 import ContratosAssinadosResumo from "./ContratosAssinadosResumo";
