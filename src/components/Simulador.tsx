@@ -1187,6 +1187,29 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                           </select>
                         </div>
 
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                            Ramo de Atividade da Empresa
+                          </label>
+                          <select
+                            value={formData.ramo}
+                            onChange={(e: any) => setFormData({ ...formData, ramo: e.target.value })}
+                            className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent text-slate-800 rounded-2xl px-4 py-3.5 text-sm font-medium transition-all duration-200 outline-none cursor-pointer hover:border-slate-300"
+                          >
+                            <option value="">Selecione o ramo de atividade...</option>
+                            <option value="Comércio Varejista / Atacadista">Comércio Varejista / Atacadista</option>
+                            <option value="Serviços Gerais e Corporativos">Serviços Gerais e Corporativos</option>
+                            <option value="Indústria e Manufatura">Indústria e Manufatura</option>
+                            <option value="Tecnologia / Software / Startups">Tecnologia / Software / Startups</option>
+                            <option value="Turismo, Hotelaria e Bares/Restaurantes">Turismo, Hotelaria e Bares/Restaurantes</option>
+                            <option value="Transporte, Frotas e Logística">Transporte, Frotas e Logística</option>
+                            <option value="Saúde, Clínicas e Farmácias">Saúde, Clínicas e Farmácias</option>
+                            <option value="Construção Civil e Engenharia">Construção Civil e Engenharia</option>
+                            <option value="Agronegócio e Produtor Rural">Agronegócio e Produtor Rural</option>
+                            <option value="Outros Setores">Outros Setores</option>
+                          </select>
+                        </div>
+
                         {!formData.menosDe12Meses ? (
                           <div>
                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
