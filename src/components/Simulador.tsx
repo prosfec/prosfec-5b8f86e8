@@ -394,6 +394,14 @@ export default function Simulador({
     }
   };
 
+  const handleConsumoEnergiaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const clean = e.target.value.replace(/\D/g, "");
+    const valueNum = clean ? parseInt(clean) / 100 : 0;
+
+    setTempConsumoEnergia(clean ? formatCurrencyBRL(valueNum) : "");
+    setFormData({ ...formData, consumoEnergiaMensal: valueNum });
+  };
+
   const handleMediaReceitaMensalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const clean = e.target.value.replace(/\D/g, "");
     const valueNum = clean ? parseInt(clean) / 100 : 0;
