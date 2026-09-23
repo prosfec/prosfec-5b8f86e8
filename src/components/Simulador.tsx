@@ -2220,6 +2220,56 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
 
                 </div>
 
+                {/* Benefício de Energia Compartilhada — a partir de R$ 1.200,00 de consumo somado */}
+                {(formData.consumoEnergiaMensal || 0) >= 1200 && (
+                  <div className="mt-8 bg-gradient-to-br from-[#04291d] via-slate-900 to-[#1a1405] border border-amber-400/35 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden">
+                    <div className="absolute -right-6 -bottom-8 opacity-10 pointer-events-none text-amber-300">
+                      <Zap className="w-40 h-40" />
+                    </div>
+
+                    <div className="relative z-10 space-y-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-amber-400/15 border border-amber-400/30 rounded-xl text-amber-300">
+                          <Zap className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-display font-extrabold text-base text-amber-200">
+                            ⚡ Benefício de Energia Compartilhada Liberado
+                          </h4>
+                          <span className="text-[11px] text-amber-100/80 font-medium block">
+                            Consumo informado de {formatCurrencyBRL(formData.consumoEnergiaMensal || 0)} por mês (empresa + sócios)
+                          </span>
+                        </div>
+                      </div>
+
+                      <ul className="space-y-2.5">
+                        <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <span>Redução de <strong className="text-emerald-300">17% a 27% na conta de luz</strong>, sem obras e sem taxa de adesão.</span>
+                        </li>
+                        <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <span>Ao ativar o benefício, seu <strong className="text-emerald-300">Diagnóstico Estrutural e Societário 360° fica 100% subsidiado</strong> pela PROSFEC.</span>
+                        </li>
+                        <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <span>A adesão ao programa de energia também é <strong className="text-emerald-300">totalmente gratuita</strong>.</span>
+                        </li>
+                      </ul>
+
+                      <a
+                        href="https://raioenergy.com/r/XN8NN5AWFG"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-extrabold transition-colors duration-200"
+                      >
+                        <Zap className="w-4 h-4" />
+                        Ativar Redução de Energia &amp; Diagnóstico Gratuito
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 {/* Partner Registration Form (Etapa 2 - Coleta de dados dos sócios) */}
                 <div className="mt-8 pt-8 border-t border-gray-100">
                   <div className="bg-slate-50 rounded-2xl border border-gray-100 p-5 md:p-8 space-y-6">
