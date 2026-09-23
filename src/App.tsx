@@ -339,6 +339,7 @@ export default function App() {
         porte: lead.porte,
         dataAbertura: lead.dataAbertura || "",
         ramo: lead.ramo || "",
+        consumoEnergiaMensal: lead.consumoEnergiaMensal || 0,
         menosDe12Meses: lead.menosDe12Meses,
         capitalSocial: lead.capitalSocial || 0,
         mediaReceitaMensal: lead.mediaReceitaMensal || 0,
