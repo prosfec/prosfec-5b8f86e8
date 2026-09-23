@@ -11,6 +11,7 @@ export interface LeadData {
   dataAbertura: string;
   uf: string;
   ramo: string;
+  consumoEnergiaMensal?: number; // soma mensal das faturas de energia (CNPJ + CPFs dos sócios)
   menosDe12Meses: boolean;
   capitalSocial?: number;
   mediaReceitaMensal?: number;

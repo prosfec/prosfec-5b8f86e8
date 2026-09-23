@@ -72,6 +72,7 @@ const initialLeadData: LeadData = {
   dataAbertura: "",
   uf: "SP",
   ramo: "",
+  consumoEnergiaMensal: 0,
   menosDe12Meses: false,
   capitalSocial: 0,
   mediaReceitaMensal: 0,
@@ -185,6 +186,7 @@ export default function Simulador({
   const [tempFaturamento, setTempFaturamento] = useState(() => initialData?.faturamentoAnual ? formatCurrencyBRL(initialData.faturamentoAnual) : "");
   const [tempCapitalSocial, setTempCapitalSocial] = useState(() => initialData?.capitalSocial ? formatCurrencyBRL(initialData.capitalSocial) : "");
   const [tempMediaReceitaMensal, setTempMediaReceitaMensal] = useState(() => initialData?.mediaReceitaMensal ? formatCurrencyBRL(initialData.mediaReceitaMensal) : "");
+  const [tempConsumoEnergia, setTempConsumoEnergia] = useState(() => (initialData as any)?.consumoEnergiaMensal ? formatCurrencyBRL((initialData as any).consumoEnergiaMensal) : "");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [calculating, setCalculating] = useState(false);
   const [finished, setFinished] = useState(false);
