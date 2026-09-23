@@ -72,6 +72,7 @@ const initialLeadData: LeadData = {
   dataAbertura: "",
   uf: "SP",
   ramo: "",
+  consumoEnergiaMensal: 0,
   menosDe12Meses: false,
   capitalSocial: 0,
   mediaReceitaMensal: 0,
@@ -185,6 +186,7 @@ export default function Simulador({
   const [tempFaturamento, setTempFaturamento] = useState(() => initialData?.faturamentoAnual ? formatCurrencyBRL(initialData.faturamentoAnual) : "");
   const [tempCapitalSocial, setTempCapitalSocial] = useState(() => initialData?.capitalSocial ? formatCurrencyBRL(initialData.capitalSocial) : "");
   const [tempMediaReceitaMensal, setTempMediaReceitaMensal] = useState(() => initialData?.mediaReceitaMensal ? formatCurrencyBRL(initialData.mediaReceitaMensal) : "");
+  const [tempConsumoEnergia, setTempConsumoEnergia] = useState(() => (initialData as any)?.consumoEnergiaMensal ? formatCurrencyBRL((initialData as any).consumoEnergiaMensal) : "");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [calculating, setCalculating] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -392,6 +394,14 @@ export default function Simulador({
     if (errors.capitalSocial) {
       setErrors({ ...errors, capitalSocial: "" });
     }
+  };
+
+  const handleConsumoEnergiaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const clean = e.target.value.replace(/\D/g, "");
+    const valueNum = clean ? parseInt(clean) / 100 : 0;
+
+    setTempConsumoEnergia(clean ? formatCurrencyBRL(valueNum) : "");
+    setFormData({ ...formData, consumoEnergiaMensal: valueNum });
   };
 
   const handleMediaReceitaMensalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1187,6 +1197,29 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                           </select>
                         </div>
 
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                            Ramo de Atividade da Empresa
+                          </label>
+                          <select
+                            value={formData.ramo}
+                            onChange={(e: any) => setFormData({ ...formData, ramo: e.target.value })}
+                            className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent text-slate-800 rounded-2xl px-4 py-3.5 text-sm font-medium transition-all duration-200 outline-none cursor-pointer hover:border-slate-300"
+                          >
+                            <option value="">Selecione o ramo de atividade...</option>
+                            <option value="Comércio Varejista / Atacadista">Comércio Varejista / Atacadista</option>
+                            <option value="Serviços Gerais e Corporativos">Serviços Gerais e Corporativos</option>
+                            <option value="Indústria e Manufatura">Indústria e Manufatura</option>
+                            <option value="Tecnologia / Software / Startups">Tecnologia / Software / Startups</option>
+                            <option value="Turismo, Hotelaria e Bares/Restaurantes">Turismo, Hotelaria e Bares/Restaurantes</option>
+                            <option value="Transporte, Frotas e Logística">Transporte, Frotas e Logística</option>
+                            <option value="Saúde, Clínicas e Farmácias">Saúde, Clínicas e Farmácias</option>
+                            <option value="Construção Civil e Engenharia">Construção Civil e Engenharia</option>
+                            <option value="Agronegócio e Produtor Rural">Agronegócio e Produtor Rural</option>
+                            <option value="Outros Setores">Outros Setores</option>
+                          </select>
+                        </div>
+
                         {!formData.menosDe12Meses ? (
                           <div>
                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
@@ -1755,6 +1788,24 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                             </p>
                           )}
                         </div>
+
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 space-y-2">
+                          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <Zap className="w-4 h-4 text-brand-accent shrink-0" />
+                            Consumo médio mensal de energia elétrica (empresa + sócios)
+                          </label>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={tempConsumoEnergia}
+                            onChange={handleConsumoEnergiaChange}
+                            placeholder="R$ 0,00"
+                            className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent text-slate-800 rounded-2xl px-4 py-3.5 text-sm font-extrabold transition-all duration-200 outline-none hover:border-slate-300"
+                          />
+                          <span className="text-[10px] text-gray-500 block leading-snug">
+                            Informe a soma aproximada das faturas de energia do CNPJ e dos CPFs dos sócios. A partir de R$ 1.200,00 sua empresa libera o programa de redução de energia com diagnóstico sem custo.
+                          </span>
+                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -2196,29 +2247,79 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                   </div>
 
                   {/* PROSFEC consulting recommendations - 5 cols */}
-                  <div className="md:col-span-5 bg-brand-bg-light/60 p-5 rounded-2xl border border-gray-200/50 space-y-4">
-                    <h5 className="font-display font-bold text-sm text-brand-primary flex items-center gap-1.5">
-                      <Check className="text-brand-accent w-4 h-4 stroke-[3]" />
+                  <div className="md:col-span-5 bg-slate-900 p-5 rounded-2xl border border-emerald-500/25 space-y-4 shadow-lg">
+                    <h5 className="font-display font-bold text-sm text-emerald-300 flex items-center gap-1.5">
+                      <Check className="text-emerald-400 w-4 h-4 stroke-[3]" />
                       Próximos Passos Recomendados
                     </h5>
-                    
+
                     <ul className="space-y-3">
                       {simulationResult?.recomendações.map((rec, rIdx) => (
-                        <li key={rIdx} className="flex gap-2 text-xs text-gray-600 leading-relaxed text-left">
-                          <span className="text-brand-primary font-bold shrink-0">•</span>
+                        <li key={rIdx} className="flex gap-2 text-xs text-slate-100 leading-relaxed text-left">
+                          <span className="text-emerald-400 font-bold shrink-0">•</span>
                           <span>{rec}</span>
                         </li>
                       ))}
                     </ul>
 
-                    <div className="pt-2">
-                      <span className="text-[10px] text-gray-400 leading-tight block">
+                    <div className="pt-3 border-t border-slate-700/70">
+                      <span className="text-[11px] text-slate-400 leading-snug block">
                         Seu dossiê está pronto para análise humana. Nossos assessores possuem contato direto com os gerentes de contas dos principais bancos do Pronampe.
                       </span>
                     </div>
                   </div>
 
                 </div>
+
+                {/* Benefício de Energia Compartilhada — a partir de R$ 1.200,00 de consumo somado */}
+                {(formData.consumoEnergiaMensal || 0) >= 1200 && (
+                  <div className="mt-8 bg-gradient-to-br from-[#04291d] via-slate-900 to-[#1a1405] border border-amber-400/35 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden">
+                    <div className="absolute -right-6 -bottom-8 opacity-10 pointer-events-none text-amber-300">
+                      <Zap className="w-40 h-40" />
+                    </div>
+
+                    <div className="relative z-10 space-y-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-amber-400/15 border border-amber-400/30 rounded-xl text-amber-300">
+                          <Zap className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-display font-extrabold text-base text-amber-200">
+                            ⚡ Benefício de Energia Compartilhada Liberado
+                          </h4>
+                          <span className="text-[11px] text-amber-100/80 font-medium block">
+                            Consumo informado de {formatCurrencyBRL(formData.consumoEnergiaMensal || 0)} por mês (empresa + sócios)
+                          </span>
+                        </div>
+                      </div>
+
+                      <ul className="space-y-2.5">
+                        <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <span>Redução de <strong className="text-emerald-300">17% a 27% na conta de luz</strong>, sem obras e sem taxa de adesão.</span>
+                        </li>
+                        <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <span>Ao ativar o benefício, seu <strong className="text-emerald-300">Diagnóstico Estrutural e Societário 360° fica 100% subsidiado</strong> pela PROSFEC.</span>
+                        </li>
+                        <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <span>A adesão ao programa de energia também é <strong className="text-emerald-300">totalmente gratuita</strong>.</span>
+                        </li>
+                      </ul>
+
+                      <a
+                        href="https://raioenergy.com/r/XN8NN5AWFG"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-extrabold transition-colors duration-200"
+                      >
+                        <Zap className="w-4 h-4" />
+                        Ativar Redução de Energia &amp; Diagnóstico Gratuito
+                      </a>
+                    </div>
+                  </div>
+                )}
 
                 {/* Partner Registration Form (Etapa 2 - Coleta de dados dos sócios) */}
                 <div className="mt-8 pt-8 border-t border-gray-100">
