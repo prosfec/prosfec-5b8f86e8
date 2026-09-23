@@ -1755,6 +1755,24 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                             </p>
                           )}
                         </div>
+
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 space-y-2">
+                          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <Zap className="w-4 h-4 text-brand-accent shrink-0" />
+                            Consumo médio mensal de energia elétrica (empresa + sócios)
+                          </label>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={tempConsumoEnergia}
+                            onChange={handleConsumoEnergiaChange}
+                            placeholder="R$ 0,00"
+                            className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent text-slate-800 rounded-2xl px-4 py-3.5 text-sm font-extrabold transition-all duration-200 outline-none hover:border-slate-300"
+                          />
+                          <span className="text-[10px] text-gray-500 block leading-snug">
+                            Informe a soma aproximada das faturas de energia do CNPJ e dos CPFs dos sócios. A partir de R$ 1.200,00 sua empresa libera o programa de redução de energia com diagnóstico sem custo.
+                          </span>
+                        </div>
                       </div>
                     </motion.div>
                   )}
