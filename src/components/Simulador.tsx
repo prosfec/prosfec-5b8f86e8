@@ -2196,23 +2196,23 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                   </div>
 
                   {/* PROSFEC consulting recommendations - 5 cols */}
-                  <div className="md:col-span-5 bg-brand-bg-light/60 p-5 rounded-2xl border border-gray-200/50 space-y-4">
-                    <h5 className="font-display font-bold text-sm text-brand-primary flex items-center gap-1.5">
-                      <Check className="text-brand-accent w-4 h-4 stroke-[3]" />
+                  <div className="md:col-span-5 bg-slate-900 p-5 rounded-2xl border border-emerald-500/25 space-y-4 shadow-lg">
+                    <h5 className="font-display font-bold text-sm text-emerald-300 flex items-center gap-1.5">
+                      <Check className="text-emerald-400 w-4 h-4 stroke-[3]" />
                       Próximos Passos Recomendados
                     </h5>
-                    
+
                     <ul className="space-y-3">
                       {simulationResult?.recomendações.map((rec, rIdx) => (
-                        <li key={rIdx} className="flex gap-2 text-xs text-gray-600 leading-relaxed text-left">
-                          <span className="text-brand-primary font-bold shrink-0">•</span>
+                        <li key={rIdx} className="flex gap-2 text-xs text-slate-100 leading-relaxed text-left">
+                          <span className="text-emerald-400 font-bold shrink-0">•</span>
                           <span>{rec}</span>
                         </li>
                       ))}
                     </ul>
 
-                    <div className="pt-2">
-                      <span className="text-[10px] text-gray-400 leading-tight block">
+                    <div className="pt-3 border-t border-slate-700/70">
+                      <span className="text-[11px] text-slate-400 leading-snug block">
                         Seu dossiê está pronto para análise humana. Nossos assessores possuem contato direto com os gerentes de contas dos principais bancos do Pronampe.
                       </span>
                     </div>
