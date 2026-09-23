@@ -76,7 +76,8 @@ import {
   Building,
   Gauge,
   Wallet,
-  Percent
+  Percent,
+  Zap
 } from "lucide-react";
 import LeadStepTimeline from "./LeadStepTimeline";
 import ContratosAssinadosResumo from "./ContratosAssinadosResumo";
@@ -3236,6 +3237,19 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                     </strong>
                     <span className="text-[9px] text-slate-500 block mt-0.5">Previsão para o CNPJ.</span>
                   </div>
+
+                  {(lead.consumoEnergiaMensal || 0) > 0 && (
+                    <div className="bg-amber-50/60 border border-amber-100 p-4 rounded-2xl min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Zap className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Consumo de Energia</span>
+                      </div>
+                      <strong className="text-base md:text-lg font-black text-[#0A3D2E] block break-words">
+                        {formatCurrencyBRL(lead.consumoEnergiaMensal || 0)}
+                      </strong>
+                      <span className="text-[9px] text-slate-500 block mt-0.5">Faturas mensais informadas (CNPJ + sócios).</span>
+                    </div>
+                  )}
 
                   <div className="bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl min-w-0">
                     <div className="flex items-center gap-1.5 mb-1">
