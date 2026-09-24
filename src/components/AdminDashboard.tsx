@@ -3787,6 +3787,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         const isAnswered = !!lead.pendencias?.resposta;
                          const stageNum = lead.etapa || 1;
                          const pdfPendentes = getPendingReports(lead);
+                         const ultimaMov = getUltimaMovimentacao(lead);
+                         const movNova = isMovimentacaoNova(lead);
 
                         return (
                           <div 
@@ -3821,6 +3823,33 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
                               </span>
                             )}
+
+                            {ultimaMov && (
+                              <div className={`mx-4 mt-3 p-2.5 rounded-xl border text-left ${
+                                movNova ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-200"
+                              }`}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`text-[9px] font-black uppercase tracking-wider ${movNova ? "text-amber-700" : "text-slate-500"}`}>
+                                    {movNova ? "Nova movimentação" : "Última movimentação"}
+                                  </span>
+                                  <span className="text-[9px] font-semibold text-slate-500">{formatarTempoRelativo(ultimaMov.ts)}</span>
+                                </div>
+                                <p className="text-[11px] font-bold text-slate-700 leading-snug mt-1 line-clamp-2">{ultimaMov.resumo}</p>
+                                <div className="flex items-center justify-between gap-2 mt-1">
+                                  <span className="text-[10px] font-semibold text-slate-500 truncate">por {ultimaMov.autor}</span>
+                                  {movNova && (
+                                    <button
+                                      type="button"
+                                      onClick={() => marcarMovimentacaoVista(lead)}
+                                      className="text-[10px] font-bold text-amber-700 hover:text-amber-900 underline cursor-pointer shrink-0"
+                                    >
+                                      Marcar como visto
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
 
                              {/* Header details */}
                             <div className="p-4 flex-1 space-y-2.5">
@@ -4003,7 +4032,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </button>
 
                                 <button
-                                  onClick={() => setWorkspaceLead(lead)}
+                                  onClick={() => abrirWorkspaceLead(lead)}
                                   className="h-8 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold rounded-lg transition-all cursor-pointer shrink-0 flex items-center gap-1"
                                   title="Abrir Workspace do Lead & Diagnóstico IA"
                                 >
@@ -4090,6 +4119,23 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                       <span>RESPONDIDO</span>
                                     </span>
                                   )}
+                                  {(() => {
+                                    const mov = getUltimaMovimentacao(lead);
+                                    if (!mov) return null;
+                                    const nova = isMovimentacaoNova(lead);
+                                    return (
+                                      <span
+                                        className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border shrink-0 ${
+                                          nova ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-slate-50 text-slate-600 border-slate-200"
+                                        }`}
+                                        title={`${mov.resumo} — por ${mov.autor}`}
+                                      >
+                                        <Bell className="w-2.5 h-2.5" />
+                                        <span className="normal-case tracking-normal font-bold">{mov.resumo}</span>
+                                        <span className="font-semibold text-slate-500 normal-case tracking-normal">· {formatarTempoRelativo(mov.ts)}</span>
+                                      </span>
+                                    );
+                                  })()}
                                 </div>
                                 <div className="text-[11px] text-slate-500 font-mono mt-0.5">{lead.cnpj || "-"}</div>
                                 {lead.parceiroId ? (
@@ -4182,7 +4228,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </button>
 
                                 <button
-                                  onClick={() => setWorkspaceLead(lead)}
+                                  onClick={() => abrirWorkspaceLead(lead)}
                                   className="px-2 py-1 text-xs bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 rounded-lg font-bold transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
                                   title="Abrir Workspace do Lead & Diagnóstico IA"
                                 >
