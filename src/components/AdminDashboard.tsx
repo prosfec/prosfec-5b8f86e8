@@ -492,6 +492,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [hideTeamMembers, setHideTeamMembers] = useState<boolean>(true);
   const [pendingReports, setPendingReports] = useState<{ byLead: Record<string, number>; byDoc: Record<string, number> }>({ byLead: {}, byDoc: {} });
   const [onlyPendingPdf, setOnlyPendingPdf] = useState(false);
+  const [onlyRecentMoves, setOnlyRecentMoves] = useState(false);
+  const [movimentacoesVistas, setMovimentacoesVistas] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("prosfec_movimentacoes_vistas");
+      if (raw) setMovimentacoesVistas(JSON.parse(raw));
+    } catch {
+      /* ignora leitura inválida */
+    }
+  }, []);
 
   // Pagination
   const [leadsPage, setLeadsPage] = useState(1);
@@ -1452,6 +1463,96 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   };
 
   const totalPendingPdfLeads = leads.filter(l => getPendingReports(l) > 0).length;
+
+  // ===== Últimas Movimentações (detecção de atualizações recentes no lead) =====
+  const parseDataMovimentacao = (valor: any): number => {
+    if (!valor) return 0;
+    try {
+      const base = typeof valor?.toDate === "function" ? valor.toDate() : valor;
+      const ts = new Date(base).getTime();
+      return Number.isNaN(ts) ? 0 : ts;
+    } catch {
+      return 0;
+    }
+  };
+
+  const getUltimaMovimentacao = (lead: any): { data: string; ts: number; autor: string; resumo: string } | null => {
+    if (!lead) return null;
+    const candidatos: Array<{ ts: number; autor: string; resumo: string }> = [];
+    const autorPadrao = lead.parceiroNome || "Parceiro";
+
+    const historico = Array.isArray(lead.historicoEtapas) ? lead.historicoEtapas : [];
+    historico.forEach((h: any) => {
+      const ts = parseDataMovimentacao(h?.data);
+      if (!ts) return;
+      candidatos.push({
+        ts,
+        autor: h?.autor === "admin" ? "Mesa de Operações" : (h?.autor || "Sistema"),
+        resumo: h?.detalhes || (h?.etapaNova ? `Etapa atualizada para o Passo ${h.etapaNova}` : "Atualização de etapa"),
+      });
+    });
+
+    if (lead.pendencias?.resposta) {
+      const ts = parseDataMovimentacao(lead.pendencias?.dataResposta || lead.pendencias?.respostaEm || lead.dataAtualizacaoStatus);
+      if (ts) candidatos.push({ ts, autor: autorPadrao, resumo: "💬 Resposta de pendência enviada" });
+    }
+
+    const tsContratos = parseDataMovimentacao(lead.contratosAssinadosAtualizadoEm);
+    if (tsContratos) candidatos.push({ ts: tsContratos, autor: autorPadrao, resumo: "📑 Link de contratos assinados anexado" });
+
+    const tsFicha = parseDataMovimentacao(
+      lead.fichaRatingCredito?.dataAtualizacao || lead.fichaRatingCredito?.atualizadoEm || lead.fichaRatingCredito?.dataEnvio
+    );
+    if (tsFicha) candidatos.push({ ts: tsFicha, autor: autorPadrao, resumo: "📝 Ficha documental atualizada" });
+
+    const tsDocs = parseDataMovimentacao(lead.documentosAtualizadoEm || lead.fichaRatingCredito?.documentosAtualizadoEm);
+    if (tsDocs) candidatos.push({ ts: tsDocs, autor: autorPadrao, resumo: "📎 Novos documentos anexados" });
+
+    const validos = candidatos.filter(c => c.ts > 0).sort((a, b) => b.ts - a.ts);
+    if (!validos.length) return null;
+    const top = validos[0];
+    return { data: new Date(top.ts).toISOString(), ts: top.ts, autor: top.autor, resumo: top.resumo };
+  };
+
+  const isMovimentacaoNova = (lead: any): boolean => {
+    const mov = getUltimaMovimentacao(lead);
+    if (!mov) return false;
+    const vista = movimentacoesVistas[lead.id];
+    if (!vista) return true;
+    return mov.ts > parseDataMovimentacao(vista);
+  };
+
+  const marcarMovimentacaoVista = (lead: any) => {
+    const mov = getUltimaMovimentacao(lead);
+    if (!mov) return;
+    setMovimentacoesVistas(prev => {
+      const next = { ...prev, [lead.id]: mov.data };
+      try {
+        localStorage.setItem("prosfec_movimentacoes_vistas", JSON.stringify(next));
+      } catch {
+        /* ignora escrita indisponível */
+      }
+      return next;
+    });
+  };
+
+  const abrirWorkspaceLead = (lead: any) => {
+    marcarMovimentacaoVista(lead);
+    setWorkspaceLead(lead);
+  };
+
+  const formatarTempoRelativo = (ts: number): string => {
+    const diff = Date.now() - ts;
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return "agora mesmo";
+    if (min < 60) return `há ${min} min`;
+    const horas = Math.floor(min / 60);
+    if (horas < 24) return `hoje às ${new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+    if (horas < 48) return `ontem às ${new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+    return new Date(ts).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  };
+
+  const totalMovimentacoesNovas = leads.filter(l => isMovimentacaoNova(l)).length;
 
   const fetchData = async () => {
     setLoading(true);
@@ -2727,10 +2828,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       return false;
     }
 
+    if (onlyRecentMoves && !getUltimaMovimentacao(lead)) {
+      return false;
+    }
+
     return matchesSearch && matchesStatus && matchesPorte && matchesPrep && matchesEtapa && matchesRating;
   });
 
-  const paginatedLeads = filteredLeads.slice((leadsPage - 1) * itemsPerPage, leadsPage * itemsPerPage);
+  const orderedLeads = onlyRecentMoves
+    ? [...filteredLeads].sort((a, b) => (getUltimaMovimentacao(b)?.ts || 0) - (getUltimaMovimentacao(a)?.ts || 0))
+    : filteredLeads;
+
+  const paginatedLeads = orderedLeads.slice((leadsPage - 1) * itemsPerPage, leadsPage * itemsPerPage);
 
   const filteredPartners = partners.filter(p => {
     if (hideTeamMembers) {
@@ -3277,6 +3386,26 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </button>
                   )}
 
+                  {/* Filtro: leads com movimentações recentes */}
+                  {activeTab === "leads" && (
+                    <button
+                      type="button"
+                      onClick={() => { setOnlyRecentMoves(!onlyRecentMoves); setLeadsPage(1); }}
+                      className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                        onlyRecentMoves
+                          ? "bg-amber-500 text-white border-amber-500"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-amber-300 hover:text-amber-700"
+                      }`}
+                      title="Mostrar apenas leads com movimentações recentes, das mais novas para as mais antigas"
+                    >
+                      <Bell className={`w-3.5 h-3.5 ${onlyRecentMoves ? "text-white" : "text-amber-500"}`} />
+                      Últimas Movimentações ({totalMovimentacoesNovas})
+                      {totalMovimentacoesNovas > 0 && !onlyRecentMoves && (
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                      )}
+                    </button>
+                  )}
+
                    {/* Hide Team Members Switch (Partners Only) */}
                   {activeTab === "partners" && (
                     <button
@@ -3658,6 +3787,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         const isAnswered = !!lead.pendencias?.resposta;
                          const stageNum = lead.etapa || 1;
                          const pdfPendentes = getPendingReports(lead);
+                         const ultimaMov = getUltimaMovimentacao(lead);
+                         const movNova = isMovimentacaoNova(lead);
 
                         return (
                           <div 
@@ -3692,6 +3823,33 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
                               </span>
                             )}
+
+                            {ultimaMov && (
+                              <div className={`mx-4 mt-3 p-2.5 rounded-xl border text-left ${
+                                movNova ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-200"
+                              }`}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`text-[9px] font-black uppercase tracking-wider ${movNova ? "text-amber-700" : "text-slate-500"}`}>
+                                    {movNova ? "Nova movimentação" : "Última movimentação"}
+                                  </span>
+                                  <span className="text-[9px] font-semibold text-slate-500">{formatarTempoRelativo(ultimaMov.ts)}</span>
+                                </div>
+                                <p className="text-[11px] font-bold text-slate-700 leading-snug mt-1 line-clamp-2">{ultimaMov.resumo}</p>
+                                <div className="flex items-center justify-between gap-2 mt-1">
+                                  <span className="text-[10px] font-semibold text-slate-500 truncate">por {ultimaMov.autor}</span>
+                                  {movNova && (
+                                    <button
+                                      type="button"
+                                      onClick={() => marcarMovimentacaoVista(lead)}
+                                      className="text-[10px] font-bold text-amber-700 hover:text-amber-900 underline cursor-pointer shrink-0"
+                                    >
+                                      Marcar como visto
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
 
                              {/* Header details */}
                             <div className="p-4 flex-1 space-y-2.5">
@@ -3874,7 +4032,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </button>
 
                                 <button
-                                  onClick={() => setWorkspaceLead(lead)}
+                                  onClick={() => abrirWorkspaceLead(lead)}
                                   className="h-8 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold rounded-lg transition-all cursor-pointer shrink-0 flex items-center gap-1"
                                   title="Abrir Workspace do Lead & Diagnóstico IA"
                                 >
@@ -3961,6 +4119,23 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                       <span>RESPONDIDO</span>
                                     </span>
                                   )}
+                                  {(() => {
+                                    const mov = getUltimaMovimentacao(lead);
+                                    if (!mov) return null;
+                                    const nova = isMovimentacaoNova(lead);
+                                    return (
+                                      <span
+                                        className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border shrink-0 ${
+                                          nova ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-slate-50 text-slate-600 border-slate-200"
+                                        }`}
+                                        title={`${mov.resumo} — por ${mov.autor}`}
+                                      >
+                                        <Bell className="w-2.5 h-2.5" />
+                                        <span className="normal-case tracking-normal font-bold">{mov.resumo}</span>
+                                        <span className="font-semibold text-slate-500 normal-case tracking-normal">· {formatarTempoRelativo(mov.ts)}</span>
+                                      </span>
+                                    );
+                                  })()}
                                 </div>
                                 <div className="text-[11px] text-slate-500 font-mono mt-0.5">{lead.cnpj || "-"}</div>
                                 {lead.parceiroId ? (
@@ -4053,7 +4228,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </button>
 
                                 <button
-                                  onClick={() => setWorkspaceLead(lead)}
+                                  onClick={() => abrirWorkspaceLead(lead)}
                                   className="px-2 py-1 text-xs bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 rounded-lg font-bold transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
                                   title="Abrir Workspace do Lead & Diagnóstico IA"
                                 >
