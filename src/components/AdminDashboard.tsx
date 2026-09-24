@@ -492,6 +492,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [hideTeamMembers, setHideTeamMembers] = useState<boolean>(true);
   const [pendingReports, setPendingReports] = useState<{ byLead: Record<string, number>; byDoc: Record<string, number> }>({ byLead: {}, byDoc: {} });
   const [onlyPendingPdf, setOnlyPendingPdf] = useState(false);
+  const [onlyRecentMoves, setOnlyRecentMoves] = useState(false);
+  const [movimentacoesVistas, setMovimentacoesVistas] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("prosfec_movimentacoes_vistas");
+      if (raw) setMovimentacoesVistas(JSON.parse(raw));
+    } catch {
+      /* ignora leitura inválida */
+    }
+  }, []);
 
   // Pagination
   const [leadsPage, setLeadsPage] = useState(1);
@@ -1452,6 +1463,96 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   };
 
   const totalPendingPdfLeads = leads.filter(l => getPendingReports(l) > 0).length;
+
+  // ===== Últimas Movimentações (detecção de atualizações recentes no lead) =====
+  const parseDataMovimentacao = (valor: any): number => {
+    if (!valor) return 0;
+    try {
+      const base = typeof valor?.toDate === "function" ? valor.toDate() : valor;
+      const ts = new Date(base).getTime();
+      return Number.isNaN(ts) ? 0 : ts;
+    } catch {
+      return 0;
+    }
+  };
+
+  const getUltimaMovimentacao = (lead: any): { data: string; ts: number; autor: string; resumo: string } | null => {
+    if (!lead) return null;
+    const candidatos: Array<{ ts: number; autor: string; resumo: string }> = [];
+    const autorPadrao = lead.parceiroNome || "Parceiro";
+
+    const historico = Array.isArray(lead.historicoEtapas) ? lead.historicoEtapas : [];
+    historico.forEach((h: any) => {
+      const ts = parseDataMovimentacao(h?.data);
+      if (!ts) return;
+      candidatos.push({
+        ts,
+        autor: h?.autor === "admin" ? "Mesa de Operações" : (h?.autor || "Sistema"),
+        resumo: h?.detalhes || (h?.etapaNova ? `Etapa atualizada para o Passo ${h.etapaNova}` : "Atualização de etapa"),
+      });
+    });
+
+    if (lead.pendencias?.resposta) {
+      const ts = parseDataMovimentacao(lead.pendencias?.dataResposta || lead.pendencias?.respostaEm || lead.dataAtualizacaoStatus);
+      if (ts) candidatos.push({ ts, autor: autorPadrao, resumo: "💬 Resposta de pendência enviada" });
+    }
+
+    const tsContratos = parseDataMovimentacao(lead.contratosAssinadosAtualizadoEm);
+    if (tsContratos) candidatos.push({ ts: tsContratos, autor: autorPadrao, resumo: "📑 Link de contratos assinados anexado" });
+
+    const tsFicha = parseDataMovimentacao(
+      lead.fichaRatingCredito?.dataAtualizacao || lead.fichaRatingCredito?.atualizadoEm || lead.fichaRatingCredito?.dataEnvio
+    );
+    if (tsFicha) candidatos.push({ ts: tsFicha, autor: autorPadrao, resumo: "📝 Ficha documental atualizada" });
+
+    const tsDocs = parseDataMovimentacao(lead.documentosAtualizadoEm || lead.fichaRatingCredito?.documentosAtualizadoEm);
+    if (tsDocs) candidatos.push({ ts: tsDocs, autor: autorPadrao, resumo: "📎 Novos documentos anexados" });
+
+    const validos = candidatos.filter(c => c.ts > 0).sort((a, b) => b.ts - a.ts);
+    if (!validos.length) return null;
+    const top = validos[0];
+    return { data: new Date(top.ts).toISOString(), ts: top.ts, autor: top.autor, resumo: top.resumo };
+  };
+
+  const isMovimentacaoNova = (lead: any): boolean => {
+    const mov = getUltimaMovimentacao(lead);
+    if (!mov) return false;
+    const vista = movimentacoesVistas[lead.id];
+    if (!vista) return true;
+    return mov.ts > parseDataMovimentacao(vista);
+  };
+
+  const marcarMovimentacaoVista = (lead: any) => {
+    const mov = getUltimaMovimentacao(lead);
+    if (!mov) return;
+    setMovimentacoesVistas(prev => {
+      const next = { ...prev, [lead.id]: mov.data };
+      try {
+        localStorage.setItem("prosfec_movimentacoes_vistas", JSON.stringify(next));
+      } catch {
+        /* ignora escrita indisponível */
+      }
+      return next;
+    });
+  };
+
+  const abrirWorkspaceLead = (lead: any) => {
+    marcarMovimentacaoVista(lead);
+    setWorkspaceLead(lead);
+  };
+
+  const formatarTempoRelativo = (ts: number): string => {
+    const diff = Date.now() - ts;
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return "agora mesmo";
+    if (min < 60) return `há ${min} min`;
+    const horas = Math.floor(min / 60);
+    if (horas < 24) return `hoje às ${new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+    if (horas < 48) return `ontem às ${new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+    return new Date(ts).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  };
+
+  const totalMovimentacoesNovas = leads.filter(l => isMovimentacaoNova(l)).length;
 
   const fetchData = async () => {
     setLoading(true);
@@ -2727,10 +2828,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       return false;
     }
 
+    if (onlyRecentMoves && !getUltimaMovimentacao(lead)) {
+      return false;
+    }
+
     return matchesSearch && matchesStatus && matchesPorte && matchesPrep && matchesEtapa && matchesRating;
   });
 
-  const paginatedLeads = filteredLeads.slice((leadsPage - 1) * itemsPerPage, leadsPage * itemsPerPage);
+  const orderedLeads = onlyRecentMoves
+    ? [...filteredLeads].sort((a, b) => (getUltimaMovimentacao(b)?.ts || 0) - (getUltimaMovimentacao(a)?.ts || 0))
+    : filteredLeads;
+
+  const paginatedLeads = orderedLeads.slice((leadsPage - 1) * itemsPerPage, leadsPage * itemsPerPage);
 
   const filteredPartners = partners.filter(p => {
     if (hideTeamMembers) {
@@ -3274,6 +3383,26 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     >
                       <span className={`w-2 h-2 rounded-full ${onlyPendingPdf ? "bg-white" : "bg-rose-500 animate-pulse"}`}></span>
                       Aguardando PDF ({totalPendingPdfLeads})
+                    </button>
+                  )}
+
+                  {/* Filtro: leads com movimentações recentes */}
+                  {activeTab === "leads" && (
+                    <button
+                      type="button"
+                      onClick={() => { setOnlyRecentMoves(!onlyRecentMoves); setLeadsPage(1); }}
+                      className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                        onlyRecentMoves
+                          ? "bg-amber-500 text-white border-amber-500"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-amber-300 hover:text-amber-700"
+                      }`}
+                      title="Mostrar apenas leads com movimentações recentes, das mais novas para as mais antigas"
+                    >
+                      <Bell className={`w-3.5 h-3.5 ${onlyRecentMoves ? "text-white" : "text-amber-500"}`} />
+                      Últimas Movimentações ({totalMovimentacoesNovas})
+                      {totalMovimentacoesNovas > 0 && !onlyRecentMoves && (
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                      )}
                     </button>
                   )}
 
