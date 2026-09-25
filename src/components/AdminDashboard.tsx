@@ -2394,6 +2394,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         } : null);
       }
 
+      // Ao resolver a pendência, a movimentação sai imediatamente da aba "Últimas Movimentações"
+      if (!isPendente) {
+        setMovimentacoesVistas(prev => {
+          const next = { ...prev, [id]: nowIso };
+          try {
+            localStorage.setItem("prosfec_movimentacoes_vistas", JSON.stringify(next));
+          } catch {
+            /* ignora escrita indisponível */
+          }
+          return next;
+        });
+      }
+
       // Notify Lead and Partner of Pendência changes
       if (existingLead) {
         if (status === "pendente") {
@@ -2828,7 +2841,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       return false;
     }
 
-    if (onlyRecentMoves && !getUltimaMovimentacao(lead)) {
+    if (onlyRecentMoves && !isMovimentacaoNova(lead)) {
       return false;
     }
 
@@ -4124,15 +4137,27 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     if (!mov) return null;
                                     const nova = isMovimentacaoNova(lead);
                                     return (
-                                      <span
-                                        className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border shrink-0 ${
-                                          nova ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-slate-50 text-slate-600 border-slate-200"
-                                        }`}
-                                        title={`${mov.resumo} — por ${mov.autor}`}
-                                      >
-                                        <Bell className="w-2.5 h-2.5" />
-                                        <span className="normal-case tracking-normal font-bold">{mov.resumo}</span>
-                                        <span className="font-semibold text-slate-500 normal-case tracking-normal">· {formatarTempoRelativo(mov.ts)}</span>
+                                      <span className="inline-flex items-center gap-1 shrink-0">
+                                        <span
+                                          className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border shrink-0 ${
+                                            nova ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-slate-50 text-slate-600 border-slate-200"
+                                          }`}
+                                          title={`${mov.resumo} — por ${mov.autor}`}
+                                        >
+                                          <Bell className="w-2.5 h-2.5" />
+                                          <span className="normal-case tracking-normal font-bold">{mov.resumo}</span>
+                                          <span className="font-semibold text-slate-500 normal-case tracking-normal">· {formatarTempoRelativo(mov.ts)}</span>
+                                        </span>
+                                        {nova && (
+                                          <button
+                                            type="button"
+                                            onClick={() => marcarMovimentacaoVista(lead)}
+                                            className="text-[9px] font-bold text-amber-700 hover:text-amber-900 underline cursor-pointer shrink-0"
+                                            title="Marcar esta movimentação como vista"
+                                          >
+                                            Marcar como visto
+                                          </button>
+                                        )}
                                       </span>
                                     );
                                   })()}
