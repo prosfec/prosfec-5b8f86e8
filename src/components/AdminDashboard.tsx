@@ -2394,6 +2394,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         } : null);
       }
 
+      // Ao resolver a pendência, a movimentação sai imediatamente da aba "Últimas Movimentações"
+      if (!isPendente) {
+        setMovimentacoesVistas(prev => {
+          const next = { ...prev, [id]: nowIso };
+          try {
+            localStorage.setItem("prosfec_movimentacoes_vistas", JSON.stringify(next));
+          } catch {
+            /* ignora escrita indisponível */
+          }
+          return next;
+        });
+      }
+
       // Notify Lead and Partner of Pendência changes
       if (existingLead) {
         if (status === "pendente") {
