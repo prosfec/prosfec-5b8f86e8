@@ -2828,7 +2828,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       return false;
     }
 
-    if (onlyRecentMoves && !getUltimaMovimentacao(lead)) {
+    if (onlyRecentMoves && !isMovimentacaoNova(lead)) {
       return false;
     }
 
