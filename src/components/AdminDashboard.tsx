@@ -495,15 +495,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [onlyRecentMoves, setOnlyRecentMoves] = useState(false);
   const [movimentacoesVistas, setMovimentacoesVistas] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("prosfec_movimentacoes_vistas");
-      if (raw) setMovimentacoesVistas(JSON.parse(raw));
-    } catch {
-      /* ignora leitura inválida */
-    }
-  }, []);
-
   // Pagination
   const [leadsPage, setLeadsPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
@@ -1465,6 +1456,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const totalPendingPdfLeads = leads.filter(l => getPendingReports(l) > 0).length;
 
   // ===== Últimas Movimentações (detecção de atualizações recentes no lead) =====
+  const JANELA_MOVIMENTACAO_NOVA_MS = 7 * 24 * 60 * 60 * 1000;
+
   const parseDataMovimentacao = (valor: any): number => {
     if (!valor) return 0;
     try {
@@ -1517,27 +1510,42 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const isMovimentacaoNova = (lead: any): boolean => {
     const mov = getUltimaMovimentacao(lead);
     if (!mov) return false;
-    const vista = movimentacoesVistas[lead.id];
+    if (Date.now() - mov.ts > JANELA_MOVIMENTACAO_NOVA_MS) return false;
+    const vista = movimentacoesVistas[lead.id] || lead.ultimaMovimentacaoAdmVistaEm;
     if (!vista) return true;
     return mov.ts > parseDataMovimentacao(vista);
   };
 
-  const marcarMovimentacaoVista = (lead: any) => {
+  const marcarMovimentacaoVista = async (lead: any) => {
     const mov = getUltimaMovimentacao(lead);
     if (!mov) return;
-    setMovimentacoesVistas(prev => {
-      const next = { ...prev, [lead.id]: mov.data };
-      try {
-        localStorage.setItem("prosfec_movimentacoes_vistas", JSON.stringify(next));
-      } catch {
-        /* ignora escrita indisponível */
-      }
-      return next;
-    });
+    const vistaAnterior = movimentacoesVistas[lead.id] || lead.ultimaMovimentacaoAdmVistaEm;
+    setMovimentacoesVistas(prev => ({ ...prev, [lead.id]: mov.data }));
+    setLeads(prev => prev.map(item => item.id === lead.id
+      ? { ...item, ultimaMovimentacaoAdmVistaEm: mov.data }
+      : item));
+
+    try {
+      await updateDoc(doc(db, "leads", lead.id), {
+        ultimaMovimentacaoAdmVistaEm: mov.data,
+      });
+    } catch (error) {
+      setMovimentacoesVistas(prev => {
+        const next = { ...prev };
+        if (vistaAnterior) next[lead.id] = vistaAnterior;
+        else delete next[lead.id];
+        return next;
+      });
+      setLeads(prev => prev.map(item => item.id === lead.id
+        ? { ...item, ultimaMovimentacaoAdmVistaEm: vistaAnterior }
+        : item));
+      console.error("Erro ao compartilhar leitura da movimentação:", error);
+      toast.error("Não foi possível marcar a movimentação como vista.");
+    }
   };
 
   const abrirWorkspaceLead = (lead: any) => {
-    marcarMovimentacaoVista(lead);
+    void marcarMovimentacaoVista(lead);
     setWorkspaceLead(lead);
   };
 
@@ -2375,7 +2383,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       await updateDoc(docRef, { 
         pendente: isPendente,
         pendenciaDescricao: isPendente ? lastSummaryMsg : "",
-        pendencias: pendenciasObj
+        pendencias: pendenciasObj,
+        ...(!isPendente ? { ultimaMovimentacaoAdmVistaEm: nowIso } : {})
       });
       
       // Update local state
@@ -2396,15 +2405,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
       // Ao resolver a pendência, a movimentação sai imediatamente da aba "Últimas Movimentações"
       if (!isPendente) {
-        setMovimentacoesVistas(prev => {
-          const next = { ...prev, [id]: nowIso };
-          try {
-            localStorage.setItem("prosfec_movimentacoes_vistas", JSON.stringify(next));
-          } catch {
-            /* ignora escrita indisponível */
-          }
-          return next;
-        });
+        setMovimentacoesVistas(prev => ({ ...prev, [id]: nowIso }));
+        setLeads(prev => prev.map(item => item.id === id
+          ? { ...item, ultimaMovimentacaoAdmVistaEm: nowIso }
+          : item));
       }
 
       // Notify Lead and Partner of Pendência changes
@@ -3837,7 +3841,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </span>
                             )}
 
-                            {ultimaMov && (
+                            {ultimaMov && (onlyRecentMoves || movNova) && (
                               <div className={`mx-4 mt-3 p-2.5 rounded-xl border text-left ${
                                 movNova ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-200"
                               }`}>
@@ -3853,7 +3857,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   {movNova && (
                                     <button
                                       type="button"
-                                      onClick={() => marcarMovimentacaoVista(lead)}
+                                    onClick={() => void marcarMovimentacaoVista(lead)}
                                       className="text-[10px] font-bold text-amber-700 hover:text-amber-900 underline cursor-pointer shrink-0"
                                     >
                                       Marcar como visto
@@ -4134,8 +4138,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   )}
                                   {(() => {
                                     const mov = getUltimaMovimentacao(lead);
-                                    if (!mov) return null;
+                                     if (!mov) return null;
                                     const nova = isMovimentacaoNova(lead);
+                                     if (!onlyRecentMoves && !nova) return null;
                                     return (
                                       <span className="inline-flex items-center gap-1 shrink-0">
                                         <span
@@ -4151,7 +4156,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                         {nova && (
                                           <button
                                             type="button"
-                                            onClick={() => marcarMovimentacaoVista(lead)}
+                                             onClick={() => void marcarMovimentacaoVista(lead)}
                                             className="text-[9px] font-bold text-amber-700 hover:text-amber-900 underline cursor-pointer shrink-0"
                                             title="Marcar esta movimentação como vista"
                                           >
