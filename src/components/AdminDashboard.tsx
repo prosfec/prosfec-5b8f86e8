@@ -10,7 +10,8 @@ import {
   orderBy,
   addDoc,
   setDoc,
-  getDoc
+  getDoc,
+  arrayUnion
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
