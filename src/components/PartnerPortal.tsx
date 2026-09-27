@@ -1844,13 +1844,13 @@ export default function PartnerPortal({
       });
 
       // Update local state
-      setLeadsDistributedToMe(prev => prev.map(l => {
-        if (l.id === leadId) {
-          const existingHist = Array.isArray(l.historico) ? l.historico : [];
-          return { ...l, historico: [...existingHist, newNoteObj] };
-        }
-        return l;
-      }));
+      const applyNote = (l: any) => {
+        if (l.id !== leadId) return l;
+        const existingHist = Array.isArray(l.historico) ? l.historico : [];
+        return { ...l, historico: [...existingHist, newNoteObj] };
+      };
+      setLeadsDistributedToMe(prev => prev.map(applyNote));
+      setAllParentDistributedLeads(prev => prev.map(applyNote));
 
       setActiveNoteInput(prev => ({ ...prev, [leadId]: "" }));
     } catch (err) {
