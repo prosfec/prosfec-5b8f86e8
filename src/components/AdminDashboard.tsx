@@ -3028,12 +3028,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const notaAutomatica = {
         texto: `Status atualizado para ${statusLabel}.`,
         autor: "Mesa PROSFEC",
+        papel: "adm",
         data: agora
       };
       const novasNotas = [...(Array.isArray(alvo?.anotacoes) ? alvo.anotacoes : []), notaAutomatica];
       await updateDoc(doc(db, "leads_energia", leadId), {
         status: novoStatus,
-        anotacoes: novasNotas,
+        anotacoes: arrayUnion(notaAutomatica),
         atualizadoEm: agora
       });
       setLeadsEnergia(prev => prev.map((l: any) =>
