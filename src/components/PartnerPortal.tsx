@@ -1052,6 +1052,7 @@ export default function PartnerPortal({
   const [prospectNoteDraft, setProspectNoteDraft] = useState<Record<string, string>>({});
   const [expandedProspectNoteKey, setExpandedProspectNoteKey] = useState<string | null>(null);
   const [savingProspectNoteKey, setSavingProspectNoteKey] = useState<string | null>(null);
+  const [discardingHuntPlaceId, setDiscardingHuntPlaceId] = useState<string | null>(null);
 
   // Step 6 Services Performance & Financial Control states
   const [dashboardServiceFilter, setDashboardServiceFilter] = useState<"todos" | "pendente" | "pago" | "cancelado">("todos");
