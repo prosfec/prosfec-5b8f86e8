@@ -76,7 +76,8 @@ import {
   Menu,
   Sun,
   Moon,
-  LogOut
+  LogOut,
+  Zap
 } from "lucide-react";
 
 import { 
@@ -448,7 +449,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [comissaoReceiptText, setComissaoReceiptText] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"leads" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel">("leads");
+  const [activeTab, setActiveTab] = useState<"leads" | "leads_energia" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel">("leads");
+
+  // ⚡ Leads Energia Solar (coleção leads_energia — esteira isolada do crédito)
+  const [leadsEnergia, setLeadsEnergia] = useState<any[]>([]);
+  const [energiaStatusFilter, setEnergiaStatusFilter] = useState<"todos" | "novo" | "atendimento" | "concluido" | "arquivado">("todos");
+  const [energiaNotaDraft, setEnergiaNotaDraft] = useState<Record<string, string>>({});
+  const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [showLeadPortalSenha, setShowLeadPortalSenha] = useState<Record<string, boolean>>({});
@@ -1632,6 +1639,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       } catch (errRec) {
         console.warn("Could not load recargas:", errRec);
         setRecargas([]);
+      }
+
+      // 5.0.1 Fetch Leads Energia Solar
+      try {
+        const energiaSnapshot = await getDocs(collection(db, "leads_energia"));
+        const energiaList = energiaSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        energiaList.sort((a: any, b: any) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime());
+        setLeadsEnergia(energiaList);
+      } catch (errEnergia) {
+        console.warn("Could not load leads_energia:", errEnergia);
+        setLeadsEnergia([]);
       }
 
       // 5.1 Fetch Solicitações de Comissão (Saques de Parceiros)
@@ -2990,6 +3008,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const adminNavItems = [
     { id: "funnel", label: "Funil & Conversão", icon: TrendingUp, badge: null as any },
     { id: "leads", label: "Leads", icon: Users, badge: leads.length ? String(leads.length) : null, tone: "neutral" },
+    {
+      id: "leads_energia",
+      label: "Leads Energia",
+      icon: Zap,
+      badge: leadsEnergia.filter((l: any) => (l.status || "novo") === "novo").length || null,
+      tone: "warning"
+    },
     { id: "partners", label: "Parceiros", icon: Handshake, badge: partners.length ? String(partners.length) : null, tone: "neutral" },
     { id: "announcements", label: "Comunicados", icon: Megaphone, badge: null },
     {
