@@ -1043,6 +1043,10 @@ export default function PartnerPortal({
   const [energiaLoading, setEnergiaLoading] = useState(false);
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [expandedEnergiaLeadId, setExpandedEnergiaLeadId] = useState<string | null>(null);
+  const [energiaPanelOpen, setEnergiaPanelOpen] = useState(false);
+  const [energiaStatusFilter, setEnergiaStatusFilter] = useState<string>("todos");
+  const [energiaNotaDraft, setEnergiaNotaDraft] = useState<{ [leadId: string]: string }>({});
+  const [energiaNotaSavingId, setEnergiaNotaSavingId] = useState<string | null>(null);
 
   // Step 6 Services Performance & Financial Control states
   const [dashboardServiceFilter, setDashboardServiceFilter] = useState<"todos" | "pendente" | "pago" | "cancelado">("todos");
