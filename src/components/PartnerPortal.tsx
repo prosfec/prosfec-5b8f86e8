@@ -1047,6 +1047,11 @@ export default function PartnerPortal({
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<string>("todos");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<{ [leadId: string]: string }>({});
   const [energiaNotaSavingId, setEnergiaNotaSavingId] = useState<string | null>(null);
+  // 📝 Anotações privadas de prospecção (Painel de Oportunidades — só o parceiro vê)
+  const [prospectNotes, setProspectNotes] = useState<Record<string, { id: string; notas: any[] }>>({});
+  const [prospectNoteDraft, setProspectNoteDraft] = useState<Record<string, string>>({});
+  const [expandedProspectNoteKey, setExpandedProspectNoteKey] = useState<string | null>(null);
+  const [savingProspectNoteKey, setSavingProspectNoteKey] = useState<string | null>(null);
 
   // Step 6 Services Performance & Financial Control states
   const [dashboardServiceFilter, setDashboardServiceFilter] = useState<"todos" | "pendente" | "pago" | "cancelado">("todos");
@@ -1592,6 +1597,7 @@ export default function PartnerPortal({
       const fullList: any[] = [];
       snap.docs.forEach(docSnap => {
         const data = docSnap.data();
+        if ((data as any).tipoRegistro === "nota_prospeccao") return;
         const item = { id: docSnap.id, ...data };
         fullList.push(item);
         const key = `${data.nomeEmpresa}_${data.telefone}`;
@@ -1709,6 +1715,83 @@ export default function PartnerPortal({
     }
   };
 
+  // 📝 Anotações privadas de prospecção (visíveis apenas para o próprio parceiro)
+  const prospectNoteKey = (place: any) =>
+    `${(place?.nome || place?.nomeEmpresa || "").trim().toLowerCase()}_${(place?.telefone || "").replace(/\D/g, "")}`;
+
+  const fetchProspectNotes = async (partnerId: string) => {
+    if (!partnerId) return;
+    try {
+      const q = query(
+        collection(db, "leads_distribuidos"),
+        where("criadoPorId", "==", partnerId)
+      );
+      const snap = await getDocs(q);
+      const map: Record<string, { id: string; notas: any[] }> = {};
+      snap.docs.forEach(docSnap => {
+        const data: any = docSnap.data();
+        if (data.tipoRegistro !== "nota_prospeccao") return;
+        map[prospectNoteKey({ nome: data.nomeEmpresa, telefone: data.telefone })] = {
+          id: docSnap.id,
+          notas: Array.isArray(data.notas) ? data.notas : []
+        };
+      });
+      setProspectNotes(map);
+    } catch (error) {
+      console.error("Erro ao carregar anotações de prospecção:", error);
+    }
+  };
+
+  const handleAddProspectNote = async (place: any) => {
+    if (!currentPartner) return;
+    const key = prospectNoteKey(place);
+    const texto = (prospectNoteDraft[key] || "").trim();
+    if (!texto) return;
+    setSavingProspectNoteKey(key);
+    try {
+      const nota = {
+        texto,
+        autor: currentPartner.nome || "Parceiro",
+        data: new Date().toISOString()
+      };
+      const existente = prospectNotes[key];
+      if (existente?.id) {
+        await updateDoc(doc(db, "leads_distribuidos", existente.id), {
+          notas: arrayUnion(nota),
+          atualizadoEm: new Date().toISOString()
+        });
+        setProspectNotes(prev => ({
+          ...prev,
+          [key]: { id: existente.id, notas: [...(prev[key]?.notas || []), nota] }
+        }));
+      } else {
+        const payload: any = {
+          tipoRegistro: "nota_prospeccao",
+          criadoPorId: currentPartner.id,
+          criadoPorNome: currentPartner.nome || "",
+          nomeEmpresa: place?.nome || place?.nomeEmpresa || "",
+          telefone: place?.telefone || "",
+          endereco: place?.endereco || "",
+          cidade: place?.cidade || huntCity || "",
+          estado: place?.estado || huntState || "",
+          categoria: place?.categoria || huntKeyword || "",
+          notas: [nota],
+          criadoEm: new Date().toISOString(),
+          atualizadoEm: new Date().toISOString()
+        };
+        const docRef = await addDoc(collection(db, "leads_distribuidos"), payload);
+        setProspectNotes(prev => ({ ...prev, [key]: { id: docRef.id, notas: [nota] } }));
+      }
+      setProspectNoteDraft(prev => ({ ...prev, [key]: "" }));
+      toast.success("Anotação salva.");
+    } catch (error) {
+      console.error("Erro ao salvar anotação de prospecção:", error);
+      toast.error("Não foi possível salvar a anotação.");
+    } finally {
+      setSavingProspectNoteKey(null);
+    }
+  };
+
   // Fetch leads distributed to me (for Team Member/Consultant view)
   const fetchLeadsDistributedToMe = async (memberId: string) => {
     setDistributedLeadsLoading(true);
@@ -1718,10 +1801,12 @@ export default function PartnerPortal({
         where("teamMemberId", "==", memberId)
       );
       const snap = await getDocs(q);
-      const list = snap.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data()
-      }));
+      const list = snap.docs
+        .filter(docSnap => (docSnap.data() as any).tipoRegistro !== "nota_prospeccao")
+        .map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
       list.sort((a: any, b: any) => new Date(b.dataDistribuicao).getTime() - new Date(a.dataDistribuicao).getTime());
       setLeadsDistributedToMe(list);
     } catch (error) {
@@ -2643,6 +2728,7 @@ export default function PartnerPortal({
       fetchPartnerRefills(currentPartner.id);
       fetchHuntSearchHistory(currentPartner.id);
       fetchEnergiaLeads(currentPartner.id);
+      fetchProspectNotes(currentPartner.id);
       if (isFranquiaDigital(currentPartner.plano)) {
         fetchTeamDetails(currentPartner.id);
         fetchDistributedLeads(currentPartner.id);
@@ -8921,7 +9007,80 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   <span className="w-full block text-center text-[10px] text-slate-400 font-bold bg-slate-50 border border-slate-100 py-1.5 rounded-xl select-none">
                                     Telefone indisponível no cadastro
                                   </span>
-                                )}
+                                 )}
+
+                                {/* 📝 Anotações privadas do parceiro (não aparecem para a Mesa/ADM) */}
+                                {(() => {
+                                  const notaKey = prospectNoteKey(place);
+                                  const entry = prospectNotes[notaKey];
+                                  const notas: any[] = Array.isArray(entry?.notas) ? entry.notas : [];
+                                  const aberto = expandedProspectNoteKey === notaKey;
+                                  return (
+                                    <div className="mt-2 border-t border-slate-100 pt-2">
+                                      <button
+                                        onClick={() => setExpandedProspectNoteKey(aberto ? null : notaKey)}
+                                        className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all cursor-pointer"
+                                      >
+                                        <span className="flex items-center gap-1.5 text-[10px] font-extrabold text-slate-700">
+                                          <MessageSquare className="w-3 h-3 text-slate-500" />
+                                          Minhas Anotações
+                                          {notas.length > 0 && (
+                                            <span className="px-1.5 py-0.5 bg-[#0A3D2E] text-white rounded-full text-[8px] font-black">
+                                              {notas.length}
+                                            </span>
+                                          )}
+                                        </span>
+                                        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${aberto ? "rotate-180" : ""}`} />
+                                      </button>
+
+                                      {aberto && (
+                                        <div className="mt-2 space-y-2">
+                                          <p className="text-[9px] text-slate-400 font-bold leading-snug">
+                                            Bloco de notas privado — só você enxerga estas anotações.
+                                          </p>
+
+                                          {notas.length > 0 ? (
+                                            <div className="space-y-1.5 max-h-[150px] overflow-y-auto pr-1">
+                                              {[...notas].reverse().map((n: any, idx: number) => (
+                                                <div key={idx} className="bg-white border border-slate-200 rounded-lg p-2">
+                                                  <p className="text-[10px] text-slate-700 font-medium whitespace-pre-wrap leading-snug">{n.texto}</p>
+                                                  <p className="text-[8px] text-slate-400 font-bold mt-1">
+                                                    {n.data ? new Date(n.data).toLocaleString("pt-BR") : ""}
+                                                  </p>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          ) : (
+                                            <p className="text-[10px] text-slate-400 font-medium">Nenhuma anotação registrada ainda.</p>
+                                          )}
+
+                                          <div className="flex items-center gap-1.5">
+                                            <input
+                                              type="text"
+                                              value={prospectNoteDraft[notaKey] || ""}
+                                              onChange={(e) => setProspectNoteDraft(prev => ({ ...prev, [notaKey]: e.target.value }))}
+                                              onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                  e.preventDefault();
+                                                  handleAddProspectNote(place);
+                                                }
+                                              }}
+                                              placeholder="Ex: liguei, retorno na terça-feira..."
+                                              className="flex-1 px-2.5 py-1.5 border border-slate-200 rounded-lg text-[10px] font-medium text-slate-700 focus:outline-none focus:border-[#00A86B]"
+                                            />
+                                            <button
+                                              onClick={() => handleAddProspectNote(place)}
+                                              disabled={savingProspectNoteKey === notaKey || !(prospectNoteDraft[notaKey] || "").trim()}
+                                              className="px-2.5 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white rounded-lg font-extrabold text-[10px] transition-all cursor-pointer disabled:opacity-40"
+                                            >
+                                              {savingProspectNoteKey === notaKey ? "..." : "Salvar"}
+                                            </button>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             </div>
                           );
