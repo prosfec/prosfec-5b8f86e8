@@ -7941,6 +7941,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
                       )}
 
+                      {/* ⚡ Leads Energia Solar — disponível também para consultores */}
+                      {renderEnergiaSolarPanel()}
+
                       {/* Distributed Leads List */}
                       <div className="space-y-4">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
