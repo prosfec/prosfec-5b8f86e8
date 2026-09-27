@@ -1669,6 +1669,7 @@ export default function PartnerPortal({
         parceiroId: currentPartner.id,
         parceiroNome: currentPartner.nome || "",
         parceiroEmail: currentPartner.email || "",
+        masterPartnerId: (currentPartner as any).parentPartnerId || "",
         origem: "painel_oportunidades",
         status: "novo",
         anotacoes: [],
