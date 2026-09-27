@@ -4601,7 +4601,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 {ENERGIA_STATUS_OPTIONS.map(opt => (
                                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
-                              </select>
+                               </select>
+                              <button
+                                onClick={() => handleDeleteEnergiaLead(lead.id, lead.nomeEmpresa)}
+                                disabled={energiaSavingId === lead.id}
+                                title="Excluir lead da base de Energia Solar"
+                                className="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              >
+                                <Trash2 className="w-3 h-3" /> Excluir
+                              </button>
                             </div>
 
                             {/* Histórico e anotações */}
