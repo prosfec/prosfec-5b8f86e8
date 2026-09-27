@@ -7935,50 +7935,84 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
                       </div>
 
-                      {/* Previous Refill Requests History List */}
-                      {myRefills.length > 0 && (
-                        <div className="bg-slate-50/40 border border-slate-200/50 p-4 rounded-2xl space-y-3">
-                          <h4 className="font-black text-[10px] text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5 text-slate-400" />
-                            Histórico de Pedidos de Recarga
+                      {/* ⚡ Leads Energia Solar — vitrine fixa da esteira solar */}
+                      <div className="bg-amber-50/40 border border-amber-200/60 p-4 rounded-2xl space-y-3">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <h4 className="font-black text-[10px] text-amber-700 uppercase tracking-wide flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5 text-amber-500 fill-current" />
+                            Leads Energia Solar
+                            <span className="bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-full text-[9px]">
+                              {energiaLeads.length}
+                            </span>
                           </h4>
-                          <div className="divide-y divide-slate-100">
-                            {myRefills.map((refill) => {
-                              const dateStr = refill.dataSolicitacao 
-                                ? new Date(refill.dataSolicitacao).toLocaleDateString("pt-BR")
-                                : "-";
+                          <button
+                            onClick={() => currentPartner && fetchEnergiaLeads(currentPartner.id)}
+                            disabled={energiaLoading}
+                            className="text-[10px] font-extrabold text-amber-700 hover:text-amber-900 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                          >
+                            <RefreshCw className={`w-3 h-3 ${energiaLoading ? "animate-spin" : ""}`} />
+                            Atualizar
+                          </button>
+                        </div>
+
+                        {energiaLeads.length === 0 ? (
+                          <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                            Nenhum lead enviado para Energia Solar ainda. Use o botão <strong className="text-amber-700">⚡ Energia Solar</strong> nos cards de empresas encontradas na busca para enviar o cliente à nossa mesa de energia.
+                          </p>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                            {energiaLeads.map((lead) => {
+                              const statusKey = lead.status || "novo";
+                              const statusStyle =
+                                statusKey === "concluido" ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                                : statusKey === "atendimento" ? "bg-blue-100 text-blue-800 border-blue-200"
+                                : statusKey === "arquivado" ? "bg-slate-200 text-slate-600 border-slate-300"
+                                : "bg-amber-100 text-amber-800 border-amber-200";
+                              const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
+                              const isOpen = expandedEnergiaLeadId === lead.id;
                               return (
-                                <div key={refill.id} className="py-2 flex items-center justify-between text-xs">
-                                  <div>
-                                    <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                                      Pacote {refill.pacote} ({refill.buscas} buscas)
-                                      <span className="font-mono text-[10px] text-slate-400">• R$ {refill.valor?.toFixed(2).replace(".", ",")}</span>
+                                <div key={lead.id} className="bg-white border border-amber-100 rounded-xl p-3 space-y-1.5">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="font-extrabold text-xs text-slate-800 line-clamp-1">{lead.nomeEmpresa}</p>
+                                    <span className={`shrink-0 border font-extrabold px-1.5 py-0.5 rounded-full text-[9px] uppercase ${statusStyle}`}>
+                                      {ENERGIA_STATUS_LABELS[statusKey] || statusKey}
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] text-slate-500 font-medium space-y-0.5">
+                                    {lead.telefone && <p>📞 {lead.telefone}</p>}
+                                    {(lead.cidade || lead.estado) && <p>📍 {[lead.cidade, lead.estado].filter(Boolean).join(" / ")}</p>}
+                                    <p className="text-slate-400">
+                                      Enviado em {lead.criadoEm ? new Date(lead.criadoEm).toLocaleDateString("pt-BR") : "-"}
+                                    </p>
+                                  </div>
+                                  {notas.length > 0 && (
+                                    <div className="pt-1.5 border-t border-slate-100 space-y-1">
+                                      <button
+                                        onClick={() => setExpandedEnergiaLeadId(isOpen ? null : lead.id)}
+                                        className="text-[10px] font-extrabold text-amber-700 hover:text-amber-900 cursor-pointer"
+                                      >
+                                        {isOpen ? "Ocultar" : `Ver histórico da Mesa (${notas.length})`}
+                                      </button>
+                                      {isOpen && (
+                                        <div className="space-y-1 max-h-[140px] overflow-y-auto">
+                                          {notas.map((nota: any, idx: number) => (
+                                            <div key={idx} className="bg-slate-50 border border-slate-100 rounded-lg p-1.5">
+                                              <p className="text-[10px] text-slate-700 font-medium leading-snug">{nota.texto}</p>
+                                              <p className="text-[9px] text-slate-400 font-semibold">
+                                                {nota.autor || "Mesa PROSFEC"} • {nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}
+                                              </p>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
                                     </div>
-                                    <div className="text-[10px] text-slate-400 font-medium">Solicitado em {dateStr}</div>
-                                  </div>
-                                  <div>
-                                    {refill.status === "pendente" && (
-                                      <span className="pf-badge pf-badge-warning inline-flex items-center text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">
-                                        Pendente
-                                      </span>
-                                    )}
-                                    {refill.status === "aprovada" && (
-                                      <span className="pf-badge pf-badge-success inline-flex items-center text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">
-                                        Aprovada
-                                      </span>
-                                    )}
-                                    {refill.status === "cancelada" && (
-                                      <span className="pf-badge pf-badge-neutral inline-flex items-center text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">
-                                        Cancelada
-                                      </span>
-                                    )}
-                                  </div>
+                                  )}
                                 </div>
                               );
                             })}
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
                   {/* Filter / Hunt Inputs Form */}
                   <form onSubmit={handleHuntLeads} className="bg-slate-50/70 border border-slate-200/50 p-4 rounded-2xl space-y-4">
