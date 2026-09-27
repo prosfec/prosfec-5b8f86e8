@@ -636,7 +636,7 @@ export default function EnergiaSolarLanding() {
               </h2>
               <p className="mt-6 text-[16px] leading-relaxed text-white/60">
                 Se você paga{" "}
-                <strong className="text-[#FDE047]">a partir de R$ 500,00 por mês</strong> de
+                <strong className="text-[#FDE047]">a partir de R$ 100,00 por mês</strong> de
                 energia (média), você já pode ativar o benefício agora.
               </p>
             </div>
