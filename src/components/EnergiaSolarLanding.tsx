@@ -125,9 +125,9 @@ export default function EnergiaSolarLanding() {
               alt="Cidade iluminada conectada a uma grande fazenda solar"
               width={1920}
               height={1088}
-              className="h-full w-full object-cover opacity-40"
+              className="h-full w-full object-cover opacity-70"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#05070A]/85 via-[#05070A]/80 to-[#05070A]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#05070A] via-[#05070A]/85 to-[#05070A]/40" />
           </div>
 
           <div className="mx-auto w-full max-w-7xl px-5">
