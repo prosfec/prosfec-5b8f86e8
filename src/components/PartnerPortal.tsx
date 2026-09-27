@@ -8933,6 +8933,21 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     );
                                   })()}
 
+                                  {/* 🗑️ Descartar o lead do painel (e apagar anotações do banco) */}
+                                  <button
+                                    onClick={() => handleDiscardHuntPlace(place)}
+                                    disabled={discardingHuntPlaceId === placeId}
+                                    className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                                    title="Remover este lead do painel e apagar suas anotações"
+                                  >
+                                    {discardingHuntPlaceId === placeId ? (
+                                      <RefreshCw className="w-3 h-3 animate-spin text-rose-600" />
+                                    ) : (
+                                      <Trash2 className="w-3 h-3 text-rose-600" />
+                                    )}
+                                    Descartar
+                                  </button>
+
                                   {/* Copy business details */}
                                   <button
                                     onClick={() => {
