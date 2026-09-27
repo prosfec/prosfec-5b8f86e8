@@ -1670,12 +1670,42 @@ export default function PartnerPortal({
       };
       const docRef = await addDoc(collection(db, "leads_energia"), payload);
       setEnergiaLeads(prev => [{ id: docRef.id, ...payload }, ...prev]);
+      setEnergiaPanelOpen(true);
       toast.success("Lead enviado para a esteira de Energia Solar.");
     } catch (error) {
       console.error("Erro ao enviar lead para Energia Solar:", error);
       toast.error("Não foi possível enviar o lead para Energia Solar.");
     } finally {
       setEnergiaSavingId(null);
+    }
+  };
+
+  // Anotação do parceiro no lead de energia (compartilhada com a Mesa/ADM)
+  const handleAddEnergiaNotaParceiro = async (leadId: string) => {
+    const texto = (energiaNotaDraft[leadId] || "").trim();
+    if (!texto || !currentPartner) return;
+    setEnergiaNotaSavingId(leadId);
+    try {
+      const nota = {
+        texto,
+        autor: currentPartner.nome || "Parceiro",
+        papel: "parceiro",
+        data: new Date().toISOString()
+      };
+      await updateDoc(doc(db, "leads_energia", leadId), {
+        anotacoes: arrayUnion(nota),
+        atualizadoEm: new Date().toISOString()
+      });
+      setEnergiaLeads(prev => prev.map(l => l.id === leadId
+        ? { ...l, anotacoes: [...(Array.isArray(l.anotacoes) ? l.anotacoes : []), nota] }
+        : l));
+      setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: "" }));
+      toast.success("Anotação registrada e compartilhada com a Mesa PROSFEC.");
+    } catch (error) {
+      console.error("Erro ao salvar anotação do lead de energia:", error);
+      toast.error("Não foi possível salvar a anotação.");
+    } finally {
+      setEnergiaNotaSavingId(null);
     }
   };
 
