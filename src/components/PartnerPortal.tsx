@@ -1038,6 +1038,12 @@ export default function PartnerPortal({
   const [myRefills, setMyRefills] = useState<any[]>([]);
   const [refillSubmitting, setRefillSubmitting] = useState(false);
 
+  // ⚡ Leads Energia Solar (esteira separada — coleção leads_energia)
+  const [energiaLeads, setEnergiaLeads] = useState<any[]>([]);
+  const [energiaLoading, setEnergiaLoading] = useState(false);
+  const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
+  const [expandedEnergiaLeadId, setExpandedEnergiaLeadId] = useState<string | null>(null);
+
   // Step 6 Services Performance & Financial Control states
   const [dashboardServiceFilter, setDashboardServiceFilter] = useState<"todos" | "pendente" | "pago" | "cancelado">("todos");
   const [dashboardServiceSearch, setDashboardServiceSearch] = useState("");
@@ -1596,6 +1602,76 @@ export default function PartnerPortal({
       setAllParentDistributedLeads(fullList);
     } catch (error) {
       console.error("Erro ao buscar leads distribuídos:", error);
+    }
+  };
+
+  // ⚡ Energia Solar — esteira comercial isolada do funil de crédito
+  const ENERGIA_STATUS_LABELS: Record<string, string> = {
+    novo: "Novo",
+    atendimento: "Atendimento",
+    concluido: "Concluído",
+    arquivado: "Arquivado"
+  };
+
+  const energiaLeadKey = (place: any) => `${(place?.nome || "").trim().toLowerCase()}_${(place?.telefone || "").replace(/\D/g, "")}`;
+
+  const fetchEnergiaLeads = async (partnerId: string) => {
+    if (!partnerId) return;
+    setEnergiaLoading(true);
+    try {
+      const q = query(
+        collection(db, "leads_energia"),
+        where("parceiroId", "==", partnerId)
+      );
+      const snap = await getDocs(q);
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a: any, b: any) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime());
+      setEnergiaLeads(list);
+    } catch (error) {
+      console.error("Erro ao carregar leads de energia solar:", error);
+    } finally {
+      setEnergiaLoading(false);
+    }
+  };
+
+  const handleMarcarEnergiaSolar = async (place: any) => {
+    if (!currentPartner) return;
+    const key = energiaLeadKey(place);
+    if (energiaLeads.some(l => energiaLeadKey(l.empresa ? { nome: l.nomeEmpresa, telefone: l.telefone } : { nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
+      toast.info("Esta empresa já está na sua lista de Energia Solar.");
+      return;
+    }
+    setEnergiaSavingId(place.id);
+    try {
+      const cachedCnpj = cnpjDetailsMap[place.id];
+      const payload: any = {
+        nomeEmpresa: place.nome || "",
+        razaoSocial: cachedCnpj?.razaoSocial || place.nome || "",
+        ramo: place.categoria || huntKeyword || "",
+        telefone: place.telefone || "",
+        endereco: place.endereco || "",
+        website: place.website || "",
+        cidade: place.cidade || huntCity || "",
+        estado: place.estado || huntState || "",
+        cnpj: cachedCnpj?.cnpj || place.cnpj || "",
+        cnpjDetails: cachedCnpj || place.cnpjDetails || null,
+        parceiroId: currentPartner.id,
+        parceiroNome: currentPartner.nome || "",
+        parceiroEmail: currentPartner.email || "",
+        origem: "painel_oportunidades",
+        status: "novo",
+        anotacoes: [],
+        criadoEm: new Date().toISOString(),
+        atualizadoEm: new Date().toISOString()
+      };
+      const docRef = await addDoc(collection(db, "leads_energia"), payload);
+      setEnergiaLeads(prev => [{ id: docRef.id, ...payload }, ...prev]);
+      toast.success("Lead enviado para a esteira de Energia Solar.");
+    } catch (error) {
+      console.error("Erro ao enviar lead para Energia Solar:", error);
+      toast.error("Não foi possível enviar o lead para Energia Solar.");
+    } finally {
+      setEnergiaSavingId(null);
     }
   };
 
@@ -2532,6 +2608,7 @@ export default function PartnerPortal({
       fetchActiveAnnouncements(currentPartner.plano);
       fetchPartnerRefills(currentPartner.id);
       fetchHuntSearchHistory(currentPartner.id);
+      fetchEnergiaLeads(currentPartner.id);
       if (isFranquiaDigital(currentPartner.plano)) {
         fetchTeamDetails(currentPartner.id);
         fetchDistributedLeads(currentPartner.id);
