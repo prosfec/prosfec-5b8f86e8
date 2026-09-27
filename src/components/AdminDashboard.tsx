@@ -94,7 +94,8 @@ import {
   isMensalidadeItem,
   withoutMensalidades,
   onlyMensalidades,
-  buildWhatsAppUrl
+  buildWhatsAppUrl,
+  buildEnergiaSolarWhatsAppMessage
 } from "../utils";
 import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
