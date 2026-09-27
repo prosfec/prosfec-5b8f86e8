@@ -129,6 +129,23 @@ export function buildWhatsAppUrl(phone: unknown, message?: string): string {
   return `https://wa.me/${num}${message ? `?text=${encodeURIComponent(message)}` : ""}`;
 }
 
+// Copy padrão de abordagem para leads de Energia Solar por assinatura
+export function buildEnergiaSolarWhatsAppMessage(nomeEmpresa?: string): string {
+  const alvo = String(nomeEmpresa ?? "").trim();
+  return [
+    `Olá! Falo com o responsável pela ${alvo || "empresa"}?`,
+    "",
+    "Entro em contato porque identificamos que sua empresa está elegível para reduzir de 17% a 27% o custo da conta de energia elétrica, sem instalar placas, fazer obras ou investir em equipamentos.",
+    "",
+    "O modelo é 100% digital e garantido pela Lei Federal 14.300.",
+    "",
+    "Você pode conferir como funciona e ver as condições oficiais aqui:",
+    "👉 https://prosfec.com.br/energiasolar",
+    "",
+    "Se fizer sentido para você, me avise por aqui para tirarmos qualquer dúvida!"
+  ].join("\n");
+}
+
 // Format CEP: 99999-999
 export function formatCEP(value: string): string {
   const clean = value.replace(/\D/g, "");
