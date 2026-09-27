@@ -76,7 +76,8 @@ import {
   Menu,
   Sun,
   Moon,
-  LogOut
+  LogOut,
+  Zap
 } from "lucide-react";
 
 import { 
@@ -448,7 +449,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [comissaoReceiptText, setComissaoReceiptText] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"leads" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel">("leads");
+  const [activeTab, setActiveTab] = useState<"leads" | "leads_energia" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel">("leads");
+
+  // ⚡ Leads Energia Solar (coleção leads_energia — esteira isolada do crédito)
+  const [leadsEnergia, setLeadsEnergia] = useState<any[]>([]);
+  const [energiaStatusFilter, setEnergiaStatusFilter] = useState<"todos" | "novo" | "atendimento" | "concluido" | "arquivado">("todos");
+  const [energiaNotaDraft, setEnergiaNotaDraft] = useState<Record<string, string>>({});
+  const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [showLeadPortalSenha, setShowLeadPortalSenha] = useState<Record<string, boolean>>({});
@@ -1632,6 +1639,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       } catch (errRec) {
         console.warn("Could not load recargas:", errRec);
         setRecargas([]);
+      }
+
+      // 5.0.1 Fetch Leads Energia Solar
+      try {
+        const energiaSnapshot = await getDocs(collection(db, "leads_energia"));
+        const energiaList = energiaSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        energiaList.sort((a: any, b: any) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime());
+        setLeadsEnergia(energiaList);
+      } catch (errEnergia) {
+        console.warn("Could not load leads_energia:", errEnergia);
+        setLeadsEnergia([]);
       }
 
       // 5.1 Fetch Solicitações de Comissão (Saques de Parceiros)
@@ -2987,9 +3005,96 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     );
   }
 
+  // ⚡ Energia Solar — helpers da esteira comercial
+  const ENERGIA_STATUS_OPTIONS = [
+    { value: "novo", label: "Novo" },
+    { value: "atendimento", label: "Atendimento" },
+    { value: "concluido", label: "Concluído" },
+    { value: "arquivado", label: "Arquivado" }
+  ];
+
+  const energiaStatusBadge = (status: string) =>
+    status === "concluido" ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+    : status === "atendimento" ? "bg-blue-100 text-blue-800 border-blue-200"
+    : status === "arquivado" ? "bg-slate-200 text-slate-600 border-slate-300"
+    : "bg-amber-100 text-amber-800 border-amber-200";
+
+  const handleUpdateEnergiaStatus = async (leadId: string, novoStatus: string) => {
+    setEnergiaSavingId(leadId);
+    try {
+      const agora = new Date().toISOString();
+      const statusLabel = ENERGIA_STATUS_OPTIONS.find(o => o.value === novoStatus)?.label || novoStatus;
+      const alvo = leadsEnergia.find((l: any) => l.id === leadId);
+      const notaAutomatica = {
+        texto: `Status atualizado para ${statusLabel}.`,
+        autor: "Mesa PROSFEC",
+        data: agora
+      };
+      const novasNotas = [...(Array.isArray(alvo?.anotacoes) ? alvo.anotacoes : []), notaAutomatica];
+      await updateDoc(doc(db, "leads_energia", leadId), {
+        status: novoStatus,
+        anotacoes: novasNotas,
+        atualizadoEm: agora
+      });
+      setLeadsEnergia(prev => prev.map((l: any) =>
+        l.id === leadId ? { ...l, status: novoStatus, anotacoes: novasNotas, atualizadoEm: agora } : l
+      ));
+      toast.success(`Status alterado para ${statusLabel}.`);
+    } catch (error) {
+      console.error("Erro ao atualizar status do lead de energia:", error);
+      toast.error("Não foi possível atualizar o status.");
+    } finally {
+      setEnergiaSavingId(null);
+    }
+  };
+
+  const handleAddEnergiaNota = async (leadId: string) => {
+    const texto = (energiaNotaDraft[leadId] || "").trim();
+    if (!texto) return;
+    setEnergiaSavingId(leadId);
+    try {
+      const agora = new Date().toISOString();
+      const alvo = leadsEnergia.find((l: any) => l.id === leadId);
+      const novasNotas = [
+        ...(Array.isArray(alvo?.anotacoes) ? alvo.anotacoes : []),
+        { texto, autor: "Mesa PROSFEC", data: agora }
+      ];
+      await updateDoc(doc(db, "leads_energia", leadId), {
+        anotacoes: novasNotas,
+        atualizadoEm: agora
+      });
+      setLeadsEnergia(prev => prev.map((l: any) =>
+        l.id === leadId ? { ...l, anotacoes: novasNotas, atualizadoEm: agora } : l
+      ));
+      setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: "" }));
+      toast.success("Anotação registrada e compartilhada com o parceiro.");
+    } catch (error) {
+      console.error("Erro ao registrar anotação de energia:", error);
+      toast.error("Não foi possível salvar a anotação.");
+    } finally {
+      setEnergiaSavingId(null);
+    }
+  };
+
+  const filteredLeadsEnergia = leadsEnergia.filter((l: any) => {
+    const statusOk = energiaStatusFilter === "todos" || (l.status || "novo") === energiaStatusFilter;
+    const termo = (searchTerm || "").toLowerCase().trim();
+    const textoOk = !termo || [l.nomeEmpresa, l.razaoSocial, l.cnpj, l.telefone, l.cidade, l.parceiroNome]
+      .filter(Boolean)
+      .some((v: string) => String(v).toLowerCase().includes(termo));
+    return statusOk && textoOk;
+  });
+
   const adminNavItems = [
     { id: "funnel", label: "Funil & Conversão", icon: TrendingUp, badge: null as any },
     { id: "leads", label: "Leads", icon: Users, badge: leads.length ? String(leads.length) : null, tone: "neutral" },
+    {
+      id: "leads_energia",
+      label: "Leads Energia",
+      icon: Zap,
+      badge: leadsEnergia.filter((l: any) => (l.status || "novo") === "novo").length || null,
+      tone: "warning"
+    },
     { id: "partners", label: "Parceiros", icon: Handshake, badge: partners.length ? String(partners.length) : null, tone: "neutral" },
     { id: "announcements", label: "Comunicados", icon: Megaphone, badge: null },
     {
@@ -3206,6 +3311,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 <div>
                   <h3 className="font-display font-extrabold text-sm text-[#064e3b] uppercase tracking-wider flex items-center gap-2">
                     {activeTab === "leads" && <><Users className="w-4 h-4 text-emerald-600" /> Banco de Leads</>}
+                    {activeTab === "leads_energia" && <><Zap className="w-4 h-4 text-amber-500" /> Leads Energia Solar</>}
                     {activeTab === "partners" && <><Handshake className="w-4 h-4 text-emerald-600" /> Parceiros de Negócios</>}
                     {activeTab === "announcements" && <><Megaphone className="w-4 h-4 text-emerald-600" /> Painel de Comunicados</>}
                     {activeTab === "recargas" && <><Coins className="w-4 h-4 text-emerald-600" /> Solicitações de Recarga</>}
@@ -4339,6 +4445,183 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </div>
                   )}
                 </>
+              )}
+
+              {/* ⚡ LEADS ENERGIA SOLAR */}
+              {activeTab === "leads_energia" && (
+                <div className="p-4 md:p-6 space-y-4">
+                  {/* Filtros por etapa */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {[{ value: "todos", label: "Todos" }, ...ENERGIA_STATUS_OPTIONS].map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setEnergiaStatusFilter(opt.value as any)}
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${
+                          energiaStatusFilter === opt.value
+                            ? "bg-amber-500 text-white border-amber-500"
+                            : "bg-white/75 text-slate-600 border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        {opt.label}
+                        <span className="ml-1 opacity-70">
+                          {opt.value === "todos"
+                            ? leadsEnergia.length
+                            : leadsEnergia.filter((l: any) => (l.status || "novo") === opt.value).length}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {filteredLeadsEnergia.length === 0 ? (
+                    <div className="p-16 text-center text-slate-400">
+                      <Zap className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="font-bold text-slate-600">Nenhum lead de energia solar encontrado</p>
+                      <p className="text-xs mt-1">Os parceiros enviam leads pelo botão ⚡ Energia Solar no Painel de Oportunidades.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                      {filteredLeadsEnergia.map((lead: any) => {
+                        const status = lead.status || "novo";
+                        const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
+                        const socios = lead.cnpjDetails?.socios || [];
+                        return (
+                          <div key={lead.id} className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 space-y-3">
+                            {/* Identificação */}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-black text-sm text-slate-800 line-clamp-1">{lead.nomeEmpresa}</p>
+                                {lead.razaoSocial && lead.razaoSocial !== lead.nomeEmpresa && (
+                                  <p className="text-[11px] text-slate-500 font-semibold line-clamp-1">{lead.razaoSocial}</p>
+                                )}
+                                {lead.ramo && (
+                                  <span className="inline-block mt-1 text-[9px] bg-slate-100 text-slate-600 font-extrabold px-1.5 py-0.5 rounded uppercase">
+                                    {lead.ramo}
+                                  </span>
+                                )}
+                              </div>
+                              <span className={`shrink-0 border font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase ${energiaStatusBadge(status)}`}>
+                                {ENERGIA_STATUS_OPTIONS.find(o => o.value === status)?.label || status}
+                              </span>
+                            </div>
+
+                            {/* Dados cadastrais */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-slate-600 font-medium">
+                              {lead.cnpj && (
+                                <p className="flex items-center gap-1">
+                                  <FileText className="w-3.5 h-3.5 text-slate-400" /> {lead.cnpj}
+                                  {lead.cnpjDetails?.situacaoCadastral && (
+                                    <span className="ml-1 bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded text-[8px]">
+                                      {lead.cnpjDetails.situacaoCadastral}
+                                    </span>
+                                  )}
+                                </p>
+                              )}
+                              {lead.cnpjDetails?.porte && (
+                                <p className="flex items-center gap-1"><Briefcase className="w-3.5 h-3.5 text-slate-400" /> Porte: {lead.cnpjDetails.porte}</p>
+                              )}
+                              {lead.telefone && (
+                                <p className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-slate-400" /> {lead.telefone}</p>
+                              )}
+                              {(lead.cidade || lead.estado) && (
+                                <p className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400" /> {[lead.cidade, lead.estado].filter(Boolean).join(" / ")}</p>
+                              )}
+                              {lead.endereco && (
+                                <p className="sm:col-span-2 flex items-start gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5" /> <span className="line-clamp-2">{lead.endereco}</span></p>
+                              )}
+                              {lead.website && (
+                                <p className="sm:col-span-2 flex items-center gap-1 truncate">
+                                  <Link2 className="w-3.5 h-3.5 text-slate-400" />
+                                  <a href={lead.website} target="_blank" rel="noreferrer" className="text-blue-600 font-semibold hover:underline truncate">
+                                    {String(lead.website).replace(/https?:\/\/(www\.)?/, "")}
+                                  </a>
+                                </p>
+                              )}
+                            </div>
+
+                            {socios.length > 0 && (
+                              <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide mb-1">Quadro Societário</p>
+                                <p className="text-[11px] text-slate-600 font-medium">
+                                  {socios.map((s: any) => s.nome || s).join(" • ")}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Parceiro indicador */}
+                            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-2.5 text-[11px]">
+                              <p className="text-[9px] font-black text-indigo-400 uppercase tracking-wide mb-0.5">Afiliado indicador</p>
+                              <p className="font-extrabold text-indigo-800">{lead.parceiroNome || "Não informado"}</p>
+                              {lead.parceiroEmail && <p className="text-indigo-600 font-medium">{lead.parceiroEmail}</p>}
+                              <p className="text-indigo-500/80 font-semibold">
+                                Indicado em {lead.criadoEm ? new Date(lead.criadoEm).toLocaleString("pt-BR") : "-"}
+                              </p>
+                            </div>
+
+                            {/* Ações */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {lead.telefone && (
+                                <a
+                                  href={buildWhatsAppUrl(lead.telefone, `Olá, ${lead.nomeEmpresa}! Aqui é da PROSFEC, sobre a economia na sua conta de energia.`)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Send className="w-3 h-3" /> WhatsApp
+                                </a>
+                              )}
+                              <select
+                                value={status}
+                                onChange={(e) => handleUpdateEnergiaStatus(lead.id, e.target.value)}
+                                disabled={energiaSavingId === lead.id}
+                                className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 cursor-pointer disabled:opacity-50"
+                              >
+                                {ENERGIA_STATUS_OPTIONS.map(opt => (
+                                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Histórico e anotações */}
+                            <div className="pt-2.5 border-t border-slate-100 space-y-2">
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Histórico de Movimentações</p>
+                              {notas.length === 0 ? (
+                                <p className="text-[11px] text-slate-400 font-medium">Sem movimentações registradas.</p>
+                              ) : (
+                                <div className="space-y-1 max-h-[160px] overflow-y-auto">
+                                  {notas.slice().reverse().map((nota: any, idx: number) => (
+                                    <div key={idx} className="bg-slate-50 border border-slate-100 rounded-lg p-2">
+                                      <p className="text-[11px] text-slate-700 font-medium leading-snug">{nota.texto}</p>
+                                      <p className="text-[9px] text-slate-400 font-semibold">
+                                        {nota.autor || "Mesa PROSFEC"} • {nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={energiaNotaDraft[lead.id] || ""}
+                                  onChange={(e) => setEnergiaNotaDraft(prev => ({ ...prev, [lead.id]: e.target.value }))}
+                                  onKeyDown={(e) => { if (e.key === "Enter") handleAddEnergiaNota(lead.id); }}
+                                  placeholder="Escrever anotação visível ao parceiro..."
+                                  className="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                />
+                                <button
+                                  onClick={() => handleAddEnergiaNota(lead.id)}
+                                  disabled={energiaSavingId === lead.id || !(energiaNotaDraft[lead.id] || "").trim()}
+                                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                                >
+                                  <Plus className="w-3 h-3" /> Registrar
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* PARTNERS LIST TABLE */}

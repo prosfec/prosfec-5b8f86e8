@@ -266,6 +266,18 @@ service cloud.firestore {
                        ));
     }
 
+    // ---------------------------------------------------------------------
+    // leads_energia — esteira comercial de Energia Solar (isolada do crédito)
+    // Parceiro autenticado cria/consulta; ADM atualiza status e anotações.
+    // ---------------------------------------------------------------------
+    match /leads_energia/{energiaId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isStaff()
+                    || (isSignedIn() && resource != null && partnerDocBelongsToMe(resource.data.parceiroId));
+      allow delete: if isStaff();
+    }
+
 
     // ---------------------------------------------------------------------
     // 7. NOTIFICACOES

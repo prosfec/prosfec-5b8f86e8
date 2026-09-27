@@ -10,3 +10,5 @@
 <!-- LOVABLE:END -->
 
 - Persist admin movement-read timestamps on each lead, not browser storage, so the queue is shared across staff devices.
+
+- Leads de energia solar ficam na coleção `leads_energia`, separada de `leads_distribuidos`, porque o funil solar tem fluxo comercial próprio (4 etapas, sem consulta/taxa).
