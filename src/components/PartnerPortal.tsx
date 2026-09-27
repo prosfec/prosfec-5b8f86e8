@@ -1637,7 +1637,7 @@ export default function PartnerPortal({
   const handleMarcarEnergiaSolar = async (place: any) => {
     if (!currentPartner) return;
     const key = energiaLeadKey(place);
-    if (energiaLeads.some(l => energiaLeadKey(l.empresa ? { nome: l.nomeEmpresa, telefone: l.telefone } : { nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
+    if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
       toast.info("Esta empresa já está na sua lista de Energia Solar.");
       return;
     }
