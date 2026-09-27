@@ -94,7 +94,8 @@ import {
   isMensalidadeItem,
   withoutMensalidades,
   onlyMensalidades,
-  buildWhatsAppUrl
+  buildWhatsAppUrl,
+  buildEnergiaSolarWhatsAppMessage
 } from "../utils";
 import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
@@ -4564,7 +4565,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             <div className="flex items-center gap-2 flex-wrap">
                               {lead.telefone && (
                                 <a
-                                  href={buildWhatsAppUrl(lead.telefone, `Olá, ${lead.nomeEmpresa}! Aqui é da PROSFEC, sobre a economia na sua conta de energia.`)}
+                                  href={buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa))}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer"
