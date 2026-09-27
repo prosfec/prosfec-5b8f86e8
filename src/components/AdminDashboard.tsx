@@ -10,7 +10,8 @@ import {
   orderBy,
   addDoc,
   setDoc,
-  getDoc
+  getDoc,
+  arrayUnion
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
@@ -3028,12 +3029,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const notaAutomatica = {
         texto: `Status atualizado para ${statusLabel}.`,
         autor: "Mesa PROSFEC",
+        papel: "adm",
         data: agora
       };
       const novasNotas = [...(Array.isArray(alvo?.anotacoes) ? alvo.anotacoes : []), notaAutomatica];
       await updateDoc(doc(db, "leads_energia", leadId), {
         status: novoStatus,
-        anotacoes: novasNotas,
+        anotacoes: arrayUnion(notaAutomatica),
         atualizadoEm: agora
       });
       setLeadsEnergia(prev => prev.map((l: any) =>
@@ -3055,12 +3057,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     try {
       const agora = new Date().toISOString();
       const alvo = leadsEnergia.find((l: any) => l.id === leadId);
+      const novaNota = { texto, autor: "Mesa PROSFEC", papel: "adm", data: agora };
       const novasNotas = [
         ...(Array.isArray(alvo?.anotacoes) ? alvo.anotacoes : []),
-        { texto, autor: "Mesa PROSFEC", data: agora }
+        novaNota
       ];
       await updateDoc(doc(db, "leads_energia", leadId), {
-        anotacoes: novasNotas,
+        anotacoes: arrayUnion(novaNota),
         atualizadoEm: agora
       });
       setLeadsEnergia(prev => prev.map((l: any) =>
