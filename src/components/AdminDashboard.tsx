@@ -3051,6 +3051,25 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
+  const handleDeleteEnergiaLead = async (leadId: string, nomeEmpresa?: string) => {
+    const confirmado = window.confirm(
+      `Excluir definitivamente o lead ${nomeEmpresa || "selecionado"} da base de Energia Solar?\n\nEssa ação não pode ser desfeita e o lead deixará de aparecer também no painel do parceiro.`
+    );
+    if (!confirmado) return;
+    setEnergiaSavingId(leadId);
+    try {
+      await deleteDoc(doc(db, "leads_energia", leadId));
+      setLeadsEnergia(prev => prev.filter((l: any) => l.id !== leadId));
+      toast.success("Lead excluído da base de Energia Solar.");
+    } catch (error) {
+      console.error("Erro ao excluir lead de energia:", error);
+      toast.error("Não foi possível excluir o lead.");
+    } finally {
+      setEnergiaSavingId(null);
+    }
+  };
+
+
   const handleAddEnergiaNota = async (leadId: string) => {
     const texto = (energiaNotaDraft[leadId] || "").trim();
     if (!texto) return;
