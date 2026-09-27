@@ -8063,7 +8063,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               const energiaCnpjData = cnpjDetailsMap[lead.id] || lead.cnpjDetails || null;
                               const energiaCnpj = energiaCnpjData?.cnpj || lead.cnpj || "";
                               const energiaWa = lead.telefone
-                                ? buildWhatsAppUrl(lead.telefone, `Olá, ${lead.nomeEmpresa}! Sou consultor da PROSFEC e entro em contato sobre a análise de economia na sua conta de energia elétrica.`)
+                                ? buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa))
                                 : "#";
                               return (
                                 <div key={lead.id} className="bg-white border border-amber-100 rounded-2xl p-3.5 space-y-2.5">
