@@ -1052,6 +1052,7 @@ export default function PartnerPortal({
   const [prospectNoteDraft, setProspectNoteDraft] = useState<Record<string, string>>({});
   const [expandedProspectNoteKey, setExpandedProspectNoteKey] = useState<string | null>(null);
   const [savingProspectNoteKey, setSavingProspectNoteKey] = useState<string | null>(null);
+  const [discardingHuntPlaceId, setDiscardingHuntPlaceId] = useState<string | null>(null);
 
   // Step 6 Services Performance & Financial Control states
   const [dashboardServiceFilter, setDashboardServiceFilter] = useState<"todos" | "pendente" | "pago" | "cancelado">("todos");
@@ -1739,6 +1740,34 @@ export default function PartnerPortal({
       setProspectNotes(map);
     } catch (error) {
       console.error("Erro ao carregar anotações de prospecção:", error);
+    }
+  };
+
+  // 🗑️ Descartar lead do Painel de Oportunidades (todos os perfis)
+  const handleDiscardHuntPlace = async (place: any) => {
+    if (!place) return;
+    if (!confirm(`Descartar "${place.nome || "este lead"}" do Painel de Oportunidades?\n\nO card será removido e as anotações salvas dele serão apagadas do banco de dados.`)) return;
+    const key = prospectNoteKey(place);
+    setDiscardingHuntPlaceId(place.id);
+    try {
+      const existente = prospectNotes[key];
+      if (existente?.id) {
+        await deleteDoc(doc(db, "leads_distribuidos", existente.id));
+        setProspectNotes(prev => {
+          const copy = { ...prev };
+          delete copy[key];
+          return copy;
+        });
+      }
+      setHuntResults(prev => prev.filter(p => p.id !== place.id));
+      setSelectedHuntPlaces(prev => prev.filter(id => id !== place.id));
+      if (expandedProspectNoteKey === key) setExpandedProspectNoteKey(null);
+      toast.success("Lead descartado do painel.");
+    } catch (error) {
+      console.error("Erro ao descartar lead do painel:", error);
+      toast.error("Não foi possível descartar o lead.");
+    } finally {
+      setDiscardingHuntPlaceId(null);
     }
   };
 
@@ -8932,6 +8961,21 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                       </button>
                                     );
                                   })()}
+
+                                  {/* 🗑️ Descartar o lead do painel (e apagar anotações do banco) */}
+                                  <button
+                                    onClick={() => handleDiscardHuntPlace(place)}
+                                    disabled={discardingHuntPlaceId === placeId}
+                                    className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                                    title="Remover este lead do painel e apagar suas anotações"
+                                  >
+                                    {discardingHuntPlaceId === placeId ? (
+                                      <RefreshCw className="w-3 h-3 animate-spin text-rose-600" />
+                                    ) : (
+                                      <Trash2 className="w-3 h-3 text-rose-600" />
+                                    )}
+                                    Descartar
+                                  </button>
 
                                   {/* Copy business details */}
                                   <button
