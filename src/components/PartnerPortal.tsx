@@ -1743,6 +1743,34 @@ export default function PartnerPortal({
     }
   };
 
+  // 🗑️ Descartar lead do Painel de Oportunidades (todos os perfis)
+  const handleDiscardHuntPlace = async (place: any) => {
+    if (!place) return;
+    if (!confirm(`Descartar "${place.nome || "este lead"}" do Painel de Oportunidades?\n\nO card será removido e as anotações salvas dele serão apagadas do banco de dados.`)) return;
+    const key = prospectNoteKey(place);
+    setDiscardingHuntPlaceId(place.id);
+    try {
+      const existente = prospectNotes[key];
+      if (existente?.id) {
+        await deleteDoc(doc(db, "leads_distribuidos", existente.id));
+        setProspectNotes(prev => {
+          const copy = { ...prev };
+          delete copy[key];
+          return copy;
+        });
+      }
+      setHuntResults(prev => prev.filter(p => p.id !== place.id));
+      setSelectedHuntPlaces(prev => prev.filter(id => id !== place.id));
+      if (expandedProspectNoteKey === key) setExpandedProspectNoteKey(null);
+      toast.success("Lead descartado do painel.");
+    } catch (error) {
+      console.error("Erro ao descartar lead do painel:", error);
+      toast.error("Não foi possível descartar o lead.");
+    } finally {
+      setDiscardingHuntPlaceId(null);
+    }
+  };
+
   const handleAddProspectNote = async (place: any) => {
     if (!currentPartner) return;
     const key = prospectNoteKey(place);
