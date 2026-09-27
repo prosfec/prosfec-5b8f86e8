@@ -194,25 +194,197 @@ export default function EnergiaSolarLanding() {
               </Glass>
             </div>
             <Glass className="p-7">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
-                Custo da energia ao longo dos anos
-              </p>
-              <div className="mt-8 flex h-56 items-end gap-3">
-                {[34, 46, 58, 71, 88, 100].map((h, i) => (
-                  <div key={i} className="flex flex-1 flex-col items-center gap-2">
-                    <div
-                      className="w-full rounded-t-lg bg-gradient-to-t from-[#FACC15]/15 to-[#FACC15]/70"
-                      style={{ height: `${h}%` }}
-                    />
-                    <span className="text-[10px] font-bold text-white/35">
-                      {2021 + i}
-                    </span>
-                  </div>
-                ))}
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
+                    Custo da energia ao longo dos anos
+                  </p>
+                  <p className="mt-1.5 text-[13px] text-white/45">
+                    Tarifa média residencial em R$ por kWh
+                  </p>
+                </div>
+                <span className="rounded-full border border-[#FACC15]/25 bg-[#FACC15]/10 px-3 py-1.5 text-[11px] font-extrabold text-[#FDE047]">
+                  ▲ +69% em 5 anos
+                </span>
               </div>
-              <p className="mt-6 text-[13px] leading-relaxed text-white/45">
+
+              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-semibold">
+                <span className="flex items-center gap-2 text-white/55">
+                  <span className="h-2 w-2 rounded-full bg-[#FACC15]" />
+                  Tarifa tradicional da distribuidora
+                </span>
+                <span className="flex items-center gap-2 text-white/55">
+                  <span className="h-2 w-2 rounded-full bg-[#10B981]" />
+                  Com assinatura solar (−17% a −27%)
+                </span>
+              </div>
+
+              <svg
+                viewBox="0 0 480 232"
+                className="mt-5 w-full"
+                role="img"
+                aria-label="Gráfico comparativo da tarifa de energia da distribuidora contra o valor pago com assinatura solar entre 2021 e 2026"
+              >
+                <defs>
+                  <linearGradient id="gradTarifa" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#FACC15" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#FACC15" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="gradSolar" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+
+                {[
+                  { y: 205, l: "0,40" },
+                  { y: 161.5, l: "0,60" },
+                  { y: 118, l: "0,80" },
+                  { y: 74.6, l: "1,00" },
+                  { y: 31.1, l: "1,20" },
+                ].map((g) => (
+                  <g key={g.l}>
+                    <line
+                      x1="46"
+                      x2="472"
+                      y1={g.y}
+                      y2={g.y}
+                      stroke="#ffffff"
+                      strokeOpacity="0.07"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x="38"
+                      y={g.y + 3.5}
+                      textAnchor="end"
+                      fill="#ffffff"
+                      fillOpacity="0.32"
+                      fontSize="10"
+                      fontWeight="600"
+                    >
+                      {g.l}
+                    </text>
+                  </g>
+                ))}
+
+                <path
+                  d="M46,144.1 L130,120.1 L214,102.7 L298,83.1 L382,61.4 L466,41.8 L466,205 L46,205 Z"
+                  fill="url(#gradTarifa)"
+                />
+                <path
+                  d="M46,176.7 L130,157.1 L214,144.1 L298,128.8 L382,111.4 L466,96.2 L466,205 L46,205 Z"
+                  fill="url(#gradSolar)"
+                />
+
+                <polyline
+                  points="46,144.1 130,120.1 214,102.7 298,83.1 382,61.4 466,41.8"
+                  fill="none"
+                  stroke="#FACC15"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <polyline
+                  points="46,176.7 130,157.1 214,144.1 298,128.8 382,111.4 466,96.2"
+                  fill="none"
+                  stroke="#10B981"
+                  strokeWidth="2.5"
+                  strokeDasharray="7 5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {[
+                  [46, 144.1],
+                  [130, 120.1],
+                  [214, 102.7],
+                  [298, 83.1],
+                  [382, 61.4],
+                  [466, 41.8],
+                ].map(([x, y]) => (
+                  <circle
+                    key={`t${x}`}
+                    cx={x}
+                    cy={y}
+                    r="3.5"
+                    fill="#05070A"
+                    stroke="#FACC15"
+                    strokeWidth="2.5"
+                  />
+                ))}
+                {[
+                  [46, 176.7],
+                  [130, 157.1],
+                  [214, 144.1],
+                  [298, 128.8],
+                  [382, 111.4],
+                  [466, 96.2],
+                ].map(([x, y]) => (
+                  <circle
+                    key={`s${x}`}
+                    cx={x}
+                    cy={y}
+                    r="3.5"
+                    fill="#05070A"
+                    stroke="#10B981"
+                    strokeWidth="2.5"
+                  />
+                ))}
+
+                <text
+                  x="46"
+                  y="132"
+                  fill="#FDE047"
+                  fontSize="11"
+                  fontWeight="800"
+                >
+                  R$ 0,68
+                </text>
+                <text
+                  x="466"
+                  y="30"
+                  textAnchor="end"
+                  fill="#FDE047"
+                  fontSize="12"
+                  fontWeight="800"
+                >
+                  R$ 1,15
+                </text>
+                <text
+                  x="466"
+                  y="114"
+                  textAnchor="end"
+                  fill="#10B981"
+                  fontSize="12"
+                  fontWeight="800"
+                >
+                  R$ 0,90
+                </text>
+
+                {["2021", "2022", "2023", "2024", "2025", "2026"].map((ano, i) => (
+                  <text
+                    key={ano}
+                    x={46 + i * 84}
+                    y="226"
+                    textAnchor={i === 0 ? "start" : i === 5 ? "end" : "middle"}
+                    fill="#ffffff"
+                    fillOpacity="0.35"
+                    fontSize="10"
+                    fontWeight="700"
+                  >
+                    {ano}
+                  </text>
+                ))}
+              </svg>
+
+              <p className="mt-5 text-[13px] leading-relaxed text-white/45">
                 Reajustes, bandeiras tarifárias e tributos em cascata seguem pressionando
-                a sua fatura ano após ano.
+                a sua fatura ano após ano. Com a assinatura, a linha verde mostra o quanto
+                você deixa de pagar todos os meses.
+              </p>
+              <p className="mt-3 text-[11px] leading-relaxed text-white/30">
+                Fonte: histórico de tarifas homologadas pela ANEEL e projeções de mercado.
+                Valores médios ilustrativos, variáveis por distribuidora.
               </p>
             </Glass>
           </div>
