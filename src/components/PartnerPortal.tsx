@@ -8297,6 +8297,35 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         <Plus className="w-3 h-3" />
                                         Cadastrar Lead
                                       </button>
+
+                                      {/* ⚡ Enviar para a esteira de Energia Solar */}
+                                      {(() => {
+                                        const jaEnviado = energiaLeads.some(
+                                          (l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === energiaLeadKey(leadPlaceObj)
+                                        );
+                                        if (jaEnviado) {
+                                          return (
+                                            <span className="px-2.5 py-1.5 bg-amber-100 text-amber-800 border border-amber-200 rounded-lg font-extrabold text-[10px] flex items-center justify-center gap-1 select-none">
+                                              <Check className="w-3 h-3 text-amber-700" />
+                                              Enviado para Energia Solar
+                                            </span>
+                                          );
+                                        }
+                                        return (
+                                          <button
+                                            onClick={() => handleMarcarEnergiaSolar(leadPlaceObj)}
+                                            disabled={energiaSavingId === lead.id}
+                                            className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                                          >
+                                            {energiaSavingId === lead.id ? (
+                                              <RefreshCw className="w-3 h-3 animate-spin text-amber-600" />
+                                            ) : (
+                                              <Zap className="w-3 h-3 text-amber-500 fill-current" />
+                                            )}
+                                            Energia Solar
+                                          </button>
+                                        );
+                                      })()}
                                     </div>
 
                                     {hasPhone && (
