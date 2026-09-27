@@ -11514,14 +11514,64 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     </div>
                                   )}
 
-                                  {lead.historico && lead.historico.length > 0 && (
-                                    <div className="mt-2 p-2 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-                                      <span className="text-[9px] font-extrabold text-slate-500 uppercase block">Última Anotação:</span>
-                                      <p className="text-[11px] text-slate-700 italic">
-                                        "{lead.historico[lead.historico.length - 1].text}"
-                                      </p>
+                                  {/* Anotações & Histórico — leitura e escrita para o Master */}
+                                  <div className="mt-2 bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <button
+                                        onClick={() => setExpandedNotesLeadId(expandedNotesLeadId === lead.id ? null : lead.id)}
+                                        className="text-[10px] font-extrabold text-indigo-700 hover:text-indigo-900 flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
+                                        Anotações & Histórico ({Array.isArray(lead.historico) ? lead.historico.length : 0})
+                                      </button>
+                                      <span className="text-[9px] text-slate-400 font-bold uppercase">Acompanhamento</span>
                                     </div>
-                                  )}
+
+                                    {expandedNotesLeadId === lead.id ? (
+                                      <div className="space-y-2 pt-2 border-t border-slate-200/60">
+                                        {Array.isArray(lead.historico) && lead.historico.length > 0 ? (
+                                          <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                                            {lead.historico.map((note: any, idx: number) => (
+                                              <div key={note.id || idx} className="bg-white border border-slate-200/60 p-2 rounded-lg text-[10px] space-y-0.5">
+                                                <div className="flex items-center justify-between text-slate-400 font-bold">
+                                                  <span>{note.author || "Consultor"}</span>
+                                                  <span>{note.date ? new Date(note.date).toLocaleString("pt-BR") : ""}</span>
+                                                </div>
+                                                <p className="text-slate-700 font-medium whitespace-pre-wrap">{note.text}</p>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <p className="text-[10px] text-slate-400 italic">Nenhuma anotação registrada ainda.</p>
+                                        )}
+
+                                        <div className="flex items-center gap-1.5 pt-1">
+                                          <input
+                                            type="text"
+                                            placeholder="Escreva uma orientação..."
+                                            value={activeNoteInput[lead.id] || ""}
+                                            onChange={(e) => setActiveNoteInput(prev => ({ ...prev, [lead.id]: e.target.value }))}
+                                            onKeyDown={(e) => { if (e.key === "Enter") handleAddLeadNote(lead.id); }}
+                                            className="flex-1 bg-white border border-slate-200 text-[10px] px-2.5 py-1.5 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                          />
+                                          <button
+                                            disabled={!activeNoteInput[lead.id]?.trim() || addingNoteForLeadId === lead.id}
+                                            onClick={() => handleAddLeadNote(lead.id)}
+                                            className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                                          >
+                                            {addingNoteForLeadId === lead.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                                            Salvar
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      Array.isArray(lead.historico) && lead.historico.length > 0 && (
+                                        <p className="text-[11px] text-slate-700 italic line-clamp-2">
+                                          "{lead.historico[lead.historico.length - 1].text}"
+                                        </p>
+                                      )
+                                    )}
+                                  </div>
                                 </div>
                               </div>
 
