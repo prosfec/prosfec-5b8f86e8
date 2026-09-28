@@ -1390,7 +1390,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         observacoes: motivo.trim() || "Solicitação recusada pela administração",
         dataAtualizacao: new Date().toISOString()
       });
-      const solRef = (solicitacoesComissao || []).find((s: any) => s.id === id);
+      const solRef = (comissoes || []).find((s: any) => s.id === id);
       if (solRef) await syncEnergiaLeadsComissao(solRef, "recusado");
 
 
