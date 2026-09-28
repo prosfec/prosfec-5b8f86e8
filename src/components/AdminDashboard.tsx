@@ -11,7 +11,8 @@ import {
   addDoc,
   setDoc,
   getDoc,
-  arrayUnion
+  arrayUnion,
+  where
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
@@ -1300,6 +1301,27 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
+  // Reflete o desfecho de um saque de Energia Solar nos leads envolvidos:
+  // pago → "paga"; recusado → volta para "acumulada" (pode ser solicitado de novo).
+  const syncEnergiaLeadsComissao = async (sol: any, desfecho: "pago" | "recusado") => {
+    if (sol?.origem !== "energia_solar") return;
+    try {
+      let ids: string[] = Array.isArray(sol?.detalhes?.leadIds) ? sol.detalhes.leadIds : [];
+      if (!ids.length && sol?.dataSolicitacao) {
+        const snap = await getDocs(query(collection(db, "leads_energia"), where("comissaoSolicitadaEm", "==", sol.dataSolicitacao)));
+        ids = snap.docs.map(d => d.id);
+      }
+      const now = new Date().toISOString();
+      for (const leadId of ids) {
+        await updateDoc(doc(db, "leads_energia", leadId), desfecho === "pago"
+          ? { comissaoStatus: "paga", comissaoPagaEm: now }
+          : { comissaoStatus: "acumulada", comissaoSolicitadaEm: null });
+      }
+    } catch (e) {
+      console.error("Erro ao sincronizar leads de energia com o saque:", e);
+    }
+  };
+
   const handlePayCommission = async (solicitacao: SolicitacaoComissao) => {
     if (userRole === "contador") {
       alert("Acesso Restrito: Contadores não possuem permissão para liquidar comissões.");
@@ -1322,6 +1344,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         dataPagamento: now,
         comprovante: comprovanteText
       });
+      await syncEnergiaLeadsComissao(solicitacao, "pago");
 
       // Notify partner
       if (solicitacao.partnerId) {
@@ -1367,6 +1390,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         observacoes: motivo.trim() || "Solicitação recusada pela administração",
         dataAtualizacao: new Date().toISOString()
       });
+      const solRef = (comissoes || []).find((s: any) => s.id === id);
+      if (solRef) await syncEnergiaLeadsComissao(solRef, "recusado");
+
 
       alert("Solicitação de comissão recusada.");
       await fetchData();
@@ -3029,7 +3055,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   // Converte "1.850,00" ou "1850.00" em número
   const parseValorBR = (valor: string): number => {
-    const limpo = String(valor || "").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+    let limpo = String(valor || "").replace(/[^\d,.-]/g, "");
+    if (limpo.includes(",")) {
+      // Formato BR: ponto = milhar, vírgula = decimal
+      limpo = limpo.replace(/\./g, "").replace(",", ".");
+    } else if ((limpo.match(/\./g) || []).length > 1 || /\.\d{3}$/.test(limpo)) {
+      // "1.850" ou "1.850.000" → pontos de milhar
+      limpo = limpo.replace(/\./g, "");
+    }
+    // Caso contrário, ponto único com 1-2 casas é decimal ("1850.00")
     const n = parseFloat(limpo);
     return Number.isFinite(n) ? n : 0;
   };
@@ -5898,7 +5932,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                       ? "bg-sky-50 text-sky-700 border border-sky-200"
                                       : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                   }`}>
-                                    {(sol as any).origem === "vendas" ? "Comissões de Vendas" : "Serviços Passo 6"}
+                                    {(sol as any).origem === "vendas" ? "Comissões de Vendas" : (sol as any).origem === "energia_solar" ? "Comissões de Energia Solar" : "Serviços Passo 6"}
                                   </span>
                                 </td>
 
