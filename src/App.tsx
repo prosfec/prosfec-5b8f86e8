@@ -17,7 +17,7 @@ import DiagnosticoSection from "./components/DiagnosticoSection";
 import Beneficios from "./components/Beneficios";
 import SolucoesEspecificas from "./components/SolucoesEspecificas";
 import CTAFinal from "./components/CTAFinal";
-import Parceiros from "./components/Parceiros";
+// Programa de Parceiros migrado para a página dedicada /parceiros
 import FAQ from "./components/FAQ";
 import Footer from "./components/Footer";
 import AdminDashboard from "./components/AdminDashboard";
