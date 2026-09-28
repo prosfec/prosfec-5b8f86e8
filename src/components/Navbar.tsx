@@ -99,12 +99,12 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
               Como Atuamos
             </a>
             <a
-              href="#parceiros"
-              onClick={(e) => handleLinkClick(e, "parceiros")}
+              href="/parceiros"
                className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
             >
-              Parceiros
+              Seja Parceiro
             </a>
+
             <a
               href="#faq"
               onClick={(e) => handleLinkClick(e, "faq")}
