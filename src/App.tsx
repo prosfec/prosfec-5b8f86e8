@@ -234,6 +234,8 @@ export default function App() {
     setPartnerInitialRegister(true);
     setShowPartnerPortal(true);
   };
+  void handleSelectPlanForPartner;
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
