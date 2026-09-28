@@ -101,13 +101,13 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
               </li>
               <li>
                 <a
-                  href="#parceiros"
-                  onClick={(e) => handleLinkClick(e, "parceiros")}
+                  href="/parceiros"
                   className="hover:text-white transition-colors"
                 >
-                  Programa de recomendador
+                  Seja um Parceiro PROSFEC
                 </a>
               </li>
+
               <li>
                 <a
                   href="#faq"
