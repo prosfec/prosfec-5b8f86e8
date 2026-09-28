@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as EnergiasolarRouteImport } from './routes/energiasolar'
+import { Route as ParceirosRouteImport } from './routes/parceiros'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ContratoLeadIdRouteImport } from './routes/contrato.$leadId'
@@ -30,6 +31,11 @@ const AdminRoute = AdminRouteImport.update({
 const EnergiasolarRoute = EnergiasolarRouteImport.update({
   id: '/energiasolar',
   path: '/energiasolar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParceirosRoute = ParceirosRouteImport.update({
+  id: '/parceiros',
+  path: '/parceiros',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/energiasolar': typeof EnergiasolarRoute
+  '/parceiros': typeof ParceirosRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/energiasolar': typeof EnergiasolarRoute
+  '/parceiros': typeof ParceirosRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/energiasolar': typeof EnergiasolarRoute
+  '/parceiros': typeof ParceirosRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/energiasolar'
+    | '/parceiros'
     | '/sitemap.xml'
     | '/api/$'
     | '/contrato/$leadId'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/energiasolar'
+    | '/parceiros'
     | '/sitemap.xml'
     | '/api/$'
     | '/contrato/$leadId'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/energiasolar'
+    | '/parceiros'
     | '/sitemap.xml'
     | '/api/$'
     | '/contrato/$leadId'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   EnergiasolarRoute: typeof EnergiasolarRoute
+  ParceirosRoute: typeof ParceirosRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ContratoLeadIdRoute: typeof ContratoLeadIdRoute
@@ -142,6 +155,13 @@ declare module '@tanstack/react-router' {
       path: '/energiasolar'
       fullPath: '/energiasolar'
       preLoaderRoute: typeof EnergiasolarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parceiros': {
+      id: '/parceiros'
+      path: '/parceiros'
+      fullPath: '/parceiros'
+      preLoaderRoute: typeof ParceirosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   EnergiasolarRoute: EnergiasolarRoute,
+  ParceirosRoute: ParceirosRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSplatRoute: ApiSplatRoute,
   ContratoLeadIdRoute: ContratoLeadIdRoute,

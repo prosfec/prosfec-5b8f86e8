@@ -606,8 +606,8 @@ export default function App() {
           referredByPartnerNome={referredByPartnerNome}
         />
 
-        {/* 10. PROGRAMA DE PARCEIROS */}
-        <Parceiros onSelectPlan={handleSelectPlanForPartner} />
+        {/* 10. PROGRAMA DE PARCEIROS: agora em página dedicada (/parceiros) */}
+
 
         {/* 11. FAQ */}
         <FAQ />
