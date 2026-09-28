@@ -25,7 +25,7 @@ import {
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
-import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, isJanelaSaqueQuinzenal, proximaJanelaSaqueLabel } from "../utils";
+import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueQuinzenal, proximaJanelaSaqueLabel } from "../utils";
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import LeadRegisterForm from "./LeadRegisterForm";
@@ -1957,6 +1957,7 @@ export default function PartnerPortal({
                               const energiaWa = lead.telefone
                                 ? buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa))
                                 : "#";
+                              const energiaFollowUp = precisaFollowUpEnergia(lead);
                               return (
                                 <div key={lead.id} className="bg-white border border-amber-100 rounded-2xl p-3.5 space-y-2.5">
                                   <div className="flex items-start justify-between gap-2">
@@ -1971,10 +1972,25 @@ export default function PartnerPortal({
                                         <p className="text-[10px] text-slate-500 font-semibold line-clamp-1">{lead.razaoSocial}</p>
                                       )}
                                     </div>
-                                    <span className={`shrink-0 border font-extrabold px-1.5 py-0.5 rounded-full text-[9px] uppercase ${statusStyle}`}>
-                                      {ENERGIA_STATUS_LABELS[statusKey] || statusKey}
+                                    <span className="shrink-0 flex items-center gap-1.5">
+                                      {energiaFollowUp && (
+                                        <span className="relative flex w-2.5 h-2.5" title="Follow-up recomendado">
+                                          <span className="absolute inline-flex w-full h-full rounded-full bg-amber-400 opacity-75 animate-ping" />
+                                          <span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-amber-500" />
+                                        </span>
+                                      )}
+                                      <span className={`border font-extrabold px-1.5 py-0.5 rounded-full text-[9px] uppercase ${statusStyle}`}>
+                                        {ENERGIA_STATUS_LABELS[statusKey] || statusKey}
+                                      </span>
                                     </span>
                                   </div>
+
+                                  {energiaFollowUp && (
+                                    <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-2 py-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                      <span className="text-[9px] font-extrabold uppercase tracking-wide">Follow-up recomendado (3+ dias sem retorno)</span>
+                                    </div>
+                                  )}
 
                                   {energiaTemNovidade(lead) && (
                                     <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-2 py-1">
@@ -2140,15 +2156,28 @@ export default function PartnerPortal({
                                   </div>
 
                                   {lead.telefone && (
-                                    <a
-                                      href={energiaWa}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="w-full px-3 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
-                                    >
-                                      <Send className="w-3.5 h-3.5 text-white fill-current" />
-                                      Abordar no WhatsApp
-                                    </a>
+                                    <div className="space-y-2">
+                                      <a
+                                        href={energiaWa}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="w-full px-3 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                      >
+                                        <Send className="w-3.5 h-3.5 text-white fill-current" />
+                                        Abordar no WhatsApp
+                                      </a>
+                                      {energiaFollowUp && (
+                                        <a
+                                          href={buildWhatsAppUrl(lead.telefone, buildEnergiaFollowUpWhatsAppMessage(lead.nomeEmpresa))}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                        >
+                                          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                          Cobrar Retorno (Follow-up)
+                                        </a>
+                                      )}
+                                    </div>
                                   )}
 
                                   <div className="pt-2 border-t border-slate-100 space-y-2">
