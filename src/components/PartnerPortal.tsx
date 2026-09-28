@@ -1972,10 +1972,25 @@ export default function PartnerPortal({
                                         <p className="text-[10px] text-slate-500 font-semibold line-clamp-1">{lead.razaoSocial}</p>
                                       )}
                                     </div>
-                                    <span className={`shrink-0 border font-extrabold px-1.5 py-0.5 rounded-full text-[9px] uppercase ${statusStyle}`}>
-                                      {ENERGIA_STATUS_LABELS[statusKey] || statusKey}
+                                    <span className="shrink-0 flex items-center gap-1.5">
+                                      {energiaFollowUp && (
+                                        <span className="relative flex w-2.5 h-2.5" title="Follow-up recomendado">
+                                          <span className="absolute inline-flex w-full h-full rounded-full bg-amber-400 opacity-75 animate-ping" />
+                                          <span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-amber-500" />
+                                        </span>
+                                      )}
+                                      <span className={`border font-extrabold px-1.5 py-0.5 rounded-full text-[9px] uppercase ${statusStyle}`}>
+                                        {ENERGIA_STATUS_LABELS[statusKey] || statusKey}
+                                      </span>
                                     </span>
                                   </div>
+
+                                  {energiaFollowUp && (
+                                    <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-2 py-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                      <span className="text-[9px] font-extrabold uppercase tracking-wide">Follow-up recomendado (3+ dias sem retorno)</span>
+                                    </div>
+                                  )}
 
                                   {energiaTemNovidade(lead) && (
                                     <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-2 py-1">
