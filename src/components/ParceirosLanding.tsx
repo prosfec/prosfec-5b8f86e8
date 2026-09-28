@@ -264,7 +264,7 @@ export default function ParceirosLanding() {
               className="border border-white/10 hover:border-white/25 bg-white/5 hover:bg-white/10 text-zinc-100 font-bold text-xs px-3.5 sm:px-4 py-2.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <Users className="w-4 h-4 text-emerald-400" strokeWidth={2} />
-              <span className="hidden sm:inline">Já sou Parceiro (</span>Entrar<span className="hidden sm:inline">)</span>
+              <span className="hidden sm:inline">Já sou Parceiro&nbsp;·&nbsp;</span>Entrar
             </button>
           </div>
         </div>
