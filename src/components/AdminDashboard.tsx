@@ -4709,6 +4709,58 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </p>
                             </div>
 
+                            {/* Fechamento financeiro registrado */}
+                            {Number(lead.comissaoParceiro) > 0 && (
+                              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-[11px] flex items-center justify-between gap-2 flex-wrap">
+                                <span className="font-extrabold text-emerald-800">
+                                  Fatura: {formatCurrencyBRL(Number(lead.valorFatura) || 0)} • Repasse: {formatCurrencyBRL(Number(lead.comissaoParceiro) || 0)}
+                                </span>
+                                <span className="bg-emerald-600 text-white font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase">
+                                  {lead.comissaoStatus === "paga" ? "Paga" : lead.comissaoStatus === "solicitada" ? "Saque solicitado" : "Acumulada"}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Formulário de conclusão */}
+                            {energiaFechamentoLeadId === lead.id && (
+                              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+                                <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">Concluir contrato</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={energiaFechamentoFatura}
+                                    onChange={(e) => setEnergiaFechamentoFatura(e.target.value)}
+                                    placeholder="Fatura média (R$)"
+                                    className="px-2.5 py-1.5 bg-white border border-amber-200 rounded-lg text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                  />
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={energiaFechamentoComissao}
+                                    onChange={(e) => setEnergiaFechamentoComissao(e.target.value)}
+                                    placeholder="Comissão do parceiro (R$)"
+                                    className="px-2.5 py-1.5 bg-white border border-amber-200 rounded-lg text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={handleConfirmarFechamentoEnergia}
+                                    disabled={energiaSavingId === lead.id}
+                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                                  >
+                                    Confirmar Conclusão
+                                  </button>
+                                  <button
+                                    onClick={() => { setEnergiaFechamentoLeadId(null); setEnergiaFechamentoFatura(""); setEnergiaFechamentoComissao(""); }}
+                                    className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg font-extrabold text-[10px] cursor-pointer"
+                                  >
+                                    Cancelar
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
                             {/* Ações */}
                             <div className="flex items-center gap-2 flex-wrap">
                               {lead.telefone && (
@@ -4731,6 +4783,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
                                </select>
+                              {status === "concluido" && energiaFechamentoLeadId !== lead.id && (
+                                <button
+                                  onClick={() => {
+                                    setEnergiaFechamentoLeadId(lead.id);
+                                    setEnergiaFechamentoFatura(lead.valorFatura ? String(lead.valorFatura) : "");
+                                    setEnergiaFechamentoComissao(lead.comissaoParceiro ? String(lead.comissaoParceiro) : "");
+                                  }}
+                                  className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-lg font-extrabold text-[10px] cursor-pointer"
+                                >
+                                  Editar valores
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleDeleteEnergiaLead(lead.id, lead.nomeEmpresa)}
                                 disabled={energiaSavingId === lead.id}
@@ -4740,6 +4804,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <Trash2 className="w-3 h-3" /> Excluir
                               </button>
                             </div>
+
 
                             {/* Histórico e anotações */}
                             <div className="pt-2.5 border-t border-slate-100 space-y-2">
