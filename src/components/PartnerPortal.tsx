@@ -25,7 +25,7 @@ import {
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
-import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage } from "../utils";
+import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, isJanelaSaqueQuinzenal, proximaJanelaSaqueLabel } from "../utils";
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import LeadRegisterForm from "./LeadRegisterForm";
