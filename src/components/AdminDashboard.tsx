@@ -3027,26 +3027,49 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     : status === "arquivado" ? "bg-slate-200 text-slate-600 border-slate-300"
     : "bg-amber-100 text-amber-800 border-amber-200";
 
-  const handleUpdateEnergiaStatus = async (leadId: string, novoStatus: string) => {
+  // Converte "1.850,00" ou "1850.00" em número
+  const parseValorBR = (valor: string): number => {
+    const limpo = String(valor || "").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+    const n = parseFloat(limpo);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const handleUpdateEnergiaStatus = async (leadId: string, novoStatus: string, extras?: Record<string, any>) => {
+    // Fechamento financeiro obrigatório ao concluir
+    if (novoStatus === "concluido" && !extras) {
+      const alvoAtual = leadsEnergia.find((l: any) => l.id === leadId);
+      setEnergiaFechamentoLeadId(leadId);
+      setEnergiaFechamentoFatura(alvoAtual?.valorFatura ? String(alvoAtual.valorFatura) : "");
+      setEnergiaFechamentoComissao(alvoAtual?.comissaoParceiro ? String(alvoAtual.comissaoParceiro) : "");
+      return;
+    }
     setEnergiaSavingId(leadId);
     try {
       const agora = new Date().toISOString();
       const statusLabel = ENERGIA_STATUS_OPTIONS.find(o => o.value === novoStatus)?.label || novoStatus;
       const alvo = leadsEnergia.find((l: any) => l.id === leadId);
       const notaAutomatica = {
-        texto: `Status atualizado para ${statusLabel}.`,
+        texto: extras
+          ? `Contrato concluído. Fatura média: ${formatCurrencyBRL(extras.valorFatura || 0)} • Comissão do parceiro: ${formatCurrencyBRL(extras.comissaoParceiro || 0)}.`
+          : `Status atualizado para ${statusLabel}.`,
         autor: "Mesa PROSFEC",
         papel: "adm",
         data: agora
       };
       const novasNotas = [...(Array.isArray(alvo?.anotacoes) ? alvo.anotacoes : []), notaAutomatica];
-      await updateDoc(doc(db, "leads_energia", leadId), {
+      const payload: any = {
         status: novoStatus,
         anotacoes: arrayUnion(notaAutomatica),
-        atualizadoEm: agora
-      });
+        atualizadoEm: agora,
+        ultimaMovimentacaoMesaEm: agora,
+        ultimaMovimentacaoMesaTexto: notaAutomatica.texto,
+        ...(extras || {})
+      };
+      await updateDoc(doc(db, "leads_energia", leadId), payload);
       setLeadsEnergia(prev => prev.map((l: any) =>
-        l.id === leadId ? { ...l, status: novoStatus, anotacoes: novasNotas, atualizadoEm: agora } : l
+        l.id === leadId
+          ? { ...l, ...payload, anotacoes: novasNotas }
+          : l
       ));
       toast.success(`Status alterado para ${statusLabel}.`);
     } catch (error) {
@@ -3055,6 +3078,27 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     } finally {
       setEnergiaSavingId(null);
     }
+  };
+
+  const handleConfirmarFechamentoEnergia = async () => {
+    if (!energiaFechamentoLeadId) return;
+    const valorFatura = parseValorBR(energiaFechamentoFatura);
+    const comissaoParceiro = parseValorBR(energiaFechamentoComissao);
+    if (valorFatura <= 0 || comissaoParceiro <= 0) {
+      toast.error("Informe o valor da fatura e a comissão do parceiro.");
+      return;
+    }
+    const leadId = energiaFechamentoLeadId;
+    await handleUpdateEnergiaStatus(leadId, "concluido", {
+      valorFatura,
+      comissaoParceiro,
+      comissaoStatus: "acumulada",
+      fechadoEm: new Date().toISOString(),
+      fechadoPor: "Mesa PROSFEC"
+    });
+    setEnergiaFechamentoLeadId(null);
+    setEnergiaFechamentoFatura("");
+    setEnergiaFechamentoComissao("");
   };
 
   const handleDeleteEnergiaLead = async (leadId: string, nomeEmpresa?: string) => {
