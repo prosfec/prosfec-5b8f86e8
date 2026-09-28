@@ -4554,6 +4554,53 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               {/* ⚡ LEADS ENERGIA SOLAR */}
               {activeTab === "leads_energia" && (
                 <div className="p-4 md:p-6 space-y-4">
+                  {/* Totais executivos */}
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                    {[
+                      { label: "Total de Leads", valor: String(energiaTotais.total), cor: "text-slate-800" },
+                      { label: "Em Atendimento", valor: String(energiaTotais.atendimento), cor: "text-blue-700" },
+                      { label: "Contratos Concluídos", valor: String(energiaTotais.concluidos), cor: "text-emerald-700" },
+                      { label: "Faturas Negociadas", valor: formatCurrencyBRL(energiaTotais.volumeFaturas), cor: "text-slate-800" },
+                      { label: "Comissões da Quinzena", valor: formatCurrencyBRL(energiaTotais.comissoesQuinzena), cor: "text-amber-700" }
+                    ].map(card => (
+                      <div key={card.label} className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">{card.label}</p>
+                        <p className={`font-black text-base mt-0.5 ${card.cor}`}>{card.valor}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Barra de filtros */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      type="text"
+                      value={energiaBusca}
+                      onChange={(e) => setEnergiaBusca(e.target.value)}
+                      placeholder="Buscar por empresa, CNPJ, cidade ou parceiro..."
+                      className="flex-1 min-w-[220px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                    />
+                    <select
+                      value={energiaParceiroFilter}
+                      onChange={(e) => setEnergiaParceiroFilter(e.target.value)}
+                      className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 cursor-pointer"
+                    >
+                      <option value="todos">Todos os parceiros</option>
+                      {energiaParceirosLista.map(p => (
+                        <option key={p.id} value={p.id}>{p.nome} ({p.total})</option>
+                      ))}
+                    </select>
+                    <select
+                      value={energiaEstadoFilter}
+                      onChange={(e) => setEnergiaEstadoFilter(e.target.value)}
+                      className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 cursor-pointer"
+                    >
+                      <option value="todos">Todos os estados</option>
+                      {energiaEstadosLista.map(uf => (
+                        <option key={uf} value={uf}>{uf}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   {/* Filtros por etapa */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {[{ value: "todos", label: "Todos" }, ...ENERGIA_STATUS_OPTIONS].map(opt => (
@@ -4575,6 +4622,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       </button>
                     ))}
                   </div>
+
 
                   {filteredLeadsEnergia.length === 0 ? (
                     <div className="p-16 text-center text-slate-400">
