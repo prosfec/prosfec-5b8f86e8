@@ -2153,7 +2153,10 @@ export default function PartnerPortal({
 
                                   <div className="pt-2 border-t border-slate-100 space-y-2">
                                     <button
-                                      onClick={() => setExpandedEnergiaLeadId(isOpen ? null : lead.id)}
+                                      onClick={() => {
+                                        setExpandedEnergiaLeadId(isOpen ? null : lead.id);
+                                        if (!isOpen) marcarEnergiaLeadVisto(lead);
+                                      }}
                                       className="text-[10px] font-extrabold text-amber-700 hover:text-amber-900 flex items-center gap-1 cursor-pointer"
                                     >
                                       <MessageSquare className="w-3.5 h-3.5 text-amber-600" />
