@@ -1976,6 +1976,29 @@ export default function PartnerPortal({
                                     </span>
                                   </div>
 
+                                  {energiaTemNovidade(lead) && (
+                                    <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-2 py-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                      <span className="text-[9px] font-extrabold uppercase tracking-wide">Nova atualização da Mesa</span>
+                                    </div>
+                                  )}
+
+                                  {Number(lead.comissaoParceiro) > 0 && (
+                                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 space-y-0.5">
+                                      <p className="text-[10px] font-extrabold text-emerald-800">
+                                        🎉 Contrato fechado • Fatura: {formatCurrencyBRL(Number(lead.valorFatura) || 0)}
+                                      </p>
+                                      <p className="text-[11px] font-black text-emerald-900">
+                                        Sua comissão: {formatCurrencyBRL(Number(lead.comissaoParceiro) || 0)}
+                                      </p>
+                                      <p className="text-[9px] font-bold text-emerald-700 uppercase">
+                                        {lead.comissaoStatus === "paga" ? "Paga" : lead.comissaoStatus === "solicitada" ? "Saque solicitado" : "Acumulada para a quinzena"}
+                                      </p>
+                                    </div>
+                                  )}
+
+
+
                                   {energiaCnpjData && (
                                     <div className="bg-emerald-50 border border-emerald-200/80 p-2.5 rounded-xl space-y-1 text-[10px]">
                                       <div className="flex items-center justify-between gap-2">
