@@ -1539,7 +1539,8 @@ export default function PartnerPortal({
   })();
 
   // Origem de uma solicitação antiga (sem campo) = serviços (comportamento anterior)
-  const getSolicitacaoOrigem = (s: any): "vendas" | "servicos" => (s?.origem === "vendas" ? "vendas" : "servicos");
+  const getSolicitacaoOrigem = (s: any): "vendas" | "servicos" | "energia_solar" =>
+    s?.origem === "vendas" ? "vendas" : s?.origem === "energia_solar" ? "energia_solar" : "servicos";
 
   const somaSaques = (origem: "vendas" | "servicos", status: string) =>
     (solicitacoesComissao || [])
@@ -1775,7 +1776,8 @@ export default function PartnerPortal({
         dataSolicitacao: agora,
         detalhes: {
           quantidadeContratos: elegiveis.length,
-          leadsEnvolvidos: elegiveis.map((l: any) => l.nomeEmpresa)
+          leadsEnvolvidos: elegiveis.map((l: any) => l.nomeEmpresa),
+          leadIds: elegiveis.map((l: any) => l.id)
         }
       });
       for (const l of elegiveis) {
