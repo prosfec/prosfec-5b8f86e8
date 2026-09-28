@@ -3134,10 +3134,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       ];
       await updateDoc(doc(db, "leads_energia", leadId), {
         anotacoes: arrayUnion(novaNota),
-        atualizadoEm: agora
+        atualizadoEm: agora,
+        ultimaMovimentacaoMesaEm: agora,
+        ultimaMovimentacaoMesaTexto: "Nova anotação da Mesa PROSFEC"
       });
       setLeadsEnergia(prev => prev.map((l: any) =>
-        l.id === leadId ? { ...l, anotacoes: novasNotas, atualizadoEm: agora } : l
+        l.id === leadId ? { ...l, anotacoes: novasNotas, atualizadoEm: agora, ultimaMovimentacaoMesaEm: agora } : l
       ));
       setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: "" }));
       toast.success("Anotação registrada e compartilhada com o parceiro.");
@@ -3151,12 +3153,41 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   const filteredLeadsEnergia = leadsEnergia.filter((l: any) => {
     const statusOk = energiaStatusFilter === "todos" || (l.status || "novo") === energiaStatusFilter;
-    const termo = (searchTerm || "").toLowerCase().trim();
+    const termo = `${searchTerm || ""} ${energiaBusca || ""}`.toLowerCase().trim();
     const textoOk = !termo || [l.nomeEmpresa, l.razaoSocial, l.cnpj, l.telefone, l.cidade, l.parceiroNome]
       .filter(Boolean)
       .some((v: string) => String(v).toLowerCase().includes(termo));
-    return statusOk && textoOk;
+    const parceiroOk = energiaParceiroFilter === "todos" || (l.parceiroId || "") === energiaParceiroFilter;
+    const estadoOk = energiaEstadoFilter === "todos" || (l.estado || "") === energiaEstadoFilter;
+    return statusOk && textoOk && parceiroOk && estadoOk;
   });
+
+  // Listas dinâmicas para os filtros (client-side, sem índices no banco)
+  const energiaParceirosLista = Array.from(
+    leadsEnergia.reduce((acc: Map<string, { id: string; nome: string; total: number }>, l: any) => {
+      const id = l.parceiroId || "";
+      if (!id) return acc;
+      const atual = acc.get(id);
+      acc.set(id, { id, nome: l.parceiroNome || "Parceiro", total: (atual?.total || 0) + 1 });
+      return acc;
+    }, new Map()).values()
+  ).sort((a, b) => a.nome.localeCompare(b.nome));
+
+  const energiaEstadosLista = Array.from(
+    new Set(leadsEnergia.map((l: any) => l.estado).filter(Boolean))
+  ).sort() as string[];
+
+  // Totais executivos da esteira solar
+  const energiaConcluidos = leadsEnergia.filter((l: any) => (l.status || "novo") === "concluido");
+  const energiaTotais = {
+    total: leadsEnergia.length,
+    atendimento: leadsEnergia.filter((l: any) => (l.status || "novo") === "atendimento").length,
+    concluidos: energiaConcluidos.length,
+    volumeFaturas: energiaConcluidos.reduce((acc: number, l: any) => acc + (Number(l.valorFatura) || 0), 0),
+    comissoesQuinzena: energiaConcluidos
+      .filter((l: any) => (l.comissaoStatus || "acumulada") === "acumulada")
+      .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0)
+  };
 
   const adminNavItems = [
     { id: "funnel", label: "Funil & Conversão", icon: TrendingUp, badge: null as any },
