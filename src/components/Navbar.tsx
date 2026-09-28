@@ -173,19 +173,25 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
               Analisar minha empresa
             </a>
             <a
-              href="/parceiros"
-              className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
-            >
-              Seja um Parceiro PROSFEC
-            </a>
-
-            <a
               href="#faq"
               onClick={(e) => handleLinkClick(e, "faq")}
               className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
             >
               Perguntas Frequentes
             </a>
+            <a
+              href="/energiasolar"
+              className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
+            >
+              Saiba como pode ter de 17% a 27% de desconto na sua fatura de energia
+            </a>
+            <a
+              href="/parceiros"
+              className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
+            >
+              Seja um Parceiro PROSFEC
+            </a>
+
 
             <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
               <button
