@@ -99,12 +99,12 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
               Como Atuamos
             </a>
             <a
-              href="#parceiros"
-              onClick={(e) => handleLinkClick(e, "parceiros")}
+              href="/parceiros"
                className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
             >
-              Parceiros
+              Seja Parceiro
             </a>
+
             <a
               href="#faq"
               onClick={(e) => handleLinkClick(e, "faq")}
@@ -179,12 +179,12 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
               Analisar minha empresa
             </a>
             <a
-              href="#parceiros"
-              onClick={(e) => handleLinkClick(e, "parceiros")}
+              href="/parceiros"
               className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
             >
-              Indique e Ganhe (Parceiros)
+              Seja um Parceiro PROSFEC
             </a>
+
             <a
               href="#faq"
               onClick={(e) => handleLinkClick(e, "faq")}

@@ -17,7 +17,7 @@ import DiagnosticoSection from "./components/DiagnosticoSection";
 import Beneficios from "./components/Beneficios";
 import SolucoesEspecificas from "./components/SolucoesEspecificas";
 import CTAFinal from "./components/CTAFinal";
-import Parceiros from "./components/Parceiros";
+// Programa de Parceiros migrado para a página dedicada /parceiros
 import FAQ from "./components/FAQ";
 import Footer from "./components/Footer";
 import AdminDashboard from "./components/AdminDashboard";
@@ -234,6 +234,8 @@ export default function App() {
     setPartnerInitialRegister(true);
     setShowPartnerPortal(true);
   };
+  void handleSelectPlanForPartner;
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -606,8 +608,8 @@ export default function App() {
           referredByPartnerNome={referredByPartnerNome}
         />
 
-        {/* 10. PROGRAMA DE PARCEIROS */}
-        <Parceiros onSelectPlan={handleSelectPlanForPartner} />
+        {/* 10. PROGRAMA DE PARCEIROS: agora em página dedicada (/parceiros) */}
+
 
         {/* 11. FAQ */}
         <FAQ />
