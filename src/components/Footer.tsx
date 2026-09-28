@@ -101,15 +101,6 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
               </li>
               <li>
                 <a
-                  href="/parceiros"
-                  className="hover:text-white transition-colors"
-                >
-                  Seja um Parceiro PROSFEC
-                </a>
-              </li>
-
-              <li>
-                <a
                   href="#faq"
                   onClick={(e) => handleLinkClick(e, "faq")}
                   className="hover:text-white transition-colors"
@@ -117,7 +108,24 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
                   Perguntas e Respostas
                 </a>
               </li>
+              <li>
+                <a
+                  href="/energiasolar"
+                  className="hover:text-white transition-colors"
+                >
+                  Saiba como pode ter de 17% a 27% de desconto na sua fatura de energia
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/parceiros"
+                  className="hover:text-white transition-colors"
+                >
+                  Seja um Parceiro PROSFEC
+                </a>
+              </li>
             </ul>
+
           </div>
 
           {/* Column 3 - Contact & Offices - 4 cols */}
