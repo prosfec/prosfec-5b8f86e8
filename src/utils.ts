@@ -146,6 +146,32 @@ export function buildEnergiaSolarWhatsAppMessage(nomeEmpresa?: string): string {
   ].join("\n");
 }
 
+// ===== Janela de saque quinzenal (dias 15 e último dia do mês) =====
+export function isUltimoDiaDoMes(date: Date = new Date()): boolean {
+  const proximo = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+  return proximo.getMonth() !== date.getMonth();
+}
+
+// Janela aberta no dia 15 ou no último dia do mês (28/29/30/31)
+export function isJanelaSaqueQuinzenal(date: Date = new Date()): boolean {
+  return date.getDate() === 15 || isUltimoDiaDoMes(date);
+}
+
+// Dias restantes até a próxima janela de saque
+export function diasAteProximaJanelaSaque(date: Date = new Date()): number {
+  if (isJanelaSaqueQuinzenal(date)) return 0;
+  const dia = date.getDate();
+  if (dia < 15) return 15 - dia;
+  const ultimoDia = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  return ultimoDia - dia;
+}
+
+export function proximaJanelaSaqueLabel(date: Date = new Date()): string {
+  const dias = diasAteProximaJanelaSaque(date);
+  if (dias === 0) return "Janela de saque aberta hoje";
+  return `Próxima janela em ${dias} dia${dias > 1 ? "s" : ""}`;
+}
+
 // Format CEP: 99999-999
 export function formatCEP(value: string): string {
   const clean = value.replace(/\D/g, "");

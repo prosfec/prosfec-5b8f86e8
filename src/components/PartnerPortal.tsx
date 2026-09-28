@@ -25,7 +25,7 @@ import {
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
-import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage } from "../utils";
+import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, isJanelaSaqueQuinzenal, proximaJanelaSaqueLabel } from "../utils";
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import LeadRegisterForm from "./LeadRegisterForm";
@@ -1047,6 +1047,9 @@ export default function PartnerPortal({
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<string>("todos");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<{ [leadId: string]: string }>({});
   const [energiaNotaSavingId, setEnergiaNotaSavingId] = useState<string | null>(null);
+  const [energiaSaqueOpen, setEnergiaSaqueOpen] = useState(false);
+  const [energiaSaquePix, setEnergiaSaquePix] = useState("");
+  const [energiaSaqueSubmitting, setEnergiaSaqueSubmitting] = useState(false);
   // 📝 Anotações privadas de prospecção (Painel de Oportunidades — só o parceiro vê)
   const [prospectNotes, setProspectNotes] = useState<Record<string, { id: string; notas: any[] }>>({});
   const [prospectNoteDraft, setProspectNoteDraft] = useState<Record<string, string>>({});
@@ -1717,6 +1720,88 @@ export default function PartnerPortal({
     }
   };
 
+  // Marca como lida a última movimentação registrada pela Mesa nesse lead
+  const marcarEnergiaLeadVisto = async (lead: any) => {
+    if (!lead?.id || !lead.ultimaMovimentacaoMesaEm) return;
+    const visto = lead.vistoPeloParceiroEm ? new Date(lead.vistoPeloParceiroEm).getTime() : 0;
+    if (new Date(lead.ultimaMovimentacaoMesaEm).getTime() <= visto) return;
+    const agora = new Date().toISOString();
+    setEnergiaLeads(prev => prev.map(l => l.id === lead.id ? { ...l, vistoPeloParceiroEm: agora } : l));
+    try {
+      await updateDoc(doc(db, "leads_energia", lead.id), { vistoPeloParceiroEm: agora });
+    } catch (error) {
+      console.error("Erro ao marcar movimentação como lida:", error);
+    }
+  };
+
+  const energiaTemNovidade = (lead: any) => {
+    if (!lead?.ultimaMovimentacaoMesaEm) return false;
+    const visto = lead.vistoPeloParceiroEm ? new Date(lead.vistoPeloParceiroEm).getTime() : 0;
+    return new Date(lead.ultimaMovimentacaoMesaEm).getTime() > visto;
+  };
+
+  // Comissões de energia acumuladas e aguardando a janela quinzenal
+  const energiaComissaoAcumulada = energiaLeads
+    .filter((l: any) => (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada")
+    .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
+
+  const handleSolicitarSaqueEnergia = async () => {
+    if (!currentPartner || energiaComissaoAcumulada <= 0) return;
+    if (!isJanelaSaqueQuinzenal()) {
+      toast.error("Os saques são liberados apenas nos dias 15 e 30.");
+      return;
+    }
+    if (!energiaSaquePix.trim()) {
+      toast.error("Informe a sua chave PIX.");
+      return;
+    }
+    const elegiveis = energiaLeads.filter((l: any) =>
+      (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada" && Number(l.comissaoParceiro) > 0
+    );
+    setEnergiaSaqueSubmitting(true);
+    try {
+      const agora = new Date().toISOString();
+      await addDoc(collection(db, "solicitacoes_comissao"), {
+        partnerId: currentPartner.id,
+        partnerNome: currentPartner.nome || "Parceiro",
+        partnerEmail: currentPartner.email || "",
+        partnerWhatsapp: (currentPartner as any).whatsapp || "",
+        partnerPlano: currentPartner.plano || "",
+        chavePix: energiaSaquePix.trim(),
+        valor: energiaComissaoAcumulada,
+        status: "pendente",
+        origem: "energia_solar",
+        origemLabel: "Comissões de Energia Solar",
+        dataSolicitacao: agora,
+        detalhes: {
+          quantidadeContratos: elegiveis.length,
+          leadsEnvolvidos: elegiveis.map((l: any) => l.nomeEmpresa)
+        }
+      });
+      for (const l of elegiveis) {
+        await updateDoc(doc(db, "leads_energia", l.id), {
+          comissaoStatus: "solicitada",
+          comissaoSolicitadaEm: agora
+        });
+      }
+      setEnergiaLeads(prev => prev.map(l =>
+        elegiveis.some((e: any) => e.id === l.id)
+          ? { ...l, comissaoStatus: "solicitada", comissaoSolicitadaEm: agora }
+          : l
+      ));
+      setEnergiaSaqueOpen(false);
+      setEnergiaSaquePix("");
+      toast.success(`Solicitação de saque de ${formatCurrencyBRL(energiaComissaoAcumulada)} enviada.`);
+    } catch (error) {
+      console.error("Erro ao solicitar saque de energia solar:", error);
+      toast.error("Não foi possível registrar a solicitação de saque.");
+    } finally {
+      setEnergiaSaqueSubmitting(false);
+    }
+  };
+
+
+
   const renderEnergiaSolarPanel = () => {
                         const energiaCounts = energiaLeads.reduce((acc: Record<string, number>, l: any) => {
                           const k = l.status || "novo";
@@ -1772,6 +1857,66 @@ export default function PartnerPortal({
                             );
                           })}
                         </div>
+
+                        {/* Régua de desempenho e saque quinzenal */}
+                        <div className="bg-white border border-amber-200/70 rounded-2xl p-3 space-y-2.5">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {[
+                              { label: "Leads Enviados", valor: String(energiaLeads.length) },
+                              { label: "Em Atendimento", valor: String(energiaCounts["atendimento"] || 0) },
+                              { label: "Contratos Fechados", valor: String(energiaCounts["concluido"] || 0) },
+                              { label: "Comissão da Quinzena", valor: formatCurrencyBRL(energiaComissaoAcumulada) }
+                            ].map(item => (
+                              <div key={item.label} className="bg-amber-50/60 border border-amber-100 rounded-xl p-2">
+                                <p className="text-[8px] font-black text-amber-600 uppercase tracking-wide">{item.label}</p>
+                                <p className="font-black text-sm text-slate-800 mt-0.5">{item.valor}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          {isJanelaSaqueQuinzenal() && energiaComissaoAcumulada > 0 ? (
+                            !energiaSaqueOpen ? (
+                              <button
+                                onClick={() => setEnergiaSaqueOpen(true)}
+                                className="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-[11px] cursor-pointer transition-all"
+                              >
+                                Solicitar Saque Quinzenal ({formatCurrencyBRL(energiaComissaoAcumulada)})
+                              </button>
+                            ) : (
+                              <div className="space-y-2">
+                                <input
+                                  type="text"
+                                  value={energiaSaquePix}
+                                  onChange={(e) => setEnergiaSaquePix(e.target.value)}
+                                  placeholder="Sua chave PIX (CPF, CNPJ, e-mail, celular ou aleatória)"
+                                  className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={handleSolicitarSaqueEnergia}
+                                    disabled={energiaSaqueSubmitting || !energiaSaquePix.trim()}
+                                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg font-extrabold text-[11px] cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    {energiaSaqueSubmitting && <RefreshCw className="w-3 h-3 animate-spin" />}
+                                    Confirmar Solicitação
+                                  </button>
+                                  <button
+                                    onClick={() => setEnergiaSaqueOpen(false)}
+                                    className="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-extrabold text-[11px] cursor-pointer"
+                                  >
+                                    Cancelar
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          ) : (
+                            <div className="w-full px-3 py-2 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl font-extrabold text-[10px] text-center">
+                              🔒 Saques liberados nos dias 15 e 30 • {proximaJanelaSaqueLabel()}
+                            </div>
+                          )}
+                        </div>
+
+
 
                         {!energiaPanelOpen ? (
                           <p className="text-[10px] text-slate-500 font-medium">
@@ -1830,6 +1975,29 @@ export default function PartnerPortal({
                                       {ENERGIA_STATUS_LABELS[statusKey] || statusKey}
                                     </span>
                                   </div>
+
+                                  {energiaTemNovidade(lead) && (
+                                    <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-2 py-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                      <span className="text-[9px] font-extrabold uppercase tracking-wide">Nova atualização da Mesa</span>
+                                    </div>
+                                  )}
+
+                                  {Number(lead.comissaoParceiro) > 0 && (
+                                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 space-y-0.5">
+                                      <p className="text-[10px] font-extrabold text-emerald-800">
+                                        🎉 Contrato fechado • Fatura: {formatCurrencyBRL(Number(lead.valorFatura) || 0)}
+                                      </p>
+                                      <p className="text-[11px] font-black text-emerald-900">
+                                        Sua comissão: {formatCurrencyBRL(Number(lead.comissaoParceiro) || 0)}
+                                      </p>
+                                      <p className="text-[9px] font-bold text-emerald-700 uppercase">
+                                        {lead.comissaoStatus === "paga" ? "Paga" : lead.comissaoStatus === "solicitada" ? "Saque solicitado" : "Acumulada para a quinzena"}
+                                      </p>
+                                    </div>
+                                  )}
+
+
 
                                   {energiaCnpjData && (
                                     <div className="bg-emerald-50 border border-emerald-200/80 p-2.5 rounded-xl space-y-1 text-[10px]">
@@ -1985,7 +2153,10 @@ export default function PartnerPortal({
 
                                   <div className="pt-2 border-t border-slate-100 space-y-2">
                                     <button
-                                      onClick={() => setExpandedEnergiaLeadId(isOpen ? null : lead.id)}
+                                      onClick={() => {
+                                        setExpandedEnergiaLeadId(isOpen ? null : lead.id);
+                                        if (!isOpen) marcarEnergiaLeadVisto(lead);
+                                      }}
                                       className="text-[10px] font-extrabold text-amber-700 hover:text-amber-900 flex items-center gap-1 cursor-pointer"
                                     >
                                       <MessageSquare className="w-3.5 h-3.5 text-amber-600" />

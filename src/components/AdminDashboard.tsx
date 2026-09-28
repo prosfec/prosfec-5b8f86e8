@@ -458,6 +458,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<"todos" | "novo" | "atendimento" | "concluido" | "arquivado">("todos");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<Record<string, string>>({});
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
+  const [energiaParceiroFilter, setEnergiaParceiroFilter] = useState<string>("todos");
+  const [energiaEstadoFilter, setEnergiaEstadoFilter] = useState<string>("todos");
+  const [energiaBusca, setEnergiaBusca] = useState<string>("");
+  const [energiaFechamentoLeadId, setEnergiaFechamentoLeadId] = useState<string | null>(null);
+  const [energiaFechamentoFatura, setEnergiaFechamentoFatura] = useState<string>("");
+  const [energiaFechamentoComissao, setEnergiaFechamentoComissao] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [showLeadPortalSenha, setShowLeadPortalSenha] = useState<Record<string, boolean>>({});
@@ -3021,26 +3027,49 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     : status === "arquivado" ? "bg-slate-200 text-slate-600 border-slate-300"
     : "bg-amber-100 text-amber-800 border-amber-200";
 
-  const handleUpdateEnergiaStatus = async (leadId: string, novoStatus: string) => {
+  // Converte "1.850,00" ou "1850.00" em número
+  const parseValorBR = (valor: string): number => {
+    const limpo = String(valor || "").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+    const n = parseFloat(limpo);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const handleUpdateEnergiaStatus = async (leadId: string, novoStatus: string, extras?: Record<string, any>) => {
+    // Fechamento financeiro obrigatório ao concluir
+    if (novoStatus === "concluido" && !extras) {
+      const alvoAtual = leadsEnergia.find((l: any) => l.id === leadId);
+      setEnergiaFechamentoLeadId(leadId);
+      setEnergiaFechamentoFatura(alvoAtual?.valorFatura ? String(alvoAtual.valorFatura) : "");
+      setEnergiaFechamentoComissao(alvoAtual?.comissaoParceiro ? String(alvoAtual.comissaoParceiro) : "");
+      return;
+    }
     setEnergiaSavingId(leadId);
     try {
       const agora = new Date().toISOString();
       const statusLabel = ENERGIA_STATUS_OPTIONS.find(o => o.value === novoStatus)?.label || novoStatus;
       const alvo = leadsEnergia.find((l: any) => l.id === leadId);
       const notaAutomatica = {
-        texto: `Status atualizado para ${statusLabel}.`,
+        texto: extras
+          ? `Contrato concluído. Fatura média: ${formatCurrencyBRL(extras.valorFatura || 0)} • Comissão do parceiro: ${formatCurrencyBRL(extras.comissaoParceiro || 0)}.`
+          : `Status atualizado para ${statusLabel}.`,
         autor: "Mesa PROSFEC",
         papel: "adm",
         data: agora
       };
       const novasNotas = [...(Array.isArray(alvo?.anotacoes) ? alvo.anotacoes : []), notaAutomatica];
-      await updateDoc(doc(db, "leads_energia", leadId), {
+      const payload: any = {
         status: novoStatus,
         anotacoes: arrayUnion(notaAutomatica),
-        atualizadoEm: agora
-      });
+        atualizadoEm: agora,
+        ultimaMovimentacaoMesaEm: agora,
+        ultimaMovimentacaoMesaTexto: notaAutomatica.texto,
+        ...(extras || {})
+      };
+      await updateDoc(doc(db, "leads_energia", leadId), payload);
       setLeadsEnergia(prev => prev.map((l: any) =>
-        l.id === leadId ? { ...l, status: novoStatus, anotacoes: novasNotas, atualizadoEm: agora } : l
+        l.id === leadId
+          ? { ...l, ...payload, anotacoes: novasNotas }
+          : l
       ));
       toast.success(`Status alterado para ${statusLabel}.`);
     } catch (error) {
@@ -3049,6 +3078,27 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     } finally {
       setEnergiaSavingId(null);
     }
+  };
+
+  const handleConfirmarFechamentoEnergia = async () => {
+    if (!energiaFechamentoLeadId) return;
+    const valorFatura = parseValorBR(energiaFechamentoFatura);
+    const comissaoParceiro = parseValorBR(energiaFechamentoComissao);
+    if (valorFatura <= 0 || comissaoParceiro <= 0) {
+      toast.error("Informe o valor da fatura e a comissão do parceiro.");
+      return;
+    }
+    const leadId = energiaFechamentoLeadId;
+    await handleUpdateEnergiaStatus(leadId, "concluido", {
+      valorFatura,
+      comissaoParceiro,
+      comissaoStatus: "acumulada",
+      fechadoEm: new Date().toISOString(),
+      fechadoPor: "Mesa PROSFEC"
+    });
+    setEnergiaFechamentoLeadId(null);
+    setEnergiaFechamentoFatura("");
+    setEnergiaFechamentoComissao("");
   };
 
   const handleDeleteEnergiaLead = async (leadId: string, nomeEmpresa?: string) => {
@@ -3084,10 +3134,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       ];
       await updateDoc(doc(db, "leads_energia", leadId), {
         anotacoes: arrayUnion(novaNota),
-        atualizadoEm: agora
+        atualizadoEm: agora,
+        ultimaMovimentacaoMesaEm: agora,
+        ultimaMovimentacaoMesaTexto: "Nova anotação da Mesa PROSFEC"
       });
       setLeadsEnergia(prev => prev.map((l: any) =>
-        l.id === leadId ? { ...l, anotacoes: novasNotas, atualizadoEm: agora } : l
+        l.id === leadId ? { ...l, anotacoes: novasNotas, atualizadoEm: agora, ultimaMovimentacaoMesaEm: agora } : l
       ));
       setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: "" }));
       toast.success("Anotação registrada e compartilhada com o parceiro.");
@@ -3101,12 +3153,41 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   const filteredLeadsEnergia = leadsEnergia.filter((l: any) => {
     const statusOk = energiaStatusFilter === "todos" || (l.status || "novo") === energiaStatusFilter;
-    const termo = (searchTerm || "").toLowerCase().trim();
+    const termo = `${searchTerm || ""} ${energiaBusca || ""}`.toLowerCase().trim();
     const textoOk = !termo || [l.nomeEmpresa, l.razaoSocial, l.cnpj, l.telefone, l.cidade, l.parceiroNome]
       .filter(Boolean)
       .some((v: string) => String(v).toLowerCase().includes(termo));
-    return statusOk && textoOk;
+    const parceiroOk = energiaParceiroFilter === "todos" || (l.parceiroId || "") === energiaParceiroFilter;
+    const estadoOk = energiaEstadoFilter === "todos" || (l.estado || "") === energiaEstadoFilter;
+    return statusOk && textoOk && parceiroOk && estadoOk;
   });
+
+  // Listas dinâmicas para os filtros (client-side, sem índices no banco)
+  const energiaParceirosLista = Array.from(
+    leadsEnergia.reduce((acc: Map<string, { id: string; nome: string; total: number }>, l: any) => {
+      const id = l.parceiroId || "";
+      if (!id) return acc;
+      const atual = acc.get(id);
+      acc.set(id, { id, nome: l.parceiroNome || "Parceiro", total: (atual?.total || 0) + 1 });
+      return acc;
+    }, new Map()).values()
+  ).sort((a, b) => a.nome.localeCompare(b.nome));
+
+  const energiaEstadosLista = Array.from(
+    new Set(leadsEnergia.map((l: any) => l.estado).filter(Boolean))
+  ).sort() as string[];
+
+  // Totais executivos da esteira solar
+  const energiaConcluidos = leadsEnergia.filter((l: any) => (l.status || "novo") === "concluido");
+  const energiaTotais = {
+    total: leadsEnergia.length,
+    atendimento: leadsEnergia.filter((l: any) => (l.status || "novo") === "atendimento").length,
+    concluidos: energiaConcluidos.length,
+    volumeFaturas: energiaConcluidos.reduce((acc: number, l: any) => acc + (Number(l.valorFatura) || 0), 0),
+    comissoesQuinzena: energiaConcluidos
+      .filter((l: any) => (l.comissaoStatus || "acumulada") === "acumulada")
+      .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0)
+  };
 
   const adminNavItems = [
     { id: "funnel", label: "Funil & Conversão", icon: TrendingUp, badge: null as any },
@@ -4473,6 +4554,53 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               {/* ⚡ LEADS ENERGIA SOLAR */}
               {activeTab === "leads_energia" && (
                 <div className="p-4 md:p-6 space-y-4">
+                  {/* Totais executivos */}
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                    {[
+                      { label: "Total de Leads", valor: String(energiaTotais.total), cor: "text-slate-800" },
+                      { label: "Em Atendimento", valor: String(energiaTotais.atendimento), cor: "text-blue-700" },
+                      { label: "Contratos Concluídos", valor: String(energiaTotais.concluidos), cor: "text-emerald-700" },
+                      { label: "Faturas Negociadas", valor: formatCurrencyBRL(energiaTotais.volumeFaturas), cor: "text-slate-800" },
+                      { label: "Comissões da Quinzena", valor: formatCurrencyBRL(energiaTotais.comissoesQuinzena), cor: "text-amber-700" }
+                    ].map(card => (
+                      <div key={card.label} className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">{card.label}</p>
+                        <p className={`font-black text-base mt-0.5 ${card.cor}`}>{card.valor}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Barra de filtros */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      type="text"
+                      value={energiaBusca}
+                      onChange={(e) => setEnergiaBusca(e.target.value)}
+                      placeholder="Buscar por empresa, CNPJ, cidade ou parceiro..."
+                      className="flex-1 min-w-[220px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                    />
+                    <select
+                      value={energiaParceiroFilter}
+                      onChange={(e) => setEnergiaParceiroFilter(e.target.value)}
+                      className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 cursor-pointer"
+                    >
+                      <option value="todos">Todos os parceiros</option>
+                      {energiaParceirosLista.map(p => (
+                        <option key={p.id} value={p.id}>{p.nome} ({p.total})</option>
+                      ))}
+                    </select>
+                    <select
+                      value={energiaEstadoFilter}
+                      onChange={(e) => setEnergiaEstadoFilter(e.target.value)}
+                      className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 cursor-pointer"
+                    >
+                      <option value="todos">Todos os estados</option>
+                      {energiaEstadosLista.map(uf => (
+                        <option key={uf} value={uf}>{uf}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   {/* Filtros por etapa */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {[{ value: "todos", label: "Todos" }, ...ENERGIA_STATUS_OPTIONS].map(opt => (
@@ -4494,6 +4622,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       </button>
                     ))}
                   </div>
+
 
                   {filteredLeadsEnergia.length === 0 ? (
                     <div className="p-16 text-center text-slate-400">
@@ -4580,6 +4709,58 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </p>
                             </div>
 
+                            {/* Fechamento financeiro registrado */}
+                            {Number(lead.comissaoParceiro) > 0 && (
+                              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-[11px] flex items-center justify-between gap-2 flex-wrap">
+                                <span className="font-extrabold text-emerald-800">
+                                  Fatura: {formatCurrencyBRL(Number(lead.valorFatura) || 0)} • Repasse: {formatCurrencyBRL(Number(lead.comissaoParceiro) || 0)}
+                                </span>
+                                <span className="bg-emerald-600 text-white font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase">
+                                  {lead.comissaoStatus === "paga" ? "Paga" : lead.comissaoStatus === "solicitada" ? "Saque solicitado" : "Acumulada"}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Formulário de conclusão */}
+                            {energiaFechamentoLeadId === lead.id && (
+                              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+                                <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">Concluir contrato</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={energiaFechamentoFatura}
+                                    onChange={(e) => setEnergiaFechamentoFatura(e.target.value)}
+                                    placeholder="Fatura média (R$)"
+                                    className="px-2.5 py-1.5 bg-white border border-amber-200 rounded-lg text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                  />
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={energiaFechamentoComissao}
+                                    onChange={(e) => setEnergiaFechamentoComissao(e.target.value)}
+                                    placeholder="Comissão do parceiro (R$)"
+                                    className="px-2.5 py-1.5 bg-white border border-amber-200 rounded-lg text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={handleConfirmarFechamentoEnergia}
+                                    disabled={energiaSavingId === lead.id}
+                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                                  >
+                                    Confirmar Conclusão
+                                  </button>
+                                  <button
+                                    onClick={() => { setEnergiaFechamentoLeadId(null); setEnergiaFechamentoFatura(""); setEnergiaFechamentoComissao(""); }}
+                                    className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg font-extrabold text-[10px] cursor-pointer"
+                                  >
+                                    Cancelar
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
                             {/* Ações */}
                             <div className="flex items-center gap-2 flex-wrap">
                               {lead.telefone && (
@@ -4602,6 +4783,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
                                </select>
+                              {status === "concluido" && energiaFechamentoLeadId !== lead.id && (
+                                <button
+                                  onClick={() => {
+                                    setEnergiaFechamentoLeadId(lead.id);
+                                    setEnergiaFechamentoFatura(lead.valorFatura ? String(lead.valorFatura) : "");
+                                    setEnergiaFechamentoComissao(lead.comissaoParceiro ? String(lead.comissaoParceiro) : "");
+                                  }}
+                                  className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-lg font-extrabold text-[10px] cursor-pointer"
+                                >
+                                  Editar valores
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleDeleteEnergiaLead(lead.id, lead.nomeEmpresa)}
                                 disabled={energiaSavingId === lead.id}
@@ -4611,6 +4804,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <Trash2 className="w-3 h-3" /> Excluir
                               </button>
                             </div>
+
 
                             {/* Histórico e anotações */}
                             <div className="pt-2.5 border-t border-slate-100 space-y-2">
