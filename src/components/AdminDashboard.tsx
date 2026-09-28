@@ -458,6 +458,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<"todos" | "novo" | "atendimento" | "concluido" | "arquivado">("todos");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<Record<string, string>>({});
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
+  const [energiaParceiroFilter, setEnergiaParceiroFilter] = useState<string>("todos");
+  const [energiaEstadoFilter, setEnergiaEstadoFilter] = useState<string>("todos");
+  const [energiaBusca, setEnergiaBusca] = useState<string>("");
+  const [energiaFechamentoLeadId, setEnergiaFechamentoLeadId] = useState<string | null>(null);
+  const [energiaFechamentoFatura, setEnergiaFechamentoFatura] = useState<string>("");
+  const [energiaFechamentoComissao, setEnergiaFechamentoComissao] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [showLeadPortalSenha, setShowLeadPortalSenha] = useState<Record<string, boolean>>({});
