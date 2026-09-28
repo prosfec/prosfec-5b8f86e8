@@ -1720,6 +1720,88 @@ export default function PartnerPortal({
     }
   };
 
+  // Marca como lida a última movimentação registrada pela Mesa nesse lead
+  const marcarEnergiaLeadVisto = async (lead: any) => {
+    if (!lead?.id || !lead.ultimaMovimentacaoMesaEm) return;
+    const visto = lead.vistoPeloParceiroEm ? new Date(lead.vistoPeloParceiroEm).getTime() : 0;
+    if (new Date(lead.ultimaMovimentacaoMesaEm).getTime() <= visto) return;
+    const agora = new Date().toISOString();
+    setEnergiaLeads(prev => prev.map(l => l.id === lead.id ? { ...l, vistoPeloParceiroEm: agora } : l));
+    try {
+      await updateDoc(doc(db, "leads_energia", lead.id), { vistoPeloParceiroEm: agora });
+    } catch (error) {
+      console.error("Erro ao marcar movimentação como lida:", error);
+    }
+  };
+
+  const energiaTemNovidade = (lead: any) => {
+    if (!lead?.ultimaMovimentacaoMesaEm) return false;
+    const visto = lead.vistoPeloParceiroEm ? new Date(lead.vistoPeloParceiroEm).getTime() : 0;
+    return new Date(lead.ultimaMovimentacaoMesaEm).getTime() > visto;
+  };
+
+  // Comissões de energia acumuladas e aguardando a janela quinzenal
+  const energiaComissaoAcumulada = energiaLeads
+    .filter((l: any) => (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada")
+    .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
+
+  const handleSolicitarSaqueEnergia = async () => {
+    if (!currentPartner || energiaComissaoAcumulada <= 0) return;
+    if (!isJanelaSaqueQuinzenal()) {
+      toast.error("Os saques são liberados apenas nos dias 15 e 30.");
+      return;
+    }
+    if (!energiaSaquePix.trim()) {
+      toast.error("Informe a sua chave PIX.");
+      return;
+    }
+    const elegiveis = energiaLeads.filter((l: any) =>
+      (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada" && Number(l.comissaoParceiro) > 0
+    );
+    setEnergiaSaqueSubmitting(true);
+    try {
+      const agora = new Date().toISOString();
+      await addDoc(collection(db, "solicitacoes_comissao"), {
+        partnerId: currentPartner.id,
+        partnerNome: currentPartner.nome || "Parceiro",
+        partnerEmail: currentPartner.email || "",
+        partnerWhatsapp: (currentPartner as any).whatsapp || "",
+        partnerPlano: currentPartner.plano || "",
+        chavePix: energiaSaquePix.trim(),
+        valor: energiaComissaoAcumulada,
+        status: "pendente",
+        origem: "energia_solar",
+        origemLabel: "Comissões de Energia Solar",
+        dataSolicitacao: agora,
+        detalhes: {
+          quantidadeContratos: elegiveis.length,
+          leadsEnvolvidos: elegiveis.map((l: any) => l.nomeEmpresa)
+        }
+      });
+      for (const l of elegiveis) {
+        await updateDoc(doc(db, "leads_energia", l.id), {
+          comissaoStatus: "solicitada",
+          comissaoSolicitadaEm: agora
+        });
+      }
+      setEnergiaLeads(prev => prev.map(l =>
+        elegiveis.some((e: any) => e.id === l.id)
+          ? { ...l, comissaoStatus: "solicitada", comissaoSolicitadaEm: agora }
+          : l
+      ));
+      setEnergiaSaqueOpen(false);
+      setEnergiaSaquePix("");
+      toast.success(`Solicitação de saque de ${formatCurrencyBRL(energiaComissaoAcumulada)} enviada.`);
+    } catch (error) {
+      console.error("Erro ao solicitar saque de energia solar:", error);
+      toast.error("Não foi possível registrar a solicitação de saque.");
+    } finally {
+      setEnergiaSaqueSubmitting(false);
+    }
+  };
+
+
+
   const renderEnergiaSolarPanel = () => {
                         const energiaCounts = energiaLeads.reduce((acc: Record<string, number>, l: any) => {
                           const k = l.status || "novo";
