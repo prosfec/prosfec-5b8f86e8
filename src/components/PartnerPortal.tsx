@@ -2140,15 +2140,28 @@ export default function PartnerPortal({
                                   </div>
 
                                   {lead.telefone && (
-                                    <a
-                                      href={energiaWa}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="w-full px-3 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
-                                    >
-                                      <Send className="w-3.5 h-3.5 text-white fill-current" />
-                                      Abordar no WhatsApp
-                                    </a>
+                                    <div className="space-y-2">
+                                      <a
+                                        href={energiaWa}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="w-full px-3 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                      >
+                                        <Send className="w-3.5 h-3.5 text-white fill-current" />
+                                        Abordar no WhatsApp
+                                      </a>
+                                      {energiaFollowUp && (
+                                        <a
+                                          href={buildWhatsAppUrl(lead.telefone, buildEnergiaFollowUpWhatsAppMessage(lead.nomeEmpresa))}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                        >
+                                          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                          Cobrar Retorno (Follow-up)
+                                        </a>
+                                      )}
+                                    </div>
                                   )}
 
                                   <div className="pt-2 border-t border-slate-100 space-y-2">
