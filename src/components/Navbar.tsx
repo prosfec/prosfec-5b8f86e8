@@ -117,13 +117,7 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
           {/* Action Buttons */}
           <div className="hidden sm:flex items-center gap-3">
             <button
-              onClick={onPartnerPortalClick}
-              className="border border-white/10 hover:border-white/20 text-zinc-200 font-bold text-xs px-4 py-2.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer bg-white/5 hover:bg-white/10"
-            >
-              <Users className="w-4 h-4 text-emerald-400" strokeWidth={2} />
-              Área do Parceiro
-            </button>
-            <button
+
               onClick={onSimulateClick}
               className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-sm px-5 py-2.5 rounded-lg transition-all flex items-center gap-2 cursor-pointer"
             >
@@ -195,16 +189,7 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
 
             <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
               <button
-                onClick={() => {
-                  setIsOpen(false);
-                  onPartnerPortalClick();
-                }}
-                className="w-full border border-gray-200 hover:bg-slate-50 text-gray-700 text-center font-bold py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2"
-              >
-                <Users className="w-5 h-5 text-gray-500" strokeWidth={2} />
-                Acessar Área do Parceiro
-              </button>
-              <button
+
                 onClick={() => {
                   setIsOpen(false);
                   onSimulateClick();
