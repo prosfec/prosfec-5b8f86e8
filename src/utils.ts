@@ -146,6 +146,30 @@ export function buildEnergiaSolarWhatsAppMessage(nomeEmpresa?: string): string {
   ].join("\n");
 }
 
+// Copy curta de reativação (follow-up) para leads de Energia Solar sem resposta
+export function buildEnergiaFollowUpWhatsAppMessage(nomeEmpresa?: string): string {
+  const alvo = String(nomeEmpresa ?? "").trim();
+  return [
+    `Olá${alvo ? `, ${alvo}` : ""}! Tudo bem?`,
+    "",
+    "Passando só para confirmar se conseguiu ver a simulação de economia na conta de energia que te enviei.",
+    "",
+    "Quer que eu faça uma estimativa rápida para o consumo da sua empresa?"
+  ].join("\n");
+}
+
+// Follow-up recomendado: lead ainda em "novo" e parado há 3 dias ou mais
+export function precisaFollowUpEnergia(lead: any, hoje: Date = new Date()): boolean {
+  if (!lead) return false;
+  if ((lead.status || "novo") !== "novo") return false;
+  const ref = lead.atualizadoEm || lead.criadoEm;
+  if (!ref) return false;
+  const base = new Date(ref).getTime();
+  if (!Number.isFinite(base)) return false;
+  const dias = (hoje.getTime() - base) / 86400000;
+  return dias >= 3;
+}
+
 // ===== Janela de saque quinzenal (dias 15 e último dia do mês) =====
 export function isUltimoDiaDoMes(date: Date = new Date()): boolean {
   const proximo = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
