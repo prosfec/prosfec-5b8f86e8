@@ -1957,6 +1957,7 @@ export default function PartnerPortal({
                               const energiaWa = lead.telefone
                                 ? buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa))
                                 : "#";
+                              const energiaFollowUp = precisaFollowUpEnergia(lead);
                               return (
                                 <div key={lead.id} className="bg-white border border-amber-100 rounded-2xl p-3.5 space-y-2.5">
                                   <div className="flex items-start justify-between gap-2">
