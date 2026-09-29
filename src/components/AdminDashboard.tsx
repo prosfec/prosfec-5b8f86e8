@@ -4684,6 +4684,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     {lead.ramo}
                                   </span>
                                 )}
+                                {lead.origem === "cadastro_manual" && (
+                                  <span className="inline-block mt-1 ml-1 text-[9px] bg-amber-100 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase">
+                                    Cadastro manual
+                                  </span>
+                                )}
                               </div>
                               <span className={`shrink-0 border font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase ${energiaStatusBadge(status)}`}>
                                 {ENERGIA_STATUS_OPTIONS.find(o => o.value === status)?.label || status}
