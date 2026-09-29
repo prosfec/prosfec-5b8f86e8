@@ -1696,6 +1696,79 @@ export default function PartnerPortal({
     }
   };
 
+  // Máscara de telefone BR para o cadastro manual
+  const maskTelefoneBR = (value: string) => {
+    const d = (value || "").replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 2) return d;
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  };
+
+  // ⚡ Cadastro manual de lead de energia solar (mesma esteira do Painel de Oportunidades)
+  const handleCadastrarEnergiaManual = async () => {
+    if (!currentPartner) return;
+    const nome = energiaManualForm.nome.trim();
+    const telefoneDigits = energiaManualForm.telefone.replace(/\D/g, "");
+    const email = energiaManualForm.email.trim();
+    if (nome.length < 3) {
+      toast.error("Informe o nome completo do cliente.");
+      return;
+    }
+    if (telefoneDigits.length < 10) {
+      toast.error("Informe um telefone/WhatsApp válido com DDD.");
+      return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Informe um e-mail válido ou deixe o campo vazio.");
+      return;
+    }
+    const key = energiaLeadKey({ nome, telefone: energiaManualForm.telefone });
+    if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
+      toast.info("Este cliente já está na sua lista de Energia Solar.");
+      return;
+    }
+    setEnergiaManualSaving(true);
+    try {
+      const payload: any = {
+        nomeEmpresa: nome,
+        razaoSocial: nome,
+        nomeContato: nome,
+        ramo: "",
+        telefone: energiaManualForm.telefone.trim(),
+        email,
+        endereco: "",
+        website: "",
+        cidade: "",
+        estado: "",
+        cnpj: "",
+        cnpjDetails: null,
+        parceiroId: currentPartner.id,
+        parceiroNome: currentPartner.nome || "",
+        parceiroEmail: currentPartner.email || "",
+        masterPartnerId: (currentPartner as any).parentPartnerId || "",
+        origem: "cadastro_manual",
+        status: "novo",
+        anotacoes: [],
+        criadoEm: new Date().toISOString(),
+        atualizadoEm: new Date().toISOString()
+      };
+      const docRef = await addDoc(collection(db, "leads_energia"), payload);
+      setEnergiaLeads(prev => [{ id: docRef.id, ...payload }, ...prev]);
+      setEnergiaManualForm({ nome: "", telefone: "", email: "" });
+      setEnergiaManualOpen(false);
+      setEnergiaPanelOpen(true);
+      toast.success("Lead cadastrado na esteira de Energia Solar.");
+    } catch (error) {
+      console.error("Erro ao cadastrar lead manual de energia:", error);
+      toast.error("Não foi possível cadastrar o lead.");
+    } finally {
+      setEnergiaManualSaving(false);
+    }
+  };
+
+
+
   // Anotação do parceiro no lead de energia (compartilhada com a Mesa/ADM)
   const handleAddEnergiaNotaParceiro = async (leadId: string) => {
     const texto = (energiaNotaDraft[leadId] || "").trim();
