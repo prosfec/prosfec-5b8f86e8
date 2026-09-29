@@ -193,8 +193,10 @@ export default function EnergiaContratacaoModal({
     if (!open) {
       setSelecionada(null);
       setBusca("");
+      setDicasAbertas(false);
     }
   }, [open]);
+
 
   const filtradas = useMemo(() => {
     const q = normalize(busca);
