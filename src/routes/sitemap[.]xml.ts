@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-const BASE_URL = "https://prosfec.lovable.app";
+const BASE_URL = "https://prosfec.com.br";
 
 interface SitemapEntry {
   path: string;

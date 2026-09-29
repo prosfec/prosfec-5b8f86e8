@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://prosfec.lovable.app/sitemap.xml
+Sitemap: https://prosfec.com.br/sitemap.xml
