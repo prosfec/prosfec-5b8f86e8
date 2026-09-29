@@ -1926,6 +1926,53 @@ export default function PartnerPortal({
                           </div>
                         </div>
 
+                        {energiaManualOpen && (
+                          <div className="bg-white border border-amber-200 rounded-xl p-3 space-y-2">
+                            <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">
+                              Cadastro manual de cliente
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              <input
+                                value={energiaManualForm.nome}
+                                onChange={e => setEnergiaManualForm(f => ({ ...f, nome: e.target.value }))}
+                                placeholder="Nome completo"
+                                className="px-3 py-2 border border-amber-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-amber-400"
+                              />
+                              <input
+                                value={energiaManualForm.telefone}
+                                onChange={e => setEnergiaManualForm(f => ({ ...f, telefone: maskTelefoneBR(e.target.value) }))}
+                                placeholder="(00) 00000-0000"
+                                inputMode="numeric"
+                                className="px-3 py-2 border border-amber-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-amber-400"
+                              />
+                              <input
+                                value={energiaManualForm.email}
+                                onChange={e => setEnergiaManualForm(f => ({ ...f, email: e.target.value }))}
+                                placeholder="E-mail (opcional)"
+                                type="email"
+                                className="px-3 py-2 border border-amber-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-amber-400"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={handleCadastrarEnergiaManual}
+                                disabled={energiaManualSaving}
+                                className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                              >
+                                {energiaManualSaving ? "Salvando..." : "Salvar Lead"}
+                              </button>
+                              <button
+                                onClick={() => { setEnergiaManualOpen(false); setEnergiaManualForm({ nome: "", telefone: "", email: "" }); }}
+                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-extrabold text-[10px] cursor-pointer"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+
+
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {(["todos", "novo", "atendimento", "concluido", "arquivado"] as const).map(st => {
                             const total = st === "todos" ? energiaLeads.length : (energiaCounts[st] || 0);
