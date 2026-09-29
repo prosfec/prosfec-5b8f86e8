@@ -4708,6 +4708,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               {lead.telefone && (
                                 <p className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-slate-400" /> {lead.telefone}</p>
                               )}
+                              {lead.email && (
+                                <p className="flex items-center gap-1 truncate"><Mail className="w-3.5 h-3.5 text-slate-400" /> {lead.email}</p>
+                              )}
                               {(lead.cidade || lead.estado) && (
                                 <p className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400" /> {[lead.cidade, lead.estado].filter(Boolean).join(" / ")}</p>
                               )}
