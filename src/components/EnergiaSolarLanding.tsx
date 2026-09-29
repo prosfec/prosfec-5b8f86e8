@@ -140,7 +140,7 @@ export default function EnergiaSolarLanding() {
 
           <div className="mx-auto w-full max-w-7xl px-5">
             <div className="max-w-4xl">
-              <SectionTag>● Regulamentado pela Lei 14.300 / ANEEL</SectionTag>
+              <SectionTag>● Parceria Oficial PROSFEC &amp; SUNNE · Lei 14.300 / ANEEL</SectionTag>
               <h1 className="mt-6 font-[Manrope,sans-serif] text-[clamp(34px,7vw,86px)] font-extrabold leading-[0.95] tracking-[-0.03em]">
                 A Revolução da Energia Inteligente.
                 <span className="mt-3 block bg-gradient-to-r from-[#10B981] to-[#16C784] bg-clip-text text-transparent">
