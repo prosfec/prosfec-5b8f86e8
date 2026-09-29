@@ -93,9 +93,15 @@ export default function EnergiaSolarLanding() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#10B981] to-[#16C784] text-lg text-[#05070A]">
               ⚡
             </span>
-            <span className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-white">
-              Energia Inteligente
+            <span className="flex flex-col leading-tight">
+              <span className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-white">
+                PROSFEC <span className="text-[#10B981]">&</span> SUNNE
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-white/40">
+                Energia Inteligente
+              </span>
             </span>
+
           </a>
           <nav className="hidden items-center gap-7 lg:flex">
             {NAV.map((n) => (
@@ -134,11 +140,11 @@ export default function EnergiaSolarLanding() {
 
           <div className="mx-auto w-full max-w-7xl px-5">
             <div className="max-w-4xl">
-              <SectionTag>● Regulamentado pela Lei 14.300 / ANEEL</SectionTag>
+              <SectionTag>● Parceria Oficial PROSFEC &amp; SUNNE · Lei 14.300 / ANEEL</SectionTag>
               <h1 className="mt-6 font-[Manrope,sans-serif] text-[clamp(34px,7vw,86px)] font-extrabold leading-[0.95] tracking-[-0.03em]">
                 A Revolução da Energia Inteligente.
                 <span className="mt-3 block bg-gradient-to-r from-[#10B981] to-[#16C784] bg-clip-text text-transparent">
-                  Economize de 17% a 27% na sua conta de luz todo mês.
+                  Economize de 15% a 25% na sua conta de luz todo mês.
                 </span>
               </h1>
               <p className="mt-7 max-w-[62ch] text-[17px] leading-relaxed text-white/65">
@@ -217,7 +223,7 @@ export default function EnergiaSolarLanding() {
                 </span>
                 <span className="flex items-center gap-2 text-white/55">
                   <span className="h-2 w-2 rounded-full bg-[#10B981]" />
-                  Com assinatura solar (−17% a −27%)
+                  Com assinatura solar (−15% a −25%)
                 </span>
               </div>
 
@@ -406,7 +412,7 @@ export default function EnergiaSolarLanding() {
                 retorno. Com a <strong className="text-white">Energia Solar por Assinatura</strong>,
                 a lógica inverteu: geramos energia limpa em usinas de alta tecnologia e
                 injetamos créditos diretamente no seu relógio. Você consome o crédito solar
-                e paga até 27% mais barato.
+                e paga até 25% mais barato.
               </p>
             </div>
 
@@ -438,7 +444,7 @@ export default function EnergiaSolarLanding() {
                     "Zero investimento e zero taxa de adesão",
                     "Ativação 100% digital pelo celular",
                     "Sem obra e sem placa no seu telhado",
-                    "Desconto de 17% a 27% creditado na fatura",
+                    "Desconto de 15% a 25% creditado na fatura",
                   ].map((t) => (
                     <li key={t} className="flex gap-3">
                       <span className="text-[#10B981]">✓</span>
@@ -484,7 +490,7 @@ export default function EnergiaSolarLanding() {
                 {
                   n: "04",
                   t: "Sua Economia Real",
-                  d: "Você recebe a fatura com o desconto garantido de 17% a 27%. O dinheiro fica no seu caixa.",
+                  d: "Você recebe a fatura com o desconto garantido de 15% a 25%. O dinheiro fica no seu caixa.",
                 },
               ].map((s) => (
                 <Glass key={s.n} className="p-6">
@@ -525,7 +531,7 @@ export default function EnergiaSolarLanding() {
                 },
                 {
                   i: "📉",
-                  t: "Economia de 17% a 27%",
+                  t: "Economia de 15% a 25%",
                   d: "Redução previsível mês após mês, aliviando o custo de empresas e o orçamento de famílias.",
                 },
                 {
@@ -609,7 +615,7 @@ export default function EnergiaSolarLanding() {
                 </p>
                 <ul className="mt-5 space-y-3 text-[15px] text-white/80">
                   {[
-                    "Desconto garantido de 17% a 27%",
+                    "Desconto garantido de 15% a 25%",
                     "Proteção contra bandeiras tarifárias",
                     "Créditos solares injetados todo mês",
                     "Previsibilidade total de custos",
@@ -731,7 +737,7 @@ export default function EnergiaSolarLanding() {
               Quanto dinheiro você já deixou na mesa este ano pagando a tarifa cheia?
             </h2>
             <p className="mx-auto mt-6 max-w-[62ch] text-[16px] leading-relaxed text-white/60">
-              Cada mês que você passa adiando a migração é um mês jogando de 17% a 27% do
+              Cada mês que você passa adiando a migração é um mês jogando de 15% a 25% do
               valor da sua conta no lixo. Esse é um dinheiro que poderia estar virando lucro
               no caixa da sua empresa ou conforto para a sua família.
             </p>
@@ -796,7 +802,7 @@ export default function EnergiaSolarLanding() {
                 ⚡
               </span>
               <span className="text-[13px] font-extrabold uppercase tracking-[0.16em]">
-                Energia Inteligente
+                PROSFEC <span className="text-[#10B981]">&</span> SUNNE
               </span>
             </div>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/35">
@@ -804,15 +810,17 @@ export default function EnergiaSolarLanding() {
             </p>
           </div>
           <p className="mt-8 max-w-[90ch] text-[12px] leading-relaxed text-white/35">
-            Modelo de Geração Compartilhada regulamentado pela Lei Federal nº 14.300/2022 e
+            Programa de energia por assinatura da PROSFEC em parceria com a SUNNE, no
+            modelo de Geração Compartilhada regulamentado pela Lei Federal nº 14.300/2022 e
             Resolução Normativa ANEEL nº 1.000/2021. A economia é estimada e depende de
             fatores como distribuidora, tributação local e perfil de consumo. Não há
             garantia de fornecimento de energia pela geradora. Você permanece conectado à
             distribuidora local.
           </p>
           <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.16em] text-white/25">
-            © {new Date().getFullYear()} Energia Inteligente • Todos os direitos reservados
+            © {new Date().getFullYear()} PROSFEC &amp; SUNNE • Todos os direitos reservados
           </p>
+
         </div>
       </footer>
 

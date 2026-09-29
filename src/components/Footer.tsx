@@ -113,7 +113,7 @@ export default function Footer({ onSimulateClick, referredByPartnerWhatsapp, ref
                   href="/energiasolar"
                   className="hover:text-white transition-colors"
                 >
-                  Saiba como pode ter de 17% a 27% de desconto na sua fatura de energia
+                  Saiba como pode ter de 15% a 25% de desconto na sua fatura de energia
                 </a>
               </li>
               <li>

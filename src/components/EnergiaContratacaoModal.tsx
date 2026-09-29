@@ -229,8 +229,10 @@ export default function EnergiaContratacaoModal({
             )}
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#10B981]">
+                PROSFEC &amp; SUNNE ·{" "}
                 {selecionada ? "Simulação e Contratação" : "Passo 1 de 2"}
               </p>
+
               <p className="text-[15px] font-extrabold text-white">
                 {selecionada
                   ? `${selecionada.nome}${selecionada.uf !== "—" ? ` (${selecionada.uf})` : ""} · ${selecionada.desconto}% de desconto`

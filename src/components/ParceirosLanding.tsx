@@ -47,7 +47,7 @@ const PRODUTOS = [
     icon: Sun,
     tag: "Produto 3",
     title: "Energia Solar por Assinatura",
-    desc: "Sem obra, sem placas e sem investimento. A empresa passa a economizar de 17% a 27% na conta de luz com adesão 100% digital.",
+    desc: "Sem obra, sem placas e sem investimento. A empresa passa a economizar de 15% a 25% na conta de luz com adesão 100% digital.",
     ganho: "Comissões com repasses rápidos a cada cliente ativado.",
   },
 ];
