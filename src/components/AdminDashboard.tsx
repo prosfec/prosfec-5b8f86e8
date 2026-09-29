@@ -1492,34 +1492,59 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   });
 
   // Consultas executadas que ainda estão sem o relatório PDF anexado pela equipe
+  const buildPendingReports = (docs: any[]) => {
+    const byLead: Record<string, number> = {};
+    const byDoc: Record<string, number> = {};
+    docs.forEach((d) => {
+      const data: any = d.data() || {};
+      if (d.id.startsWith("ia_diagnostico_")) return;
+      if (!data.resultado) return;
+      if (data.relatorioPdfUrl) return;
+      if (data.leadId) {
+        byLead[data.leadId] = (byLead[data.leadId] || 0) + 1;
+      } else if (data.documento) {
+        const doc = String(data.documento).replace(/\D/g, "");
+        if (doc) byDoc[doc] = (byDoc[doc] || 0) + 1;
+      }
+    });
+    return { byLead, byDoc };
+  };
+
   const loadPendingReports = async () => {
     try {
       const snap = await getDocs(collection(db, "consultas_realizadas"));
-      const byLead: Record<string, number> = {};
-      const byDoc: Record<string, number> = {};
-      snap.docs.forEach((d) => {
-        const data: any = d.data() || {};
-        if (d.id.startsWith("ia_diagnostico_")) return;
-        if (!data.resultado) return;
-        if (data.relatorioPdfUrl) return;
-        if (data.leadId) {
-          byLead[data.leadId] = (byLead[data.leadId] || 0) + 1;
-        } else if (data.documento) {
-          const doc = String(data.documento).replace(/\D/g, "");
-          if (doc) byDoc[doc] = (byDoc[doc] || 0) + 1;
-        }
-      });
-      setPendingReports({ byLead, byDoc });
+      setPendingReports(buildPendingReports(snap.docs));
     } catch (err) {
       console.warn("Não foi possível carregar as consultas pendentes de PDF:", err);
     }
   };
 
+  // Escuta em tempo real: uma consulta lançada pelo parceiro acende o aviso na hora
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const unsubscribe = onSnapshot(
+      collection(db, "consultas_realizadas"),
+      (snap) => setPendingReports(buildPendingReports(snap.docs)),
+      (err) => console.warn("Monitoramento de consultas pendentes indisponível:", err)
+    );
+    return () => unsubscribe();
+  }, [isAuthenticated]);
+
   const getPendingReports = (lead: any): number => {
     if (!lead) return 0;
     const porLead = pendingReports.byLead[lead.id] || 0;
+    // Registros antigos sem leadId: casa pelo CNPJ da empresa e pelos CPFs dos sócios
+    const documentos = new Set<string>();
     const cnpj = String(lead.cnpj || "").replace(/\D/g, "");
-    const porDoc = cnpj ? (pendingReports.byDoc[cnpj] || 0) : 0;
+    if (cnpj) documentos.add(cnpj);
+    (Array.isArray(lead.socios) ? lead.socios : []).forEach((s: any) => {
+      const cpf = String(s?.cpf || "").replace(/\D/g, "");
+      if (cpf) documentos.add(cpf);
+    });
+    let porDoc = 0;
+    documentos.forEach((docDigits) => {
+      porDoc += pendingReports.byDoc[docDigits] || 0;
+    });
     return porLead + porDoc;
   };
 
