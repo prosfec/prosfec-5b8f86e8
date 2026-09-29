@@ -802,7 +802,7 @@ export default function EnergiaSolarLanding() {
                 ⚡
               </span>
               <span className="text-[13px] font-extrabold uppercase tracking-[0.16em]">
-                Energia Inteligente
+                PROSFEC <span className="text-[#10B981]">&</span> SUNNE
               </span>
             </div>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/35">
@@ -810,15 +810,17 @@ export default function EnergiaSolarLanding() {
             </p>
           </div>
           <p className="mt-8 max-w-[90ch] text-[12px] leading-relaxed text-white/35">
-            Modelo de Geração Compartilhada regulamentado pela Lei Federal nº 14.300/2022 e
+            Programa de energia por assinatura da PROSFEC em parceria com a SUNNE, no
+            modelo de Geração Compartilhada regulamentado pela Lei Federal nº 14.300/2022 e
             Resolução Normativa ANEEL nº 1.000/2021. A economia é estimada e depende de
             fatores como distribuidora, tributação local e perfil de consumo. Não há
             garantia de fornecimento de energia pela geradora. Você permanece conectado à
             distribuidora local.
           </p>
           <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.16em] text-white/25">
-            © {new Date().getFullYear()} Energia Inteligente • Todos os direitos reservados
+            © {new Date().getFullYear()} PROSFEC &amp; SUNNE • Todos os direitos reservados
           </p>
+
         </div>
       </footer>
 
