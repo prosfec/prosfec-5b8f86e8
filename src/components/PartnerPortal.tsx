@@ -1050,6 +1050,10 @@ export default function PartnerPortal({
   const [energiaSaqueOpen, setEnergiaSaqueOpen] = useState(false);
   const [energiaSaquePix, setEnergiaSaquePix] = useState("");
   const [energiaSaqueSubmitting, setEnergiaSaqueSubmitting] = useState(false);
+  // ⚡ Cadastro manual de lead de energia solar (controle de referência do parceiro)
+  const [energiaManualOpen, setEnergiaManualOpen] = useState(false);
+  const [energiaManualSaving, setEnergiaManualSaving] = useState(false);
+  const [energiaManualForm, setEnergiaManualForm] = useState({ nome: "", telefone: "", email: "" });
   // 📝 Anotações privadas de prospecção (Painel de Oportunidades — só o parceiro vê)
   const [prospectNotes, setProspectNotes] = useState<Record<string, { id: string; notas: any[] }>>({});
   const [prospectNoteDraft, setProspectNoteDraft] = useState<Record<string, string>>({});
