@@ -160,7 +160,7 @@ export default function EnergiaSolarLanding() {
                 ))}
               </div>
               <div className="mt-10 flex flex-wrap items-center gap-4">
-                <CtaButton>Simule e Contrate Aqui</CtaButton>
+                <CtaButton onClick={abrirModal}>Simule e Contrate Aqui</CtaButton>
                 <a
                   href="#como-funciona"
                   className="rounded-full border border-white/12 bg-white/[0.04] px-7 py-4 text-[15px] font-bold text-white/85 backdrop-blur-xl transition-all hover:border-[#10B981]/30 hover:text-white"
