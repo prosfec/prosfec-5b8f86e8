@@ -61,6 +61,8 @@ const NAV = [
 
 export default function EnergiaSolarLanding() {
   const [scrolled, setScrolled] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const abrirModal = () => setModalOpen(true);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
