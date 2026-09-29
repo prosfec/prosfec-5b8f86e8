@@ -93,9 +93,15 @@ export default function EnergiaSolarLanding() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#10B981] to-[#16C784] text-lg text-[#05070A]">
               ⚡
             </span>
-            <span className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-white">
-              Energia Inteligente
+            <span className="flex flex-col leading-tight">
+              <span className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-white">
+                PROSFEC <span className="text-[#10B981]">&</span> SUNNE
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-white/40">
+                Energia Inteligente
+              </span>
             </span>
+
           </a>
           <nav className="hidden items-center gap-7 lg:flex">
             {NAV.map((n) => (
