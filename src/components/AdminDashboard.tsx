@@ -1822,6 +1822,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         console.warn("Could not load custom base prices:", errConfig);
       }
 
+      // Mantém o aviso "Aguardando PDF" sincronizado ao atualizar o painel
+      await loadPendingReports();
+
+
+
     } catch (err: any) {
       console.error("Error fetching admin dashboard data:", err);
       const code = String(err?.code || "");
