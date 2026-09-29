@@ -3269,6 +3269,29 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0)
   };
 
+  // Ciclo mensal: fechamento dia 10, NF dia 20 (interno), pagamento dia 25
+  const energiaCicloEtapa = etapaCicloEnergia();
+
+  // Consolidado por parceiro para liquidação direta pela Mesa
+  const energiaPagamentosPorParceiro = Array.from(
+    energiaConcluidos
+      .filter((l: any) => (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0)
+      .reduce((acc: Map<string, { id: string; nome: string; contratos: number; total: number; solicitado: boolean }>, l: any) => {
+        const id = l.parceiroId || "";
+        if (!id) return acc;
+        const atual = acc.get(id);
+        acc.set(id, {
+          id,
+          nome: l.parceiroNome || "Parceiro",
+          contratos: (atual?.contratos || 0) + 1,
+          total: (atual?.total || 0) + (Number(l.comissaoParceiro) || 0),
+          solicitado: (atual?.solicitado || false) || (l.comissaoStatus === "solicitada")
+        });
+        return acc;
+      }, new Map()).values()
+  ).sort((a, b) => b.total - a.total);
+
+
   const adminNavItems = [
     { id: "funnel", label: "Funil & Conversão", icon: TrendingUp, badge: null as any },
     { id: "leads", label: "Leads", icon: Users, badge: leads.length ? String(leads.length) : null, tone: "neutral" },
