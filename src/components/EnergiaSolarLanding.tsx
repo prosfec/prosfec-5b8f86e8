@@ -758,7 +758,7 @@ export default function EnergiaSolarLanding() {
                   de crédito.
                 </p>
                 <div className="mt-9 flex justify-center">
-                  <CtaButton className="px-9 py-5 text-[16px]">
+                  <CtaButton className="px-9 py-5 text-[16px]" onClick={abrirModal}>
                     Simule e Contrate Aqui
                   </CtaButton>
                 </div>
