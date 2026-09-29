@@ -1,21 +1,22 @@
 import { useEffect, useState } from "react";
 import heroImg from "@/assets/energia-solar-hero.jpg";
+import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 
-const CTA_LINK = "https://raioenergy.com/r/XN8NN5AWFG";
 const CTA_TEXT = "Simule e contrate aqui";
 
 function CtaButton({
   children,
   className = "",
+  onClick,
 }: {
   children?: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }) {
   return (
-    <a
-      href={CTA_LINK}
-      target="_blank"
-      rel="noopener noreferrer"
+    <button
+      type="button"
+      onClick={onClick}
       className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-[#10B981] px-7 py-4 text-[15px] font-extrabold tracking-tight text-[#05070A] shadow-[0_10px_40px_-10px_rgba(16,185,129,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#16C784] ${className}`}
     >
       <span className="relative z-10">{children ?? CTA_TEXT}</span>
@@ -23,7 +24,7 @@ function CtaButton({
         →
       </span>
       <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-[1200ms] group-hover:translate-x-full" />
-    </a>
+    </button>
   );
 }
 
