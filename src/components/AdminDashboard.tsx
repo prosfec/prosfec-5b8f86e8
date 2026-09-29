@@ -12,7 +12,8 @@ import {
   setDoc,
   getDoc,
   arrayUnion,
-  where
+  where,
+  runTransaction
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
@@ -1306,25 +1307,41 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
-  // Reflete o desfecho de um saque de Energia Solar nos leads envolvidos:
-  // pago → "paga"; recusado → volta para "acumulada" (pode ser solicitado de novo).
-  const syncEnergiaLeadsComissao = async (sol: any, desfecho: "pago" | "recusado") => {
-    if (sol?.origem !== "energia_solar") return;
-    try {
-      let ids: string[] = Array.isArray(sol?.detalhes?.leadIds) ? sol.detalhes.leadIds : [];
-      if (!ids.length && sol?.dataSolicitacao) {
-        const snap = await getDocs(query(collection(db, "leads_energia"), where("comissaoSolicitadaEm", "==", sol.dataSolicitacao)));
-        ids = snap.docs.map(d => d.id);
-      }
-      const now = new Date().toISOString();
-      for (const leadId of ids) {
-        await updateDoc(doc(db, "leads_energia", leadId), desfecho === "pago"
+  const energiaIdsDoSaque = async (sol: SolicitacaoComissao): Promise<string[]> => {
+    const ids = (sol as any).detalhes?.leadIds;
+    if (Array.isArray(ids) && ids.length) return ids;
+    if (!sol.dataSolicitacao) throw new Error("Saque solar sem contratos vinculados. Confira o histórico antes de pagar.");
+    const snap = await getDocs(query(collection(db, "leads_energia"), where("comissaoSolicitadaEm", "==", sol.dataSolicitacao)));
+    if (snap.empty) throw new Error("Nenhum contrato encontrado para este saque. Confira o histórico antes de pagar.");
+    return snap.docs.map(d => d.id);
+  };
+
+  const liquidarSaqueEnergia = async (sol: SolicitacaoComissao, desfecho: "pago" | "recusado", comprovante?: string) => {
+    const ids = await energiaIdsDoSaque(sol);
+    if (new Set(ids).size !== ids.length) throw new Error("Saque com contratos repetidos. Confira antes de continuar.");
+    const now = new Date().toISOString();
+    await runTransaction(db, async tx => {
+      const saqueRef = doc(db, "solicitacoes_comissao", sol.id);
+      const saqueSnap = await tx.get(saqueRef);
+      if (!saqueSnap.exists() || saqueSnap.data().status !== "pendente") throw new Error("Este saque já foi processado. Atualize o painel.");
+      const leadSnaps = await Promise.all(ids.map(id => tx.get(doc(db, "leads_energia", id))));
+      const total = leadSnaps.reduce((sum, snap) => {
+        const lead = snap.data();
+        if (!lead || lead.parceiroId !== sol.partnerId || lead.status !== "concluido" || lead.comissaoStatus !== "solicitada" || lead.comissaoSolicitadaEm !== saqueSnap.data()?.dataSolicitacao) {
+          throw new Error("Os contratos deste saque mudaram. Confira os valores antes de continuar.");
+        }
+        return sum + Math.round(Number(lead.comissaoParceiro || 0) * 100);
+      }, 0);
+      if (total !== Math.round(Number(saqueSnap.data().valor) * 100)) throw new Error("O valor do saque não corresponde aos contratos. Confira antes de pagar.");
+      tx.update(saqueRef, desfecho === "pago"
+        ? { status: "pago", dataPagamento: now, comprovante: comprovante || "Comprovante Pix processado via Administração PROSFEC" }
+        : { status: "recusado", observacoes: comprovante || "Solicitação recusada pela administração", dataAtualizacao: now });
+      for (const snap of leadSnaps) {
+        tx.update(snap.ref, desfecho === "pago"
           ? { comissaoStatus: "paga", comissaoPagaEm: now }
           : { comissaoStatus: "acumulada", comissaoSolicitadaEm: null });
       }
-    } catch (e) {
-      console.error("Erro ao sincronizar leads de energia com o saque:", e);
-    }
+    });
   };
 
   const handlePayCommission = async (solicitacao: SolicitacaoComissao) => {
@@ -1344,12 +1361,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const comprovanteText = comissaoReceiptText[solicitacao.id]?.trim() || "Comprovante Pix processado via Administração PROSFEC";
       const now = new Date().toISOString();
 
-      await updateDoc(docRef, {
-        status: "pago",
-        dataPagamento: now,
-        comprovante: comprovanteText
-      });
-      await syncEnergiaLeadsComissao(solicitacao, "pago");
+      if ((solicitacao as any).origem === "energia_solar") {
+        await liquidarSaqueEnergia(solicitacao, "pago", comprovanteText);
+      } else {
+        await updateDoc(docRef, {
+          status: "pago",
+          dataPagamento: now,
+          comprovante: comprovanteText
+        });
+      }
 
       // Notify partner
       if (solicitacao.partnerId) {
@@ -1372,7 +1392,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       await fetchData();
     } catch (err) {
       console.error("Erro ao marcar comissão como paga:", err);
-      alert("Erro ao processar o pagamento da comissão no Firestore.");
+      alert("Erro ao processar o pagamento: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setProcessingComissaoId(null);
     }
@@ -1390,20 +1410,23 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     setProcessingComissaoId(id);
     try {
       const docRef = doc(db, "solicitacoes_comissao", id);
-      await updateDoc(docRef, {
-        status: "recusado",
-        observacoes: motivo.trim() || "Solicitação recusada pela administração",
-        dataAtualizacao: new Date().toISOString()
-      });
       const solRef = (comissoes || []).find((s: any) => s.id === id);
-      if (solRef) await syncEnergiaLeadsComissao(solRef, "recusado");
+      if ((solRef as any)?.origem === "energia_solar") {
+        await liquidarSaqueEnergia(solRef, "recusado", motivo.trim());
+      } else {
+        await updateDoc(docRef, {
+          status: "recusado",
+          observacoes: motivo.trim() || "Solicitação recusada pela administração",
+          dataAtualizacao: new Date().toISOString()
+        });
+      }
 
 
       alert("Solicitação de comissão recusada.");
       await fetchData();
     } catch (err) {
       console.error("Erro ao recusar comissão:", err);
-      alert("Erro ao recusar solicitação.");
+      alert("Erro ao recusar solicitação: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setProcessingComissaoId(null);
     }
@@ -3160,11 +3183,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   // Liquidação direta pela Mesa (dia 25), sem depender de solicitação do parceiro
   const handleLiquidarCicloEnergia = async (parceiroId: string, parceiroNome: string) => {
+    if (userRole === "contador") {
+      toast.error("Somente a administração pode liquidar comissões.");
+      return;
+    }
     const elegiveis = leadsEnergia.filter((l: any) =>
-      (l.parceiroId || "") === parceiroId &&
-      (l.status || "novo") === "concluido" &&
-      (l.comissaoStatus || "acumulada") !== "paga" &&
-      Number(l.comissaoParceiro) > 0
+      (l.parceiroId || "") === parceiroId && (l.status || "novo") === "concluido" &&
+      (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0
     );
     if (elegiveis.length === 0) return;
     const total = elegiveis.reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
@@ -3174,24 +3199,46 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     if (!confirmado) return;
     setEnergiaSavingId(parceiroId);
     try {
+      const pendentesSnap = await getDocs(query(collection(db, "solicitacoes_comissao"), where("partnerId", "==", parceiroId)));
+      const pendentes = pendentesSnap.docs.filter(s => s.data().origem === "energia_solar" && s.data().status === "pendente");
+      const vinculados = await Promise.all(pendentes.map(async s => ({ snap: s, ids: await energiaIdsDoSaque({ id: s.id, ...s.data() } as SolicitacaoComissao) })));
+      const idsPendentes = vinculados.flatMap(v => v.ids);
+      if (new Set(idsPendentes).size !== idsPendentes.length) throw new Error("Há saques com contratos sobrepostos. Confira antes de pagar.");
       const agora = new Date().toISOString();
-      for (const l of elegiveis) {
-        await updateDoc(doc(db, "leads_energia", l.id), {
-          comissaoStatus: "paga",
-          comissaoPagaEm: agora,
-          atualizadoEm: agora,
-          ultimaMovimentacaoMesaEm: agora,
-          ultimaMovimentacaoMesaTexto: "Comissão paga pela Mesa PROSFEC"
+      await runTransaction(db, async tx => {
+        const saqueSnaps = await Promise.all(vinculados.map(v => tx.get(v.snap.ref)));
+        const leadSnaps = await Promise.all(elegiveis.map((l: any) => tx.get(doc(db, "leads_energia", l.id))));
+        const leadMap = new Map(leadSnaps.map(s => [s.id, s]));
+        for (let i = 0; i < vinculados.length; i++) {
+          const saque = saqueSnaps[i].data();
+          const { ids } = vinculados[i];
+          if (!saque || saque.status !== "pendente" || ids.some(id => !leadMap.has(id))) throw new Error("O saque mudou ou inclui contratos fora deste pagamento. Atualize o painel.");
+          const valor = ids.reduce((sum, id) => sum + Math.round(Number(leadMap.get(id)?.data()?.comissaoParceiro || 0) * 100), 0);
+          if (valor !== Math.round(Number(saque.valor) * 100)) throw new Error("O valor de um saque não corresponde aos contratos. Confira antes de pagar.");
+        }
+        for (const snap of leadSnaps) {
+          const lead = snap.data();
+          const status = lead?.comissaoStatus || "acumulada";
+          if (!lead || lead.parceiroId !== parceiroId || lead.status !== "concluido" || !["acumulada", "solicitada"].includes(status) || (status === "solicitada" && !idsPendentes.includes(snap.id)) || (status === "acumulada" && idsPendentes.includes(snap.id))) {
+            throw new Error("Uma comissão mudou ou possui saque sem vínculo confirmado. Atualize o painel.");
+          }
+          if (status === "solicitada" && !vinculados.some(v => v.ids.includes(snap.id) && lead.comissaoSolicitadaEm === v.snap.data().dataSolicitacao)) throw new Error("A solicitação deste contrato mudou. Atualize o painel.");
+        }
+        for (const snap of saqueSnaps) tx.update(snap.ref, { status: "pago", dataPagamento: agora, comprovante: "Pagamento direto registrado pela Mesa PROSFEC" });
+        for (const snap of leadSnaps) tx.update(snap.ref, {
+          comissaoStatus: "paga", comissaoPagaEm: agora, atualizadoEm: agora,
+          ultimaMovimentacaoMesaEm: agora, ultimaMovimentacaoMesaTexto: "Comissão paga pela Mesa PROSFEC"
         });
-      }
+      });
       const ids = new Set(elegiveis.map((l: any) => l.id));
       setLeadsEnergia(prev => prev.map((l: any) =>
         ids.has(l.id) ? { ...l, comissaoStatus: "paga", comissaoPagaEm: agora, ultimaMovimentacaoMesaEm: agora } : l
       ));
+      setComissoes(prev => prev.map(s => pendentes.some(p => p.id === s.id) ? { ...s, status: "pago", dataPagamento: agora } : s));
       toast.success(`Pagamento de ${formatCurrencyBRL(total)} registrado para ${parceiroNome}.`);
     } catch (error) {
       console.error("Erro ao liquidar ciclo de energia:", error);
-      toast.error("Não foi possível registrar o pagamento.");
+      toast.error(error instanceof Error ? error.message : "Não foi possível registrar o pagamento.");
     } finally {
       setEnergiaSavingId(null);
     }
@@ -4727,7 +4774,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             </div>
                             <button
                               onClick={() => handleLiquidarCicloEnergia(p.id, p.nome)}
-                              disabled={energiaSavingId === p.id}
+                              disabled={energiaSavingId === p.id || userRole === "contador"}
                               className="shrink-0 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg font-extrabold text-[10px] cursor-pointer"
                             >
                               {energiaSavingId === p.id ? "Registrando..." : "Liquidar Pagamento"}

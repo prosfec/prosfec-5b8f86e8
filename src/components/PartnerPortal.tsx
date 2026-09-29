@@ -21,7 +21,8 @@ import {
   getDoc,
   onSnapshot,
   arrayUnion,
-  deleteField
+  deleteField,
+  runTransaction
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
@@ -1653,6 +1654,16 @@ export default function PartnerPortal({
     }
   };
 
+  useEffect(() => {
+    if (!isAuthenticated || !currentPartner?.id) return;
+    const q = query(collection(db, "leads_energia"), where("parceiroId", "==", currentPartner.id));
+    return onSnapshot(q, snapshot => {
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a: any, b: any) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime());
+      setEnergiaLeads(list);
+    }, error => console.warn("Erro ao atualizar comissões de energia:", error));
+  }, [isAuthenticated, currentPartner?.id]);
+
   const handleMarcarEnergiaSolar = async (place: any) => {
     if (!currentPartner) return;
     const key = energiaLeadKey(place);
@@ -1824,7 +1835,7 @@ export default function PartnerPortal({
     .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
 
   const handleSolicitarSaqueEnergia = async () => {
-    if (!currentPartner || energiaComissaoAcumulada <= 0) return;
+    if (!currentPartner || energiaComissaoAcumulada <= 0 || energiaSaqueSubmitting) return;
     if (!isJanelaSaqueMensal()) {
       toast.error("Os pagamentos de comissão solar são liberados apenas no dia 25.");
       return;
@@ -1839,30 +1850,38 @@ export default function PartnerPortal({
     setEnergiaSaqueSubmitting(true);
     try {
       const agora = new Date().toISOString();
-      await addDoc(collection(db, "solicitacoes_comissao"), {
-        partnerId: currentPartner.id,
-        partnerNome: currentPartner.nome || "Parceiro",
-        partnerEmail: currentPartner.email || "",
-        partnerWhatsapp: (currentPartner as any).whatsapp || "",
-        partnerPlano: currentPartner.plano || "",
-        chavePix: energiaSaquePix.trim(),
-        valor: energiaComissaoAcumulada,
-        status: "pendente",
-        origem: "energia_solar",
-        origemLabel: "Comissões de Energia Solar",
-        dataSolicitacao: agora,
-        detalhes: {
-          quantidadeContratos: elegiveis.length,
-          leadsEnvolvidos: elegiveis.map((l: any) => l.nomeEmpresa),
-          leadIds: elegiveis.map((l: any) => l.id)
-        }
-      });
-      for (const l of elegiveis) {
-        await updateDoc(doc(db, "leads_energia", l.id), {
-          comissaoStatus: "solicitada",
-          comissaoSolicitadaEm: agora
+      const saqueRef = doc(collection(db, "solicitacoes_comissao"));
+      const valor = await runTransaction(db, async tx => {
+        const snaps = await Promise.all(elegiveis.map((l: any) => tx.get(doc(db, "leads_energia", l.id))));
+        const centavos = snaps.reduce((sum, snap) => {
+          const lead = snap.data();
+          if (!lead || lead.parceiroId !== currentPartner.id || lead.status !== "concluido" || (lead.comissaoStatus || "acumulada") !== "acumulada" || Number(lead.comissaoParceiro) <= 0) {
+            throw new Error("Uma comissão mudou. Atualize o painel antes de solicitar novamente.");
+          }
+          return sum + Math.round(Number(lead.comissaoParceiro) * 100);
+        }, 0) / 100;
+        if (!snaps.length || centavos <= 0) throw new Error("Não há comissões disponíveis para solicitação.");
+        tx.set(saqueRef, {
+          partnerId: currentPartner.id,
+          partnerNome: currentPartner.nome || "Parceiro",
+          partnerEmail: currentPartner.email || "",
+          partnerWhatsapp: (currentPartner as any).whatsapp || "",
+          partnerPlano: currentPartner.plano || "",
+          chavePix: energiaSaquePix.trim(),
+          valor: centavos,
+          status: "pendente",
+          origem: "energia_solar",
+          origemLabel: "Comissões de Energia Solar",
+          dataSolicitacao: agora,
+          detalhes: {
+            quantidadeContratos: snaps.length,
+            leadsEnvolvidos: elegiveis.map((l: any) => l.nomeEmpresa),
+            leadIds: snaps.map(s => s.id)
+          }
         });
-      }
+        for (const snap of snaps) tx.update(snap.ref, { comissaoStatus: "solicitada", comissaoSolicitadaEm: agora });
+        return centavos;
+      });
       setEnergiaLeads(prev => prev.map(l =>
         elegiveis.some((e: any) => e.id === l.id)
           ? { ...l, comissaoStatus: "solicitada", comissaoSolicitadaEm: agora }
@@ -1870,7 +1889,7 @@ export default function PartnerPortal({
       ));
       setEnergiaSaqueOpen(false);
       setEnergiaSaquePix("");
-      toast.success(`Solicitação de saque de ${formatCurrencyBRL(energiaComissaoAcumulada)} enviada.`);
+      toast.success(`Solicitação de saque de ${formatCurrencyBRL(valor)} enviada.`);
     } catch (error) {
       console.error("Erro ao solicitar saque de energia solar:", error);
       toast.error("Não foi possível registrar a solicitação de saque.");
