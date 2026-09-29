@@ -3188,7 +3188,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const filteredLeadsEnergia = leadsEnergia.filter((l: any) => {
     const statusOk = energiaStatusFilter === "todos" || (l.status || "novo") === energiaStatusFilter;
     const termo = `${searchTerm || ""} ${energiaBusca || ""}`.toLowerCase().trim();
-    const textoOk = !termo || [l.nomeEmpresa, l.razaoSocial, l.cnpj, l.telefone, l.cidade, l.parceiroNome]
+    const textoOk = !termo || [l.nomeEmpresa, l.razaoSocial, l.cnpj, l.telefone, l.email, l.cidade, l.parceiroNome]
       .filter(Boolean)
       .some((v: string) => String(v).toLowerCase().includes(termo));
     const parceiroOk = energiaParceiroFilter === "todos" || (l.parceiroId || "") === energiaParceiroFilter;
