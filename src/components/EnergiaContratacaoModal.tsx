@@ -256,6 +256,50 @@ export default function EnergiaContratacaoModal({
 
         {selecionada ? (
           <div className="bg-[#05070A]">
+            {/* Dicas de leitura da fatura */}
+            <div className="border-b border-white/[0.07] bg-[#0B0F14]">
+              <button
+                type="button"
+                onClick={() => setDicasAbertas((v) => !v)}
+                className="flex w-full items-center justify-between gap-3 px-5 py-2.5 text-left"
+              >
+                <span className="text-[12px] font-semibold text-white/60">
+                  💡 Dúvidas com esses campos? Veja onde achar na sua conta
+                </span>
+                <span className="shrink-0 rounded-full border border-[#10B981]/30 bg-[#10B981]/10 px-3 py-1 text-[11px] font-extrabold text-[#10B981]">
+                  {dicasAbertas ? "Ocultar dicas" : "Ver dicas"}
+                </span>
+              </button>
+              {dicasAbertas && (
+                <div className="grid gap-3 px-5 pb-4 sm:grid-cols-3">
+                  {[
+                    {
+                      t: "Média de Consumo (kWh)",
+                      d: 'Olhe no quadro "Histórico de Consumo" da fatura (tabela ou gráfico dos últimos 12 meses). Use o valor em kWh do último mês ou a média indicada ali.',
+                    },
+                    {
+                      t: "Tipo de Ligação",
+                      d: 'Fica em "Dados Técnicos" ou "Classificação", perto do número da instalação. Monofásica: casas e apartamentos compactos. Bifásica: imóveis com chuveiro 220V e ar-condicionado. Trifásica: quase todas as empresas, comércios e galpões.',
+                    },
+                    {
+                      t: "Taxa de Iluminação Pública (R$)",
+                      d: 'Na lista de valores cobrados, procure a sigla "CIP" ou "COSIP". Digite só o valor em reais dessa linha (ex.: 25,00). Se não existir na sua conta, coloque 0.',
+                    },
+                  ].map((i) => (
+                    <div
+                      key={i.t}
+                      className="rounded-[14px] border border-white/[0.08] bg-white/[0.03] px-4 py-3"
+                    >
+                      <p className="text-[12px] font-extrabold text-[#10B981]">{i.t}</p>
+                      <p className="mt-1.5 text-[11.5px] leading-relaxed text-white/55">
+                        {i.d}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <iframe
               src={selecionada.url}
               title={`Contratação ${selecionada.nome}`}
