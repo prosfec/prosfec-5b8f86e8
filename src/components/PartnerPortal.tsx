@@ -1654,6 +1654,16 @@ export default function PartnerPortal({
     }
   };
 
+  useEffect(() => {
+    if (!isAuthenticated || !currentPartner?.id) return;
+    const q = query(collection(db, "leads_energia"), where("parceiroId", "==", currentPartner.id));
+    return onSnapshot(q, snapshot => {
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a: any, b: any) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime());
+      setEnergiaLeads(list);
+    }, error => console.warn("Erro ao atualizar comissões de energia:", error));
+  }, [isAuthenticated, currentPartner?.id]);
+
   const handleMarcarEnergiaSolar = async (place: any) => {
     if (!currentPartner) return;
     const key = energiaLeadKey(place);
