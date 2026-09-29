@@ -4277,13 +4277,15 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
                       {/* List of recommended services */}
                       {servicosRecomendados.length === 0 ? (
-                        <div className="p-4 bg-amber-50/70 border border-amber-200/70 rounded-xl text-xs text-amber-900 flex items-center gap-3">
-                          <Clock className="w-5 h-5 text-amber-600 shrink-0" />
-                          <div>
-                            <span className="font-extrabold block">Aguardando análise da equipe</span>
-                            <span className="text-[11px] text-amber-800">Os relatórios de crédito acima estão disponíveis para leitura. Após a análise, a equipe PROSFEC inclui manualmente os serviços necessários para este cliente.</span>
+                        aptoMesaCredito ? null : (
+                          <div className="p-4 bg-amber-50/70 border border-amber-200/70 rounded-xl text-xs text-amber-900 flex items-center gap-3">
+                            <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+                            <div>
+                              <span className="font-extrabold block">Aguardando análise da equipe</span>
+                              <span className="text-[11px] text-amber-800">Os relatórios de crédito acima estão disponíveis para leitura. Após a análise, a equipe PROSFEC inclui manualmente os serviços necessários para este cliente.</span>
+                            </div>
                           </div>
-                        </div>
+                        )
                       ) : (
                         <div className="space-y-3">
                           {servicosRecomendados.map((serv, sIdx) => (
