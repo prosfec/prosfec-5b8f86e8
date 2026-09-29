@@ -25,7 +25,7 @@ import {
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
-import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueQuinzenal, proximaJanelaSaqueLabel } from "../utils";
+import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel } from "../utils";
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import LeadRegisterForm from "./LeadRegisterForm";
@@ -1818,15 +1818,15 @@ export default function PartnerPortal({
     return new Date(lead.ultimaMovimentacaoMesaEm).getTime() > visto;
   };
 
-  // Comissões de energia acumuladas e aguardando a janela quinzenal
+  // Comissões de energia acumuladas e aguardando o ciclo mensal (pagamento dia 25)
   const energiaComissaoAcumulada = energiaLeads
     .filter((l: any) => (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada")
     .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
 
   const handleSolicitarSaqueEnergia = async () => {
     if (!currentPartner || energiaComissaoAcumulada <= 0) return;
-    if (!isJanelaSaqueQuinzenal()) {
-      toast.error("Os saques são liberados apenas nos dias 15 e 30.");
+    if (!isJanelaSaqueMensal()) {
+      toast.error("Os pagamentos de comissão solar são liberados apenas no dia 25.");
       return;
     }
     if (!energiaSaquePix.trim()) {
@@ -1991,14 +1991,15 @@ export default function PartnerPortal({
                           })}
                         </div>
 
-                        {/* Régua de desempenho e saque quinzenal */}
+                        {/* Régua de desempenho e ciclo mensal de pagamento */}
                         <div className="bg-white border border-amber-200/70 rounded-2xl p-3 space-y-2.5">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             {[
                               { label: "Leads Enviados", valor: String(energiaLeads.length) },
                               { label: "Em Atendimento", valor: String(energiaCounts["atendimento"] || 0) },
                               { label: "Contratos Fechados", valor: String(energiaCounts["concluido"] || 0) },
-                              { label: "Comissão da Quinzena", valor: formatCurrencyBRL(energiaComissaoAcumulada) }
+                              { label: "Comissão do Ciclo", valor: formatCurrencyBRL(energiaComissaoAcumulada) }
+
                             ].map(item => (
                               <div key={item.label} className="bg-amber-50/60 border border-amber-100 rounded-xl p-2">
                                 <p className="text-[8px] font-black text-amber-600 uppercase tracking-wide">{item.label}</p>
@@ -2007,14 +2008,22 @@ export default function PartnerPortal({
                             ))}
                           </div>
 
-                          {isJanelaSaqueQuinzenal() && energiaComissaoAcumulada > 0 ? (
+                          <div className="bg-amber-50/70 border border-amber-100 rounded-xl px-2.5 py-2">
+                            <p className="text-[9px] font-black text-amber-700 uppercase tracking-wide">Ciclo Mensal de Comissões</p>
+                            <p className="text-[10px] font-semibold text-slate-600 mt-0.5 leading-relaxed">
+                              Vendas apuradas até o dia 10 • Pagamento no dia 25
+                            </p>
+                          </div>
+
+                          {isJanelaSaqueMensal() && energiaComissaoAcumulada > 0 ? (
                             !energiaSaqueOpen ? (
                               <button
                                 onClick={() => setEnergiaSaqueOpen(true)}
                                 className="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-[11px] cursor-pointer transition-all"
                               >
-                                Solicitar Saque Quinzenal ({formatCurrencyBRL(energiaComissaoAcumulada)})
+                                Solicitar Pagamento do Ciclo ({formatCurrencyBRL(energiaComissaoAcumulada)})
                               </button>
+
                             ) : (
                               <div className="space-y-2">
                                 <input
@@ -2044,7 +2053,7 @@ export default function PartnerPortal({
                             )
                           ) : (
                             <div className="w-full px-3 py-2 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl font-extrabold text-[10px] text-center">
-                              🔒 Saques liberados nos dias 15 e 30 • {proximaJanelaSaqueLabel()}
+                              🔒 Pagamentos liberados todo dia 25 • {proximoPagamentoEnergiaLabel()}
                             </div>
                           )}
                         </div>
@@ -2141,7 +2150,7 @@ export default function PartnerPortal({
                                         Sua comissão: {formatCurrencyBRL(Number(lead.comissaoParceiro) || 0)}
                                       </p>
                                       <p className="text-[9px] font-bold text-emerald-700 uppercase">
-                                        {lead.comissaoStatus === "paga" ? "Paga" : lead.comissaoStatus === "solicitada" ? "Saque solicitado" : "Acumulada para a quinzena"}
+                                        {lead.comissaoStatus === "paga" ? "Paga" : lead.comissaoStatus === "solicitada" ? "Saque solicitado" : "Acumulada para o ciclo (pagamento dia 25)"}
                                       </p>
                                     </div>
                                   )}

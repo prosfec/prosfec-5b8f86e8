@@ -170,31 +170,46 @@ export function precisaFollowUpEnergia(lead: any, hoje: Date = new Date()): bool
   return dias >= 3;
 }
 
-// ===== Janela de saque quinzenal (dias 15 e último dia do mês) =====
+// ===== Ciclo mensal de comissões (Energia Solar) =====
+// Fechamento das vendas: dia 10 | Envio de NF (somente ADM): dia 20 | Pagamento: dia 25
+export const CICLO_ENERGIA_FECHAMENTO = 10;
+export const CICLO_ENERGIA_NOTA_FISCAL = 20;
+export const CICLO_ENERGIA_PAGAMENTO = 25;
+
 export function isUltimoDiaDoMes(date: Date = new Date()): boolean {
   const proximo = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
   return proximo.getMonth() !== date.getMonth();
 }
 
-// Janela aberta no dia 15 ou no último dia do mês (28/29/30/31)
-export function isJanelaSaqueQuinzenal(date: Date = new Date()): boolean {
-  return date.getDate() === 15 || isUltimoDiaDoMes(date);
+// Janela de saque aberta somente no dia 25 (pagamento mensal)
+export function isJanelaSaqueMensal(date: Date = new Date()): boolean {
+  return date.getDate() === CICLO_ENERGIA_PAGAMENTO;
 }
 
-// Dias restantes até a próxima janela de saque
-export function diasAteProximaJanelaSaque(date: Date = new Date()): number {
-  if (isJanelaSaqueQuinzenal(date)) return 0;
+// Dias restantes até o próximo dia 25
+export function diasAteProximoPagamento(date: Date = new Date()): number {
   const dia = date.getDate();
-  if (dia < 15) return 15 - dia;
+  if (dia === CICLO_ENERGIA_PAGAMENTO) return 0;
+  if (dia < CICLO_ENERGIA_PAGAMENTO) return CICLO_ENERGIA_PAGAMENTO - dia;
   const ultimoDia = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  return ultimoDia - dia;
+  return (ultimoDia - dia) + CICLO_ENERGIA_PAGAMENTO;
 }
 
-export function proximaJanelaSaqueLabel(date: Date = new Date()): string {
-  const dias = diasAteProximaJanelaSaque(date);
-  if (dias === 0) return "Janela de saque aberta hoje";
-  return `Próxima janela em ${dias} dia${dias > 1 ? "s" : ""}`;
+export function proximoPagamentoEnergiaLabel(date: Date = new Date()): string {
+  const dias = diasAteProximoPagamento(date);
+  if (dias === 0) return "Pagamento liberado hoje";
+  return `Próximo pagamento em ${dias} dia${dias > 1 ? "s" : ""}`;
 }
+
+// Etapa atual do ciclo mensal (uso interno da Mesa/ADM)
+export function etapaCicloEnergia(date: Date = new Date()): "apuracao" | "nota_fiscal" | "pagamento" | "encerrado" {
+  const dia = date.getDate();
+  if (dia <= CICLO_ENERGIA_FECHAMENTO) return "apuracao";
+  if (dia <= CICLO_ENERGIA_NOTA_FISCAL) return "nota_fiscal";
+  if (dia <= CICLO_ENERGIA_PAGAMENTO) return "pagamento";
+  return "encerrado";
+}
+
 
 // Format CEP: 99999-999
 export function formatCEP(value: string): string {
