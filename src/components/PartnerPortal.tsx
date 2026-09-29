@@ -25,7 +25,7 @@ import {
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
-import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueQuinzenal, proximaJanelaSaqueLabel } from "../utils";
+import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel } from "../utils";
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import LeadRegisterForm from "./LeadRegisterForm";
@@ -1818,15 +1818,15 @@ export default function PartnerPortal({
     return new Date(lead.ultimaMovimentacaoMesaEm).getTime() > visto;
   };
 
-  // Comissões de energia acumuladas e aguardando a janela quinzenal
+  // Comissões de energia acumuladas e aguardando o ciclo mensal (pagamento dia 25)
   const energiaComissaoAcumulada = energiaLeads
     .filter((l: any) => (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada")
     .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
 
   const handleSolicitarSaqueEnergia = async () => {
     if (!currentPartner || energiaComissaoAcumulada <= 0) return;
-    if (!isJanelaSaqueQuinzenal()) {
-      toast.error("Os saques são liberados apenas nos dias 15 e 30.");
+    if (!isJanelaSaqueMensal()) {
+      toast.error("Os pagamentos de comissão solar são liberados apenas no dia 25.");
       return;
     }
     if (!energiaSaquePix.trim()) {
@@ -2150,7 +2150,7 @@ export default function PartnerPortal({
                                         Sua comissão: {formatCurrencyBRL(Number(lead.comissaoParceiro) || 0)}
                                       </p>
                                       <p className="text-[9px] font-bold text-emerald-700 uppercase">
-                                        {lead.comissaoStatus === "paga" ? "Paga" : lead.comissaoStatus === "solicitada" ? "Saque solicitado" : "Acumulada para a quinzena"}
+                                        {lead.comissaoStatus === "paga" ? "Paga" : lead.comissaoStatus === "solicitada" ? "Saque solicitado" : "Acumulada para o ciclo (pagamento dia 25)"}
                                       </p>
                                     </div>
                                   )}
