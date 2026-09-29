@@ -3183,6 +3183,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   // Liquidação direta pela Mesa (dia 25), sem depender de solicitação do parceiro
   const handleLiquidarCicloEnergia = async (parceiroId: string, parceiroNome: string) => {
+    if (userRole === "contador") {
+      toast.error("Somente a administração pode liquidar comissões.");
+      return;
+    }
     const elegiveis = leadsEnergia.filter((l: any) =>
       (l.parceiroId || "") === parceiroId && (l.status || "novo") === "concluido" &&
       (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0
@@ -4770,7 +4774,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             </div>
                             <button
                               onClick={() => handleLiquidarCicloEnergia(p.id, p.nome)}
-                              disabled={energiaSavingId === p.id}
+                              disabled={energiaSavingId === p.id || userRole === "contador"}
                               className="shrink-0 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg font-extrabold text-[10px] cursor-pointer"
                             >
                               {energiaSavingId === p.id ? "Registrando..." : "Liquidar Pagamento"}
