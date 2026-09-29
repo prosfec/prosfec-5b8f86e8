@@ -106,14 +106,13 @@ export default function EnergiaSolarLanding() {
               </a>
             ))}
           </nav>
-          <a
-            href={CTA_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={abrirModal}
             className="hidden rounded-full bg-[#10B981] px-5 py-2.5 text-[13px] font-extrabold text-[#05070A] transition-all hover:bg-[#16C784] sm:inline-flex"
           >
             Simule e Contrate Agora
-          </a>
+          </button>
         </div>
       </header>
 
