@@ -2053,7 +2053,7 @@ export default function PartnerPortal({
                             )
                           ) : (
                             <div className="w-full px-3 py-2 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl font-extrabold text-[10px] text-center">
-                              🔒 Saques liberados nos dias 15 e 30 • {proximaJanelaSaqueLabel()}
+                              🔒 Pagamentos liberados todo dia 25 • {proximoPagamentoEnergiaLabel()}
                             </div>
                           )}
                         </div>
