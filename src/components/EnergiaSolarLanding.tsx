@@ -1,21 +1,22 @@
 import { useEffect, useState } from "react";
 import heroImg from "@/assets/energia-solar-hero.jpg";
+import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 
-const CTA_LINK = "https://raioenergy.com/r/XN8NN5AWFG";
 const CTA_TEXT = "Simule e contrate aqui";
 
 function CtaButton({
   children,
   className = "",
+  onClick,
 }: {
   children?: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }) {
   return (
-    <a
-      href={CTA_LINK}
-      target="_blank"
-      rel="noopener noreferrer"
+    <button
+      type="button"
+      onClick={onClick}
       className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-[#10B981] px-7 py-4 text-[15px] font-extrabold tracking-tight text-[#05070A] shadow-[0_10px_40px_-10px_rgba(16,185,129,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#16C784] ${className}`}
     >
       <span className="relative z-10">{children ?? CTA_TEXT}</span>
@@ -23,7 +24,7 @@ function CtaButton({
         →
       </span>
       <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-[1200ms] group-hover:translate-x-full" />
-    </a>
+    </button>
   );
 }
 
@@ -60,6 +61,8 @@ const NAV = [
 
 export default function EnergiaSolarLanding() {
   const [scrolled, setScrolled] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const abrirModal = () => setModalOpen(true);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -105,14 +108,13 @@ export default function EnergiaSolarLanding() {
               </a>
             ))}
           </nav>
-          <a
-            href={CTA_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={abrirModal}
             className="hidden rounded-full bg-[#10B981] px-5 py-2.5 text-[13px] font-extrabold text-[#05070A] transition-all hover:bg-[#16C784] sm:inline-flex"
           >
             Simule e Contrate Agora
-          </a>
+          </button>
         </div>
       </header>
 
@@ -159,7 +161,7 @@ export default function EnergiaSolarLanding() {
                 ))}
               </div>
               <div className="mt-10 flex flex-wrap items-center gap-4">
-                <CtaButton>Simule e Contrate Aqui</CtaButton>
+                <CtaButton onClick={abrirModal}>Simule e Contrate Aqui</CtaButton>
                 <a
                   href="#como-funciona"
                   className="rounded-full border border-white/12 bg-white/[0.04] px-7 py-4 text-[15px] font-bold text-white/85 backdrop-blur-xl transition-all hover:border-[#10B981]/30 hover:text-white"
@@ -757,7 +759,7 @@ export default function EnergiaSolarLanding() {
                   de crédito.
                 </p>
                 <div className="mt-9 flex justify-center">
-                  <CtaButton className="px-9 py-5 text-[16px]">
+                  <CtaButton className="px-9 py-5 text-[16px]" onClick={abrirModal}>
                     Simule e Contrate Aqui
                   </CtaButton>
                 </div>
@@ -816,15 +818,16 @@ export default function EnergiaSolarLanding() {
 
       {/* CTA FLUTUANTE */}
       <div className="fixed bottom-5 right-5 z-50 sm:bottom-7 sm:right-7">
-        <a
-          href={CTA_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={abrirModal}
           className="flex items-center gap-2 rounded-full bg-[#10B981] px-6 py-4 text-[14px] font-extrabold text-[#05070A] shadow-[0_10px_45px_-8px_rgba(16,185,129,0.9)] transition-all hover:-translate-y-0.5 hover:bg-[#16C784]"
         >
           ⚡ Simule e contrate aqui
-        </a>
+        </button>
       </div>
+
+      <EnergiaContratacaoModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }
