@@ -96,7 +96,12 @@ import {
   withoutMensalidades,
   onlyMensalidades,
   buildWhatsAppUrl,
-  buildEnergiaSolarWhatsAppMessage
+  buildEnergiaSolarWhatsAppMessage,
+  etapaCicloEnergia,
+  CICLO_ENERGIA_FECHAMENTO,
+  CICLO_ENERGIA_NOTA_FISCAL,
+  CICLO_ENERGIA_PAGAMENTO
+
 } from "../utils";
 import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
