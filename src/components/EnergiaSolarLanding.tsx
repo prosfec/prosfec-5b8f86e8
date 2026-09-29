@@ -817,15 +817,16 @@ export default function EnergiaSolarLanding() {
 
       {/* CTA FLUTUANTE */}
       <div className="fixed bottom-5 right-5 z-50 sm:bottom-7 sm:right-7">
-        <a
-          href={CTA_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={abrirModal}
           className="flex items-center gap-2 rounded-full bg-[#10B981] px-6 py-4 text-[14px] font-extrabold text-[#05070A] shadow-[0_10px_45px_-8px_rgba(16,185,129,0.9)] transition-all hover:-translate-y-0.5 hover:bg-[#16C784]"
         >
           ⚡ Simule e contrate aqui
-        </a>
+        </button>
       </div>
+
+      <EnergiaContratacaoModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }
