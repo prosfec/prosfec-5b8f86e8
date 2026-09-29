@@ -172,6 +172,8 @@ export default function EnergiaContratacaoModal({
 }) {
   const [busca, setBusca] = useState("");
   const [selecionada, setSelecionada] = useState<Concessionaria | null>(null);
+  const [dicasAbertas, setDicasAbertas] = useState(false);
+
 
   useEffect(() => {
     if (!open) return;
