@@ -3158,6 +3158,47 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
+  // Liquidação direta pela Mesa (dia 25), sem depender de solicitação do parceiro
+  const handleLiquidarCicloEnergia = async (parceiroId: string, parceiroNome: string) => {
+    const elegiveis = leadsEnergia.filter((l: any) =>
+      (l.parceiroId || "") === parceiroId &&
+      (l.status || "novo") === "concluido" &&
+      (l.comissaoStatus || "acumulada") !== "paga" &&
+      Number(l.comissaoParceiro) > 0
+    );
+    if (elegiveis.length === 0) return;
+    const total = elegiveis.reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
+    const confirmado = window.confirm(
+      `Confirmar o pagamento de ${formatCurrencyBRL(total)} para ${parceiroNome}?\n\n${elegiveis.length} contrato(s) serão marcados como Comissão Paga no painel do parceiro.`
+    );
+    if (!confirmado) return;
+    setEnergiaSavingId(parceiroId);
+    try {
+      const agora = new Date().toISOString();
+      for (const l of elegiveis) {
+        await updateDoc(doc(db, "leads_energia", l.id), {
+          comissaoStatus: "paga",
+          comissaoPagaEm: agora,
+          atualizadoEm: agora,
+          ultimaMovimentacaoMesaEm: agora,
+          ultimaMovimentacaoMesaTexto: "Comissão paga pela Mesa PROSFEC"
+        });
+      }
+      const ids = new Set(elegiveis.map((l: any) => l.id));
+      setLeadsEnergia(prev => prev.map((l: any) =>
+        ids.has(l.id) ? { ...l, comissaoStatus: "paga", comissaoPagaEm: agora, ultimaMovimentacaoMesaEm: agora } : l
+      ));
+      toast.success(`Pagamento de ${formatCurrencyBRL(total)} registrado para ${parceiroNome}.`);
+    } catch (error) {
+      console.error("Erro ao liquidar ciclo de energia:", error);
+      toast.error("Não foi possível registrar o pagamento.");
+    } finally {
+      setEnergiaSavingId(null);
+    }
+  };
+
+
+
 
   const handleAddEnergiaNota = async (leadId: string) => {
     const texto = (energiaNotaDraft[leadId] || "").trim();
