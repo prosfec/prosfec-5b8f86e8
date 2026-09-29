@@ -900,6 +900,33 @@ export function createExpressApp() {
         }).catch((error) => console.warn("Notification write failed:", error?.message || "erro"));
       }
 
+      // Avisa a Mesa de Operações: consulta executada e ainda sem o relatório PDF anexado
+      if (leadId) {
+        const nowIsoConsulta = new Date().toISOString();
+        patchDocRest(`leads/${String(leadId)}`, {
+          consultaCreditoAtualizadoEm: nowIsoConsulta,
+          consultaCreditoAguardandoPdf: true,
+        }).catch((error) => console.warn("Lead movement write failed:", error?.message || "erro"));
+
+        (async () => {
+          let nomeCliente = String(leadId);
+          try {
+            const leadDoc: any = await getDocRest(`leads/${String(leadId)}`);
+            nomeCliente = leadDoc?.nomeEmpresa || leadDoc?.razaoSocial || nomeCliente;
+          } catch { /* usa o identificador do lead */ }
+          await createDocRest("notificacoes", {
+            recipientId: "admin",
+            recipientType: "admin",
+            titulo: "Consulta executada — aguardando relatório PDF",
+            mensagem: `${operationDoc.partnerNome} executou ${produtoNome} para ${nomeCliente}. O relatório PDF ainda não foi anexado.`,
+            tipo: "info",
+            lida: false,
+            leadId: String(leadId),
+            dataCriacao: nowIsoConsulta,
+          });
+        })().catch((error) => console.warn("Admin notification write failed:", error?.message || "erro"));
+      }
+
       return res.json({ success: true, consulta_id: requestId, newBalance, debited, produto_nome: produtoNome, data: apiResult, meta: { price: isAdminUser ? 0 : partnerPrice, isAdminBypass: isAdminUser } });
     } catch (err: any) {
       if (chargedPartnerId && chargedAmount > 0) {
