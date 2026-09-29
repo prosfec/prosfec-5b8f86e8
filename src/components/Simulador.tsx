@@ -2295,7 +2295,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                       <ul className="space-y-2.5">
                         <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
                           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                          <span>Redução de <strong className="text-emerald-300">17% a 27% na conta de luz</strong>, sem obras e sem taxa de adesão.</span>
+                          <span>Redução de <strong className="text-emerald-300">15% a 25% na conta de luz</strong>, sem obras e sem taxa de adesão.</span>
                         </li>
                         <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
                           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />

@@ -135,7 +135,7 @@ export function buildEnergiaSolarWhatsAppMessage(nomeEmpresa?: string): string {
   return [
     `Olá! Falo com o responsável pela ${alvo || "empresa"}?`,
     "",
-    "Entro em contato porque identificamos que sua empresa está elegível para reduzir de 17% a 27% o custo da conta de energia elétrica, sem instalar placas, fazer obras ou investir em equipamentos.",
+    "Entro em contato porque identificamos que sua empresa está elegível para reduzir de 15% a 25% o custo da conta de energia elétrica, sem instalar placas, fazer obras ou investir em equipamentos.",
     "",
     "O modelo é 100% digital e garantido pela Lei Federal 14.300.",
     "",

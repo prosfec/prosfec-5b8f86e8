@@ -183,7 +183,7 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
               href="/energiasolar"
               className="block px-4 py-3 text-base font-semibold text-gray-800 hover:bg-brand-bg-light rounded-lg transition-all"
             >
-              Saiba como pode ter de 17% a 27% de desconto na sua fatura de energia
+              Saiba como pode ter de 15% a 25% de desconto na sua fatura de energia
             </a>
             <a
               href="/parceiros"

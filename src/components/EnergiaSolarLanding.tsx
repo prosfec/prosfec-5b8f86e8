@@ -138,7 +138,7 @@ export default function EnergiaSolarLanding() {
               <h1 className="mt-6 font-[Manrope,sans-serif] text-[clamp(34px,7vw,86px)] font-extrabold leading-[0.95] tracking-[-0.03em]">
                 A Revolução da Energia Inteligente.
                 <span className="mt-3 block bg-gradient-to-r from-[#10B981] to-[#16C784] bg-clip-text text-transparent">
-                  Economize de 17% a 27% na sua conta de luz todo mês.
+                  Economize de 15% a 25% na sua conta de luz todo mês.
                 </span>
               </h1>
               <p className="mt-7 max-w-[62ch] text-[17px] leading-relaxed text-white/65">
@@ -217,7 +217,7 @@ export default function EnergiaSolarLanding() {
                 </span>
                 <span className="flex items-center gap-2 text-white/55">
                   <span className="h-2 w-2 rounded-full bg-[#10B981]" />
-                  Com assinatura solar (−17% a −27%)
+                  Com assinatura solar (−15% a −25%)
                 </span>
               </div>
 
@@ -406,7 +406,7 @@ export default function EnergiaSolarLanding() {
                 retorno. Com a <strong className="text-white">Energia Solar por Assinatura</strong>,
                 a lógica inverteu: geramos energia limpa em usinas de alta tecnologia e
                 injetamos créditos diretamente no seu relógio. Você consome o crédito solar
-                e paga até 27% mais barato.
+                e paga até 25% mais barato.
               </p>
             </div>
 
@@ -438,7 +438,7 @@ export default function EnergiaSolarLanding() {
                     "Zero investimento e zero taxa de adesão",
                     "Ativação 100% digital pelo celular",
                     "Sem obra e sem placa no seu telhado",
-                    "Desconto de 17% a 27% creditado na fatura",
+                    "Desconto de 15% a 25% creditado na fatura",
                   ].map((t) => (
                     <li key={t} className="flex gap-3">
                       <span className="text-[#10B981]">✓</span>
@@ -484,7 +484,7 @@ export default function EnergiaSolarLanding() {
                 {
                   n: "04",
                   t: "Sua Economia Real",
-                  d: "Você recebe a fatura com o desconto garantido de 17% a 27%. O dinheiro fica no seu caixa.",
+                  d: "Você recebe a fatura com o desconto garantido de 15% a 25%. O dinheiro fica no seu caixa.",
                 },
               ].map((s) => (
                 <Glass key={s.n} className="p-6">
@@ -525,7 +525,7 @@ export default function EnergiaSolarLanding() {
                 },
                 {
                   i: "📉",
-                  t: "Economia de 17% a 27%",
+                  t: "Economia de 15% a 25%",
                   d: "Redução previsível mês após mês, aliviando o custo de empresas e o orçamento de famílias.",
                 },
                 {
@@ -609,7 +609,7 @@ export default function EnergiaSolarLanding() {
                 </p>
                 <ul className="mt-5 space-y-3 text-[15px] text-white/80">
                   {[
-                    "Desconto garantido de 17% a 27%",
+                    "Desconto garantido de 15% a 25%",
                     "Proteção contra bandeiras tarifárias",
                     "Créditos solares injetados todo mês",
                     "Previsibilidade total de custos",
@@ -731,7 +731,7 @@ export default function EnergiaSolarLanding() {
               Quanto dinheiro você já deixou na mesa este ano pagando a tarifa cheia?
             </h2>
             <p className="mx-auto mt-6 max-w-[62ch] text-[16px] leading-relaxed text-white/60">
-              Cada mês que você passa adiando a migração é um mês jogando de 17% a 27% do
+              Cada mês que você passa adiando a migração é um mês jogando de 15% a 25% do
               valor da sua conta no lixo. Esse é um dinheiro que poderia estar virando lucro
               no caixa da sua empresa ou conforto para a sua família.
             </p>
