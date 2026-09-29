@@ -2008,14 +2008,22 @@ export default function PartnerPortal({
                             ))}
                           </div>
 
-                          {isJanelaSaqueQuinzenal() && energiaComissaoAcumulada > 0 ? (
+                          <div className="bg-amber-50/70 border border-amber-100 rounded-xl px-2.5 py-2">
+                            <p className="text-[9px] font-black text-amber-700 uppercase tracking-wide">Ciclo Mensal de Comissões</p>
+                            <p className="text-[10px] font-semibold text-slate-600 mt-0.5 leading-relaxed">
+                              Vendas apuradas até o dia 10 • Pagamento no dia 25
+                            </p>
+                          </div>
+
+                          {isJanelaSaqueMensal() && energiaComissaoAcumulada > 0 ? (
                             !energiaSaqueOpen ? (
                               <button
                                 onClick={() => setEnergiaSaqueOpen(true)}
                                 className="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-[11px] cursor-pointer transition-all"
                               >
-                                Solicitar Saque Quinzenal ({formatCurrencyBRL(energiaComissaoAcumulada)})
+                                Solicitar Pagamento do Ciclo ({formatCurrencyBRL(energiaComissaoAcumulada)})
                               </button>
+
                             ) : (
                               <div className="space-y-2">
                                 <input
