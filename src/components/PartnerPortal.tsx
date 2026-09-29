@@ -1991,14 +1991,15 @@ export default function PartnerPortal({
                           })}
                         </div>
 
-                        {/* Régua de desempenho e saque quinzenal */}
+                        {/* Régua de desempenho e ciclo mensal de pagamento */}
                         <div className="bg-white border border-amber-200/70 rounded-2xl p-3 space-y-2.5">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             {[
                               { label: "Leads Enviados", valor: String(energiaLeads.length) },
                               { label: "Em Atendimento", valor: String(energiaCounts["atendimento"] || 0) },
                               { label: "Contratos Fechados", valor: String(energiaCounts["concluido"] || 0) },
-                              { label: "Comissão da Quinzena", valor: formatCurrencyBRL(energiaComissaoAcumulada) }
+                              { label: "Comissão do Ciclo", valor: formatCurrencyBRL(energiaComissaoAcumulada) }
+
                             ].map(item => (
                               <div key={item.label} className="bg-amber-50/60 border border-amber-100 rounded-xl p-2">
                                 <p className="text-[8px] font-black text-amber-600 uppercase tracking-wide">{item.label}</p>
