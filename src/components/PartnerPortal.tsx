@@ -1902,6 +1902,13 @@ export default function PartnerPortal({
                           </h4>
                           <div className="flex items-center gap-2">
                             <button
+                              onClick={() => setEnergiaManualOpen(o => !o)}
+                              className="px-2.5 py-1.5 bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer transition-all"
+                            >
+                              <Plus className="w-3 h-3" />
+                              Cadastrar Lead
+                            </button>
+                            <button
                               onClick={() => currentPartner && fetchEnergiaLeads(currentPartner.id)}
                               disabled={energiaLoading}
                               className="text-[10px] font-extrabold text-amber-700 hover:text-amber-900 flex items-center gap-1 cursor-pointer disabled:opacity-50"
