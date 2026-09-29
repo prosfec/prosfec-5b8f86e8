@@ -1596,6 +1596,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     const tsDocs = parseDataMovimentacao(lead.documentosAtualizadoEm || lead.fichaRatingCredito?.documentosAtualizadoEm);
     if (tsDocs) candidatos.push({ ts: tsDocs, autor: autorPadrao, resumo: "📎 Novos documentos anexados" });
 
+    const tsConsulta = parseDataMovimentacao(lead.consultaCreditoAtualizadoEm);
+    if (tsConsulta) candidatos.push({ ts: tsConsulta, autor: autorPadrao, resumo: "🔎 Consulta executada — aguardando relatório PDF" });
+
     const validos = candidatos.filter(c => c.ts > 0).sort((a, b) => b.ts - a.ts);
     if (!validos.length) return null;
     const top = validos[0];
