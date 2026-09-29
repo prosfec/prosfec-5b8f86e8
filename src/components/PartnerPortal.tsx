@@ -1050,6 +1050,10 @@ export default function PartnerPortal({
   const [energiaSaqueOpen, setEnergiaSaqueOpen] = useState(false);
   const [energiaSaquePix, setEnergiaSaquePix] = useState("");
   const [energiaSaqueSubmitting, setEnergiaSaqueSubmitting] = useState(false);
+  // ⚡ Cadastro manual de lead de energia solar (controle de referência do parceiro)
+  const [energiaManualOpen, setEnergiaManualOpen] = useState(false);
+  const [energiaManualSaving, setEnergiaManualSaving] = useState(false);
+  const [energiaManualForm, setEnergiaManualForm] = useState({ nome: "", telefone: "", email: "" });
   // 📝 Anotações privadas de prospecção (Painel de Oportunidades — só o parceiro vê)
   const [prospectNotes, setProspectNotes] = useState<Record<string, { id: string; notas: any[] }>>({});
   const [prospectNoteDraft, setProspectNoteDraft] = useState<Record<string, string>>({});
@@ -1692,6 +1696,79 @@ export default function PartnerPortal({
     }
   };
 
+  // Máscara de telefone BR para o cadastro manual
+  const maskTelefoneBR = (value: string) => {
+    const d = (value || "").replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 2) return d;
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  };
+
+  // ⚡ Cadastro manual de lead de energia solar (mesma esteira do Painel de Oportunidades)
+  const handleCadastrarEnergiaManual = async () => {
+    if (!currentPartner) return;
+    const nome = energiaManualForm.nome.trim();
+    const telefoneDigits = energiaManualForm.telefone.replace(/\D/g, "");
+    const email = energiaManualForm.email.trim();
+    if (nome.length < 3) {
+      toast.error("Informe o nome completo do cliente.");
+      return;
+    }
+    if (telefoneDigits.length < 10) {
+      toast.error("Informe um telefone/WhatsApp válido com DDD.");
+      return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Informe um e-mail válido ou deixe o campo vazio.");
+      return;
+    }
+    const key = energiaLeadKey({ nome, telefone: energiaManualForm.telefone });
+    if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
+      toast.info("Este cliente já está na sua lista de Energia Solar.");
+      return;
+    }
+    setEnergiaManualSaving(true);
+    try {
+      const payload: any = {
+        nomeEmpresa: nome,
+        razaoSocial: nome,
+        nomeContato: nome,
+        ramo: "",
+        telefone: energiaManualForm.telefone.trim(),
+        email,
+        endereco: "",
+        website: "",
+        cidade: "",
+        estado: "",
+        cnpj: "",
+        cnpjDetails: null,
+        parceiroId: currentPartner.id,
+        parceiroNome: currentPartner.nome || "",
+        parceiroEmail: currentPartner.email || "",
+        masterPartnerId: (currentPartner as any).parentPartnerId || "",
+        origem: "cadastro_manual",
+        status: "novo",
+        anotacoes: [],
+        criadoEm: new Date().toISOString(),
+        atualizadoEm: new Date().toISOString()
+      };
+      const docRef = await addDoc(collection(db, "leads_energia"), payload);
+      setEnergiaLeads(prev => [{ id: docRef.id, ...payload }, ...prev]);
+      setEnergiaManualForm({ nome: "", telefone: "", email: "" });
+      setEnergiaManualOpen(false);
+      setEnergiaPanelOpen(true);
+      toast.success("Lead cadastrado na esteira de Energia Solar.");
+    } catch (error) {
+      console.error("Erro ao cadastrar lead manual de energia:", error);
+      toast.error("Não foi possível cadastrar o lead.");
+    } finally {
+      setEnergiaManualSaving(false);
+    }
+  };
+
+
+
   // Anotação do parceiro no lead de energia (compartilhada com a Mesa/ADM)
   const handleAddEnergiaNotaParceiro = async (leadId: string) => {
     const texto = (energiaNotaDraft[leadId] || "").trim();
@@ -1825,6 +1902,13 @@ export default function PartnerPortal({
                           </h4>
                           <div className="flex items-center gap-2">
                             <button
+                              onClick={() => setEnergiaManualOpen(o => !o)}
+                              className="px-2.5 py-1.5 bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer transition-all"
+                            >
+                              <Plus className="w-3 h-3" />
+                              Cadastrar Lead
+                            </button>
+                            <button
                               onClick={() => currentPartner && fetchEnergiaLeads(currentPartner.id)}
                               disabled={energiaLoading}
                               className="text-[10px] font-extrabold text-amber-700 hover:text-amber-900 flex items-center gap-1 cursor-pointer disabled:opacity-50"
@@ -1841,6 +1925,53 @@ export default function PartnerPortal({
                             </button>
                           </div>
                         </div>
+
+                        {energiaManualOpen && (
+                          <div className="bg-white border border-amber-200 rounded-xl p-3 space-y-2">
+                            <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">
+                              Cadastro manual de cliente
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              <input
+                                value={energiaManualForm.nome}
+                                onChange={e => setEnergiaManualForm(f => ({ ...f, nome: e.target.value }))}
+                                placeholder="Nome completo"
+                                className="px-3 py-2 border border-amber-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-amber-400"
+                              />
+                              <input
+                                value={energiaManualForm.telefone}
+                                onChange={e => setEnergiaManualForm(f => ({ ...f, telefone: maskTelefoneBR(e.target.value) }))}
+                                placeholder="(00) 00000-0000"
+                                inputMode="numeric"
+                                className="px-3 py-2 border border-amber-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-amber-400"
+                              />
+                              <input
+                                value={energiaManualForm.email}
+                                onChange={e => setEnergiaManualForm(f => ({ ...f, email: e.target.value }))}
+                                placeholder="E-mail (opcional)"
+                                type="email"
+                                className="px-3 py-2 border border-amber-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-amber-400"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={handleCadastrarEnergiaManual}
+                                disabled={energiaManualSaving}
+                                className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                              >
+                                {energiaManualSaving ? "Salvando..." : "Salvar Lead"}
+                              </button>
+                              <button
+                                onClick={() => { setEnergiaManualOpen(false); setEnergiaManualForm({ nome: "", telefone: "", email: "" }); }}
+                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-extrabold text-[10px] cursor-pointer"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+
 
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {(["todos", "novo", "atendimento", "concluido", "arquivado"] as const).map(st => {

@@ -3188,7 +3188,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const filteredLeadsEnergia = leadsEnergia.filter((l: any) => {
     const statusOk = energiaStatusFilter === "todos" || (l.status || "novo") === energiaStatusFilter;
     const termo = `${searchTerm || ""} ${energiaBusca || ""}`.toLowerCase().trim();
-    const textoOk = !termo || [l.nomeEmpresa, l.razaoSocial, l.cnpj, l.telefone, l.cidade, l.parceiroNome]
+    const textoOk = !termo || [l.nomeEmpresa, l.razaoSocial, l.cnpj, l.telefone, l.email, l.cidade, l.parceiroNome]
       .filter(Boolean)
       .some((v: string) => String(v).toLowerCase().includes(termo));
     const parceiroOk = energiaParceiroFilter === "todos" || (l.parceiroId || "") === energiaParceiroFilter;
@@ -4684,6 +4684,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     {lead.ramo}
                                   </span>
                                 )}
+                                {lead.origem === "cadastro_manual" && (
+                                  <span className="inline-block mt-1 ml-1 text-[9px] bg-amber-100 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase">
+                                    Cadastro manual
+                                  </span>
+                                )}
                               </div>
                               <span className={`shrink-0 border font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase ${energiaStatusBadge(status)}`}>
                                 {ENERGIA_STATUS_OPTIONS.find(o => o.value === status)?.label || status}
@@ -4707,6 +4712,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               )}
                               {lead.telefone && (
                                 <p className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-slate-400" /> {lead.telefone}</p>
+                              )}
+                              {lead.email && (
+                                <p className="flex items-center gap-1 truncate"><Mail className="w-3.5 h-3.5 text-slate-400" /> {lead.email}</p>
                               )}
                               {(lead.cidade || lead.estado) && (
                                 <p className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400" /> {[lead.cidade, lead.estado].filter(Boolean).join(" / ")}</p>
