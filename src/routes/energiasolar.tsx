@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import EnergiaSolarLanding from "@/components/EnergiaSolarLanding";
+import energySocialAsset from "@/assets/energy-social.png.asset.json";
 
 const TITLE = "Energia Solar por Assinatura | Economize de 15% a 25% na Conta de Luz";
 const DESCRIPTION =
   "Energia solar por assinatura sem obras, sem placas e sem investimento. Reduza de 15% a 25% o valor da sua conta de luz com geração compartilhada regulamentada pela Lei 14.300 e pela ANEEL.";
 const URL = "https://prosfec.com.br/energiasolar";
+const SOCIAL_IMAGE_URL = `https://prosfec.com.br${energySocialAsset.url}`;
 
 export const Route = createFileRoute("/energiasolar")({
   component: EnergiaSolarPage,
@@ -16,7 +18,9 @@ export const Route = createFileRoute("/energiasolar")({
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: URL },
+      { property: "og:image", content: SOCIAL_IMAGE_URL },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: SOCIAL_IMAGE_URL },
       { name: "theme-color", content: "#05070A" },
     ],
     links: [{ rel: "canonical", href: URL }],
