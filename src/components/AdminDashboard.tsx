@@ -4664,7 +4664,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       { label: "Em Atendimento", valor: String(energiaTotais.atendimento), cor: "text-blue-700" },
                       { label: "Contratos Concluídos", valor: String(energiaTotais.concluidos), cor: "text-emerald-700" },
                       { label: "Faturas Negociadas", valor: formatCurrencyBRL(energiaTotais.volumeFaturas), cor: "text-slate-800" },
-                      { label: "Comissões da Quinzena", valor: formatCurrencyBRL(energiaTotais.comissoesQuinzena), cor: "text-amber-700" }
+                      { label: "Comissões do Ciclo", valor: formatCurrencyBRL(energiaTotais.comissoesQuinzena), cor: "text-amber-700" }
                     ].map(card => (
                       <div key={card.label} className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3">
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">{card.label}</p>
@@ -4672,6 +4672,72 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       </div>
                     ))}
                   </div>
+
+                  {/* Régua do ciclo mensal de comissões (uso interno da Mesa) */}
+                  <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-3.5 h-3.5 text-amber-600" />
+                      <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-wide">Ciclo Mensal de Comissões — Energia Solar</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      {[
+                        { chave: "apuracao", titulo: `Dia ${CICLO_ENERGIA_FECHAMENTO} • Fechamento`, texto: "Apuração das vendas concluídas no mês." },
+                        { chave: "nota_fiscal", titulo: `Dia ${CICLO_ENERGIA_NOTA_FISCAL} • Nota Fiscal`, texto: "Conferir relatório e enviar a NF da parceria (interno)." },
+                        { chave: "pagamento", titulo: `Dia ${CICLO_ENERGIA_PAGAMENTO} • Pagamento`, texto: "Repasse das comissões aos parceiros via PIX." }
+                      ].map(etapa => {
+                        const ativa = energiaCicloEtapa === etapa.chave;
+                        return (
+                          <div
+                            key={etapa.chave}
+                            className={`rounded-xl border p-2.5 ${ativa ? "bg-amber-50 border-amber-300" : "bg-slate-50 border-slate-200"}`}
+                          >
+                            <p className={`text-[10px] font-black uppercase tracking-wide ${ativa ? "text-amber-700" : "text-slate-500"}`}>{etapa.titulo}</p>
+                            <p className="text-[10px] font-medium text-slate-600 mt-0.5 leading-relaxed">{etapa.texto}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {energiaCicloEtapa === "nota_fiscal" && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2">
+                        <p className="text-[10px] font-bold text-blue-800">
+                          Período de envio da NF da parceria — limite dia {CICLO_ENERGIA_NOTA_FISCAL}. (Informação interna da Mesa)
+                        </p>
+                      </div>
+                    )}
+                    {energiaCicloEtapa === "pagamento" && (
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                        <p className="text-[10px] font-bold text-emerald-800">
+                          Janela de pagamento das comissões solares aberta (dia {CICLO_ENERGIA_PAGAMENTO}).
+                        </p>
+                      </div>
+                    )}
+
+                    {energiaPagamentosPorParceiro.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Comissões a pagar por parceiro</p>
+                        {energiaPagamentosPorParceiro.map(p => (
+                          <div key={p.id} className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-black text-slate-800 truncate">{p.nome}</p>
+                              <p className="text-[10px] font-semibold text-slate-500">
+                                {p.contratos} contrato{p.contratos > 1 ? "s" : ""} • {formatCurrencyBRL(p.total)}
+                                {p.solicitado && <span className="ml-1 text-amber-700">• saque solicitado</span>}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleLiquidarCicloEnergia(p.id, p.nome)}
+                              disabled={energiaSavingId === p.id}
+                              className="shrink-0 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg font-extrabold text-[10px] cursor-pointer"
+                            >
+                              {energiaSavingId === p.id ? "Registrando..." : "Liquidar Pagamento"}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
 
                   {/* Barra de filtros */}
                   <div className="flex items-center gap-2 flex-wrap">
