@@ -790,7 +790,7 @@ export default function PartnerPortal({
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "energia" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
   // Aparência (Claro / Tecnológico) — apenas visual, persistida no navegador
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
@@ -858,7 +858,7 @@ export default function PartnerPortal({
   }, [isAuthenticated, currentPartner]);
 
   // Tab switch handler with profile completion guard
-  const handleTabClick = (tab: "dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil") => {
+  const handleTabClick = (tab: "dashboard" | "leads" | "energia" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil") => {
     if (isAuthenticated && currentPartner && !isProfileComplete(currentPartner) && tab !== "perfil") {
       setProfileErrorMsg("Para sua segurança, é obrigatório preencher e salvar todos os seus dados cadastrais (Nome, CPF/CNPJ, WhatsApp, Cidade e Chave Pix) antes de acessar as outras funções do sistema.");
       setActiveTab("perfil");
@@ -1044,7 +1044,7 @@ export default function PartnerPortal({
   const [energiaLoading, setEnergiaLoading] = useState(false);
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [expandedEnergiaLeadId, setExpandedEnergiaLeadId] = useState<string | null>(null);
-  const [energiaPanelOpen, setEnergiaPanelOpen] = useState(false);
+  const [energiaPanelOpen, setEnergiaPanelOpen] = useState(true);
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<string>("todos");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<{ [leadId: string]: string }>({});
   const [energiaNotaSavingId, setEnergiaNotaSavingId] = useState<string | null>(null);
