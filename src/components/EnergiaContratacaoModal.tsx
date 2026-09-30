@@ -23,7 +23,7 @@ export const CONCESSIONARIAS: Concessionaria[] = [
   },
   {
     nome: "COPEL-Dis",
-    uf: "SC",
+    uf: "PR",
     desconto: 15,
     url: "https://assessordeenergia.sunne.com.br/self-service?link=6e9d4181-0968-4010-8425-1f52240002a0",
   },
