@@ -9598,6 +9598,18 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 </motion.div>
               )}
 
+              {activeTab === "energia" && (
+                <motion.div
+                  key="energia-tab"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-6 text-left max-w-6xl mx-auto"
+                >
+                  {renderEnergiaSolarPanel()}
+                </motion.div>
+              )}
+
               {activeTab === "terms" && (
                 <motion.div
                   key="terms-tab"
