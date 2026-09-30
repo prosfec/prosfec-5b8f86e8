@@ -8323,8 +8323,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
                       )}
 
-                      {/* ⚡ Leads Energia Solar — disponível também para consultores */}
-                      {renderEnergiaSolarPanel()}
 
                       {/* Distributed Leads List */}
                       <div className="space-y-4">
@@ -8822,8 +8820,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
                       </div>
 
-                      {/* ⚡ Leads Energia Solar — painel retrátil com card completo */}
-                      {renderEnergiaSolarPanel()}
 
                   {/* Filter / Hunt Inputs Form */}
                   <form onSubmit={handleHuntLeads} className="bg-slate-50/70 border border-slate-200/50 p-4 rounded-2xl space-y-4">
