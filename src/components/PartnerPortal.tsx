@@ -790,7 +790,7 @@ export default function PartnerPortal({
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "energia" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
   // Aparência (Claro / Tecnológico) — apenas visual, persistida no navegador
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
@@ -858,7 +858,7 @@ export default function PartnerPortal({
   }, [isAuthenticated, currentPartner]);
 
   // Tab switch handler with profile completion guard
-  const handleTabClick = (tab: "dashboard" | "leads" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil") => {
+  const handleTabClick = (tab: "dashboard" | "leads" | "energia" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil") => {
     if (isAuthenticated && currentPartner && !isProfileComplete(currentPartner) && tab !== "perfil") {
       setProfileErrorMsg("Para sua segurança, é obrigatório preencher e salvar todos os seus dados cadastrais (Nome, CPF/CNPJ, WhatsApp, Cidade e Chave Pix) antes de acessar as outras funções do sistema.");
       setActiveTab("perfil");
@@ -1044,7 +1044,7 @@ export default function PartnerPortal({
   const [energiaLoading, setEnergiaLoading] = useState(false);
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [expandedEnergiaLeadId, setExpandedEnergiaLeadId] = useState<string | null>(null);
-  const [energiaPanelOpen, setEnergiaPanelOpen] = useState(false);
+  const [energiaPanelOpen, setEnergiaPanelOpen] = useState(true);
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<string>("todos");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<{ [leadId: string]: string }>({});
   const [energiaNotaSavingId, setEnergiaNotaSavingId] = useState<string | null>(null);
@@ -5120,6 +5120,26 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         )}
       </button>
 
+      <button
+        onClick={() => { handleTabClick("energia"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "energia"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <Zap className={`w-5 h-5 ${activeTab === "energia" ? "text-white" : "text-amber-500"}`} strokeWidth={2} />
+          Leads Energia ({energiaLeads.length})
+        </span>
+        {!isProfileComplete(currentPartner) ? (
+          <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+        ) : (
+          <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "energia" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+        )}
+      </button>
+
+
       {!currentPartner?.plano?.toUpperCase().includes("AFILIADO") && (
         <button
           onClick={() => { handleTabClick("caca-leads"); setMobileMenuOpen(false); }}
@@ -8303,8 +8323,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
                       )}
 
-                      {/* ⚡ Leads Energia Solar — disponível também para consultores */}
-                      {renderEnergiaSolarPanel()}
 
                       {/* Distributed Leads List */}
                       <div className="space-y-4">
@@ -8802,8 +8820,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </div>
                       </div>
 
-                      {/* ⚡ Leads Energia Solar — painel retrátil com card completo */}
-                      {renderEnergiaSolarPanel()}
 
                   {/* Filter / Hunt Inputs Form */}
                   <form onSubmit={handleHuntLeads} className="bg-slate-50/70 border border-slate-200/50 p-4 rounded-2xl space-y-4">
@@ -9579,6 +9595,18 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   )}
                     </>
                   )}
+                </motion.div>
+              )}
+
+              {activeTab === "energia" && (
+                <motion.div
+                  key="energia-tab"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-6 text-left max-w-6xl mx-auto"
+                >
+                  {renderEnergiaSolarPanel()}
                 </motion.div>
               )}
 
