@@ -155,6 +155,37 @@ export const CONCESSIONARIAS: Concessionaria[] = [
   },
 ];
 
+const REGIAO_POR_UF: Record<string, string> = {
+  PR: "Sul",
+  SC: "Sul",
+  RS: "Sul",
+  SP: "Sudeste",
+  RJ: "Sudeste",
+  MG: "Sudeste",
+  ES: "Sudeste",
+  BA: "Nordeste",
+  PE: "Nordeste",
+  CE: "Nordeste",
+  RN: "Nordeste",
+  PB: "Nordeste",
+  AL: "Nordeste",
+  PI: "Nordeste",
+  MA: "Nordeste",
+  GO: "Centro-Oeste",
+  MT: "Centro-Oeste",
+  MS: "Centro-Oeste",
+  PA: "Norte",
+};
+
+const REGIOES = ["Todas", "Sul", "Sudeste", "Centro-Oeste", "Nordeste", "Norte"];
+
+function regiaoDe(c: Concessionaria) {
+  if (c.uf === "—") return "Sul/Sudeste";
+  return REGIAO_POR_UF[c.uf] ?? "";
+}
+
+const DESCONTO_MAXIMO = Math.max(...CONCESSIONARIAS.map((c) => c.desconto));
+
 function normalize(value: string) {
   return value
     .normalize("NFD")
@@ -162,6 +193,7 @@ function normalize(value: string) {
     .toLowerCase()
     .trim();
 }
+
 
 export default function EnergiaContratacaoModal({
   open,
@@ -171,8 +203,10 @@ export default function EnergiaContratacaoModal({
   onClose: () => void;
 }) {
   const [busca, setBusca] = useState("");
+  const [regiao, setRegiao] = useState("Todas");
   const [selecionada, setSelecionada] = useState<Concessionaria | null>(null);
   const [dicasAbertas, setDicasAbertas] = useState(false);
+
 
 
   useEffect(() => {
@@ -193,6 +227,7 @@ export default function EnergiaContratacaoModal({
     if (!open) {
       setSelecionada(null);
       setBusca("");
+      setRegiao("Todas");
       setDicasAbertas(false);
     }
   }, [open]);
@@ -200,11 +235,20 @@ export default function EnergiaContratacaoModal({
 
   const filtradas = useMemo(() => {
     const q = normalize(busca);
-    if (!q) return CONCESSIONARIAS;
-    return CONCESSIONARIAS.filter(
-      (c) => normalize(`${c.nome} ${c.uf}`).includes(q) || normalize(c.uf) === q,
-    );
-  }, [busca]);
+    return CONCESSIONARIAS.filter((c) => {
+      const r = regiaoDe(c);
+      const okRegiao =
+        regiao === "Todas" ||
+        r === regiao ||
+        (r === "Sul/Sudeste" && (regiao === "Sul" || regiao === "Sudeste"));
+      if (!okRegiao) return false;
+      if (!q) return true;
+      return (
+        normalize(`${c.nome} ${c.uf} ${r}`).includes(q) || normalize(c.uf) === q
+      );
+    });
+  }, [busca, regiao]);
+
 
   if (!open) return null;
 
@@ -342,44 +386,101 @@ export default function EnergiaContratacaoModal({
             </div>
 
             {/* Busca */}
-            <div className="mt-6">
+            <div className="mt-6 rounded-[18px] border border-white/[0.08] bg-white/[0.03] p-4 backdrop-blur-xl">
               <label
                 htmlFor="busca-concessionaria"
                 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45"
               >
                 Escolha a distribuidora da sua conta de luz
               </label>
-              <input
-                id="busca-concessionaria"
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar por nome ou estado (ex.: CEMIG, MG, SP...)"
-                className="mt-2.5 w-full rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-[14px] text-white placeholder:text-white/30 outline-none transition focus:border-[#10B981]/50"
-              />
+              <div className="relative mt-2.5">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[14px] text-white/30">
+                  🔍
+                </span>
+                <input
+                  id="busca-concessionaria"
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  placeholder="Buscar por nome, estado ou região (ex.: CEMIG, MG, Sul...)"
+                  className="w-full rounded-full border border-white/10 bg-white/[0.04] py-3 pl-11 pr-5 text-[14px] text-white placeholder:text-white/30 outline-none transition focus:border-[#10B981]/50 focus:ring-2 focus:ring-[#10B981]/20"
+                />
+              </div>
+              <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {REGIOES.map((r) => {
+                  const ativo = r === regiao;
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRegiao(r)}
+                      aria-pressed={ativo}
+                      className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition ${
+                        ativo
+                          ? "border border-transparent bg-gradient-to-r from-[#10B981] to-[#16C784] text-[#05070A] shadow-[0_6px_20px_-8px_rgba(16,185,129,0.9)]"
+                          : "border border-white/10 bg-white/[0.04] text-white/55 hover:border-[#10B981]/35 hover:text-white"
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Lista */}
-            <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-              {filtradas.map((c) => (
-                <button
-                  key={c.url}
-                  type="button"
-                  onClick={() => setSelecionada(c)}
-                  className="group flex items-center justify-between gap-3 rounded-[14px] border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-left transition hover:-translate-y-0.5 hover:border-[#10B981]/40 hover:bg-[#10B981]/[0.07]"
-                >
-                  <span>
-                    <span className="block text-[14px] font-bold text-white">
-                      {c.nome}
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {filtradas.map((c) => {
+                const topo = c.desconto >= DESCONTO_MAXIMO;
+                return (
+                  <button
+                    key={c.url}
+                    type="button"
+                    onClick={() => setSelecionada(c)}
+                    aria-label={`Simular com ${c.nome} ${c.uf !== "—" ? c.uf : ""} — ${c.desconto}% de desconto`}
+                    className={`group relative overflow-hidden rounded-[18px] border bg-white/[0.03] px-4 pb-4 pt-4 text-left shadow-[0_8px_28px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:border-[#10B981]/60 hover:shadow-[0_14px_40px_-12px_rgba(16,185,129,0.45)] ${
+                      topo ? "border-[#FACC15]/30" : "border-white/[0.08]"
+                    }`}
+                  >
+                    {topo && (
+                      <span className="absolute right-3 top-3 rounded-full border border-[#FACC15]/35 bg-[#FACC15]/10 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#FDE047]">
+                        Melhor economia
+                      </span>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#10B981] to-[#0A3D2E] text-[18px] text-[#05070A] shadow-[0_6px_18px_-8px_rgba(16,185,129,0.9)]">
+                        ☀️
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[14.5px] font-bold text-white">
+                          {c.nome}
+                        </span>
+                        <span className="mt-0.5 flex items-center gap-1 text-[11.5px] text-white/45">
+                          <span className="text-[10px]">📍</span>
+                          {c.uf === "—"
+                            ? "Região Sul / Sudeste"
+                            : `${c.uf} · ${regiaoDe(c)}`}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-right">
+                        <span className="block text-[22px] font-extrabold leading-none text-[#10B981]">
+                          {c.desconto}%
+                        </span>
+                        <span className="mt-1 block text-[9.5px] font-bold uppercase tracking-[0.12em] text-white/35">
+                          de desconto
+                        </span>
+                      </span>
+                    </div>
+                    <span className="mt-3.5 block h-1 w-full overflow-hidden rounded-full bg-white/[0.07]">
+                      <span
+                        className="block h-full rounded-full bg-gradient-to-r from-[#0A3D2E] via-[#10B981] to-[#16C784]"
+                        style={{
+                          width: `${Math.round((c.desconto / DESCONTO_MAXIMO) * 100)}%`,
+                        }}
+                      />
                     </span>
-                    <span className="mt-0.5 block text-[12px] text-white/45">
-                      {c.uf === "—" ? "Região Sul / Sudeste" : `Estado: ${c.uf}`}
-                    </span>
-                  </span>
-                  <span className="shrink-0 rounded-full border border-[#10B981]/30 bg-[#10B981]/10 px-3 py-1.5 text-[12px] font-extrabold text-[#10B981]">
-                    {c.desconto}% OFF
-                  </span>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
               {filtradas.length === 0 && (
                 <p className="col-span-full rounded-[14px] border border-white/[0.08] bg-white/[0.03] px-4 py-5 text-center text-[13px] text-white/50">
                   Nenhuma distribuidora encontrada com esse termo.
@@ -391,6 +492,7 @@ export default function EnergiaContratacaoModal({
               Percentuais de desconto conforme disponibilidade de cada distribuidora. A
               simulação é gratuita e não gera compromisso.
             </p>
+
           </div>
         )}
       </div>
