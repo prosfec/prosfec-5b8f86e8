@@ -11,7 +11,7 @@ export type Concessionaria = {
 export const CONCESSIONARIAS: Concessionaria[] = [
   {
     nome: "CELESC-Dis",
-    uf: "PR",
+    uf: "SC",
     desconto: 15,
     url: "https://assessordeenergia.sunne.com.br/self-service?link=f237b260-71e0-4e5f-b5c1-928f21d5bfbd",
   },
