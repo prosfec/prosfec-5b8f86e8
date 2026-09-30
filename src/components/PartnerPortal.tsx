@@ -5120,6 +5120,26 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         )}
       </button>
 
+      <button
+        onClick={() => { handleTabClick("energia"); setMobileMenuOpen(false); }}
+        className={`soft-nav-item justify-between text-left group ${
+          activeTab === "energia"
+            ? "soft-nav-item-active"
+            : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          <Zap className={`w-5 h-5 ${activeTab === "energia" ? "text-white" : "text-amber-500"}`} strokeWidth={2} />
+          Leads Energia ({energiaLeads.length})
+        </span>
+        {!isProfileComplete(currentPartner) ? (
+          <Lock className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2} />
+        ) : (
+          <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "energia" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
+        )}
+      </button>
+
+
       {!currentPartner?.plano?.toUpperCase().includes("AFILIADO") && (
         <button
           onClick={() => { handleTabClick("caca-leads"); setMobileMenuOpen(false); }}
