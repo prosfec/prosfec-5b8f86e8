@@ -2235,6 +2235,100 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // ===== Senha temporária do parceiro (somente ADM) =====
+  // Usa a conta de serviço do Firebase (FIREBASE_SERVICE_ACCOUNT, JSON) para
+  // gerar um token OAuth e alterar a senha via Identity Toolkit (admin).
+  const pemToDer = (pem: string) => {
+    const b64 = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+    return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  };
+  const b64url = (input: string | Uint8Array) => {
+    const bytes = typeof input === "string" ? new TextEncoder().encode(input) : input;
+    let s = "";
+    bytes.forEach((b) => (s += String.fromCharCode(b)));
+    return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  };
+  const getAdminAccessToken = async (): Promise<{ token: string; projectId: string }> => {
+    const raw = optionalEnv("FIREBASE_SERVICE_ACCOUNT");
+    if (!raw) throw Object.assign(new Error("SERVICE_ACCOUNT_MISSING"), { statusCode: 503 });
+    const sa = JSON.parse(raw);
+    const now = Math.floor(Date.now() / 1000);
+    const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+    const claim = b64url(JSON.stringify({
+      iss: sa.client_email,
+      scope: "https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/cloud-platform",
+      aud: "https://oauth2.googleapis.com/token",
+      iat: now,
+      exp: now + 3600,
+    }));
+    const key = await crypto.subtle.importKey(
+      "pkcs8", pemToDer(String(sa.private_key).replace(/\\n/g, "\n")),
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"],
+    );
+    const sig = new Uint8Array(await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(`${header}.${claim}`)));
+    const r = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: `${header}.${claim}.${b64url(sig)}`,
+      }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.access_token) throw new Error("Falha ao autenticar a conta de serviço.");
+    return { token: data.access_token, projectId: sa.project_id || FIREBASE_PROJECT_ID };
+  };
+
+  app.post("/api/admin/reset-partner-password", async (req, res) => {
+    try {
+      const caller = await authenticateApiCaller(req);
+      if (!caller.isAdmin) return res.status(403).json({ error: "Somente o ADM pode redefinir senhas." });
+      const partnerId = String(req.body?.partnerId || "").trim();
+      const novaSenha = String(req.body?.novaSenha || "");
+      if (!partnerId || novaSenha.length < 6 || novaSenha.length > 64) {
+        return res.status(400).json({ error: "Parceiro e senha (6 a 64 caracteres) são obrigatórios." });
+      }
+      const partner = await getDocRest(`parceiros/${partnerId}`);
+      const email = String(partner?.email || "").trim().toLowerCase();
+      if (!email) return res.status(404).json({ error: "Parceiro sem e-mail cadastrado." });
+
+      const { token, projectId } = await getAdminAccessToken();
+      const base = `https://identitytoolkit.googleapis.com/v1/projects/${projectId}`;
+      const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+
+      const look = await fetch(`${base}/accounts:lookup`, { method: "POST", headers, body: JSON.stringify({ email: [email] }) });
+      const lookData = await look.json().catch(() => ({}));
+      let localId = lookData?.users?.[0]?.localId || "";
+
+      if (localId) {
+        const up = await fetch(`${base}/accounts:update`, {
+          method: "POST", headers, body: JSON.stringify({ localId, password: novaSenha }),
+        });
+        if (!up.ok) {
+          console.error("[RESET SENHA] update", up.status, (await up.text()).slice(0, 300));
+          return res.status(502).json({ error: "O Firebase recusou a alteração da senha." });
+        }
+      } else {
+        const cr = await fetch(`${base}/accounts`, {
+          method: "POST", headers, body: JSON.stringify({ email, password: novaSenha, emailVerified: true }),
+        });
+        const crData = await cr.json().catch(() => ({}));
+        if (!cr.ok) {
+          console.error("[RESET SENHA] create", cr.status, JSON.stringify(crData).slice(0, 300));
+          return res.status(502).json({ error: "Não foi possível criar o acesso do parceiro." });
+        }
+        localId = crData.localId || "";
+      }
+      return res.json({ success: true, email });
+    } catch (err: any) {
+      if (err?.message === "SERVICE_ACCOUNT_MISSING") {
+        return res.status(503).json({ error: "SERVICE_ACCOUNT_MISSING" });
+      }
+      console.error("[RESET SENHA] Falha:", err?.message);
+      return res.status(err?.statusCode || 500).json({ error: err?.message || "Erro ao redefinir senha." });
+    }
+  });
+
   // Migração em lote — protegida por MIGRATION_ADMIN_TOKEN
   app.post("/api/auth/migrar-parceiros", async (req, res) => {
     const expected = optionalEnv("MIGRATION_ADMIN_TOKEN");
