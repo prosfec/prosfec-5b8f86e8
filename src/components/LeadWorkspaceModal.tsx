@@ -959,7 +959,7 @@ export default function LeadWorkspaceModal({
       setLocalQuerySuccess(
         data.duplicate
           ? "Este documento já possui consulta — nenhum saldo foi debitado."
-          : `Consulta realizada com sucesso! Produto: ${data.produto_nome || selectedProductCode}` +
+          : `Diagnóstico solicitado! A Mesa vai anexar o laudo PDF em breve. Produto: ${data.produto_nome || selectedProductCode}` +
             (data.debitWarning ? ` — ${data.debitWarning}` : "")
       );
       // Atualiza o saldo visível imediatamente, sem F5
