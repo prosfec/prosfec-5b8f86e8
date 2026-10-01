@@ -19,6 +19,8 @@ import {
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
 import { db, auth, createNotification } from "../firebase";
+import PartnerPasswordResetModal from "./PartnerPasswordResetModal";
+import { KeyRound } from "lucide-react";
 import { PendenciaItem, SolicitacaoComissao } from "../types";
 import { 
   Users, 
