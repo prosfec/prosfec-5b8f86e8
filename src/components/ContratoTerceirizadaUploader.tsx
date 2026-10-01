@@ -9,11 +9,12 @@ const MAX_BYTES = 15 * 1024 * 1024;
 
 interface Props {
   lead: any;
+  canEdit?: boolean;
   onUpdated?: (patch: Record<string, any>) => void;
 }
 
-/** Anexo do contrato de assessoria emitido pela empresa terceirizada (PDF). */
-export default function ContratoTerceirizadaUploader({ lead, onUpdated }: Props) {
+/** Anexo do contrato de assessoria emitido pela empresa terceirizada (PDF). Upload só ADM. */
+export default function ContratoTerceirizadaUploader({ lead, canEdit = false, onUpdated }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);

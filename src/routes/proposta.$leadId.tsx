@@ -559,6 +559,40 @@ function PropostaPublicaPage() {
                 </a>
               </div>
             )}
+
+            {proposta?.contratoTerceirizada?.url && (
+              <div className="mt-4 p-4 border border-slate-200 rounded-2xl bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-xs font-extrabold text-slate-800">
+                    Contrato de Assessoria e Prestação de Serviços
+                  </h3>
+                  <span className="block text-[11px] text-slate-500 truncate">
+                    {proposta.contratoTerceirizada.nome || "contrato.pdf"}
+                    {proposta.contratoTerceirizada.enviadoEm
+                      ? ` • ${dataHoraBR(proposta.contratoTerceirizada.enviadoEm)}`
+                      : ""}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={proposta.contratoTerceirizada.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-[11px] font-black uppercase tracking-wider transition-all"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Visualizar
+                  </a>
+                  <a
+                    href={proposta.contratoTerceirizada.url}
+                    download={proposta.contratoTerceirizada.nome || undefined}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 text-[11px] font-black uppercase tracking-wider hover:bg-slate-50 transition-all"
+                  >
+                    Baixar PDF
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
