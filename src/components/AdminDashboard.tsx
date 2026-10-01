@@ -19,6 +19,8 @@ import {
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
 import { db, auth, createNotification } from "../firebase";
+import PartnerPasswordResetModal from "./PartnerPasswordResetModal";
+import { KeyRound } from "lucide-react";
 import { PendenciaItem, SolicitacaoComissao } from "../types";
 import { 
   Users, 
@@ -624,6 +626,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     setShowCertificadoSenha(false);
   }, [selectedLead, customServices]);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [resetPasswordPartner, setResetPasswordPartner] = useState<Partner | null>(null);
 
   // Ajuste manual de saldo do parceiro (correção de cobranças que falharam)
   const [balanceAdjustPartner, setBalanceAdjustPartner] = useState<Partner | null>(null);
@@ -3473,6 +3476,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="soft-ui pf-admin min-h-screen flex font-sans text-ink bg-slate-50 dark:bg-zinc-950 dark:text-zinc-100">
+      {resetPasswordPartner && (
+        <PartnerPasswordResetModal partner={resetPasswordPartner as any} onClose={() => setResetPasswordPartner(null)} />
+      )}
       {/* Sidebar fixa (desktop) */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col z-40 bg-[#02241a] border-r border-white/10">
         {sidebarBrand}
@@ -5319,6 +5325,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               >
                                 Abrir Operação
                               </button>
+
+                              {userRole === "admin" && (
+                                <button
+                                  type="button"
+                                  onClick={() => setResetPasswordPartner(partner)}
+                                  className="p-1.5 rounded-lg border transition-all shrink-0 bg-white hover:bg-slate-50 text-[#0A3D2E] border-slate-200 cursor-pointer"
+                                  title="Gerar senha temporária"
+                                >
+                                  <KeyRound className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
 
                               <button
                                 type="button"
