@@ -873,14 +873,9 @@ export function createExpressApp() {
         await patchDocRest(operationPath, { debitado: true, saldoApos: newBalance });
       }
 
-      const tokenToUse = requireEnv("REDEBE_TOKEN").replace(/^Bearer\s+/i, "").trim();
-      const redebeRes = await fetchWithTimeout(REDEBE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenToUse}`, "X-Api-Token": tokenToUse },
-        body: JSON.stringify({ documento: cleanDoc }),
-      }, 30_000);
-      if (!redebeRes.ok) throw new UpstreamError(`REDEBE_${redebeRes.status}`, redebeRes.status);
-      const apiResult = await redebeRes.json();
+      // Sem disparo para API externa: a solicitação entra na fila da Mesa,
+      // que anexa o laudo PDF obtido na fonte externa.
+      const apiResult = { origem: "mesa_manual", aguardandoLaudo: true, solicitadoEm: new Date().toISOString() };
 
       const consultaDoc = {
         partnerId, partnerNome: partnerNome || partnerData?.nome || "Mesa de Operações",
@@ -894,8 +889,8 @@ export function createExpressApp() {
 
       if (!isAdminUser) {
         createDocRest("notificacoes", {
-          recipientId: partnerId, recipientType: "parceiro", titulo: "Consulta Realizada (PROSFEC Diagnóstico 360)",
-          mensagem: `Consulta de crédito realizada com sucesso. Valor de R$ ${partnerPrice.toFixed(2).replace(".", ",")} debitado.`,
+          recipientId: partnerId, recipientType: "parceiro", titulo: "Diagnóstico solicitado — aguardando laudo da Mesa",
+          mensagem: `Diagnóstico solicitado com sucesso. Valor de R$ ${partnerPrice.toFixed(2).replace(".", ",")} debitado.`,
           tipo: "success", lida: false, dataCriacao: new Date().toISOString(),
         }).catch((error) => console.warn("Notification write failed:", error?.message || "erro"));
       }
@@ -917,8 +912,8 @@ export function createExpressApp() {
           await createDocRest("notificacoes", {
             recipientId: "admin",
             recipientType: "admin",
-            titulo: "Consulta executada — aguardando relatório PDF",
-            mensagem: `${operationDoc.partnerNome} executou ${produtoNome} para ${nomeCliente}. O relatório PDF ainda não foi anexado.`,
+            titulo: "Novo diagnóstico solicitado — aguardando anexo do PDF",
+            mensagem: `${operationDoc.partnerNome} solicitou ${produtoNome} para ${nomeCliente}. Anexe o laudo PDF na ficha do lead.`,
             tipo: "info",
             lida: false,
             leadId: String(leadId),
