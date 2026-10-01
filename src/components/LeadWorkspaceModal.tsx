@@ -81,6 +81,7 @@ import {
 } from "lucide-react";
 import LeadStepTimeline from "./LeadStepTimeline";
 import ContratosAssinadosResumo from "./ContratosAssinadosResumo";
+import ContratoTerceirizadaUploader from "./ContratoTerceirizadaUploader";
 import LeadConciergeTracker from "./LeadConciergeTracker";
 import FichaRatingAdmViewer from "./FichaRatingAdmViewer";
 import FichaRatingCreditoForm from "./FichaRatingCreditoForm";
@@ -3123,78 +3124,36 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               </div>
 
 
-              {/* Definição de Contrato e Assinatura (modelo comercial híbrido) */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Definição de Contrato e Assinatura
-                </h4>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                      Modelo de contratação
-                    </label>
-                    <select
-                      value={planoContratacao}
-                      onChange={(e) => setPlanoContratacao(e.target.value)}
-                      className="w-full bg-slate-50/50 border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 transition-all rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 outline-none cursor-pointer"
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="Avulso">Avulso</option>
-                      <option value="Assessoria Essential">Assessoria Essential — {formatMensalidadeBRL(mensalidadesConfig.essential)}/mês</option>
-                      <option value="Assessoria Growth">Assessoria Growth — {formatMensalidadeBRL(mensalidadesConfig.growth)}/mês</option>
-                      <option value="Assessoria Corporate">Assessoria Corporate — {formatMensalidadeBRL(mensalidadesConfig.corporate)}/mês</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      onClick={handleSalvarPlanoContratacao}
-                      disabled={savingPlanoContratacao || !planoContratacao}
-                      className="px-4 py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-60 text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer"
-                    >
-                      {savingPlanoContratacao ? "Salvando..." : "Salvar definição"}
-                    </button>
-                  </div>
+              {/* Link público de assinatura dos contratos de preços e serviços */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Link público de assinatura (Contrato de Preços e Serviços)
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    readOnly
+                    value={contratoPublicLink}
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-mono text-slate-700 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCopiarLinkContrato}
+                    className="px-4 py-2.5 bg-white border border-slate-200 hover:border-[#0A3D2E] text-slate-700 text-xs font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap"
+                  >
+                    {linkContratoCopiado ? "Copiado!" : "Copiar Link"}
+                  </button>
                 </div>
-
-                {planoContratacaoFeedback && (
-                  <p className={`text-[11px] font-bold ${planoContratacaoFeedback.type === "success" ? "text-emerald-700" : "text-red-600"}`}>
-                    {planoContratacaoFeedback.msg}
+                {lead.modeloContratacao && lead.contratoAssinado && (
+                  <p className="text-[11px] text-slate-500">
+                    Contrato anterior assinado: <strong className="text-slate-900">{lead.planoEscolhido || lead.modeloContratacao}</strong> (modelo descontinuado, mantido para histórico).
                   </p>
                 )}
-
-                {(planoContratacaoFeedback?.type === "success" || lead.modeloContratacao) && (
-                  <div className="space-y-2">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Link público de assinatura
-                    </label>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        readOnly
-                        value={contratoPublicLink}
-                        className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-mono text-slate-700 outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleCopiarLinkContrato}
-                        className="px-4 py-2.5 bg-white border border-slate-200 hover:border-[#0A3D2E] text-slate-700 text-xs font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap"
-                      >
-                        {linkContratoCopiado ? "Copiado!" : "Copiar Link"}
-                      </button>
-                    </div>
-                    {lead.modeloContratacao && (
-                      <p className="text-[11px] text-slate-500">
-                        Plano definido: <strong className="text-slate-900">{lead.planoEscolhido || lead.modeloContratacao}</strong>
-                        {Number(lead.valorMensalidade || 0) > 0
-                          ? ` — R$ ${Number(lead.valorMensalidade).toFixed(2).replace(".", ",")}/mês`
-                          : ""}
-                      </p>
-                    )}
-                  </div>
-                )}
               </div>
+
+              <ContratoTerceirizadaUploader
+                lead={lead}
+                onUpdated={(patch) => onLeadUpdated?.({ ...lead, ...patch })}
+              />
 
               <ContratosAssinadosResumo lead={lead} />
 
