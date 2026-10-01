@@ -31,13 +31,13 @@ export const Route = createFileRoute("/proposta/$leadId")({
       {
         name: "description",
         content:
-          "Acesse sua proposta PROSFEC: simulação de linha governamental, pagamento dos serviços e envio da documentação.",
+          "Acompanhe sua proposta PROSFEC: diagnóstico, contrato, pagamento dos serviços e envio da documentação.",
       },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Sua Proposta PROSFEC" },
       {
         property: "og:description",
-        content: "Simulação, pagamento e envio de documentação em um só lugar.",
+        content: "Diagnóstico, contrato, pagamento e documentação em um só lugar.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -767,144 +767,6 @@ function PropostaPublicaPage() {
               )}
             </div>
           </div>
-        </section>
-
-        {/* Bloco 5 — Simulação de elegibilidade */}
-        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-            <span className="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">
-              5
-            </span>
-            <div className="min-w-0">
-              <h2 className="font-black text-sm uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                <Calculator className="w-4 h-4 text-emerald-600" />
-                Simulação de Elegibilidade
-                {simulacao?.creditLineCode ? ` (${simulacao.creditLineCode})` : ""}
-              </h2>
-              {simulacao?.creditLineName ? (
-                <p className="text-[11px] text-[#00A86B] font-bold mt-0.5">
-                  {simulacao.creditLineName}
-                </p>
-              ) : null}
-            </div>
-          </div>
-
-          {!simulacao || !schedule ? (
-            <div className="p-6 flex items-start gap-3">
-              <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <h3 className="text-sm font-black text-slate-800">Simulação em preparação</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Nossa equipe está finalizando a configuração da sua operação de crédito. Assim
-                  que estiver pronta, os valores aparecerão aqui neste mesmo link.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="p-5 sm:p-6 space-y-5">
-              <div className="flex items-start gap-2.5 bg-amber-50/70 border border-amber-200 rounded-2xl p-3.5">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-amber-900 leading-relaxed">
-                  <strong className="font-black uppercase tracking-wider">Aviso importante:</strong>{" "}
-                  esta simulação representa uma análise técnica de elegibilidade e capacidade
-                  estimada, não constituindo aprovação prévia de crédito. Os valores exatos de
-                  crédito liberado, taxas e prazos dependem da deliberação final da instituição
-                  financeira concedente.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                <ReadField label="Valor desejado" value={formatBRL(simulacao.valorDesejado)} />
-                <ReadField label="Taxa de juros anual" value={`${simulacao.taxaAnual}% a.a.`} />
-                <ReadField
-                  label="Sistema de amortização"
-                  value={simulacao.sistemaAmortizacao === "PRICE" ? "PRICE (Constante)" : "SAC (Decrescente)"}
-                />
-                <ReadField label="Carência" value={`${simulacao.carenciaMeses} meses`} />
-                <ReadField label="Amortização" value={`${simulacao.amortizacaoMeses} meses`} />
-                <ReadField
-                  label="Prazo total"
-                  value={`${(simulacao.carenciaMeses || 0) + (simulacao.amortizacaoMeses || 0)} meses`}
-                />
-              </div>
-
-              <div className="bg-[#0A3D2E] text-white p-6 rounded-2xl grid grid-cols-2 gap-4 shadow-md">
-                <div>
-                  <span className="text-[9px] text-emerald-200 uppercase font-black tracking-wider">
-                    Parcela Inicial
-                  </span>
-                  <div className="text-xl font-black font-mono">
-                    {formatBRL(schedule.parcelaInicial)}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-[9px] text-emerald-200 uppercase font-black tracking-wider">
-                    Parcela Final
-                  </span>
-                  <div className="text-xl font-black font-mono">
-                    {formatBRL(schedule.parcelaFinal)}
-                  </div>
-                </div>
-                <div className="col-span-2 border-t border-emerald-800/80 pt-3 flex flex-col sm:flex-row sm:justify-between gap-3">
-                  <div>
-                    <span className="text-[9px] text-emerald-200 uppercase font-black tracking-wider block">
-                      Total de Juros Estimados
-                    </span>
-                    <div className="text-sm font-bold font-mono text-emerald-300">
-                      {formatBRL(schedule.totalJuros)}
-                    </div>
-                  </div>
-                  <div className="sm:text-right">
-                    <span className="text-[9px] text-emerald-200 uppercase font-black tracking-wider block">
-                      Custo Total (Amortização + Juros)
-                    </span>
-                    <div className="text-xl font-black font-mono text-white">
-                      {formatBRL(schedule.totalPago)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-slate-200 max-h-72 overflow-y-auto">
-                <table className="w-full text-[10px]">
-                  <thead className="sticky top-0">
-                    <tr className="bg-slate-50 border-b border-slate-100 font-bold uppercase text-slate-500">
-                      <th className="p-2 text-left">Mês</th>
-                      <th className="p-2 text-left">Tipo</th>
-                      <th className="p-2 text-right">Amortização</th>
-                      <th className="p-2 text-right">Juros</th>
-                      <th className="p-2 text-right">Parcela</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {schedule.rows.map((row: any) => (
-                      <tr key={row.mes} className="border-b border-slate-100/50">
-                        <td className="p-2 font-mono">Mês {row.mes}</td>
-                        <td className="p-2">
-                          <span
-                            className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
-                              row.tipo === "Carência"
-                                ? "bg-amber-100 text-amber-800"
-                                : "bg-emerald-100 text-emerald-800"
-                            }`}
-                          >
-                            {row.tipo}
-                          </span>
-                        </td>
-                        <td className="p-2 text-right font-mono">
-                          {row.amortizacao > 0 ? formatBRL(row.amortizacao) : "-"}
-                        </td>
-                        <td className="p-2 text-right font-mono">{formatBRL(row.juros)}</td>
-                        <td className="p-2 text-right font-black font-mono text-[#0A3D2E]">
-                          {formatBRL(row.parcela)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
         </section>
 
         {/* Bloco 6 — Resultado da estruturação */}
