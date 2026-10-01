@@ -995,7 +995,7 @@ Gostaria de iniciar o atendimento.`;
   const handleExitIntentWhatsApp = () => {
     const targetPhone = referredByPartnerWhatsapp || "5598987353253";
     
-    let text = `Olá! Estava preenchendo o Simulador de Elegibilidade do Pronampe 2026 e gostaria de salvar meu progresso para garantir meu lugar na análise.`;
+    let text = `Olá! Estava preenchendo a ficha cadastral da PROSFEC e gostaria de continuar o atendimento.`;
     if (formData.cnpj) {
       text += `\n*CNPJ:* ${formData.cnpj}`;
     }
@@ -1032,10 +1032,10 @@ Gostaria de iniciar o atendimento.`;
         {!isModalMode && (
           <div className="text-center max-w-2xl mx-auto mb-8 space-y-3">
             <h2 className="home-heading font-display font-bold text-3xl md:text-4xl">
-              Calcule seu limite potencial em 5 etapas
+              Ficha cadastral da sua empresa em 5 etapas
             </h2>
             <p className="text-sm md:text-base font-semibold text-emerald-400">
-              ⏳ Leva menos de 3 minutos · Simulador Consultivo Sem Compromisso
+              ⏳ Leva menos de 3 minutos · Sem compromisso
             </p>
           </div>
         )}
