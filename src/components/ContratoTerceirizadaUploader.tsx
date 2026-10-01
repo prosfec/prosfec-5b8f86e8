@@ -136,9 +136,15 @@ export default function ContratoTerceirizadaUploader({ lead, canEdit = false, on
         </a>
       )}
 
-      <input ref={inputRef} type="file" accept="application/pdf,.pdf" onChange={handleSelect} className="hidden" />
+      {!canEdit && !url && (
+        <p className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
+          Aguardando anexo do contrato pela Mesa de Operações.
+        </p>
+      )}
 
-      <div className="flex flex-wrap gap-2">
+      {canEdit && <input ref={inputRef} type="file" accept="application/pdf,.pdf" onChange={handleSelect} className="hidden" />}
+
+      {canEdit && <div className="flex flex-wrap gap-2">
         <button
           type="button"
           disabled={uploading}
