@@ -970,15 +970,11 @@ export default function Simulador({
   const headerInfo = getStepHeader();
 
   const handleWhatsAppRedirect = () => {
-    if (!simulationResult) return;
-    const limitFormatted = formatCurrencyBRL(simulationResult.limiteEstimado);
-    const text = `Olá ${referredByPartnerNome || "PROSFEC"}! Realizei a simulação do Pronampe 2026 para minha empresa${referredByPartnerNome ? " através do seu link de indicação" : ""}.
+    const text = `Olá ${referredByPartnerNome || "PROSFEC"}! Acabei de enviar o cadastro da minha empresa${referredByPartnerNome ? " através do seu link de indicação" : ""}.
 *CNPJ:* ${formData.cnpj}
 *Razão Social:* ${formData.razaoSocial}
-*Limite Potencial Estimado:* ${limitFormatted}
-*Nível de Preparidade:* ${String(simulationResult?.nivelPreparacao || "").toUpperCase()}
 
-Gostaria de falar com você para dar andamento ao atendimento e agilizar a liberação do recurso.`;
+Gostaria de iniciar o atendimento.`;
     
     // Choose partner whatsapp if available, else fallback to platform default
     const targetPhone = referredByPartnerWhatsapp || "5598987353253";
@@ -999,7 +995,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
   const handleExitIntentWhatsApp = () => {
     const targetPhone = referredByPartnerWhatsapp || "5598987353253";
     
-    let text = `Olá! Estava preenchendo o Simulador de Elegibilidade do Pronampe 2026 e gostaria de salvar meu progresso para garantir meu lugar na análise.`;
+    let text = `Olá! Estava preenchendo a ficha cadastral da PROSFEC e gostaria de continuar o atendimento.`;
     if (formData.cnpj) {
       text += `\n*CNPJ:* ${formData.cnpj}`;
     }
@@ -1036,10 +1032,10 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
         {!isModalMode && (
           <div className="text-center max-w-2xl mx-auto mb-8 space-y-3">
             <h2 className="home-heading font-display font-bold text-3xl md:text-4xl">
-              Calcule seu limite potencial em 5 etapas
+              Ficha cadastral da sua empresa em 5 etapas
             </h2>
             <p className="text-sm md:text-base font-semibold text-emerald-400">
-              ⏳ Leva menos de 3 minutos · Simulador Consultivo Sem Compromisso
+              ⏳ Leva menos de 3 minutos · Sem compromisso
             </p>
           </div>
         )}
@@ -1103,7 +1099,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                             </div>
                             <div>
                               <h4 className="font-extrabold text-xs uppercase tracking-wider text-amber-900">
-                                Simulação Ativa Encontrada no Banco de Dados
+                                Cadastro Ativo Encontrado no Banco de Dados
                               </h4>
                               <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
                                 Já identificamos que existe uma solicitação cadastrada para o CNPJ (<strong>{formData.cnpj}</strong>). Um consultor PROSFEC responsável já está com o seu caso e dará continuidade ao atendimento.
@@ -1857,10 +1853,10 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                       <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                         <h4 className="text-xs font-bold text-emerald-800 mb-1 flex items-center gap-1.5">
                           <Check className="w-4 h-4 stroke-[3]" />
-                          Tudo pronto para processar simulação
+                          Tudo pronto para enviar seu cadastro
                         </h4>
                         <p className="text-xs text-gray-600 leading-normal">
-                          Ao clicar em calcular, faremos o cruzamento do seu enquadramento e alertaremos quais irregularidades podem atrasar seu processo nos bancos parceiros.
+                          Ao enviar, seus dados seguem para a equipe técnica e seu consultor iniciará o atendimento pelo WhatsApp.
                         </p>
                       </div>
                     </motion.div>
@@ -1900,11 +1896,11 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                         {calculating ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            Analisando elegibilidade...
+                            Enviando cadastro...
                           </>
                         ) : (
                           <>
-                            Efetuar Simulação
+                            Enviar Cadastro
                             <Send className="w-4 h-4" />
                           </>
                         )}
@@ -1924,401 +1920,28 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                 <SimulationResultBoundary
                   whatsappUrl={buildWhatsAppUrl(
                     referredByPartnerWhatsapp || "5598987353253",
-                    "Olá! Fiz a simulação na PROSFEC e gostaria de receber o meu resultado.",
+                    "Olá! Fiz meu cadastro na PROSFEC e gostaria de iniciar o atendimento.",
                   )}
                   onReset={resetAll}
                 >
-                {/* Result Hero Badge */}
-                <div className="bg-brand-primary text-white p-6 rounded-2xl relative overflow-hidden mb-6 shadow-inner">
+                {/* Confirmação de cadastro (sem simulação de valores) */}
+                <div className="bg-brand-primary text-white p-6 md:p-8 rounded-2xl relative overflow-hidden mb-6 shadow-inner">
                   <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
-                    <TrendingUp className="w-48 h-48 -rotate-12" />
+                    <CheckCircle2 className="w-48 h-48 -rotate-12" />
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-emerald-300 block mb-1">
-                        Limite Estimado Potencial do seu CNPJ
-                      </span>
-                      <p className="text-3xl md:text-4xl font-display font-extrabold">
-                        {formatCurrencyBRL(simulationResult?.limiteEstimado || 0)}
-                      </p>
-                    </div>
-
-                    {typeof simulationResult?.scoreElegibilidade === "number" && (
-                      <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center gap-4 shrink-0">
-                        <div className="relative w-14 h-14 flex items-center justify-center rounded-full bg-slate-900/60 border border-emerald-400/40">
-                          <span className="text-lg font-black text-emerald-300 font-mono">
-                            {simulationResult.scoreElegibilidade}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] uppercase font-extrabold text-emerald-300 tracking-wider block">
-                            Score PROSFEC
-                          </span>
-                          <span className="text-xs font-bold text-white">
-                            {simulationResult.scoreElegibilidade >= 80 
-                              ? "Excelente Enquadramento" 
-                              : simulationResult.scoreElegibilidade >= 60 
-                                ? "Enquadramento Moderado" 
-                                : "Necessita de Adequações"}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-300 mt-3">
-                    {formData.menosDe12Meses 
-                      ? `*Cálculo conforme regras da linha recomendada: limite proporcional ponderado de acordo com o capital social e média de receitas mensais.`
-                      : formData.seloEmpregaMulher 
-                        ? `*Cálculo conforme regras com Selo Emprega + Mulher: até 60% do faturamento anual, com direito a teto preferencial assegurado.`
-                        : `*Cálculo otimizado pela PROSFEC IA: limite de crédito baseado no histórico de faturamento bruto anual e capacidade de enquadramento federal.`
-                    }
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-emerald-300 block mb-2">
+                    Cadastro recebido
+                  </span>
+                  <h3 className="font-display font-extrabold text-2xl md:text-3xl leading-tight">
+                    Solicitação de análise recebida com sucesso!
+                  </h3>
+                  <p className="text-sm text-white/80 mt-3 leading-relaxed max-w-2xl">
+                    Os dados da sua empresa foram encaminhados para a equipe técnica. {referredByPartnerNome ? `${referredByPartnerNome}, seu consultor,` : "Nosso consultor"} entrará em contato via WhatsApp para iniciar o atendimento e apresentar o diagnóstico personalizado.
                   </p>
+                  {createdLeadId && (
+                    <p className="text-xs text-emerald-200 font-mono mt-4">Código de rastreio: {createdLeadId}</p>
+                  )}
                 </div>
-
-                {/* Dynamic Credit Line Recommendation Banner */}
-                <div className="bg-gradient-to-r from-[#032e22] via-[#084534] to-[#043326] text-white p-6 rounded-3xl relative overflow-hidden mb-8 border border-emerald-800/60 shadow-xl">
-                  <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
-                    <Sparkles className="w-48 h-48 -rotate-12 text-brand-accent" />
-                  </div>
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 relative z-10">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-[10px] bg-brand-accent/20 border border-brand-accent/30 text-brand-accent font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                          Recomendação PROSFEC IA
-                        </span>
-                        {simulationResult?.bancoDetalhes && (
-                          <span className="text-[10px] bg-emerald-400/20 border border-emerald-400/30 text-emerald-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Building className="w-3 h-3 text-brand-accent" />
-                            {simulationResult.bancoDetalhes.bancoNormalizado}
-                          </span>
-                        )}
-                        {simulationResult?.fonte?.includes("Gemini") && (
-                          <span className="text-[10px] bg-emerald-400/20 border border-emerald-400/30 text-emerald-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Bot className="w-3 h-3" />
-                            Análise IA
-                          </span>
-                        )}
-                      </div>
-                      <h3 className="font-display font-black text-xl md:text-2xl text-white tracking-tight">
-                        {simulationResult?.creditLineName || "PRONAMPE 2026"}
-                      </h3>
-                      <p className="text-xs text-emerald-100/90 font-medium leading-relaxed mt-2 max-w-xl">
-                        {simulationResult?.justificativa || "Sua empresa foi qualificada no enquadramento automático federal do Pronampe devido ao faturamento e porte compatível."}
-                      </p>
-                    </div>
-                    
-                    <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl text-left shrink-0 w-full md:w-auto min-w-[200px] hover:bg-white/10 transition-colors duration-200">
-                      <span className="text-[10px] uppercase font-bold text-emerald-300 tracking-wider block mb-0.5">Parcela Mensal Estimada</span>
-                      <strong className="text-2xl font-black text-brand-accent block">
-                        {formatCurrencyBRL(simulationResult?.parcela || (simulationResult?.limiteEstimado ? (simulationResult.limiteEstimado * 0.026) : 0))}
-                      </strong>
-                      <span className="text-[9px] text-emerald-100/70 leading-tight block mt-1">
-                        Taxa de {simulationResult?.rate || 16.5}% a.a. em {simulationResult?.prazo || 48} meses.
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Advanced Dynamic Credit Parameters Dashboard */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 simulator-results-container">
-                  <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl text-left min-w-0">
-                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Teto do Crédito</span>
-                    <strong className="text-sm md:text-base text-emerald-800 font-extrabold block">
-                      {formatCurrencyBRL(simulationResult?.limiteEstimado || 500000)}
-                    </strong>
-                    <span className="text-[9px] text-gray-500 leading-tight block mt-0.5">Limite máximo para o CNPJ.</span>
-                  </div>
-                  
-                  <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl text-left min-w-0">
-                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Prazo de Pagamento</span>
-                    <strong className="text-sm md:text-base text-emerald-800 font-extrabold block">
-                      Até {simulationResult?.prazo || 72} Meses
-                    </strong>
-                    <span className="text-[9px] text-emerald-700 font-semibold leading-tight block mt-0.5">Teto máximo estendido.</span>
-                  </div>
-                  
-                  <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl text-left min-w-0">
-                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Carência de Capital</span>
-                    <strong className="text-sm md:text-base text-emerald-800 font-extrabold block">
-                      Até {simulationResult?.carencia || 12} Meses
-                    </strong>
-                    <span className="text-[9px] text-emerald-700 font-semibold leading-tight block mt-0.5">Carência máxima garantida.</span>
-                  </div>
-                  
-                  <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl text-left min-w-0">
-                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Taxa de Juros</span>
-                    <strong className="text-sm md:text-base text-emerald-800 font-extrabold block font-mono">
-                      {simulationResult?.rate ? `${simulationResult.rate}% a.a.` : "Selic + até 6% a.a."}
-                    </strong>
-                    <span className="text-[9px] text-gray-500 leading-tight block mt-0.5">Taxas subsidiadas de fomento.</span>
-                  </div>
-                </div>
-
-                {/* Partner Bank Specific Rules Card */}
-                {simulationResult?.bancoDetalhes && (
-                  <div className="mb-8 bg-emerald-950/40 border border-emerald-800/50 p-5 rounded-2xl text-left shadow-inner">
-                    <div className="flex items-center justify-between gap-3 mb-3 pb-2 border-b border-emerald-800/40">
-                      <div className="flex items-center gap-2">
-                        <Building className="w-4 h-4 text-brand-accent" />
-                        <h4 className="font-display font-extrabold text-sm text-emerald-300">
-                          Condições Específicas do Agente Financeiro: {simulationResult.bancoDetalhes.bancoNormalizado}
-                        </h4>
-                      </div>
-                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        {simulationResult.bancoDetalhes.categoria === "estatal" ? "Banco Público Estatal" :
-                         simulationResult.bancoDetalhes.categoria === "cooperativa" ? "Cooperativa de Crédito" : "Banco Privado"}
-                      </span>
-                    </div>
-                    <p className="text-xs text-emerald-100/90 leading-relaxed font-medium mb-3">
-                      {simulationResult.bancoDetalhes.destaqueEsteira}
-                    </p>
-                    <div className="flex flex-wrap gap-2 text-[11px]">
-                      <span className="bg-emerald-900/60 border border-emerald-700/50 text-emerald-200 px-3 py-1 rounded-lg font-semibold flex items-center gap-1.5">
-                        <Shield className="w-3.5 h-3.5 text-brand-accent" />
-                        Esteira: {simulationResult.bancoDetalhes.modalidadeAprovacao}
-                      </span>
-                      {typeof simulationResult.bancoDetalhes.carenciaPadrao === "number" && (
-                        <span className="bg-emerald-900/60 border border-emerald-700/50 text-emerald-200 px-3 py-1 rounded-lg font-semibold flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-brand-accent" />
-                          Carência Padrão: {simulationResult.bancoDetalhes.carenciaPadrao} meses
-                          {typeof simulationResult.bancoDetalhes.carenciaMaxima === "number"
-                            ? ` (Máx: ${simulationResult.bancoDetalhes.carenciaMaxima}m)`
-                            : ""}
-                        </span>
-                      )}
-                      {typeof simulationResult.bancoDetalhes.taxaAnualEstimada === "number" && (
-                        <span className="bg-emerald-900/60 border border-emerald-700/50 text-emerald-200 px-3 py-1 rounded-lg font-semibold flex items-center gap-1.5">
-                          <TrendingUp className="w-3.5 h-3.5 text-brand-accent" />
-                          Taxa Estimada no Banco: {simulationResult.bancoDetalhes.taxaAnualEstimada}% a.a.
-                        </span>
-                      )}
-                      {simulationResult.bancoDetalhes.condicaoConfirmada === false && (
-                        <span className="bg-amber-900/40 border border-amber-600/40 text-amber-200 px-3 py-1 rounded-lg font-semibold flex items-center gap-1.5">
-                          <Shield className="w-3.5 h-3.5 text-amber-300" />
-                          Condições específicas deste banco a confirmar — valem os parâmetros oficiais do programa.
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Recomendação 1: Badge de Excedente de Capacidade de Crédito */}
-                {((simulationResult?.excedenteCapacidade && simulationResult.excedenteCapacidade > 0) ||
-                  ((simulationResult?.capacidadeTotal || 0) > (simulationResult?.limiteEstimado || 0))) && (
-                  <div className="mb-8 bg-gradient-to-br from-amber-950/40 via-amber-900/20 to-slate-900 border border-amber-500/40 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden">
-                    <div className="absolute -right-6 -bottom-6 opacity-10 pointer-events-none text-amber-400">
-                      <Zap className="w-40 h-40" />
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-amber-500/20">
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-amber-500/20 border border-amber-400/30 rounded-xl text-amber-300">
-                          <Zap className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-display font-extrabold text-base text-amber-200">
-                            Excedente de Capacidade de Crédito Identificado
-                          </h4>
-                          <span className="text-[11px] text-amber-300/80 font-medium block">
-                            Capacidade fiscal superior ao teto individual do PRONAMPE
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-mono font-extrabold uppercase px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 shrink-0">
-                        ESTRUTURAÇÃO MULTI-LINHA
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-xl">
-                        <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Capacidade Bruta (e-CAC)</span>
-                        <strong className="text-base font-extrabold text-white block">
-                          {formatCurrencyBRL(simulationResult?.capacidadeTotal || 0)}
-                        </strong>
-                        <span className="text-[9px] text-slate-400 block mt-0.5">30% do faturamento anual declarado.</span>
-                      </div>
-
-                      <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-xl">
-                        <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Teto Alocado PRONAMPE</span>
-                        <strong className="text-base font-extrabold text-emerald-400 block">
-                          {formatCurrencyBRL(simulationResult?.limiteEstimado || 0)}
-                        </strong>
-                        <span className="text-[9px] text-emerald-300/80 block mt-0.5">Limite máximo no programa federal.</span>
-                      </div>
-
-                      <div className="bg-amber-950/60 border border-amber-500/30 p-3.5 rounded-xl">
-                        <span className="text-[10px] font-bold uppercase text-amber-300 block mb-0.5">Saldo Excedente Disponível</span>
-                        <strong className="text-base font-extrabold text-amber-200 block">
-                          {formatCurrencyBRL(simulationResult?.excedenteCapacidade || Math.max(0, (simulationResult?.capacidadeTotal || 0) - (simulationResult?.limiteEstimado || 0)))}
-                        </strong>
-                        <span className="text-[9px] text-amber-300/80 block mt-0.5">Capacidade para linhas complementares.</span>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-amber-100/90 leading-relaxed font-medium bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-xl">
-                      💡 <strong>Recomendação de Alta Conversão Prosfec:</strong> Como o seu faturamento permite alocar até <strong>{formatCurrencyBRL(simulationResult?.capacidadeTotal || 0)}</strong>, nossa assessoria pode estruturar a captação do excedente de <strong>{formatCurrencyBRL(simulationResult?.excedenteCapacidade || 0)}</strong> combinando o PRONAMPE com garantias via <strong>FGI PEAC</strong> ou <strong>Linhas Corporativas de Giro com Fundo Garantidor</strong>.
-                    </p>
-                  </div>
-                )}
-
-                {/* Comparativo de mercado suspenso até haver benchmark com fonte, URL, data, metodologia e escopo. */}
-
-
-                {/* Consultor de Crédito Governamental Parecer Técnico & Documentos */}
-                {(simulationResult?.justificativaTecnica || (simulationResult?.documentosNecessarios && simulationResult.documentosNecessarios.length > 0)) && (
-                  <div className="mb-8 bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 space-y-5 shadow-lg">
-                    <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-                      <Bot className="w-5 h-5 text-emerald-400" />
-                      <h4 className="font-display font-extrabold text-sm text-emerald-400 uppercase tracking-wider">
-                        Parecer do Consultor de Crédito Governamental
-                      </h4>
-                    </div>
-
-                    {simulationResult?.justificativaTecnica && (
-                      <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                        {simulationResult.justificativaTecnica}
-                      </p>
-                    )}
-
-                    {simulationResult?.documentosNecessarios && simulationResult.documentosNecessarios.length > 0 && (
-                      <div className="pt-2">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                          Documentação Exigida para Enquadramento do Perfil:
-                        </span>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {simulationResult.documentosNecessarios.map((doc, dIdx) => (
-                            <div key={dIdx} className="flex items-center gap-2 bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/60 text-xs text-slate-200">
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                              <span className="font-medium text-[11px] leading-tight">{doc}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                  
-                  {/* Integrity Checklist - 7 cols */}
-                  <div className="md:col-span-7 space-y-5">
-                    <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-                      <Shield className="w-5 h-5 text-brand-primary" />
-                      <h4 className="font-bold text-sm text-brand-primary uppercase">
-                        Diagnóstico Geral de Viabilidade
-                      </h4>
-                    </div>
-
-                    <div className="flex items-center gap-3.5 p-3 rounded-xl border border-gray-100 bg-gray-50/50">
-                      <span className="text-xs font-bold text-gray-500 uppercase block shrink-0">
-                        Nível de Disponibilidade Médio:
-                      </span>
-                      {simulationResult?.nivelPreparacao === "alto" ? (
-                        <span className="bg-emerald-100 text-emerald-800 text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">
-                          ALTA APROVAÇÃO
-                        </span>
-                      ) : simulationResult?.nivelPreparacao === "medio" ? (
-                        <span className="bg-amber-100 text-amber-800 text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">
-                          ATENÇÃO RECOMENDADA
-                        </span>
-                      ) : (
-                        <span className="bg-rose-100 text-rose-800 text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">
-                          BLOQUEIO PROVÁVEL
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-3">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest block">
-                        Apontamentos Críticos Verificados:
-                      </span>
-                      {simulationResult?.principaisAlertas.map((alert, idx) => (
-                        <div key={idx} className="flex items-start gap-2.5 p-3.5 bg-rose-50/60 rounded-xl border border-rose-100/60">
-                          {simulationResult?.nivelPreparacao === "alto" ? (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                          ) : (
-                            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                          )}
-                          <p className="text-xs font-medium text-gray-700 leading-normal">{alert}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* PROSFEC consulting recommendations - 5 cols */}
-                  <div className="md:col-span-5 bg-slate-900 p-5 rounded-2xl border border-emerald-500/25 space-y-4 shadow-lg">
-                    <h5 className="font-display font-bold text-sm text-emerald-300 flex items-center gap-1.5">
-                      <Check className="text-emerald-400 w-4 h-4 stroke-[3]" />
-                      Próximos Passos Recomendados
-                    </h5>
-
-                    <ul className="space-y-3">
-                      {simulationResult?.recomendações.map((rec, rIdx) => (
-                        <li key={rIdx} className="flex gap-2 text-xs text-slate-100 leading-relaxed text-left">
-                          <span className="text-emerald-400 font-bold shrink-0">•</span>
-                          <span>{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <div className="pt-3 border-t border-slate-700/70">
-                      <span className="text-[11px] text-slate-400 leading-snug block">
-                        Seu dossiê está pronto para análise humana. Nossos assessores possuem contato direto com os gerentes de contas dos principais bancos do Pronampe.
-                      </span>
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Benefício de Energia Compartilhada — a partir de R$ 1.200,00 de consumo somado */}
-                {(formData.consumoEnergiaMensal || 0) >= 1200 && (
-                  <div className="mt-8 bg-gradient-to-br from-[#04291d] via-slate-900 to-[#1a1405] border border-amber-400/35 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden">
-                    <div className="absolute -right-6 -bottom-8 opacity-10 pointer-events-none text-amber-300">
-                      <Zap className="w-40 h-40" />
-                    </div>
-
-                    <div className="relative z-10 space-y-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-amber-400/15 border border-amber-400/30 rounded-xl text-amber-300">
-                          <Zap className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-display font-extrabold text-base text-amber-200">
-                            ⚡ Benefício de Energia Compartilhada Liberado
-                          </h4>
-                          <span className="text-[11px] text-amber-100/80 font-medium block">
-                            Consumo informado de {formatCurrencyBRL(formData.consumoEnergiaMensal || 0)} por mês (empresa + sócios)
-                          </span>
-                        </div>
-                      </div>
-
-                      <ul className="space-y-2.5">
-                        <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                          <span>Redução de <strong className="text-emerald-300">15% a 25% na conta de luz</strong>, sem obras e sem taxa de adesão.</span>
-                        </li>
-                        <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                          <span>Ao ativar o benefício, seu <strong className="text-emerald-300">Diagnóstico Estrutural e Societário 360° fica 100% subsidiado</strong> pela PROSFEC.</span>
-                        </li>
-                        <li className="flex gap-2 text-xs text-slate-100 leading-relaxed">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                          <span>A adesão ao programa de energia também é <strong className="text-emerald-300">totalmente gratuita</strong>.</span>
-                        </li>
-                      </ul>
-
-                      <a
-                        href="https://raioenergy.com/r/XN8NN5AWFG"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-extrabold transition-colors duration-200"
-                      >
-                        <Zap className="w-4 h-4" />
-                        Ativar Redução de Energia &amp; Diagnóstico Gratuito
-                      </a>
-                    </div>
-                  </div>
-                )}
 
                 {/* Partner Registration Form (Etapa 2 - Coleta de dados dos sócios) */}
                 <div className="mt-8 pt-8 border-t border-gray-100">
@@ -2526,7 +2149,7 @@ Gostaria de falar com você para dar andamento ao atendimento e agilizar a liber
                     onClick={resetAll}
                     className="text-xs font-bold text-gray-400 hover:text-brand-primary p-2 transition-all cursor-pointer"
                   >
-                    ← Reiniciar Simulação
+                    ← Novo cadastro
                   </button>
 
                   <button

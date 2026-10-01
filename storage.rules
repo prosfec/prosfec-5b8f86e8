@@ -44,6 +44,16 @@ service firebase.storage {
       allow delete: if isStaff();
     }
 
+    // Contrato de assessoria emitido pela terceirizada, anexado na ficha do lead.
+    // Leitura por link; envio por usuários autenticados (parceiros e equipe).
+    match /contratos_terceirizada/{arquivo} {
+      allow read: if true;
+      allow create, update: if isSignedIn()
+        && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType == 'application/pdf';
+      allow delete: if isSignedIn();
+    }
+
     // Tudo o mais permanece bloqueado.
     match /{allPaths=**} {
       allow read, write: if false;

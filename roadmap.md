@@ -1,10 +1,7 @@
 # Roadmap
 
-- [x] Proteger rotas RedeBE e diagnóstico com autenticação e autorização reais
-- [x] Tornar consulta RedeBE idempotente e o débito concorrente-seguro
-- [x] Remover credenciais fixas e melhorar erros REST/externos
-- [x] Validar dados reais e saída do diagnóstico Gemini
-- [x] Migrar gravações restantes do SDK web para REST compatível
-- [x] Ajustar interface para token, catálogo obrigatório e idempotência
-- [x] Restringir gravações sensíveis nas regras do Firestore
-- [x] Validar tipos, build e fluxos essenciais
+- [x] Home: formulário vira ficha cadastral, sem tela de resultado de simulação
+- [x] Remover simulação do Workspace (Passo 1), Passo 6 e link de acompanhamento
+- [x] Diagnóstico sem disparo RedeBE (mantém débito e upload do laudo pela Mesa)
+- [x] Contratos: remover Assessoria mensal e Avulso genérico; manter Preços e Serviços + Aditivo; anexo do contrato da terceirizada
+- [ ] Publicar storage.rules no Console do Firebase (ação do usuário)

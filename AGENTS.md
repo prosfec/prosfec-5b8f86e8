@@ -13,3 +13,5 @@
 
 - Leads de energia solar ficam na coleção `leads_energia`, separada de `leads_distribuidos`, porque o funil solar tem fluxo comercial próprio (4 etapas, sem consulta/taxa).
 - Saques solares e seus leads devem mudar de estado juntos em transações Firestore com validação dos IDs e valores atuais, porque a Mesa e o parceiro podem agir simultaneamente e um mesmo contrato não pode ser pago duas vezes.
+- Credit diagnosis requests never call an external API: the server records the request, debits the partner and queues it for staff to attach the PDF, because reports now come from an offline external source.
+- The principal Assessoria/Avulso contract is discontinued; only already-signed ones are served, so historical signatures stay immutable while new contracts are only price-and-service documents.

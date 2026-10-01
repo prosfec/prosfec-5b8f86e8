@@ -594,11 +594,11 @@ export default function App() {
         <div className="home-section bg-[#0B0F14] pt-12 md:pt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left space-y-3">
             <h2 className="font-display font-bold text-3xl md:text-4xl text-white leading-tight">
-              Comece entendendo o potencial da sua empresa
+              Cadastre sua empresa
             </h2>
             <p className="text-zinc-400 text-base leading-relaxed max-w-2xl">
-              Faça uma primeira análise e descubra quais caminhos de crédito podem fazer sentido para
-              o seu negócio.
+              Preencha a ficha cadastral da sua empresa. Seu consultor recebe os dados e inicia o
+              atendimento pelo WhatsApp.
             </p>
           </div>
         </div>
@@ -661,7 +661,7 @@ export default function App() {
           className="flex-1 bg-[#00A86B] hover:bg-[#008f5a] text-white font-extrabold text-xs py-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-98"
         >
           <Calculator className="w-5 h-5" />
-          Simular Limite
+          Cadastrar Empresa
         </button>
 
         <a
