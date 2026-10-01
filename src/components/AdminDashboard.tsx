@@ -624,6 +624,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     setShowCertificadoSenha(false);
   }, [selectedLead, customServices]);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [resetPasswordPartner, setResetPasswordPartner] = useState<Partner | null>(null);
 
   // Ajuste manual de saldo do parceiro (correção de cobranças que falharam)
   const [balanceAdjustPartner, setBalanceAdjustPartner] = useState<Partner | null>(null);
@@ -5319,6 +5320,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               >
                                 Abrir Operação
                               </button>
+
+                              {userRole === "admin" && (
+                                <button
+                                  type="button"
+                                  onClick={() => setResetPasswordPartner(partner)}
+                                  className="p-1.5 rounded-lg border transition-all shrink-0 bg-white hover:bg-slate-50 text-[#0A3D2E] border-slate-200 cursor-pointer"
+                                  title="Gerar senha temporária"
+                                >
+                                  <KeyRound className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
 
                               <button
                                 type="button"
