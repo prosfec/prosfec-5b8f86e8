@@ -3176,6 +3176,7 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
 
               <ContratoTerceirizadaUploader
                 lead={lead}
+                canEdit={isAdminUser}
                 onUpdated={(patch) => onLeadUpdated?.({ ...lead, ...patch })}
               />
 

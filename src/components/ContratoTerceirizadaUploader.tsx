@@ -9,11 +9,12 @@ const MAX_BYTES = 15 * 1024 * 1024;
 
 interface Props {
   lead: any;
+  canEdit?: boolean;
   onUpdated?: (patch: Record<string, any>) => void;
 }
 
-/** Anexo do contrato de assessoria emitido pela empresa terceirizada (PDF). */
-export default function ContratoTerceirizadaUploader({ lead, onUpdated }: Props) {
+/** Anexo do contrato de assessoria emitido pela empresa terceirizada (PDF). Upload só ADM. */
+export default function ContratoTerceirizadaUploader({ lead, canEdit = false, onUpdated }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -135,9 +136,15 @@ export default function ContratoTerceirizadaUploader({ lead, onUpdated }: Props)
         </a>
       )}
 
-      <input ref={inputRef} type="file" accept="application/pdf,.pdf" onChange={handleSelect} className="hidden" />
+      {!canEdit && !url && (
+        <p className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
+          Aguardando anexo do contrato pela Mesa de Operações.
+        </p>
+      )}
 
-      <div className="flex flex-wrap gap-2">
+      {canEdit && <input ref={inputRef} type="file" accept="application/pdf,.pdf" onChange={handleSelect} className="hidden" />}
+
+      {canEdit && <div className="flex flex-wrap gap-2">
         <button
           type="button"
           disabled={uploading}
@@ -158,7 +165,7 @@ export default function ContratoTerceirizadaUploader({ lead, onUpdated }: Props)
             Remover
           </button>
         )}
-      </div>
+      </div>}
 
       {error && (
         <div className="text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2 flex items-center gap-1.5">
