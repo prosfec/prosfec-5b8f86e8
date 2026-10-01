@@ -7659,7 +7659,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 </td>
                                 <td className="py-3.5 px-4">
                                   <div className="font-extrabold font-mono text-slate-900">
-                                    {formatCurrencyBRL((lead.valorAprovado || lead.limiteEstimado || 0) * getDirectCommissionMultiplier(currentPartner?.plano))}
+                                    {lead.valorAprovado && lead.valorAprovado > 0 ? formatCurrencyBRL(lead.valorAprovado * getDirectCommissionMultiplier(currentPartner?.plano)) : "Sob análise"}
                                   </div>
                                   <div className="mt-1">
                                     {lead.comissaoPaga ? (
@@ -7750,7 +7750,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {paginatedLeads.map(lead => {
                           const isConcluded = lead.etapa === 7 || lead.status === "concluido";
                           const isRefused = lead.etapa === 8;
-                          const directCommissionValue = (lead.valorAprovado || lead.limiteEstimado || 0) * getDirectCommissionMultiplier(currentPartner?.plano);
+                          const directCommissionValue = (lead.valorAprovado || 0) * getDirectCommissionMultiplier(currentPartner?.plano);
                           
                           return (
                             <div key={lead.id} className="pf-panel bg-white/75 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_12px_32px_-12px_rgba(2,36,26,0.18)]">
@@ -7830,9 +7830,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               {/* Commission Box */}
                               <div className="bg-emerald-50/70 border border-emerald-200 p-3 rounded-xl flex items-center justify-between text-xs">
                                 <div>
-                                  <span className="text-[11px] text-emerald-900 font-bold uppercase block">Comissão Estimada</span>
+                                  <span className="text-[11px] text-emerald-900 font-bold uppercase block">Sua Comissão</span>
                                   <span className="font-extrabold font-mono text-[#00A86B] text-sm">
-                                    {formatCurrencyBRL(directCommissionValue)}
+                                    {directCommissionValue > 0 ? formatCurrencyBRL(directCommissionValue) : "Sob análise"}
                                   </span>
                                 </div>
                                 <div>
@@ -8023,7 +8023,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     columnLeads.map(lead => {
                                       const isRefused = lead.etapa === 8 || lead.status === "recusado" || lead.resultadoAnaliseCredito === "recusado";
                                       const isApproved = (lead.valorAprovado && lead.valorAprovado > 0) || lead.status === "concluido" || lead.status === "aprovado" || lead.resultadoAnaliseCredito === "aprovado";
-                                      const directCommissionValue = (lead.valorAprovado || lead.limiteEstimado || 0) * getDirectCommissionMultiplier(currentPartner?.plano);
+                                      const directCommissionValue = (lead.valorAprovado || 0) * getDirectCommissionMultiplier(currentPartner?.plano);
                                       const hasActivePendency = lead.pendente || lead.pendencias?.status === "pendente";
 
                                       // Sub-etapas for Passo 6 Operacionalização
@@ -8152,7 +8152,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                             <div className="flex justify-between items-center text-[9px] bg-slate-50/80 p-1 rounded">
                                               <span className="text-slate-500 font-bold">Sua Comissão:</span>
                                               <span className="font-black text-[#0A3D2E]">
-                                                {formatCurrencyBRL(directCommissionValue)}
+                                                {directCommissionValue > 0 ? formatCurrencyBRL(directCommissionValue) : "Sob análise"}
                                               </span>
                                             </div>
                                           </div>
