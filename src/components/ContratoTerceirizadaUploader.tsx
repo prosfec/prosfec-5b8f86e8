@@ -165,7 +165,7 @@ export default function ContratoTerceirizadaUploader({ lead, canEdit = false, on
             Remover
           </button>
         )}
-      </div>
+      </div>}
 
       {error && (
         <div className="text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2 flex items-center gap-1.5">
