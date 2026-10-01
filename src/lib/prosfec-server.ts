@@ -2808,7 +2808,9 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       const pendentes = await derivarDocumentosPendentes(lead, assinados);
       const documentosAvulsos = [...assinados.map(publicContratoView), ...pendentes];
 
-      if (!lead.modeloContratacao && documentosAvulsos.length === 0) {
+      // Contrato principal (Assessoria/Avulso) descontinuado: só aparece se já foi assinado.
+      const principalDisponivel = Boolean(lead.modeloContratacao && lead.contratoAssinado);
+      if (!principalDisponivel && documentosAvulsos.length === 0) {
         return res.status(404).json({ error: "Contrato ainda não disponibilizado para assinatura." });
       }
 
@@ -2825,7 +2827,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
 
       const documentos: any[] = [];
 
-      if (lead.modeloContratacao) {
+      if (principalDisponivel) {
         const isAvulsoPrincipal = String(lead.modeloContratacao).toLowerCase() === "avulso";
 
         // Corpo do contrato de assessoria: texto congelado na assinatura ou o vigente no painel
@@ -3311,6 +3313,10 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           if (multiplos) return;
           throw new AssinaturaErro(409, "Este contrato já foi assinado.");
         }
+        // Contratos de Assessoria mensal e Avulso genérico foram descontinuados:
+        // apenas os já assinados permanecem disponíveis para consulta.
+        if (multiplos) return;
+        throw new AssinaturaErro(410, "Este modelo de contrato foi descontinuado.");
 
         const currentEtapa = Number(lead.etapa || 1);
         const nextEtapa = Math.max(currentEtapa, 5);
