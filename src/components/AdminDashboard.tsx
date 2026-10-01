@@ -3476,6 +3476,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="soft-ui pf-admin min-h-screen flex font-sans text-ink bg-slate-50 dark:bg-zinc-950 dark:text-zinc-100">
+      {resetPasswordPartner && (
+        <PartnerPasswordResetModal partner={resetPasswordPartner as any} onClose={() => setResetPasswordPartner(null)} />
+      )}
       {/* Sidebar fixa (desktop) */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col z-40 bg-[#02241a] border-r border-white/10">
         {sidebarBrand}
