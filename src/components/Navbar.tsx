@@ -122,7 +122,7 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
               className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-sm px-5 py-2.5 rounded-lg transition-all flex items-center gap-2 cursor-pointer"
             >
               <Calculator className="w-4 h-4" strokeWidth={2} />
-              Simular agora
+              Cadastrar empresa
             </button>
           </div>
 
@@ -203,7 +203,7 @@ export default function Navbar({ onSimulateClick, onPartnerPortalClick }: Navbar
                 className="w-full bg-[#00A86B] hover:bg-[#008f5a] text-white text-center font-bold py-3.5 rounded-xl shadow-md flex items-center justify-center gap-2"
               >
                 <Calculator className="w-5 h-5" strokeWidth={2} />
-                Simular Limite Potencial
+                Cadastrar minha empresa
               </button>
             </div>
           </div>

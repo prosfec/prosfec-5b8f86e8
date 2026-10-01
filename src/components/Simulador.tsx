@@ -1099,7 +1099,7 @@ Gostaria de iniciar o atendimento.`;
                             </div>
                             <div>
                               <h4 className="font-extrabold text-xs uppercase tracking-wider text-amber-900">
-                                Simulação Ativa Encontrada no Banco de Dados
+                                Cadastro Ativo Encontrado no Banco de Dados
                               </h4>
                               <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
                                 Já identificamos que existe uma solicitação cadastrada para o CNPJ (<strong>{formData.cnpj}</strong>). Um consultor PROSFEC responsável já está com o seu caso e dará continuidade ao atendimento.
