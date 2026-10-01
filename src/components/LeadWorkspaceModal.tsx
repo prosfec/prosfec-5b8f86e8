@@ -1704,6 +1704,9 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
   const [editRamo, setEditRamo] = useState(lead.ramo || "");
   const [editPorte, setEditPorte] = useState(lead.porte || "ME");
   const [editBancoPrincipal, setEditBancoPrincipal] = useState(lead.bancoPrincipal || "Banco do Brasil");
+  const [editConsumoEnergia, setEditConsumoEnergia] = useState<string>(
+    (lead as any).consumoEnergiaMensal ? String((lead as any).consumoEnergiaMensal) : ""
+  );
   const [editMenosDe12Meses, setEditMenosDe12Meses] = useState(lead.menosDe12Meses || false);
   const [editCapitalSocial, setEditCapitalSocial] = useState(lead.capitalSocial?.toString() || "");
   const [editMediaReceitaMensal, setEditMediaReceitaMensal] = useState(lead.mediaReceitaMensal?.toString() || "");
@@ -2101,6 +2104,7 @@ Por estarem de acordo, as partes firmam o presente instrumento eletrônico.`;
         ramo: editRamo,
         porte: editPorte,
         bancoPrincipal: editBancoPrincipal,
+        consumoEnergiaMensal: Number(editConsumoEnergia) || 0,
         menosDe12Meses: editMenosDe12Meses,
         capitalSocial: valCapital,
         mediaReceitaMensal: valMediaReceita,
@@ -3069,6 +3073,26 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                         required={!editMenosDe12Meses}
                       />
                     </div>
+                  )}
+                </div>
+
+                <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 space-y-1.5 mt-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 block">
+                    ⚡ Consumo Médio de Energia (Empresa + Sócios) (R$)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editConsumoEnergia}
+                    onChange={(e) => setEditConsumoEnergia(e.target.value)}
+                    placeholder="0,00"
+                    className="w-full text-sm font-medium text-slate-900 px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
+                  />
+                  {Number(editConsumoEnergia) >= 1200 ? (
+                    <p className="text-[11px] font-bold text-emerald-700">⚡ Elegível ao programa de energia por assinatura</p>
+                  ) : (
+                    <p className="text-[11px] text-slate-500">Soma aproximada das faturas de energia do CNPJ e dos CPFs dos sócios.</p>
                   )}
                 </div>
               </div>
