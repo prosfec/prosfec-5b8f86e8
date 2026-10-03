@@ -3344,7 +3344,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     total: leadsEnergia.length,
     atendimento: leadsEnergia.filter((l: any) => (l.status || "novo") === "atendimento").length,
     concluidos: energiaConcluidos.length,
-    volumeFaturas: energiaConcluidos.reduce((acc: number, l: any) => acc + (Number(l.valorFatura) || 0), 0),
+    volumeKwh: energiaConcluidos.reduce((acc: number, l: any) => acc + (Number(l.consumoKwhMes) || 0), 0),
     comissoesQuinzena: energiaConcluidos
       .filter((l: any) => (l.comissaoStatus || "acumulada") === "acumulada")
       .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0)
@@ -4744,7 +4744,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       { label: "Total de Leads", valor: String(energiaTotais.total), cor: "text-slate-800" },
                       { label: "Em Atendimento", valor: String(energiaTotais.atendimento), cor: "text-blue-700" },
                       { label: "Contratos Concluídos", valor: String(energiaTotais.concluidos), cor: "text-emerald-700" },
-                      { label: "Faturas Negociadas", valor: formatCurrencyBRL(energiaTotais.volumeFaturas), cor: "text-slate-800" },
+                      { label: "Consumo Negociado", valor: `${energiaTotais.volumeKwh.toLocaleString("pt-BR")} kWh/mês`, cor: "text-slate-800" },
                       { label: "Comissões do Ciclo", valor: formatCurrencyBRL(energiaTotais.comissoesQuinzena), cor: "text-amber-700" }
                     ].map(card => (
                       <div key={card.label} className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3">

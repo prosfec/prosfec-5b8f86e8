@@ -2012,12 +2012,14 @@ export default function PartnerPortal({
 
                         {/* Régua de desempenho e ciclo mensal de pagamento */}
                         <div className="bg-white border border-amber-200/70 rounded-2xl p-3 space-y-2.5">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                             {[
                               { label: "Leads Enviados", valor: String(energiaLeads.length) },
                               { label: "Em Atendimento", valor: String(energiaCounts["atendimento"] || 0) },
                               { label: "Contratos Fechados", valor: String(energiaCounts["concluido"] || 0) },
+                              { label: "Consumo Negociado", valor: `${energiaLeads.filter((l: any) => (l.status || "novo") === "concluido").reduce((acc: number, l: any) => acc + (Number(l.consumoKwhMes) || 0), 0).toLocaleString("pt-BR")} kWh/mês` },
                               { label: "Comissão do Ciclo", valor: formatCurrencyBRL(energiaComissaoAcumulada) }
+
 
                             ].map(item => (
                               <div key={item.label} className="bg-amber-50/60 border border-amber-100 rounded-xl p-2">
