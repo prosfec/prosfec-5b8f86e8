@@ -3148,7 +3148,15 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
               </div>
 
 
+              {!aptoMesaCredito && servicosRecomendados.length === 0 && !(lead.modeloContratacao && lead.contratoAssinado) && (
+                <div className="p-4 bg-amber-50/70 border border-amber-200/70 rounded-xl text-xs text-amber-900 flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+                  <span>Nenhum contrato disponível ainda. A Mesa de Operações está analisando o diagnóstico do Passo 3.</span>
+                </div>
+              )}
+
               {/* Link público de assinatura dos contratos de preços e serviços */}
+              {(servicosRecomendados.length > 0 || (lead.modeloContratacao && lead.contratoAssinado)) && (
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Link público de assinatura (Contrato de Preços e Serviços)
@@ -3173,12 +3181,15 @@ _Proposta válida sujeita à análise de mesa. Vamos prosseguir com as assinatur
                   </p>
                 )}
               </div>
+              )}
 
-              <ContratoTerceirizadaUploader
-                lead={lead}
-                canEdit={isAdminUser}
-                onUpdated={(patch) => onLeadUpdated?.({ ...lead, ...patch })}
-              />
+              {aptoMesaCredito && (
+                <ContratoTerceirizadaUploader
+                  lead={lead}
+                  canEdit={isAdminUser}
+                  onUpdated={(patch) => onLeadUpdated?.({ ...lead, ...patch })}
+                />
+              )}
 
               <ContratosAssinadosResumo lead={lead} />
 
