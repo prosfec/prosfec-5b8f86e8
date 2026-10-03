@@ -2163,7 +2163,7 @@ export default function PartnerPortal({
                                   {Number(lead.comissaoParceiro) > 0 && (
                                     <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 space-y-0.5">
                                       <p className="text-[10px] font-extrabold text-emerald-800">
-                                        🎉 Contrato fechado • Fatura: {formatCurrencyBRL(Number(lead.valorFatura) || 0)}
+                                        🎉 Contrato fechado • {lead.consumoKwhMes ? `Consumo: ${Number(lead.consumoKwhMes).toLocaleString("pt-BR")} kWh/mês` : `Fatura: ${formatCurrencyBRL(Number(lead.valorFatura) || 0)}`}
                                       </p>
                                       <p className="text-[11px] font-black text-emerald-900">
                                         Sua comissão: {formatCurrencyBRL(Number(lead.comissaoParceiro) || 0)}
