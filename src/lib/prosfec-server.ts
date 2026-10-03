@@ -3844,7 +3844,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
           contratoAssinado: !!lead.contratoAssinado,
           contratoAssinadoData: lead.contratoAssinadoData || null,
           contratoTerceirizada:
-            typeof lead.contratoTerceirizadaUrl === "string" && lead.contratoTerceirizadaUrl.trim()
+            lead.aptoMesaCredito === true && typeof lead.contratoTerceirizadaUrl === "string" && lead.contratoTerceirizadaUrl.trim()
               ? {
                   url: lead.contratoTerceirizadaUrl,
                   nome: String(lead.contratoTerceirizadaNome || "").slice(0, 200),
