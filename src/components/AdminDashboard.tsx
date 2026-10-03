@@ -3135,7 +3135,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     if (novoStatus === "concluido" && !extras) {
       const alvoAtual = leadsEnergia.find((l: any) => l.id === leadId);
       setEnergiaFechamentoLeadId(leadId);
-      setEnergiaFechamentoFatura(alvoAtual?.valorFatura ? String(alvoAtual.valorFatura) : "");
+      setEnergiaFechamentoFatura(alvoAtual?.consumoKwhMes ? String(alvoAtual.consumoKwhMes) : "");
       setEnergiaFechamentoComissao(alvoAtual?.comissaoParceiro ? String(alvoAtual.comissaoParceiro) : "");
       return;
     }
@@ -3146,7 +3146,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const alvo = leadsEnergia.find((l: any) => l.id === leadId);
       const notaAutomatica = {
         texto: extras
-          ? `Contrato concluído. Fatura média: ${formatCurrencyBRL(extras.valorFatura || 0)} • Comissão do parceiro: ${formatCurrencyBRL(extras.comissaoParceiro || 0)}.`
+          ? `Contrato concluído. Consumo: ${Number(extras.consumoKwhMes || 0).toLocaleString("pt-BR")} kWh/mês • Comissão do parceiro: ${formatCurrencyBRL(extras.comissaoParceiro || 0)}.`
           : `Status atualizado para ${statusLabel}.`,
         autor: "Mesa PROSFEC",
         papel: "adm",
@@ -3178,15 +3178,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   const handleConfirmarFechamentoEnergia = async () => {
     if (!energiaFechamentoLeadId) return;
-    const valorFatura = parseValorBR(energiaFechamentoFatura);
+    const consumoKwhMes = parseValorBR(energiaFechamentoFatura);
     const comissaoParceiro = parseValorBR(energiaFechamentoComissao);
-    if (valorFatura <= 0 || comissaoParceiro <= 0) {
-      toast.error("Informe o valor da fatura e a comissão do parceiro.");
+    if (consumoKwhMes <= 0 || comissaoParceiro <= 0) {
+      toast.error("Informe o consumo (kWh/mês) e a comissão do parceiro.");
       return;
     }
     const leadId = energiaFechamentoLeadId;
     await handleUpdateEnergiaStatus(leadId, "concluido", {
-      valorFatura,
+      consumoKwhMes,
       comissaoParceiro,
       comissaoStatus: "acumulada",
       fechadoEm: new Date().toISOString(),
@@ -4971,7 +4971,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             {Number(lead.comissaoParceiro) > 0 && (
                               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-[11px] flex items-center justify-between gap-2 flex-wrap">
                                 <span className="font-extrabold text-emerald-800">
-                                  Fatura: {formatCurrencyBRL(Number(lead.valorFatura) || 0)} • Repasse: {formatCurrencyBRL(Number(lead.comissaoParceiro) || 0)}
+                                  {lead.consumoKwhMes ? `Consumo: ${Number(lead.consumoKwhMes).toLocaleString("pt-BR")} kWh/mês` : `Fatura: ${formatCurrencyBRL(Number(lead.valorFatura) || 0)}`} • Repasse: {formatCurrencyBRL(Number(lead.comissaoParceiro) || 0)}
                                 </span>
                                 <span className="bg-emerald-600 text-white font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase">
                                   {lead.comissaoStatus === "paga" ? "Paga" : lead.comissaoStatus === "solicitada" ? "Saque solicitado" : "Acumulada"}
@@ -4989,7 +4989,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     inputMode="decimal"
                                     value={energiaFechamentoFatura}
                                     onChange={(e) => setEnergiaFechamentoFatura(e.target.value)}
-                                    placeholder="Fatura média (R$)"
+                                    placeholder="Consumo (kWh/mês)"
                                     className="px-2.5 py-1.5 bg-white border border-amber-200 rounded-lg text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
                                   />
                                   <input
@@ -5045,7 +5045,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <button
                                   onClick={() => {
                                     setEnergiaFechamentoLeadId(lead.id);
-                                    setEnergiaFechamentoFatura(lead.valorFatura ? String(lead.valorFatura) : "");
+                                    setEnergiaFechamentoFatura(lead.consumoKwhMes ? String(lead.consumoKwhMes) : "");
                                     setEnergiaFechamentoComissao(lead.comissaoParceiro ? String(lead.comissaoParceiro) : "");
                                   }}
                                   className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-lg font-extrabold text-[10px] cursor-pointer"
