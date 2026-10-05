@@ -1634,6 +1634,10 @@ export default function PartnerPortal({
   };
 
   const energiaLeadKey = (place: any) => `${(place?.nome || "").trim().toLowerCase()}_${(place?.telefone || "").replace(/\D/g, "")}`;
+  // Trava síncrona contra clique duplo (não depende do ciclo de renderização)
+  const [energiaEnvioLock] = useState(() => new Set<string>());
+  const addEnergiaLeadUnico = (novo: any) =>
+    setEnergiaLeads(prev => (prev.some((l: any) => l.id === novo.id) ? prev : [novo, ...prev]));
 
   const fetchEnergiaLeads = async (partnerId: string) => {
     if (!partnerId) return;
@@ -1667,10 +1671,12 @@ export default function PartnerPortal({
   const handleMarcarEnergiaSolar = async (place: any) => {
     if (!currentPartner) return;
     const key = energiaLeadKey(place);
+    if (energiaEnvioLock.has(key)) return;
     if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
       toast.info("Esta empresa já está na sua lista de Energia Solar.");
       return;
     }
+    energiaEnvioLock.add(key);
     setEnergiaSavingId(place.id);
     try {
       const cachedCnpj = cnpjDetailsMap[place.id];
@@ -1696,13 +1702,14 @@ export default function PartnerPortal({
         atualizadoEm: new Date().toISOString()
       };
       const docRef = await addDoc(collection(db, "leads_energia"), payload);
-      setEnergiaLeads(prev => [{ id: docRef.id, ...payload }, ...prev]);
+      addEnergiaLeadUnico({ id: docRef.id, ...payload });
       setEnergiaPanelOpen(true);
       toast.success("Lead enviado para a esteira de Energia Solar.");
     } catch (error) {
       console.error("Erro ao enviar lead para Energia Solar:", error);
       toast.error("Não foi possível enviar o lead para Energia Solar.");
     } finally {
+      energiaEnvioLock.delete(key);
       setEnergiaSavingId(null);
     }
   };
@@ -1735,10 +1742,13 @@ export default function PartnerPortal({
       return;
     }
     const key = energiaLeadKey({ nome, telefone: energiaManualForm.telefone });
+    if (energiaEnvioLock.has(key)) return;
     if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
       toast.info("Este cliente já está na sua lista de Energia Solar.");
       return;
     }
+    energiaEnvioLock.add(key);
+    setTimeout(() => energiaEnvioLock.delete(key), 3000);
     setEnergiaManualSaving(true);
     try {
       const payload: any = {
@@ -1765,7 +1775,7 @@ export default function PartnerPortal({
         atualizadoEm: new Date().toISOString()
       };
       const docRef = await addDoc(collection(db, "leads_energia"), payload);
-      setEnergiaLeads(prev => [{ id: docRef.id, ...payload }, ...prev]);
+      addEnergiaLeadUnico({ id: docRef.id, ...payload });
       setEnergiaManualForm({ nome: "", telefone: "", email: "" });
       setEnergiaManualOpen(false);
       setEnergiaPanelOpen(true);
