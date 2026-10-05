@@ -1742,10 +1742,13 @@ export default function PartnerPortal({
       return;
     }
     const key = energiaLeadKey({ nome, telefone: energiaManualForm.telefone });
+    if (energiaEnvioLock.has(key)) return;
     if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
       toast.info("Este cliente já está na sua lista de Energia Solar.");
       return;
     }
+    energiaEnvioLock.add(key);
+    setTimeout(() => energiaEnvioLock.delete(key), 3000);
     setEnergiaManualSaving(true);
     try {
       const payload: any = {
