@@ -1702,13 +1702,14 @@ export default function PartnerPortal({
         atualizadoEm: new Date().toISOString()
       };
       const docRef = await addDoc(collection(db, "leads_energia"), payload);
-      setEnergiaLeads(prev => [{ id: docRef.id, ...payload }, ...prev]);
+      addEnergiaLeadUnico({ id: docRef.id, ...payload });
       setEnergiaPanelOpen(true);
       toast.success("Lead enviado para a esteira de Energia Solar.");
     } catch (error) {
       console.error("Erro ao enviar lead para Energia Solar:", error);
       toast.error("Não foi possível enviar o lead para Energia Solar.");
     } finally {
+      energiaEnvioLock.delete(key);
       setEnergiaSavingId(null);
     }
   };
