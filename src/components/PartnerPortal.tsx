@@ -1634,6 +1634,10 @@ export default function PartnerPortal({
   };
 
   const energiaLeadKey = (place: any) => `${(place?.nome || "").trim().toLowerCase()}_${(place?.telefone || "").replace(/\D/g, "")}`;
+  // Trava síncrona contra clique duplo (não depende do ciclo de renderização)
+  const [energiaEnvioLock] = useState(() => new Set<string>());
+  const addEnergiaLeadUnico = (novo: any) =>
+    setEnergiaLeads(prev => (prev.some((l: any) => l.id === novo.id) ? prev : [novo, ...prev]));
 
   const fetchEnergiaLeads = async (partnerId: string) => {
     if (!partnerId) return;
@@ -1667,10 +1671,12 @@ export default function PartnerPortal({
   const handleMarcarEnergiaSolar = async (place: any) => {
     if (!currentPartner) return;
     const key = energiaLeadKey(place);
+    if (energiaEnvioLock.has(key)) return;
     if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
       toast.info("Esta empresa já está na sua lista de Energia Solar.");
       return;
     }
+    energiaEnvioLock.add(key);
     setEnergiaSavingId(place.id);
     try {
       const cachedCnpj = cnpjDetailsMap[place.id];
