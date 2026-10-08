@@ -5117,6 +5117,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
     <div className="soft-card soft-nav-shell p-3 flex flex-col gap-3 lg:gap-1 text-left">
       <span className="soft-nav-group-label">Operação</span>
 
+      {!isEnergiaOnly && (<>
       <button
         onClick={() => { handleTabClick("dashboard"); setMobileMenuOpen(false); }}
         className={`soft-nav-item justify-between text-left group ${
@@ -5154,6 +5155,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "leads" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
         )}
       </button>
+      </>)}
 
       <button
         onClick={() => { handleTabClick("energia"); setMobileMenuOpen(false); }}
@@ -5196,7 +5198,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         </button>
       )}
 
-      {isFranquiaDigital(currentPartner?.plano) && (
+      {!isEnergiaOnly && isFranquiaDigital(currentPartner?.plano) && (
         <button
           onClick={() => { handleTabClick("equipe"); setMobileMenuOpen(false); }}
           className={`soft-nav-item justify-between text-left group ${
@@ -5217,6 +5219,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         </button>
       )}
 
+      {!isEnergiaOnly && (<>
       <span className="soft-nav-group-label">Financeiro</span>
 
       <button
@@ -5237,6 +5240,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
           <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeTab === "servicos-contabilidade" ? "translate-x-0.5 text-white" : "opacity-0 group-hover:opacity-100"}`} strokeWidth={2} />
         )}
       </button>
+      </>)}
 
       <span className="soft-nav-group-label">Conta</span>
 
@@ -8693,6 +8697,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         </button>
                                       )}
 
+{!isEnergiaOnly && (
                                       <button
                                         onClick={() => {
                                           setSelectedLeadForRegistration({
@@ -8712,6 +8717,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         <Plus className="w-3 h-3" />
                                         Cadastrar Lead
                                       </button>
+)}
 
                                       {/* ⚡ Enviar para a esteira de Energia Solar */}
                                       {(() => {
@@ -9361,6 +9367,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     )}
                                   </button>
 
+{!isEnergiaOnly && (
                                   {/* Cadastrar Lead PROSFEC Direct Button */}
                                   <button
                                     onClick={() => {
@@ -9380,6 +9387,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     <Plus className="w-3 h-3 text-emerald-600" />
                                     Cadastrar Lead
                                   </button>
+)}
 
                                   {/* ⚡ Enviar para a esteira de Energia Solar */}
                                   {(() => {
