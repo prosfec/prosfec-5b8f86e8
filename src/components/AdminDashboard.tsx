@@ -294,6 +294,18 @@ export const getSubscriptionStatus = (partner: Partner) => {
   const isTeamMember = partner.isTeamMember === true || (partner.plano && (partner.plano.toUpperCase().includes("CONSULTOR") || partner.plano.toUpperCase().includes("EQUIPE")));
   const isAfiliado = !!(partner.plano && partner.plano.toUpperCase().includes("AFILIADO"));
 
+  if (partner.plano && partner.plano.toUpperCase().includes("ASSESSOR DE ENERGIA") && partner.statusManual !== "bloqueado" && partner.status !== "bloqueado") {
+    return {
+      status: "ativa" as const,
+      daysLeft: 9999,
+      expiryDate: new Date(Date.now() + 9999 * 24 * 60 * 60 * 1000),
+      formattedExpiry: "Isento (Assessor de Energia)",
+      isTrial: false,
+      isExempt: true,
+      isManualBlocked: false
+    };
+  }
+
   if (isAfiliado) {
     return {
       status: "ativa" as const,
@@ -7191,8 +7203,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         );
                       }
 
-                      const valorAtual =
-                        planoUpper.includes("FRANQUIA") || planoUpper.includes("DIGITAL") || planoUpper.includes("MASTER") || planoUpper === "PLATINUM"
+                      const valorAtual = planoUpper.includes("ASSESSOR DE ENERGIA")
+                        ? "Assessor de Energia"
+                        : planoUpper.includes("FRANQUIA") || planoUpper.includes("DIGITAL") || planoUpper.includes("MASTER") || planoUpper === "PLATINUM"
                           ? "MASTER PARTNER"
                           : planoUpper.includes("EXECUTIVE") || planoUpper === "GOLD"
                             ? "Executive Partner PROSFEC"
@@ -7216,6 +7229,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             <option value="STARTER">Starter</option>
                             <option value="Executive Partner PROSFEC">Executive Partner PROSFEC</option>
                             <option value="MASTER PARTNER">Master Partner</option>
+                            <option value="Assessor de Energia">Assessor de Energia (Gratuito)</option>
                           </select>
                         </div>
                       );
