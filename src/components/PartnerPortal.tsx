@@ -293,9 +293,25 @@ const extractHotmartCode = (input: string): string => {
 };
 
 
+export const PLANO_ASSESSOR_ENERGIA = "Assessor de Energia";
+export const isAssessorEnergia = (plano?: string) =>
+  !!plano && plano.toUpperCase().includes("ASSESSOR DE ENERGIA");
+
 const getSubscriptionStatus = (partner: Partner) => {
   const isTeamMember = partner.isTeamMember === true || (partner.plano && (partner.plano.toUpperCase().includes("CONSULTOR") || partner.plano.toUpperCase().includes("EQUIPE")));
   const isAfiliado = !!(partner.plano && partner.plano.toUpperCase().includes("AFILIADO"));
+
+  if (isAssessorEnergia(partner.plano) && partner.statusManual !== "bloqueado" && partner.status !== "bloqueado") {
+    return {
+      status: "ativa" as const,
+      daysLeft: 9999,
+      expiryDate: new Date(Date.now() + 9999 * 24 * 60 * 60 * 1000),
+      formattedExpiry: "Isento (Assessor de Energia)",
+      isTrial: false,
+      isExempt: true,
+      isManualBlocked: false
+    };
+  }
 
   if (isAfiliado) {
     return {
@@ -791,6 +807,13 @@ export default function PartnerPortal({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "energia" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
+  const isEnergiaOnly = isAssessorEnergia(currentPartner?.plano);
+  // Assessor de Energia: abre direto em Leads Energia e nunca permanece em abas de crédito
+  useEffect(() => {
+    if (isEnergiaOnly && !["energia", "caca-leads", "perfil", "terms"].includes(activeTab)) {
+      setActiveTab("energia");
+    }
+  }, [isEnergiaOnly, activeTab]);
   // Aparência (Claro / Tecnológico) — apenas visual, persistida no navegador
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
