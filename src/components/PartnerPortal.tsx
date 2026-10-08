@@ -4371,10 +4371,10 @@ export default function PartnerPortal({
         plano: regPlan,
         authUid: newAuthUid,
         aceitouTermos: regAcceptedTerms,
-        status: isAfiliado ? "ativo" : "novo",
+        status: isAfiliado || isAssessorEnergia(regPlan) ? "ativo" : "novo",
         interesse: "ser parceiro",
         isTeamMember: false,
-        duracaoDias: 3, // Teste grátis de 3 dias a partir da criação
+        duracaoDias: isAssessorEnergia(regPlan) ? 36500 : 3, // Assessor de Energia é gratuito; demais têm teste de 3 dias
         dataCriacao: new Date().toISOString(),
         parentPartnerId: savedRefId,
         parentPartnerNome: savedRefNome
@@ -5651,6 +5651,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <option value="STARTER">STARTER (0,5% repasse)</option>
                             <option value="Executive Partner PROSFEC">Executive Partner PROSFEC (1,5% repasse)</option>
                             <option value="MASTER PARTNER">MASTER PARTNER (3,0% repasse)</option>
+                            <option value="Assessor de Energia">⚡ Assessor de Energia (Plano Gratuito — Exclusivo Energia Solar)</option>
 
                           </select>
                         </div>
