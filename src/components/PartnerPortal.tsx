@@ -9367,8 +9367,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     )}
                                   </button>
 
+{/* Cadastrar Lead PROSFEC Direct Button */}
 {!isEnergiaOnly && (
-                                  {/* Cadastrar Lead PROSFEC Direct Button */}
                                   <button
                                     onClick={() => {
                                       setSelectedLeadForRegistration({
