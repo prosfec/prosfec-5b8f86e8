@@ -70,7 +70,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
   const [chavePix, setChavePix] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmSenha, setConfirmSenha] = useState("");
-  const [plano, setPlano] = useState<"Consultor Starter" | "Consultor Executive">("Consultor Starter");
+  const [plano, setPlano] = useState<"Consultor Starter" | "Consultor Executive" | "Assessor de Energia">("Consultor Starter");
   const [aceitouTermos, setAceitouTermos] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
@@ -223,13 +223,13 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
         chavePix: chavePix.trim() || "",
         authUid: novoAuthUid,
         plano: plano,                                  // Selected category: "Consultor Starter" or "Consultor Executive"
-        comissao: isExecutive ? 1.5 : 0.5,             // Commission percentage: 0.5% or 1.5%
+        comissao: plano === "Assessor de Energia" ? 0 : isExecutive ? 1.5 : 0.5,             // Commission percentage: 0.5% or 1.5%
         status: "ativo",                               // Immediately active, no subscription required!
         isTeamMember: veioDeConvite,
         parentPartnerId: vinculoMasterId,
         parentPartnerNome: masterNome || "",
         aceitouTermos: true,
-        duracaoDias: 3,                              // Teste grátis de 3 dias a partir da criação
+        duracaoDias: plano === "Assessor de Energia" ? 36500 : 3,                              // Teste grátis de 3 dias a partir da criação
         dataCriacao: new Date().toISOString(),
         dataUltimoAcesso: new Date().toISOString(),
         interesse: "cadastro_usuario_direto"
@@ -497,6 +497,29 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
                       </div>
                       <p className="text-[10px] text-slate-300 leading-snug">
                         Comissão de <strong className="text-emerald-300">1,5%</strong> sobre contratos faturados.
+                      </p>
+                    </div>
+
+                    {/* Assessor de Energia (plano gratuito) */}
+                    <div
+                      onClick={() => setPlano("Assessor de Energia")}
+                      className={`sm:col-span-2 p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between space-y-2 ${
+                        plano === "Assessor de Energia"
+                          ? "bg-emerald-950/60 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-950/50"
+                          : "bg-slate-900/60 border-slate-700 hover:border-slate-600"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-white flex items-center gap-1.5">
+                          <span className={`w-2 h-2 rounded-full ${plano === "Assessor de Energia" ? "bg-emerald-400 animate-ping" : "bg-slate-500"}`} />
+                          ⚡ Assessor de Energia (Plano Gratuito)
+                        </span>
+                        {plano === "Assessor de Energia" && (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-300 leading-snug">
+                        Sem mensalidade. Foco exclusivo em <strong className="text-emerald-300">Energia Solar por assinatura</strong>.
                       </p>
                     </div>
                   </div>
