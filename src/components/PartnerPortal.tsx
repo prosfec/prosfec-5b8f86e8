@@ -5902,6 +5902,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 <div className="max-w-6xl mx-auto space-y-6">
                 {/* Unique Indicator Link Card */}
+                {!isEnergiaOnly && (
                 <div className="pf-tool bg-white text-slate-800 px-4 py-3 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                   <div className="flex flex-col lg:flex-row lg:items-center gap-3 relative z-10">
                     <div className="flex items-center gap-2.5 min-w-0 lg:w-[290px] shrink-0">
@@ -5949,6 +5950,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* TAB CONTENTS */}
                 <div className="w-full">
