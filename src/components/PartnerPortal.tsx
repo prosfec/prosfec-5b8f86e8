@@ -29,6 +29,7 @@ import { db, auth, handleFirestoreError, OperationType, createNotification } fro
 import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel } from "../utils";
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
+import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA } from "./AssessorEnergiaContratos";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
 import { LeadData, SimulationResult, SolicitacaoComissao } from "../types";
@@ -529,6 +530,25 @@ export default function PartnerPortal({
   };
 
   const [currentPartner, setCurrentPartner] = useState<Partner | null>(() => readStoredPartner());
+  const [salvandoAceiteEnergia, setSalvandoAceiteEnergia] = useState(false);
+  const registrarAceiteEnergia = async (campo: "termoCapacitacaoEnergiaAceitoEm" | "contratoPrestacaoEnergiaAceitoEm") => {
+    if (!currentPartner?.id || salvandoAceiteEnergia) return;
+    setSalvandoAceiteEnergia(true);
+    try {
+      const agora = new Date().toISOString();
+      await updateDoc(doc(db, "parceiros", currentPartner.id), {
+        [campo]: agora,
+        [`${campo.replace("AceitoEm", "")}UserAgent`]: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : "",
+      });
+      setCurrentPartner(prev => (prev ? ({ ...prev, [campo]: agora } as Partner) : prev));
+      toast.success("Aceite registrado com sucesso.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível registrar o aceite. Tente novamente.");
+    } finally {
+      setSalvandoAceiteEnergia(false);
+    }
+  };
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem("partner_authenticated") === "true" && !!readStoredPartner();
   });
@@ -5897,6 +5917,27 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 </div>
                 {renderNotificationsBell("relative")}
               </header>
+
+              {/* Aceite obrigatório dos termos do Assessor de Energia */}
+              {isEnergiaOnly && currentPartner && isProfileComplete(currentPartner) && (() => {
+                const cp: any = currentPartner;
+                const prestador = { nome: cp.nome, cpf: cp.cpf, cnpj: cp.cnpj, email: cp.email, whatsapp: cp.whatsapp, cidade: cp.cidade };
+                if (!cp.termoCapacitacaoEnergiaAceitoEm) {
+                  return (
+                    <AceiteContratoModal key="cap" titulo="Termo de Capacitação Inicial e Prática Comercial" salvando={salvandoAceiteEnergia} onAceitar={() => registrarAceiteEnergia("termoCapacitacaoEnergiaAceitoEm")}>
+                      <TermoCapacitacaoEnergia prestador={prestador} />
+                    </AceiteContratoModal>
+                  );
+                }
+                if (contratoDefinitivoLiberado(cp.termoCapacitacaoEnergiaAceitoEm) && !cp.contratoPrestacaoEnergiaAceitoEm) {
+                  return (
+                    <AceiteContratoModal key="def" titulo="Contrato de Prestação de Serviços Comerciais Autônomos" salvando={salvandoAceiteEnergia} onAceitar={() => registrarAceiteEnergia("contratoPrestacaoEnergiaAceitoEm")}>
+                      <ContratoPrestacaoEnergia prestador={prestador} />
+                    </AceiteContratoModal>
+                  );
+                }
+                return null;
+              })()}
 
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-4 md:p-8">
