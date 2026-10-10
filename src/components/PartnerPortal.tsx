@@ -9716,6 +9716,41 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>Contrato aceito eletronicamente via endereço IP seguro em: {currentPartner?.dataCriacao ? new Date(currentPartner.dataCriacao).toLocaleDateString("pt-BR") : "Ficha de Cadastro"}.</span>
                   </div>
+
+                  {isEnergiaOnly && currentPartner && (() => {
+                    const cp: any = currentPartner;
+                    const prestador = { nome: cp.nome, cpf: cp.cpf, cnpj: cp.cnpj, email: cp.email, whatsapp: cp.whatsapp, cidade: cp.cidade };
+                    const capEm = cp.termoCapacitacaoEnergiaAceitoEm;
+                    const defEm = cp.contratoPrestacaoEnergiaAceitoEm;
+                    const faltam = Math.max(0, DIAS_CAPACITACAO_ENERGIA - diasDesdeCapacitacao(capEm));
+                    return (
+                      <div className="space-y-4 pt-4 border-t border-slate-100">
+                        {capEm && (
+                          <>
+                            <h3 className="font-display font-extrabold text-base text-slate-800">Termo de Capacitação Inicial e Prática Comercial</h3>
+                            <div className="border border-slate-200/60 rounded-2xl p-5 bg-slate-50 max-h-[60vh] overflow-y-auto pr-2">
+                              <TermoCapacitacaoEnergia prestador={prestador} aceitoEm={capEm} />
+                            </div>
+                            <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl text-xs text-emerald-800">Aceito eletronicamente em {new Date(capEm).toLocaleString("pt-BR")}.</div>
+                          </>
+                        )}
+                        {capEm && !defEm && faltam > 0 && (
+                          <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-900 font-semibold">
+                            Período de capacitação e avaliação: faltam {faltam} dia(s) para a liberação do Contrato de Prestação de Serviços.
+                          </div>
+                        )}
+                        {defEm && (
+                          <>
+                            <h3 className="font-display font-extrabold text-base text-slate-800">Contrato de Prestação de Serviços Comerciais Autônomos</h3>
+                            <div className="border border-slate-200/60 rounded-2xl p-5 bg-slate-50 max-h-[60vh] overflow-y-auto pr-2">
+                              <ContratoPrestacaoEnergia prestador={prestador} aceitoEm={defEm} />
+                            </div>
+                            <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl text-xs text-emerald-800">Aceito eletronicamente em {new Date(defEm).toLocaleString("pt-BR")}.</div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </motion.div>
               )}
 
