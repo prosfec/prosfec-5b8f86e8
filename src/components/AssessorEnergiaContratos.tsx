@@ -71,168 +71,204 @@ export function ContratoPrestacaoEnergia({ prestador, aceitoEm }: { prestador: D
   const L = (t: string, i: number) => <p key={i}>{t}</p>;
   return (
     <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
-      <h3 className="font-black text-sm text-foreground">CONTRATO DE PRESTAÇÃO DE SERVIÇOS COMERCIAIS AUTÔNOMOS — PROSFEC ENERGY</h3>
+      <h3 className="font-black text-sm text-foreground">TERMO DE CONTRATO DE PRESTAÇÃO DE SERVIÇOS COMERCIAIS AUTÔNOMOS — PROSFEC ENERGY</h3>
       <p>Pelo presente instrumento particular, as partes abaixo identificadas:</p>
-      <Qualificacao p={prestador} />
-      <p>As partes resolvem celebrar o presente Contrato de Prestação de Serviços Comerciais Autônomos, mediante as cláusulas seguintes.</p>
-      <H>Cláusula 1ª — Do objeto</H>
+      <p><strong>CONTRATANTE:</strong> {CONTRATANTE.replace(", doravante denominada CONTRATANTE.", "")}, neste ato representada na forma de seus atos constitutivos.</p>
+      <p>
+        <strong>PRESTADOR:</strong> {v(prestador.nome, "[NOME COMPLETO OU RAZÃO SOCIAL]")}, inscrito no CPF/CNPJ sob nº {v(prestador.cnpj || prestador.cpf, "[CPF/CNPJ]")}, com endereço em {v(prestador.cidade, "[ENDEREÇO]")}, e-mail {v(prestador.email, "[E-MAIL]")} e telefone {v(prestador.whatsapp, "[TELEFONE]")}.
+      </p>
+      <p>Resolvem celebrar o presente Contrato de Prestação de Serviços Comerciais Autônomos, conforme as cláusulas e condições seguintes.</p>
+      <H>Cláusula 1 — Objeto do contrato</H>
       {[
-        "1.1. O presente contrato tem por objeto a prestação autônoma de serviços comerciais relacionados à PROSFEC Energy, compreendendo atividades de prospecção, identificação de potenciais clientes, apresentação de soluções de energia solar por assinatura, qualificação de oportunidades, acompanhamento comercial, follow-up e apoio à condução das oportunidades até a formalização e ativação dos contratos.",
-        "1.2. Os serviços serão executados conforme os procedimentos comerciais, as informações técnicas e os limites de atuação disponibilizados pela CONTRATANTE.",
-        "1.3. O(A) PRESTADOR(A) não possui poderes para representar juridicamente a CONTRATANTE, assumir obrigações em seu nome, conceder descontos, alterar condições comerciais, prometer resultados ou firmar compromissos não expressamente autorizados.",
-        "1.4. A celebração e a ativação de contratos com clientes dependem das etapas de validação e aprovação estabelecidas pela operação responsável.",
+        "1.1. O presente contrato tem por objeto a prestação autônoma de serviços comerciais relacionados à PROSFEC Energy, incluindo:",
+        "a) prospecção e identificação de potenciais clientes interessados em soluções de energia por assinatura;",
+        "b) apresentação comercial dos serviços e das condições disponibilizadas pela CONTRATANTE;",
+        "c) qualificação de oportunidades comerciais e levantamento de informações necessárias à contratação;",
+        "d) acompanhamento de propostas e relacionamento comercial com potenciais clientes;",
+        "e) apoio ao processo de formalização, validação e ativação dos contratos;",
+        "f) registro e atualização das informações comerciais nos sistemas disponibilizados pela CONTRATANTE;",
+        "g) demais atividades comerciais relacionadas ao objeto contratual, previamente acordadas entre as partes.",
+        "1.2. O PRESTADOR não possui poderes para representar juridicamente a CONTRATANTE, assumir obrigações em seu nome, conceder descontos não autorizados ou alterar condições comerciais sem autorização expressa.",
       ].map(L)}
-      <H>Cláusula 2ª — Da natureza da contratação e da autonomia</H>
+      <H>Cláusula 2 — Natureza da contratação e autonomia</H>
       {[
-        "2.1. A relação contratual possui natureza civil de prestação de serviços autônomos, não constituindo, por si só, contrato de emprego.",
-        "2.2. O(A) PRESTADOR(A) terá autonomia para organizar seus horários, métodos de execução e rotina de trabalho, respeitados os compromissos assumidos, os prazos acordados, a legislação aplicável e os requisitos objetivos de qualidade e segurança da operação.",
-        "2.3. Não haverá controle de jornada, exigência de cumprimento de horário diário fixo ou obrigação de permanência on-line em período predeterminado, sem prejuízo da comunicação necessária à execução dos serviços contratados.",
-        "2.4. O(A) PRESTADOR(A) poderá atender outros clientes e desenvolver outras atividades profissionais, desde que respeite as obrigações de confidencialidade, proteção de dados, prevenção de conflitos de interesse e demais deveres previstos neste instrumento.",
-        "2.5. O(A) PRESTADOR(A) poderá aceitar ou recusar novas demandas que não estejam abrangidas pelos serviços já contratados, observadas as obrigações específicas previamente assumidas.",
-        "2.6. Metas comerciais, indicadores de desempenho, padrões de qualidade e regras de comissionamento poderão ser utilizados para mensurar resultados, sem que, isoladamente, representem controle de jornada ou subordinação jurídica.",
-        "2.7. As partes reconhecem que a caracterização da relação jurídica dependerá também das condições efetivas da prestação dos serviços, não bastando a denominação deste contrato.",
+        "2.1. A contratação possui natureza civil e tem como finalidade a prestação autônoma dos serviços descritos neste instrumento, observadas as disposições legais aplicáveis.",
+        "2.2. O PRESTADOR terá autonomia para organizar seus horários, métodos e meios de execução, respeitados os compromissos assumidos, os prazos comerciais acordados e os padrões de qualidade e segurança aplicáveis aos serviços.",
+        "2.3. Não haverá controle de jornada, exigência de cumprimento de horário fixo ou obrigação de disponibilidade permanente por parte do PRESTADOR.",
+        "2.4. O PRESTADOR poderá prestar serviços a terceiros, desde que essa atividade não implique conflito de interesses, violação de confidencialidade, utilização indevida de informações da CONTRATANTE ou descumprimento das obrigações assumidas neste contrato.",
+        "2.5. A participação em capacitações, a utilização dos sistemas comerciais e a observância dos procedimentos necessários à execução dos serviços não deverão ser utilizadas para impor subordinação incompatível com a natureza autônoma da contratação.",
+        "2.6. As partes reconhecem que a natureza jurídica da relação será determinada pelas condições efetivamente praticadas, não apenas pela denominação atribuída a este instrumento.",
       ].map(L)}
-      <H>Cláusula 3ª — Das obrigações do(a) prestador(a)</H>
-      <p>São obrigações do(a) PRESTADOR(A):</p>
+      <H>Cláusula 3 — Capacitação inicial, prática comercial e validação</H>
       {[
-        "a) Executar os serviços com diligência, boa-fé, profissionalismo e observância da legislação aplicável;",
-        "b) Realizar a prospecção e o atendimento comercial de maneira ética, respeitosa e transparente;",
-        "c) Fornecer aos potenciais clientes informações comerciais corretas e atualizadas, utilizando os materiais oficiais disponibilizados;",
-        "d) Não garantir economia, aprovação, contratação, prazo ou resultado que não tenha sido formalmente confirmado;",
-        "e) Registrar as informações pertinentes às oportunidades trabalhadas no CRM disponibilizado, observadas as regras de acesso e proteção de dados;",
-        "f) Manter confidenciais os dados comerciais, documentos, informações de clientes, procedimentos internos e materiais não públicos da CONTRATANTE;",
-        "g) Utilizar os Leads e os recursos disponibilizados exclusivamente para as finalidades autorizadas;",
-        "h) Informar erros, suspeitas de fraude, incidentes de segurança e inconsistências relevantes de que tenha conhecimento;",
-        "i) Não receber valores de clientes em nome da CONTRATANTE, salvo autorização expressa e procedimento formal específico;",
-        "j) Não alterar contratos, propostas, preços ou condições de contratação sem autorização;",
-        "k) Devolver ou eliminar, conforme orientação legítima da CONTRATANTE e a legislação aplicável, os documentos e dados sob sua guarda ao término da relação.",
+        "3.1. O início da prestação dos serviços compreenderá uma etapa inicial de 22 (vinte e dois) dias corridos, dividida em:",
+        "I — Capacitação: 7 (sete) dias corridos destinados à apresentação dos serviços, procedimentos comerciais, ferramentas, critérios de qualificação de clientes, regras de conduta e modelo de remuneração;",
+        "II — Prática comercial: 15 (quinze) dias corridos subsequentes, destinados à aplicação prática dos conhecimentos e à avaliação da qualidade dos serviços executados.",
+        "3.2. A avaliação poderá considerar a compreensão dos serviços, a qualidade das informações transmitidas aos clientes, a utilização dos sistemas comerciais, o acompanhamento das oportunidades e o cumprimento das obrigações contratuais.",
+        "3.3. Ao término da etapa inicial, a CONTRATANTE poderá confirmar a continuidade da contratação ou optar pelo encerramento contratual, observadas as disposições de rescisão e o pagamento dos valores devidos.",
+        "3.4. Durante os 22 (vinte e dois) dias iniciais, não será devido o pagamento fixo mensal previsto na Cláusula 4, ficando seu início condicionado à confirmação da continuidade contratual. Essa condição não afasta o pagamento de comissões adquiridas nem de outros valores legalmente devidos.",
+        "3.5. As regras de comissionamento previstas neste contrato serão aplicáveis desde o início das atividades, inclusive durante a capacitação e a prática comercial, observados os critérios de elegibilidade e apuração.",
+        "3.6. A etapa inicial não constitui período de experiência regido pela legislação trabalhista nem afasta eventual enquadramento jurídico decorrente das condições reais da prestação dos serviços.",
       ].map(L)}
-      <H>Cláusula 4ª — Das obrigações da contratante</H>
+      <H>Cláusula 4 — Remuneração fixa e ajuda de custo</H>
+      {[
+        "4.1. Confirmada a continuidade da contratação após a etapa inicial, o PRESTADOR fará jus ao pagamento mensal fixo de R$ 1.850,00 (mil oitocentos e cinquenta reais), denominado pelas partes ajuda de custo fixa mensal, nos termos deste contrato.",
+        "4.2. O pagamento será realizado até o quinto dia útil de cada mês, referente ao período mensal anterior, observadas as condições de início da remuneração previstas na Cláusula 3.",
+        "4.3. O pagamento será efetuado por transferência bancária ou outro meio acordado entre as partes, mediante apresentação de nota fiscal ou recibo legalmente aplicável, conforme a natureza jurídica do PRESTADOR.",
+        "4.4. A remuneração fixa não substitui as comissões previstas no Anexo I, que serão apuradas e pagas separadamente.",
+        "4.5. A denominação “ajuda de custo” não altera, por si só, a natureza jurídica do pagamento, que será determinada conforme sua finalidade, os fatos da contratação e a legislação aplicável.",
+      ].map(L)}
+      <H>Cláusula 5 — Comissionamento</H>
+      {[
+        "5.1. Além da remuneração fixa, quando aplicável, o PRESTADOR poderá receber comissões variáveis conforme a produção comercial mensal validada, observadas as faixas e os percentuais estabelecidos no Anexo I.",
+        "5.2. A meta mínima para início do comissionamento será de 15.000 kWh por mês, considerando o volume de energia correspondente aos contratos elegíveis atribuídos ao PRESTADOR e devidamente validados.",
+        "5.3. O fechamento mensal da produção para apuração das comissões ocorrerá todo dia 10, e o pagamento das comissões apuradas será realizado todo dia 25, conforme o Anexo I.",
+        "5.4. A comissão será calculada de forma progressiva, conforme as faixas de produção e o valor econômico correspondente ao volume de energia comercializado, expresso em kWh.",
+        "5.5. A CONTRATANTE disponibilizará demonstrativo da apuração, permitindo a conferência da produção validada, das faixas aplicadas e dos valores de comissão.",
+        "5.6. As comissões adquiridas e os demais valores devidos não poderão ser eliminados exclusivamente em razão do encerramento posterior do contrato, observadas as regras contratuais e a legislação aplicável.",
+      ].map(L)}
+      <H>Cláusula 6 — Obrigações do prestador</H>
+      <p>São obrigações do PRESTADOR:</p>
+      {[
+        "a) executar os serviços com diligência, boa-fé e profissionalismo;",
+        "b) transmitir informações corretas e autorizadas sobre os serviços e as condições comerciais;",
+        "c) não prometer economia, aprovação, descontos ou resultados garantidos sem respaldo nas condições oficiais da operação;",
+        "d) manter atualizados os registros comerciais sob sua responsabilidade;",
+        "e) proteger os dados, documentos, credenciais e informações a que tiver acesso;",
+        "f) utilizar os sistemas, materiais e informações da CONTRATANTE exclusivamente para as finalidades autorizadas;",
+        "g) não receber valores de clientes em nome da CONTRATANTE sem autorização formal;",
+        "h) comunicar irregularidades, reclamações relevantes ou problemas identificados durante a execução dos serviços;",
+        "i) cumprir as normas aplicáveis de proteção de dados, confidencialidade e integridade comercial;",
+        "j) responder pelos atos que praticar em desacordo com este contrato ou com a legislação aplicável.",
+      ].map(L)}
+      <H>Cláusula 7 — Obrigações da contratante</H>
       <p>São obrigações da CONTRATANTE:</p>
       {[
-        "a) Disponibilizar as informações comerciais, os materiais e as orientações necessários à prestação dos serviços;",
-        "b) Conceder, quando previsto na operação, acesso ao CRM, aos Leads e às ferramentas comerciais pertinentes;",
-        "c) Disponibilizar treinamento e informações sobre os produtos, procedimentos e critérios de validação comercial;",
-        "d) Informar as regras vigentes de remuneração e comissionamento, inclusive alterações futuras, com antecedência razoável;",
-        "e) Apurar e pagar os valores devidos conforme as condições e os prazos deste contrato;",
-        "f) Disponibilizar demonstrativo de cálculo das comissões, quando houver remuneração variável;",
-        "g) Tratar os dados pessoais do(a) PRESTADOR(A) e dos clientes conforme a legislação aplicável;",
-        "h) Informar alterações relevantes nos procedimentos operacionais que afetem a execução dos serviços.",
+        "a) disponibilizar informações e materiais comerciais necessários à execução dos serviços;",
+        "b) fornecer acesso às ferramentas e aos sistemas autorizados, quando aplicável;",
+        "c) informar as condições comerciais vigentes e os critérios operacionais de validação das operações;",
+        "d) realizar os pagamentos devidos nos prazos estabelecidos;",
+        "e) disponibilizar demonstrativos de produção e comissionamento;",
+        "f) comunicar alterações relevantes nos procedimentos comerciais;",
+        "g) tratar os dados pessoais aos quais tiver acesso em conformidade com a legislação aplicável.",
       ].map(L)}
-      <H>Cláusula 5ª — Da remuneração fixa contratual</H>
+      <H>Cláusula 8 — Validação dos contratos e produção</H>
       {[
-        "5.1. Pela prestação dos serviços contratados, a CONTRATANTE pagará ao(à) PRESTADOR(A) o valor mensal de R$ 1.850,00 (mil oitocentos e cinquenta reais), sujeito às condições contratuais e à efetiva prestação dos serviços no período correspondente.",
-        "5.2. O pagamento será realizado até o dia [DIA] do mês subsequente ao período de referência, mediante apresentação do documento fiscal ou recibo legalmente aplicável e cumprimento das formalidades tributárias pertinentes.",
-        "5.3. O valor previsto nesta cláusula constitui remuneração civil contratual pelos serviços prestados, não sendo denominado salário ou benefício trabalhista neste instrumento.",
-        "5.4. Em caso de início ou encerramento do contrato durante o mês, o valor será calculado proporcionalmente aos dias de vigência e de efetiva prestação dos serviços, conforme critério previamente acordado, ressalvados valores já adquiridos e outras disposições legais aplicáveis.",
-        "5.5. A remuneração fixa não substitui nem absorve as comissões que forem devidas nos termos da cláusula seguinte.",
-        "5.6. Eventuais despesas extraordinárias somente serão reembolsadas quando previamente autorizadas pela CONTRATANTE e comprovadas documentalmente.",
+        "8.1. Para fins de apuração de produção, serão considerados os contratos atribuídos ao PRESTADOR e registrados nos sistemas oficiais da CONTRATANTE, desde que atendam aos critérios de contratação, validação e ativação aplicáveis à operação.",
+        "8.2. Leads, propostas não aceitas e contratos pendentes de validação não serão contabilizados como produção validada.",
+        "8.3. O volume em kWh deverá ser comprovável por registro operacional, documentação ou informação fornecida pela empresa responsável pela operação de energia.",
+        "8.4. Eventuais cancelamentos, estornos ou ajustes serão tratados conforme as regras de elegibilidade, os direitos já adquiridos e a legislação aplicável.",
       ].map(L)}
-      <H>Cláusula 6ª — Do comissionamento</H>
+      <H>Cláusula 9 — Confidencialidade</H>
       {[
-        "6.1. Além da remuneração fixa, o(a) PRESTADOR(A) poderá receber comissão variável conforme o desempenho comercial mensal, observadas as seguintes faixas de referência:",
-        "Produção mensal de 15.000 kWh: 5%;",
-        "Produção mensal de 20.000 kWh: 7%;",
-        "Produção mensal de 30.000 kWh: 9%.",
-        "6.2. A faixa aplicável será determinada de acordo com a produção mensal elegível e validada, conforme os critérios objetivos do plano de comissionamento vigente, previamente disponibilizado e aceito pelas partes.",
-        "6.3. A base monetária sobre a qual incidirá o percentual deverá constar de anexo comercial assinado pelas partes, especificando a fórmula de cálculo, o valor econômico de referência por kWh, o tratamento de contratos com diferentes condições e a regra de enquadramento entre as faixas.",
-        "6.4. As partes reconhecem que kWh é uma unidade de energia e, isoladamente, não constitui valor monetário. Portanto, o percentual não poderá ser calculado sem a definição expressa da base econômica aplicável.",
-        "6.5. Para fins de comissionamento, serão considerados somente contratos que atendam aos critérios de validação e ativação estabelecidos na operação e que estejam devidamente registrados nos sistemas oficiais.",
-        "6.6. A mera indicação de um Lead, realização de contato, envio de proposta ou existência de contrato pendente não gera, isoladamente, direito à comissão.",
-        "6.7. Contratos cancelados ou não validados não serão considerados para comissionamento, observadas as regras de aquisição do direito à comissão, os valores já devidos e a legislação aplicável.",
-        "6.8. A CONTRATANTE disponibilizará demonstrativo contendo, sempre que aplicável, os contratos considerados, a produção validada, a base de cálculo, o percentual aplicado e o valor final da comissão.",
-        "6.9. O pagamento das comissões será realizado até o dia [DIA] do mês subsequente à apuração, respeitadas as condições de validação e os prazos de confirmação da operação.",
-        "6.10. Alterações no plano de comissionamento deverão ser formalizadas por escrito e não poderão eliminar retroativamente comissões já adquiridas.",
-        "6.11. Divergências de cálculo deverão ser comunicadas por escrito, com indicação dos contratos ou valores questionados, para conferência e eventual correção.",
+        "9.1. O PRESTADOR deverá manter sigilo sobre informações comerciais, financeiras, operacionais, estratégicas, contratuais e cadastrais da CONTRATANTE e de seus clientes.",
+        "9.2. As informações confidenciais não poderão ser divulgadas, reproduzidas, comercializadas ou utilizadas para finalidade estranha à execução dos serviços sem autorização expressa.",
+        "9.3. A obrigação de confidencialidade permanecerá vigente durante o contrato e após seu encerramento, enquanto as informações mantiverem natureza confidencial ou estiverem protegidas por lei.",
+        "9.4. Não serão consideradas confidenciais as informações comprovadamente públicas, obtidas legitimamente de terceiros sem dever de sigilo ou cuja divulgação seja exigida por obrigação legal.",
       ].map(L)}
-      <H>Cláusula 7ª — Dos leads, do CRM e das ferramentas</H>
+      <H>Cláusula 10 — Proteção de dados pessoais</H>
       {[
-        "7.1. Os Leads, dados comerciais, materiais, sistemas, credenciais e demais recursos disponibilizados pela CONTRATANTE destinam-se exclusivamente à execução dos serviços contratados.",
-        "7.2. O(A) PRESTADOR(A) deverá manter as credenciais sob sigilo, não compartilhá-las com terceiros não autorizados e comunicar imediatamente eventual acesso indevido.",
-        "7.3. O(A) PRESTADOR(A) não poderá vender, copiar para fins não autorizados, transferir ou utilizar a base de Leads em benefício próprio ou de terceiros.",
-        "7.4. Os registros comerciais deverão ser mantidos atualizados e corretos, respeitando as regras de acesso e as finalidades autorizadas.",
-        "7.5. Encerrado o contrato, os acessos poderão ser revogados e os materiais, documentos e dados deverão ser devolvidos ou eliminados conforme as instruções da CONTRATANTE e a legislação aplicável.",
+        "10.1. As partes comprometem-se a cumprir a Lei nº 13.709/2018 — Lei Geral de Proteção de Dados Pessoais (LGPD).",
+        "10.2. O PRESTADOR utilizará os dados pessoais acessados exclusivamente para as finalidades autorizadas e relacionadas à execução dos serviços.",
+        "10.3. O PRESTADOR deverá adotar medidas razoáveis de segurança, não compartilhar credenciais e comunicar prontamente qualquer incidente ou suspeita de acesso indevido.",
+        "10.4. Encerrado o contrato, os dados e documentos deverão ser devolvidos, eliminados ou mantidos conforme instruções legítimas da CONTRATANTE e exigências legais aplicáveis.",
       ].map(L)}
-      <H>Cláusula 8ª — Da confidencialidade</H>
+      <H>Cláusula 11 — Responsabilidade e conduta comercial</H>
       {[
-        "8.1. São confidenciais as informações comerciais, estratégicas, financeiras, operacionais, técnicas, cadastrais e contratuais não públicas às quais o(a) PRESTADOR(A) tiver acesso em razão deste contrato.",
-        "8.2. O(A) PRESTADOR(A) compromete-se a não divulgar, reproduzir ou utilizar tais informações para finalidade estranha à execução dos serviços, salvo autorização expressa ou obrigação legal.",
-        "8.3. A obrigação não abrange informações comprovadamente públicas, legitimamente conhecidas antes do acesso ou cuja divulgação seja exigida por autoridade competente, observado o dever de comunicação quando legalmente permitido.",
-        "8.4. O dever de confidencialidade permanecerá vigente após o encerramento do contrato enquanto as informações mantiverem natureza confidencial ou estiverem protegidas por lei.",
+        "11.1. Cada parte responderá pelos danos que causar à outra ou a terceiros em decorrência de ação ou omissão ilícita, dolo, culpa ou descumprimento contratual, conforme a legislação aplicável.",
+        "11.2. O PRESTADOR não poderá alterar contratos, assumir obrigações financeiras, oferecer garantias em nome da CONTRATANTE ou divulgar informações comerciais não autorizadas.",
+        "11.3. Nenhuma disposição deste instrumento exclui responsabilidade legal que não possa ser afastada por acordo entre as partes.",
       ].map(L)}
-      <H>Cláusula 9ª — Da proteção de dados pessoais</H>
+      <H>Cláusula 12 — Tributos e regularidade</H>
       {[
-        "9.1. As partes comprometem-se a observar a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados Pessoais — LGPD).",
-        "9.2. O(A) PRESTADOR(A) tratará dados pessoais somente para as finalidades autorizadas e conforme as instruções legítimas aplicáveis à operação, mantendo medidas de segurança compatíveis com os riscos.",
-        "9.3. É vedado utilizar dados de clientes ou Leads para finalidades próprias, compartilhá-los sem autorização ou mantê-los além do necessário, ressalvadas as hipóteses legais.",
-        "9.4. Incidentes de segurança, perda de dispositivos, exposição de dados ou acessos indevidos deverão ser comunicados imediatamente à CONTRATANTE.",
-        "9.5. Cada parte responderá pelas obrigações legais e pelos danos que lhe forem atribuíveis, conforme sua atuação, suas responsabilidades e a legislação aplicável.",
+        "12.1. Cada parte será responsável pelas obrigações tributárias e acessórias que lhe couberem, conforme sua natureza jurídica e a legislação aplicável.",
+        "12.2. O PRESTADOR deverá fornecer os documentos fiscais ou recibos legalmente exigíveis para o pagamento dos valores contratados.",
+        "12.3. A contratação de pessoa física ou jurídica não afasta a aplicação das normas legais pertinentes à situação concreta.",
       ].map(L)}
-      <H>Cláusula 10ª — Da conduta comercial e da responsabilidade</H>
+      <H>Cláusula 13 — Prazo e vigência</H>
       {[
-        "10.1. O(A) PRESTADOR(A) deverá utilizar somente informações oficiais e condições comerciais autorizadas pela CONTRATANTE.",
-        "10.2. É vedado prometer economia específica, aprovação garantida, resultado financeiro certo ou qualquer condição não confirmada pela operação responsável.",
-        "10.3. Cada parte responderá pelos danos diretos comprovadamente causados por sua conduta ilícita, dolo, culpa ou descumprimento contratual, conforme a legislação aplicável.",
-        "10.4. Não haverá transferência automática de responsabilidade por qualquer prejuízo à outra parte. A apuração deverá considerar a conduta, o nexo causal, a extensão do dano e as circunstâncias do caso.",
-        "10.5. Nenhuma disposição deste instrumento afasta direitos ou responsabilidades que sejam legalmente indisponíveis.",
+        "13.1. O presente contrato entra em vigor na data de sua assinatura e terá prazo indeterminado, salvo se as partes estipularem prazo específico por escrito.",
+        "13.2. A etapa inicial de capacitação e prática comercial observará o disposto na Cláusula 3.",
+        "13.3. A continuidade da prestação após a etapa inicial dependerá da confirmação entre as partes, observadas as condições deste instrumento.",
       ].map(L)}
-      <H>Cláusula 11ª — Dos tributos e das obrigações legais</H>
+      <H>Cláusula 14 — Rescisão</H>
       {[
-        "11.1. Cada parte cumprirá as obrigações fiscais, previdenciárias e cadastrais que lhe forem legalmente atribuídas.",
-        "11.2. Quando o(a) PRESTADOR(A) atuar como pessoa física, os pagamentos estarão sujeitos às retenções, contribuições e formalidades exigidas pela legislação aplicável, conforme o enquadramento concreto.",
-        "11.3. Quando atuar por pessoa jurídica, o(a) PRESTADOR(A) deverá manter seu cadastro regular e emitir a documentação fiscal correspondente, observadas as regras tributárias aplicáveis.",
-        "11.4. A adoção de CPF ou CNPJ não altera, por si só, a natureza jurídica efetiva da relação nem afasta obrigações legais eventualmente incidentes.",
+        "14.1. Qualquer parte poderá encerrar o contrato mediante comunicação escrita com antecedência de 15 (quinze) dias, salvo acordo diverso entre as partes ou hipótese legal de encerramento imediato.",
+        "14.2. O contrato poderá ser encerrado imediatamente em caso de violação grave de confidencialidade, fraude, uso indevido de dados, prática ilícita ou descumprimento contratual relevante, observada a legislação aplicável.",
+        "14.3. No encerramento, serão apurados e pagos os valores fixos devidos, quando aplicáveis, as comissões adquiridas e os demais valores exigíveis até a data de término, respeitadas as regras contratuais e legais.",
+        "14.4. O encerramento não afasta as obrigações de confidencialidade, proteção de dados, prestação de contas e outras que, por sua natureza, devam permanecer vigentes.",
       ].map(L)}
-      <H>Cláusula 12ª — Da vigência</H>
+      <H>Cláusula 15 — Comunicações e alterações</H>
       {[
-        `12.1. O presente contrato terá prazo indeterminado, iniciando-se em ${dataBR(aceitoEm)}.`,
-        "12.2. A continuidade da prestação de serviços dependerá do interesse das partes e da observância das obrigações assumidas neste instrumento.",
-        "12.3. Qualquer alteração contratual deverá ser formalizada por escrito, inclusive por aditivo eletrônico com comprovação de aceite.",
+        "15.1. As comunicações formais relativas a este contrato poderão ser realizadas por e-mail ou outro canal escrito acordado entre as partes.",
+        "15.2. Alterações de remuneração, percentuais, critérios de produção ou demais condições essenciais deverão ser formalizadas por escrito e aceitas por ambas as partes.",
+        "15.3. A tolerância de uma parte quanto ao descumprimento pontual de obrigação não implicará renúncia de direito nem alteração automática do contrato.",
       ].map(L)}
-      <H>Cláusula 13ª — Da rescisão</H>
+      <H>Cláusula 16 — Disposições gerais</H>
       {[
-        "13.1. Qualquer parte poderá encerrar o contrato mediante comunicação escrita com antecedência de 15 (quinze) dias.",
-        "13.2. O contrato poderá ser encerrado imediatamente em caso de fraude, violação grave de confidencialidade, uso indevido de dados, desvio de recursos, falsificação de registros ou outro descumprimento grave devidamente fundamentado.",
-        "13.3. No encerramento, a CONTRATANTE deverá apurar e pagar os valores fixos proporcionais e as comissões já adquiridas, conforme as regras contratuais e a legislação aplicável.",
-        "13.4. Contratos em andamento na data do encerramento serão tratados conforme os critérios objetivos de atribuição, validação e aquisição de comissão previstos no anexo comercial, sem perda automática de valores já adquiridos.",
-        "13.5. As partes deverão providenciar a devolução de materiais, a revogação de acessos e o tratamento adequado dos dados sob sua responsabilidade.",
-        "13.6. O encerramento não afasta obrigações de confidencialidade, proteção de dados, prestação de contas e pagamento de valores vencidos.",
+        "16.1. O Anexo I integra este contrato para todos os fins.",
+        "16.2. Caso alguma disposição seja considerada inválida ou inexequível, as demais permanecerão vigentes na extensão permitida pela legislação.",
+        "16.3. Este instrumento não autoriza qualquer das partes a assumir obrigações em nome da outra, salvo autorização expressa.",
+        "16.4. Se a forma concreta de atuação caracterizar representação comercial ou outra modalidade regulada por legislação específica, as partes deverão observar os requisitos legais correspondentes, independentemente do título atribuído a este contrato.",
       ].map(L)}
-      <H>Cláusula 14ª — Da ausência de poderes de representação</H>
-      {[
-        "14.1. O(A) PRESTADOR(A) não poderá assumir obrigações, celebrar contratos em nome da CONTRATANTE, receber pagamentos ou conceder condições comerciais em nome desta sem autorização expressa.",
-        "14.2. Caso a atividade concreta venha a caracterizar representação comercial autônoma ou outra modalidade sujeita a legislação específica, as partes deverão revisar este instrumento e cumprir os requisitos legais correspondentes.",
-      ].map(L)}
-      <H>Cláusula 15ª — Das comunicações e dos registros</H>
-      {[
-        "15.1. As comunicações contratuais poderão ocorrer pelos e-mails e números de telefone indicados na qualificação das partes, desde que seja possível comprovar seu envio e conteúdo.",
-        "15.2. Avisos de rescisão, alterações de remuneração e notificações relativas a descumprimentos deverão ser registrados por meio que permita demonstrar seu recebimento.",
-        "15.3. As partes comprometem-se a manter seus dados cadastrais atualizados durante a vigência do contrato.",
-      ].map(L)}
-      <H>Cláusula 16ª — Das disposições gerais</H>
-      {[
-        "16.1. A tolerância de uma parte quanto a eventual descumprimento não implicará renúncia de direitos ou alteração automática deste contrato.",
-        "16.2. Se alguma disposição for considerada inválida, as demais permanecerão vigentes na medida permitida pela legislação.",
-        "16.3. Este contrato e seus anexos formalmente aceitos constituem o acordo entre as partes sobre o objeto aqui descrito.",
-        "16.4. As partes declaram que tiveram oportunidade de ler, compreender e esclarecer as disposições contratuais antes da assinatura.",
-      ].map(L)}
-      <H>Cláusula 17ª — Do foro</H>
-      <p>17.1. Fica eleito o foro da comarca de São Luís - MA, ressalvadas as regras legais de competência obrigatória e os direitos de acesso à Justiça.</p>
-      <p>E, por estarem de acordo, as partes aceitam o presente instrumento eletronicamente.</p>
-      <p>São Luís - MA, {dataBR(aceitoEm)}.</p>
+      <H>Cláusula 17 — Foro</H>
+      <p>17.1. As partes elegem o foro da comarca de São Luís - MA para dirimir controvérsias decorrentes deste contrato, respeitadas as regras legais de competência aplicáveis.</p>
+      <p>E, por estarem de acordo, as partes firmam o presente termo eletronicamente.</p>
+      <Assinaturas prestador={prestador} aceitoEm={aceitoEm} />
       <H>Anexo I — Plano de remuneração e comissionamento</H>
       {[
-        "1. Remuneração fixa mensal: R$ 1.850,00.",
-        "2. Meta mínima de produção para início do comissionamento: 15.000 kWh/mês.",
-        "3. Faixas de referência: 15.000 kWh/mês: 5%; 20.000 kWh/mês: 7%; 30.000 kWh/mês: 9%.",
-        "4. Base monetária de cálculo: [DESCREVER O VALOR ECONÔMICO APLICÁVEL E SUA FÓRMULA].",
-        "5. Regra de enquadramento: [DEFINIR SE O PERCENTUAL INCIDE SOBRE TODA A BASE DO MÊS OU SOMENTE SOBRE FAIXAS INCREMENTAIS].",
-        "6. Critérios de validação e ativação: [DESCREVER].",
-        "7. Data de fechamento da apuração: [DIA].",
-        "8. Data de pagamento: [DIA].",
-        "9. Procedimento para contestação do demonstrativo: [PRAZO E CANAL].",
-        "As partes declaram que leram e aceitaram este anexo, que integra o contrato principal.",
+        "Este Anexo integra o Contrato de Prestação de Serviços Comerciais Autônomos da PROSFEC Energy e estabelece as condições de remuneração e apuração de comissões.",
+        "1. Ajuda de custo fixa mensal",
+        "Após a conclusão da etapa inicial de capacitação e prática comercial e a confirmação da continuidade contratual, será devido ao PRESTADOR o valor fixo mensal de R$ 1.850,00 (mil oitocentos e cinquenta reais), conforme as condições do contrato principal.",
+        "O pagamento será efetuado até o quinto dia útil de cada mês, referente ao período mensal anterior.",
+        "Durante os 22 (vinte e dois) dias iniciais, aplica-se a condição de remuneração prevista no contrato principal, sem prejuízo das comissões adquiridas e dos demais valores legalmente devidos.",
+        "2. Meta mínima para comissionamento",
+        "A meta mínima para início do comissionamento será de 15.000 kWh por mês, considerando a produção comercial elegível e validada.",
+        "3. Percentuais progressivos",
+        "As comissões serão calculadas progressivamente, conforme as seguintes faixas:",
+        "• Parcela de produção entre 15.000 e 19.999 kWh: 5%;",
+        "• Parcela de produção entre 20.000 e 29.999 kWh: 7%;",
+        "• Parcela de produção a partir de 30.000 kWh: 9%.",
+        "Os percentuais serão aplicados exclusivamente sobre a parcela correspondente a cada faixa, observada a base econômica em reais vinculada ao volume de energia comercializado.",
+        "4. Cálculo das comissões",
+        "As comissões serão calculadas com base no valor econômico correspondente ao volume de energia comercializado, expresso em kWh, aplicando-se progressivamente os percentuais previstos neste Anexo sobre cada faixa de produção mensal.",
+        "5. Validação da produção",
+        "Serão consideradas para apuração as operações comerciais atribuídas ao PRESTADOR e devidamente validadas, conforme os registros dos sistemas oficiais da CONTRATANTE e os critérios operacionais aplicáveis.",
+        "Leads, propostas não aceitas e contratos pendentes de validação não serão contabilizados como produção validada.",
+        "6. Fechamento e pagamento das comissões",
+        "O fechamento mensal da produção será realizado todo dia 10, considerando o período de apuração anterior.",
+        "O pagamento das comissões apuradas será realizado todo dia 25, conforme os registros de produção validada e as condições deste Anexo.",
+        "Caso alguma das datas recaia em dia não útil, o procedimento será realizado no primeiro dia útil subsequente.",
+        "7. Demonstrativo e contestação",
+        "A CONTRATANTE disponibilizará demonstrativo da produção e das comissões apuradas.",
+        "O PRESTADOR poderá contestar o demonstrativo no prazo de 5 (cinco) dias úteis a partir de sua disponibilização, por meio do canal oficial indicado pela CONTRATANTE, apresentando os fundamentos da divergência.",
+        "A contestação não impedirá o pagamento dos valores incontroversos já devidos.",
+        "8. Disposições finais",
+        "Este Anexo integra o contrato principal. Qualquer alteração dos percentuais, faixas de produção, base econômica ou critérios de apuração dependerá de formalização escrita e aceitação de ambas as partes.",
       ].map(L)}
+      <Assinaturas prestador={prestador} aceitoEm={aceitoEm} />
+    </div>
+  );
+}
+
+function Assinaturas({ prestador, aceitoEm }: { prestador: DadosPrestador; aceitoEm?: string | null }) {
+  return (
+    <div className="grid sm:grid-cols-2 gap-3 pt-3">
+      <div className="rounded-lg border border-primary/40 bg-primary/5 p-3">
+        <p className="font-extrabold text-foreground">CONTRATANTE</p>
+        <p>DCS SOLUCOES TECNOLOGICAS E SERVICOS FINANCEIROS LTDA — PROSFEC ENERGY</p>
+        <p>CNPJ 65.668.670/0001-26</p>
+        <p className="mt-1 font-bold text-primary">✔ Assinado eletronicamente pela PROSFEC</p>
+      </div>
+      <div className="rounded-lg border border-border p-3">
+        <p className="font-extrabold text-foreground">PRESTADOR</p>
+        <p>{v(prestador.nome, "[NOME/RAZÃO SOCIAL]")}</p>
+        <p>CPF/CNPJ {v(prestador.cnpj || prestador.cpf, "[CPF/CNPJ]")}</p>
+        <p className="mt-1 font-bold text-foreground">
+          {aceitoEm ? `✔ Aceite eletrônico em ${new Date(aceitoEm).toLocaleString("pt-BR")}` : "Aguardando aceite eletrônico"}
+        </p>
+      </div>
+      <p className="sm:col-span-2">São Luís - MA, {dataBR(aceitoEm)}.</p>
     </div>
   );
 }
