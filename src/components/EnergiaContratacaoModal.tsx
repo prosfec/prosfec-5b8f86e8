@@ -198,9 +198,11 @@ function normalize(value: string) {
 export default function EnergiaContratacaoModal({
   open,
   onClose,
+  ocultarVideo = false,
 }: {
   open: boolean;
   onClose: () => void;
+  ocultarVideo?: boolean;
 }) {
   const [busca, setBusca] = useState("");
   const [regiao, setRegiao] = useState("Todas");
@@ -366,24 +368,29 @@ export default function EnergiaContratacaoModal({
           </div>
         ) : (
           <div className="max-h-[80vh] overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
-            {/* Vídeo */}
-            <div className="overflow-hidden rounded-[16px] border border-white/10 bg-black">
-              <video
-                src={videoAsset.url}
-                controls
-                playsInline
-                preload="metadata"
-                className="h-auto w-full"
-              />
-            </div>
+            {!ocultarVideo && (
+              <>
+                {/* Vídeo */}
+                <div className="overflow-hidden rounded-[16px] border border-white/10 bg-black">
+                  <video
+                    src={videoAsset.url}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="h-auto w-full"
+                  />
+                </div>
 
-            {/* Aviso da fatura */}
-            <div className="mt-5 flex items-start gap-3 rounded-[14px] border border-[#FACC15]/25 bg-[#FACC15]/[0.08] px-4 py-3.5">
-              <span className="text-[18px]">📄</span>
-              <p className="text-[14px] font-semibold leading-relaxed text-[#FDE047]">
-                Tenha sua fatura recente em mãos para preencher e fazer a simulação.
-              </p>
-            </div>
+                {/* Aviso da fatura */}
+                <div className="mt-5 flex items-start gap-3 rounded-[14px] border border-[#FACC15]/25 bg-[#FACC15]/[0.08] px-4 py-3.5">
+                  <span className="text-[18px]">📄</span>
+                  <p className="text-[14px] font-semibold leading-relaxed text-[#FDE047]">
+                    Tenha sua fatura recente em mãos para preencher e fazer a simulação.
+                  </p>
+                </div>
+              </>
+            )}
+
 
             {/* Busca */}
             <div className="mt-6 rounded-[18px] border border-white/[0.08] bg-white/[0.03] p-4 backdrop-blur-xl">
