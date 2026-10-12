@@ -30,6 +30,7 @@ import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF,
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA } from "./AssessorEnergiaContratos";
+import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
 import { LeadData, SimulationResult, SolicitacaoComissao } from "../types";
@@ -1087,6 +1088,7 @@ export default function PartnerPortal({
   const [energiaLoading, setEnergiaLoading] = useState(false);
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [expandedEnergiaLeadId, setExpandedEnergiaLeadId] = useState<string | null>(null);
+  const [propostaEnergiaLeadId, setPropostaEnergiaLeadId] = useState<string | null>(null);
   const [energiaPanelOpen, setEnergiaPanelOpen] = useState(true);
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<string>("todos");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<{ [leadId: string]: string }>({});
@@ -2394,6 +2396,17 @@ export default function PartnerPortal({
                                         </a>
                                       )}
                                     </div>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => setPropostaEnergiaLeadId(lead.id)}
+                                    className="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                  >
+                                    ⚡ Gerar Proposta
+                                  </button>
+                                  {propostaEnergiaLeadId === lead.id && (
+                                    <EnergiaContratacaoModal open ocultarVideo onClose={() => setPropostaEnergiaLeadId(null)} />
                                   )}
 
                                   <div className="pt-2 border-t border-slate-100 space-y-2">
