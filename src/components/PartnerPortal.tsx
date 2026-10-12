@@ -2292,6 +2292,43 @@ export default function PartnerPortal({
                                     </p>
                                   </div>
 
+                                  <div className="space-y-2">
+                                    <div className={`grid gap-2 ${lead.telefone ? "grid-cols-2" : "grid-cols-1"}`}>
+                                      <button
+                                        type="button"
+                                        onClick={() => setPropostaEnergiaLeadId(lead.id)}
+                                        className="w-full px-2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                      >
+                                        ⚡ Gerar Proposta
+                                      </button>
+                                      {lead.telefone && (
+                                        <a
+                                          href={energiaWa}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="w-full px-2 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                        >
+                                          <Send className="w-3.5 h-3.5 text-white fill-current" />
+                                          WhatsApp
+                                        </a>
+                                      )}
+                                    </div>
+                                    {lead.telefone && energiaFollowUp && (
+                                      <a
+                                        href={buildWhatsAppUrl(lead.telefone, buildEnergiaFollowUpWhatsAppMessage(lead.nomeEmpresa))}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                      >
+                                        <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                        Cobrar Retorno (Follow-up)
+                                      </a>
+                                    )}
+                                    {propostaEnergiaLeadId === lead.id && (
+                                      <EnergiaContratacaoModal open ocultarVideo onClose={() => setPropostaEnergiaLeadId(null)} />
+                                    )}
+                                  </div>
+
                                   <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 flex-wrap">
                                     <button
                                       onClick={() => handleFetchCnpj(energiaPlaceObj, energiaCnpj || undefined)}
@@ -2305,6 +2342,7 @@ export default function PartnerPortal({
                                       )}
                                     </button>
 
+                                    {!isEnergiaOnly && (
                                     <button
                                       onClick={() => {
                                         setSelectedLeadForRegistration({
@@ -2323,6 +2361,7 @@ export default function PartnerPortal({
                                       <Plus className="w-3 h-3 text-emerald-600" />
                                       Migrar para Funil de Crédito
                                     </button>
+                                    )}
 
                                     <button
                                       onClick={() => {
@@ -2373,41 +2412,6 @@ export default function PartnerPortal({
                                     )}
                                   </div>
 
-                                  {lead.telefone && (
-                                    <div className="space-y-2">
-                                      <a
-                                        href={energiaWa}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="w-full px-3 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
-                                      >
-                                        <Send className="w-3.5 h-3.5 text-white fill-current" />
-                                        Abordar no WhatsApp
-                                      </a>
-                                      {energiaFollowUp && (
-                                        <a
-                                          href={buildWhatsAppUrl(lead.telefone, buildEnergiaFollowUpWhatsAppMessage(lead.nomeEmpresa))}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
-                                        >
-                                          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                                          Cobrar Retorno (Follow-up)
-                                        </a>
-                                      )}
-                                    </div>
-                                  )}
-
-                                  <button
-                                    type="button"
-                                    onClick={() => setPropostaEnergiaLeadId(lead.id)}
-                                    className="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
-                                  >
-                                    ⚡ Gerar Proposta
-                                  </button>
-                                  {propostaEnergiaLeadId === lead.id && (
-                                    <EnergiaContratacaoModal open ocultarVideo onClose={() => setPropostaEnergiaLeadId(null)} />
-                                  )}
 
                                   <div className="pt-2 border-t border-slate-100 space-y-2">
                                     <button
