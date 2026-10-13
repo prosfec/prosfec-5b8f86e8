@@ -133,16 +133,13 @@ export function buildWhatsAppUrl(phone: unknown, message?: string): string {
 export function buildEnergiaSolarWhatsAppMessage(nomeEmpresa?: string): string {
   const alvo = String(nomeEmpresa ?? "").trim();
   return [
-    `Olá! Falo com o responsável pela ${alvo || "empresa"}?`,
+    `Oi${alvo ? `, ${alvo}` : ""}!`,
     "",
-    "Entro em contato porque identificamos que sua empresa está elegível para reduzir de 15% a 25% o custo da conta de energia elétrica, sem instalar placas, fazer obras ou investir em equipamentos.",
+    "Conforme conversamos, o link para você ativar a redução na sua conta de luz e destravar a nossa assessoria financeira é esse aqui:",
     "",
-    "O modelo é 100% digital e garantido pela Lei Federal 14.300.",
+    "🔗 https://prosfec.com.br/energiasolar",
     "",
-    "Você pode conferir como funciona e ver as condições oficiais aqui:",
-    "👉 https://prosfec.com.br/energiasolar",
-    "",
-    "Se fizer sentido para você, me avise por aqui para tirarmos qualquer dúvida!"
+    "Preenche rapidinho e me avisa assim que finalizar para darmos o próximo passo. Qualquer coisa me chama!"
   ].join("\n");
 }
 
