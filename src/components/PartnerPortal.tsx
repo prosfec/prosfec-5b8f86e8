@@ -2324,6 +2324,16 @@ export default function PartnerPortal({
                                         Cobrar Retorno (Follow-up)
                                       </a>
                                     )}
+                                    {lead.telefone && statusKey === "concluido" && (
+                                      <a
+                                        href={buildWhatsAppUrl(lead.telefone, buildCampanhaCPWhatsAppMessage(lead.nomeEmpresa))}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="w-full px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                      >
+                                        🚀 Campanha CP (Crédito Pessoal)
+                                      </a>
+                                    )}
                                     {propostaEnergiaLeadId === lead.id && (
                                       <EnergiaContratacaoModal open ocultarVideo onClose={() => setPropostaEnergiaLeadId(null)} />
                                     )}

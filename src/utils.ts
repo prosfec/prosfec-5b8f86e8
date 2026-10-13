@@ -137,9 +137,25 @@ export function buildEnergiaSolarWhatsAppMessage(nomeEmpresa?: string): string {
     "",
     "Conforme conversamos, o link para você ativar a redução na sua conta de luz e destravar a nossa assessoria financeira é esse aqui:",
     "",
-    "🔗 https://prosfec.com.br/energiasolar",
+    "🔗 https://entr.ai/prosfec-energy",
     "",
     "Preenche rapidinho e me avisa assim que finalizar para darmos o próximo passo. Qualquer coisa me chama!"
+  ].join("\n");
+}
+
+// Copy pós-venda (Campanha CP) para leads de Energia Solar concluídos
+export function buildCampanhaCPWhatsAppMessage(nomeEmpresa?: string): string {
+  const alvo = String(nomeEmpresa ?? "").trim();
+  return [
+    `Oi${alvo ? `, ${alvo}` : ""}! Passo 1 concluído com sucesso: sua redução na conta de luz está validada! ✅⚡`,
+    "",
+    "Como combinamos, agora que você tem essa economia no radar, a gente destrava o acesso à nossa plataforma financeira.",
+    "",
+    "Acesse o link abaixo para visualizar as ofertas de crédito pessoal e soluções financeiras liberadas para o seu CPF/CNPJ hoje:",
+    "",
+    "🔗 https://entr.ai/prosfec-creditopessoal",
+    "",
+    "O acesso é gratuito. Dá uma olhada nas propostas que vão aparecer e me chama aqui se precisar de ajuda para escolher a melhor opção!"
   ].join("\n");
 }
 
