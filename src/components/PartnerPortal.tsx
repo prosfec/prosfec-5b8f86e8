@@ -5129,8 +5129,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       <div className="mt-2.5 border-t border-emerald-800/60 pt-2 flex items-center gap-2 relative z-10">
         <div className="bg-emerald-950/40 border border-emerald-800/40 px-2 py-1.5 rounded-lg flex-1 min-w-0">
-          <span className="text-[9px] text-emerald-300/90 uppercase block font-bold tracking-wider">Comissão</span>
-          {isFranquiaDigital(currentPartner?.plano) ? (
+          <span className="text-[9px] text-emerald-300/90 uppercase block font-bold tracking-wider">{isEnergiaOnly ? "Comissão após meta" : "Comissão"}</span>
+          {isEnergiaOnly ? (
+            <span className="text-xs font-extrabold text-emerald-100 font-mono block truncate">
+              5% a 9%
+            </span>
+          ) : isFranquiaDigital(currentPartner?.plano) ? (
             <span className="text-xs font-extrabold text-emerald-100 font-mono block truncate" title="3,0% Direto · Equipe: 1,5% Exec / 2,5% Start">
               3,0% Direto
             </span>
