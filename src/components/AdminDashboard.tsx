@@ -3118,7 +3118,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     { value: "novo", label: "Novo" },
     { value: "atendimento", label: "Atendimento" },
     { value: "concluido", label: "Concluído" },
-    { value: "arquivado", label: "Arquivado" }
+    { value: "arquivado", label: "Cancelado" }
   ];
 
   const energiaStatusBadge = (status: string) =>
