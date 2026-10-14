@@ -499,7 +499,11 @@ const executeCacaLeadsClientSide = async (keyword: string, city: string, limit: 
     categoria: item.primaryTypeDisplayName?.text || keyword,
     nota: item.rating ?? null,
     avaliacoes: item.userRatingCount ?? 0,
-    mapsUrl: item.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((item.displayName?.text || "") + " " + city)}`
+    mapsUrl: item.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((item.displayName?.text || "") + " " + city)}`,
+    businessStatus: item.businessStatus || "",
+    abertoAgora: typeof item.currentOpeningHours?.openNow === "boolean" ? item.currentOpeningHours.openNow : null,
+    bairro: (item.addressComponents || []).find((c: any) => (c.types || []).includes("sublocality") || (c.types || []).includes("sublocality_level_1"))?.longText || "",
+    cep: (item.addressComponents || []).find((c: any) => (c.types || []).includes("postal_code"))?.longText || ""
   }));
 
   return {
@@ -9301,8 +9305,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {huntResults.map((place) => {
                           const placeId = place.id;
                           const hasPhone = !!place.telefone;
-                          const cnpjData = cnpjDetailsMap[placeId];
-                          const isCnpjQuerying = cnpjQueryLoading[placeId];
+                          const cnpjData: any = null;
                           const isSelected = selectedHuntPlaces.includes(placeId);
 
                           // Standardized introductory message for WhatsApp pitch (Raio-X do CNPJ + auditoria subsidiada via energia)
@@ -9364,27 +9367,21 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 )}
                               </div>
 
-                              {/* CNPJ Badge if enriched */}
-                              {cnpjData ? (
-                                <div className="bg-emerald-50 border border-emerald-200/80 p-2.5 rounded-xl space-y-1 text-[10px]">
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-extrabold text-emerald-900 flex items-center gap-1">
-                                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                                      CNPJ: {cnpjData.cnpj}
-                                    </span>
-                                    <span className="bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded text-[8px]">
-                                      {cnpjData.situacaoCadastral}
-                                    </span>
-                                  </div>
-                                  <p className="text-emerald-800 font-semibold truncate">
-                                    <strong>Razão Social:</strong> {cnpjData.razaoSocial}
-                                  </p>
-                                  <div className="flex items-center gap-3 text-emerald-700 font-medium text-[9px]">
-                                    <span>Porte: <strong>{cnpjData.porte}</strong></span>
-                                    <span>Abertura: <strong>{cnpjData.dataAbertura || "N/I"}</strong></span>
-                                  </div>
+                              {/* Status de funcionamento (Google Places) */}
+                              {(place.businessStatus === "CLOSED_PERMANENTLY" || place.businessStatus === "CLOSED_TEMPORARILY" || place.abertoAgora !== null && place.abertoAgora !== undefined) && (
+                                <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold">
+                                  {place.businessStatus === "CLOSED_PERMANENTLY" ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">Fechado permanentemente</span>
+                                  ) : place.businessStatus === "CLOSED_TEMPORARILY" ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Fechado temporariamente</span>
+                                  ) : place.abertoAgora ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Aberto agora</span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">Fechado agora</span>
+                                  )}
+                                  {place.bairro && <span className="px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200">{place.bairro}</span>}
                                 </div>
-                              ) : null}
+                              )}
 
                               {/* Details info */}
                               <div className="space-y-1.5 text-[11px] text-slate-500 font-medium">
@@ -9418,30 +9415,17 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     </a>
                                   </p>
                                 )}
+                                {place.mapsUrl && (
+                                  <p className="flex items-center gap-1">
+                                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                    <a href={place.mapsUrl} target="_blank" rel="noreferrer" className="hover:underline text-blue-600 font-semibold">Ver no Google Maps</a>
+                                  </p>
+                                )}
                               </div>
 
                               {/* Actions Bar */}
                               <div className="pt-2.5 border-t border-slate-100 space-y-2">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  {/* CNPJ Lookup Button */}
-                                  <button
-                                    onClick={() => handleFetchCnpj(place)}
-                                    disabled={isCnpjQuerying}
-                                    className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                                  >
-                                    {isCnpjQuerying ? (
-                                      <>
-                                        <RefreshCw className="w-3 h-3 animate-spin text-blue-600" />
-                                        Buscando CNPJ...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <FileText className="w-3 h-3 text-blue-600" />
-                                        {cnpjData ? "Ver Ficha CNPJ" : "Consultar CNPJ"}
-                                      </>
-                                    )}
-                                  </button>
-
 {/* Cadastrar Lead PROSFEC Direct Button */}
 {!isEnergiaOnly && (
                                   <button
