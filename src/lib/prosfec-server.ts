@@ -1369,7 +1369,7 @@ export function createExpressApp() {
     validateText?: (text: string) => boolean,
   ) {
     // Modelos mais rápidos primeiro; nunca usar modelos "pro" nesta rota.
-    const candidateModels = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
+    const candidateModels = ["gemini-3.1-flash-lite", "gemini-flash-lite-latest", "gemini-flash-latest"];
     let lastError: any = null;
 
     for (const modelName of candidateModels) {
