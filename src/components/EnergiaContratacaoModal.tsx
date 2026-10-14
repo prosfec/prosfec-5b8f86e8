@@ -247,6 +247,7 @@ export default function EnergiaContratacaoModal({
       setBusca("");
       setRegiao("Todas");
       setDicasAbertas(false);
+      setOrdem("desconto");
     }
   }, [open]);
 
@@ -285,7 +286,7 @@ export default function EnergiaContratacaoModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative my-auto w-full max-w-4xl overflow-hidden rounded-[22px] border border-white/10 bg-[#080B10] shadow-[0_30px_90px_rgba(0,0,0,0.7)]">
+      <div className="relative my-auto w-full max-w-4xl overflow-hidden rounded-[22px] border border-white/10 bg-[#070D0B] shadow-[0_30px_90px_rgba(0,0,0,0.7)]">
         {/* Cabeçalho */}
         <div className="flex items-center justify-between gap-3 border-b border-white/[0.07] bg-[#0B0F14] px-5 py-4">
           <div className="flex items-center gap-3">
