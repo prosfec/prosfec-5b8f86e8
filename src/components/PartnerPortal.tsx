@@ -1960,53 +1960,52 @@ export default function PartnerPortal({
 
 
   const renderEnergiaSolarPanel = () => {
-                        const energiaCounts = energiaLeads.reduce((acc: Record<string, number>, l: any) => {
+                        const energiaByStatus: Record<string, any[]> = { novo: [], atendimento: [], concluido: [], arquivado: [] };
+                        for (const l of energiaLeads as any[]) {
                           const k = l.status || "novo";
-                          acc[k] = (acc[k] || 0) + 1;
-                          return acc;
-                        }, {});
-                        const energiaFiltered = energiaStatusFilter === "todos"
-                          ? energiaLeads
-                          : energiaLeads.filter((l: any) => (l.status || "novo") === energiaStatusFilter);
+                          (energiaByStatus[k] || (energiaByStatus[k] = [])).push(l);
+                        }
+                        const consumoTotal = (energiaByStatus.concluido || []).reduce((acc: number, l: any) => acc + (Number(l.consumoKwhMes) || 0), 0);
+                        const COLS = [
+                          { key: "novo", label: "Novos", dot: "bg-slate-400" },
+                          { key: "atendimento", label: "Em Atendimento", dot: "bg-sky-500" },
+                          { key: "concluido", label: "Concluídos", dot: "bg-emerald-500" },
+                          { key: "arquivado", label: "Arquivados", dot: "bg-slate-300" },
+                        ];
                         return (
-                      <div className="bg-amber-50/40 border border-amber-200/60 p-4 rounded-2xl space-y-3">
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <h4 className="font-black text-[10px] text-amber-700 uppercase tracking-wide flex items-center gap-1.5">
-                            <Zap className="w-3.5 h-3.5 text-amber-500 fill-current" />
-                            Leads em Processo de Energia Solar
-                            <span className="bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-full text-[9px]">
-                              {energiaLeads.length}
-                            </span>
-                          </h4>
+                      <div className="space-y-5">
+                        <div className="flex items-end justify-between gap-3 flex-wrap">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Energia Solar</p>
+                            <h3 className="font-display text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                              <span className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
+                                <Zap className="w-4 h-4 text-emerald-400 fill-current" />
+                              </span>
+                              Esteira de Leads
+                            </h3>
+                          </div>
                           <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setEnergiaManualOpen(o => !o)}
-                              className="px-2.5 py-1.5 bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer transition-all"
-                            >
-                              <Plus className="w-3 h-3" />
-                              Cadastrar Lead
-                            </button>
                             <button
                               onClick={() => currentPartner && fetchEnergiaLeads(currentPartner.id)}
                               disabled={energiaLoading}
-                              className="text-[10px] font-extrabold text-amber-700 hover:text-amber-900 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                             >
-                              <RefreshCw className={`w-3 h-3 ${energiaLoading ? "animate-spin" : ""}`} />
+                              <RefreshCw className={`w-3.5 h-3.5 ${energiaLoading ? "animate-spin" : ""}`} />
                               Atualizar
                             </button>
                             <button
-                              onClick={() => setEnergiaPanelOpen(o => !o)}
-                              className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer transition-all"
+                              onClick={() => setEnergiaManualOpen(o => !o)}
+                              className="h-9 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                             >
-                              <ChevronDown className={`w-3 h-3 transition-transform ${energiaPanelOpen ? "rotate-180" : ""}`} />
-                              {energiaPanelOpen ? "Recolher" : `Ver Leads Salvos (${energiaLeads.length})`}
+                              <Plus className="w-3.5 h-3.5" />
+                              Cadastrar Lead
                             </button>
                           </div>
                         </div>
 
                         {energiaManualOpen && (
-                          <div className="bg-white border border-amber-200 rounded-xl p-3 space-y-2">
-                            <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">
+                          <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-sm">
+                            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                               Cadastro manual de cliente
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -2014,34 +2013,34 @@ export default function PartnerPortal({
                                 value={energiaManualForm.nome}
                                 onChange={e => setEnergiaManualForm(f => ({ ...f, nome: e.target.value }))}
                                 placeholder="Nome completo"
-                                className="px-3 py-2 border border-amber-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-amber-400"
+                                className="h-10 px-3 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
                               />
                               <input
                                 value={energiaManualForm.telefone}
                                 onChange={e => setEnergiaManualForm(f => ({ ...f, telefone: maskTelefoneBR(e.target.value) }))}
                                 placeholder="(00) 00000-0000"
                                 inputMode="numeric"
-                                className="px-3 py-2 border border-amber-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-amber-400"
+                                className="h-10 px-3 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
                               />
                               <input
                                 value={energiaManualForm.email}
                                 onChange={e => setEnergiaManualForm(f => ({ ...f, email: e.target.value }))}
                                 placeholder="E-mail (opcional)"
                                 type="email"
-                                className="px-3 py-2 border border-amber-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-amber-400"
+                                className="h-10 px-3 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
                               />
                             </div>
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={handleCadastrarEnergiaManual}
                                 disabled={energiaManualSaving}
-                                className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                                className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs cursor-pointer disabled:opacity-50"
                               >
                                 {energiaManualSaving ? "Salvando..." : "Salvar Lead"}
                               </button>
                               <button
                                 onClick={() => { setEnergiaManualOpen(false); setEnergiaManualForm({ nome: "", telefone: "", email: "" }); }}
-                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-extrabold text-[10px] cursor-pointer"
+                                className="h-9 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg font-semibold text-xs cursor-pointer"
                               >
                                 Cancelar
                               </button>
@@ -2049,110 +2048,96 @@ export default function PartnerPortal({
                           </div>
                         )}
 
-
-
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {(["todos", "novo", "atendimento", "concluido", "arquivado"] as const).map(st => {
-                            const total = st === "todos" ? energiaLeads.length : (energiaCounts[st] || 0);
-                            const active = energiaStatusFilter === st;
-                            return (
-                              <button
-                                key={st}
-                                onClick={() => { setEnergiaStatusFilter(st); setEnergiaPanelOpen(true); }}
-                                className={`px-2 py-1 rounded-full border font-extrabold text-[9px] uppercase tracking-wide cursor-pointer transition-all ${
-                                  active ? "bg-amber-500 border-amber-500 text-white" : "bg-white border-amber-200 text-amber-700 hover:bg-amber-100"
-                                }`}
-                              >
-                                {st === "todos" ? "Todos" : (ENERGIA_STATUS_LABELS[st] || st)} ({total})
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Régua de desempenho e ciclo mensal de pagamento */}
-                        <div className="bg-white border border-amber-200/70 rounded-2xl p-3 space-y-2.5">
-                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-3">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-slate-200 rounded-xl overflow-hidden border border-slate-200">
                             {[
-                              { label: "Leads Enviados", valor: String(energiaLeads.length) },
-                              { label: "Em Atendimento", valor: String(energiaCounts["atendimento"] || 0) },
-                              { label: "Contratos Fechados", valor: String(energiaCounts["concluido"] || 0) },
-                              { label: "Consumo Negociado", valor: `${energiaLeads.filter((l: any) => (l.status || "novo") === "concluido").reduce((acc: number, l: any) => acc + (Number(l.consumoKwhMes) || 0), 0).toLocaleString("pt-BR")} kWh/mês` },
-                              { label: "Comissão do Ciclo", valor: formatCurrencyBRL(energiaComissaoAcumulada) }
-
-
+                              { label: "Leads Totais", valor: String(energiaLeads.length) },
+                              { label: "Em Atendimento", valor: String(energiaByStatus.atendimento.length) },
+                              { label: "Contratos Fechados", valor: String(energiaByStatus.concluido.length) },
+                              { label: "Consumo Negociado", valor: `${consumoTotal.toLocaleString("pt-BR")}`, sufixo: "kWh/mês" },
                             ].map(item => (
-                              <div key={item.label} className="bg-amber-50/60 border border-amber-100 rounded-xl p-2">
-                                <p className="text-[8px] font-black text-amber-600 uppercase tracking-wide">{item.label}</p>
-                                <p className="font-black text-sm text-slate-800 mt-0.5">{item.valor}</p>
+                              <div key={item.label} className="bg-white p-4">
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em]">{item.label}</p>
+                                <p className="font-display text-2xl font-bold text-slate-900 mt-1 tabular-nums">
+                                  {item.valor}{item.sufixo && <span className="text-xs font-medium text-slate-400 ml-1">{item.sufixo}</span>}
+                                </p>
                               </div>
                             ))}
                           </div>
 
-                          <div className="bg-amber-50/70 border border-amber-100 rounded-xl px-2.5 py-2">
-                            <p className="text-[9px] font-black text-amber-700 uppercase tracking-wide">Ciclo Mensal de Comissões</p>
-                            <p className="text-[10px] font-semibold text-slate-600 mt-0.5 leading-relaxed">
-                              Vendas apuradas até o dia 10 • Pagamento no dia 25
-                            </p>
-                          </div>
-
-                          {isJanelaSaqueMensal() && energiaComissaoAcumulada > 0 ? (
-                            !energiaSaqueOpen ? (
-                              <button
-                                onClick={() => setEnergiaSaqueOpen(true)}
-                                className="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-[11px] cursor-pointer transition-all"
-                              >
-                                Solicitar Pagamento do Ciclo ({formatCurrencyBRL(energiaComissaoAcumulada)})
-                              </button>
-
-                            ) : (
-                              <div className="space-y-2">
-                                <input
-                                  type="text"
-                                  value={energiaSaquePix}
-                                  onChange={(e) => setEnergiaSaquePix(e.target.value)}
-                                  placeholder="Sua chave PIX (CPF, CNPJ, e-mail, celular ou aleatória)"
-                                  className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
-                                />
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={handleSolicitarSaqueEnergia}
-                                    disabled={energiaSaqueSubmitting || !energiaSaquePix.trim()}
-                                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg font-extrabold text-[11px] cursor-pointer flex items-center gap-1.5"
-                                  >
-                                    {energiaSaqueSubmitting && <RefreshCw className="w-3 h-3 animate-spin" />}
-                                    Confirmar Solicitação
-                                  </button>
-                                  <button
-                                    onClick={() => setEnergiaSaqueOpen(false)}
-                                    className="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-extrabold text-[11px] cursor-pointer"
-                                  >
-                                    Cancelar
-                                  </button>
-                                </div>
+                          <div className="rounded-xl bg-slate-900 text-white p-4 flex flex-col gap-3">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Comissão do Ciclo</p>
+                                <p className="font-display text-2xl font-bold tabular-nums mt-1">{formatCurrencyBRL(energiaComissaoAcumulada)}</p>
                               </div>
-                            )
-                          ) : (
-                            <div className="w-full px-3 py-2 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl font-extrabold text-[10px] text-center">
-                              🔒 Pagamentos liberados todo dia 25 • {proximoPagamentoEnergiaLabel()}
+                              <span className="text-[10px] text-slate-400 text-right leading-tight">Fechamento dia 10<br />Pagamento dia 25</span>
                             </div>
-                          )}
+                            {isJanelaSaqueMensal() && energiaComissaoAcumulada > 0 ? (
+                              !energiaSaqueOpen ? (
+                                <button
+                                  onClick={() => setEnergiaSaqueOpen(true)}
+                                  className="h-9 w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg font-semibold text-xs cursor-pointer transition-colors"
+                                >
+                                  Solicitar Pagamento do Ciclo
+                                </button>
+                              ) : (
+                                <div className="space-y-2">
+                                  <input
+                                    type="text"
+                                    value={energiaSaquePix}
+                                    onChange={(e) => setEnergiaSaquePix(e.target.value)}
+                                    placeholder="Sua chave PIX"
+                                    className="h-9 w-full px-3 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                                  />
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={handleSolicitarSaqueEnergia}
+                                      disabled={energiaSaqueSubmitting || !energiaSaquePix.trim()}
+                                      className="flex-1 h-9 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 rounded-lg font-semibold text-xs cursor-pointer flex items-center justify-center gap-1.5"
+                                    >
+                                      {energiaSaqueSubmitting && <RefreshCw className="w-3 h-3 animate-spin" />}
+                                      Confirmar
+                                    </button>
+                                    <button
+                                      onClick={() => setEnergiaSaqueOpen(false)}
+                                      className="h-9 px-3 border border-slate-700 text-slate-300 rounded-lg font-semibold text-xs cursor-pointer"
+                                    >
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            ) : (
+                              <div className="h-9 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 text-[11px] font-medium">
+                                <Lock className="w-3 h-3 mr-1.5" /> {proximoPagamentoEnergiaLabel()}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-
-
-                        {!energiaPanelOpen ? (
-                          <p className="text-[10px] text-slate-500 font-medium">
-                            {energiaLeads.length === 0
-                              ? <>Nenhum lead enviado para Energia Solar ainda. Use o botão <strong className="text-amber-700">⚡ Energia Solar</strong> nos cards de empresas encontradas na busca.</>
-                              : "Seus leads solares ficam salvos permanentemente aqui. Clique em Ver Leads Salvos para gerenciar."}
-                          </p>
-                        ) : energiaFiltered.length === 0 ? (
-                          <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                            Nenhum lead nesta etapa no momento.
-                          </p>
+                        {energiaLeads.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+                            Nenhum lead de Energia Solar ainda. Use o botão <strong className="text-slate-800">⚡ Energia Solar</strong> no Painel de Oportunidade ou cadastre manualmente.
+                          </div>
                         ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {energiaFiltered.map((lead: any) => {
+                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 items-start">
+                            {COLS.map(col => {
+                              const colLeads = energiaByStatus[col.key] || [];
+                              return (
+                                <div key={col.key} className="rounded-xl bg-slate-100/70 border border-slate-200 flex flex-col min-w-0">
+                                  <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-200">
+                                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                                      <span className={`w-2 h-2 rounded-full ${col.dot}`} />
+                                      {col.label}
+                                    </span>
+                                    <span className="text-[11px] font-semibold text-slate-500 bg-white border border-slate-200 rounded-md px-1.5 tabular-nums">{colLeads.length}</span>
+                                  </div>
+                                  <div className="p-2 space-y-2 max-h-[72vh] overflow-y-auto">
+                                    {colLeads.length === 0 && (
+                                      <p className="text-[11px] text-slate-400 text-center py-6">Sem leads</p>
+                                    )}
+                            {colLeads.map((lead: any) => {
                               const statusKey = lead.status || "novo";
                               const statusStyle =
                                 statusKey === "concluido" ? "bg-emerald-100 text-emerald-800 border-emerald-200"
@@ -2338,9 +2323,6 @@ export default function PartnerPortal({
                                         🚀 Campanha CP (Crédito Pessoal)
                                       </a>
                                     )}
-                                    {propostaEnergiaLeadId === lead.id && (
-                                      <EnergiaContratacaoModal open ocultarVideo onClose={() => setPropostaEnergiaLeadId(null)} />
-                                    )}
                                   </div>
 
                                   <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 flex-wrap">
@@ -2470,7 +2452,14 @@ export default function PartnerPortal({
                                 </div>
                               );
                             })}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
+                        )}
+                        {propostaEnergiaLeadId && (
+                          <EnergiaContratacaoModal open ocultarVideo onClose={() => setPropostaEnergiaLeadId(null)} />
                         )}
                       </div>
                         );
