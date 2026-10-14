@@ -186,6 +186,21 @@ function regiaoDe(c: Concessionaria) {
 
 const DESCONTO_MAXIMO = Math.max(...CONCESSIONARIAS.map((c) => c.desconto));
 
+const COR_REGIAO: Record<string, string> = {
+  Sul: "#3B82F6",
+  Sudeste: "#10B981",
+  Nordeste: "#F97316",
+  "Centro-Oeste": "#8B5CF6",
+  Norte: "#06B6D4",
+  "Sul/Sudeste": "#10B981",
+};
+
+function iniciais(nome: string) {
+  const partes = nome.replace(/[-/]/g, " ").split(/\s+/).filter(Boolean);
+  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+  return (partes[0][0] + partes[1][0]).toUpperCase();
+}
+
 function normalize(value: string) {
   return value
     .normalize("NFD")
@@ -208,6 +223,7 @@ export default function EnergiaContratacaoModal({
   const [regiao, setRegiao] = useState("Todas");
   const [selecionada, setSelecionada] = useState<Concessionaria | null>(null);
   const [dicasAbertas, setDicasAbertas] = useState(false);
+  const [ordem, setOrdem] = useState<"desconto" | "az">("desconto");
 
 
 
@@ -237,7 +253,7 @@ export default function EnergiaContratacaoModal({
 
   const filtradas = useMemo(() => {
     const q = normalize(busca);
-    return CONCESSIONARIAS.filter((c) => {
+    const lista = CONCESSIONARIAS.filter((c) => {
       const r = regiaoDe(c);
       const okRegiao =
         regiao === "Todas" ||
@@ -246,10 +262,15 @@ export default function EnergiaContratacaoModal({
       if (!okRegiao) return false;
       if (!q) return true;
       return (
-        normalize(`${c.nome} ${c.uf} ${r}`).includes(q) || normalize(c.uf) === q
+        normalize(`${c.nome} ${c.uf} ${r} ${iniciais(c.nome)}`).includes(q) || normalize(c.uf) === q
       );
     });
-  }, [busca, regiao]);
+    return [...lista].sort((a, b) =>
+      ordem === "desconto"
+        ? b.desconto - a.desconto || a.nome.localeCompare(b.nome)
+        : a.nome.localeCompare(b.nome) || a.uf.localeCompare(b.uf),
+    );
+  }, [busca, regiao, ordem]);
 
 
   if (!open) return null;
@@ -392,27 +413,55 @@ export default function EnergiaContratacaoModal({
             )}
 
 
-            {/* Busca */}
-            <div className="mt-6 rounded-[18px] border border-white/[0.08] bg-white/[0.03] p-4 backdrop-blur-xl">
-              <label
-                htmlFor="busca-concessionaria"
-                className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45"
-              >
-                Escolha a distribuidora da sua conta de luz
-              </label>
-              <div className="relative mt-2.5">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[14px] text-white/30">
-                  🔍
-                </span>
+            {/* Cabeçalho da rede + filtros */}
+            <div className={ocultarVideo ? "" : "mt-6"}>
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#10B981]/80">
+                    PROSFEC Energy · Rede de distribuição
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-2.5">
+                    <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-white">
+                      Concessionárias
+                    </h3>
+                    <span className="rounded-full border border-[#10B981]/20 bg-[#10B981]/10 px-2 py-0.5 font-mono text-[10.5px] text-[#34D399]">
+                      {CONCESSIONARIAS.length} ativas
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] p-1">
+                  {(["desconto", "az"] as const).map((o) => (
+                    <button
+                      key={o}
+                      type="button"
+                      onClick={() => setOrdem(o)}
+                      aria-pressed={ordem === o}
+                      className={`rounded-full px-3 py-1 font-mono text-[11px] transition ${
+                        ordem === o ? "bg-[#10B981] font-bold text-[#04110C]" : "text-white/50 hover:text-white"
+                      }`}
+                    >
+                      {o === "desconto" ? "Maior desconto" : "A–Z"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative mt-4">
+                <svg width="14" height="14" viewBox="0 0 16 16" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/35">
+                  <path d="M11.5 11.5L14 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" fill="none" />
+                </svg>
                 <input
                   id="busca-concessionaria"
+                  aria-label="Buscar distribuidora"
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  placeholder="Buscar por nome, estado ou região (ex.: CEMIG, MG, Sul...)"
-                  className="w-full rounded-full border border-white/10 bg-white/[0.04] py-3 pl-11 pr-5 text-[14px] text-white placeholder:text-white/30 outline-none transition focus:border-[#10B981]/50 focus:ring-2 focus:ring-[#10B981]/20"
+                  placeholder="Buscar por nome, sigla ou estado (ex.: CEMIG, MG, Sul)"
+                  className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#0D1915] pl-10 pr-4 text-[13.5px] text-white placeholder:text-white/30 outline-none transition focus:border-[#10B981]/50 focus:ring-2 focus:ring-[#10B981]/15"
                 />
               </div>
-              <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+              <div className="-mx-1 mt-3 flex items-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {REGIOES.map((r) => {
                   const ativo = r === regiao;
                   return (
@@ -421,78 +470,102 @@ export default function EnergiaContratacaoModal({
                       type="button"
                       onClick={() => setRegiao(r)}
                       aria-pressed={ativo}
-                      className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition ${
+                      className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3.5 font-mono text-[11.5px] transition ${
                         ativo
-                          ? "border border-transparent bg-gradient-to-r from-[#10B981] to-[#16C784] text-[#05070A] shadow-[0_6px_20px_-8px_rgba(16,185,129,0.9)]"
-                          : "border border-white/10 bg-white/[0.04] text-white/55 hover:border-[#10B981]/35 hover:text-white"
+                          ? "border-[#10B981] bg-[#10B981] font-bold text-[#04110C]"
+                          : "border-white/[0.08] bg-white/[0.03] text-white/55 hover:border-white/20 hover:text-white"
                       }`}
                     >
+                      {r !== "Todas" && (
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: COR_REGIAO[r] }} />
+                      )}
                       {r}
                     </button>
                   );
                 })}
+                <span className="ml-1 shrink-0 border-l border-white/10 pl-3 font-mono text-[10.5px] text-white/35">
+                  {filtradas.length} resultados
+                </span>
               </div>
             </div>
 
             {/* Lista */}
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {filtradas.map((c) => {
-                const topo = c.desconto >= DESCONTO_MAXIMO;
-                return (
-                  <button
-                    key={c.url}
-                    type="button"
-                    onClick={() => setSelecionada(c)}
-                    aria-label={`Simular com ${c.nome} ${c.uf !== "—" ? c.uf : ""} — ${c.desconto}% de desconto`}
-                    className={`group relative overflow-hidden rounded-[18px] border bg-white/[0.03] px-4 pb-4 pt-4 text-left shadow-[0_8px_28px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:border-[#10B981]/60 hover:shadow-[0_14px_40px_-12px_rgba(16,185,129,0.45)] ${
-                      topo ? "border-[#FACC15]/30" : "border-white/[0.08]"
-                    }`}
-                  >
-                    {topo && (
-                      <span className="absolute right-3 top-3 rounded-full border border-[#FACC15]/35 bg-[#FACC15]/10 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#FDE047]">
-                        Melhor economia
-                      </span>
-                    )}
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#10B981] to-[#0A3D2E] text-[18px] text-[#05070A] shadow-[0_6px_18px_-8px_rgba(16,185,129,0.9)]">
-                        ☀️
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[14.5px] font-bold text-white">
-                          {c.nome}
+            <div className="mt-4 overflow-hidden rounded-2xl border border-[#10B981]/15 bg-[#0A1210]">
+              <div className="hidden grid-cols-[1.7fr_1fr_1fr_0.9fr] gap-4 border-b border-white/[0.06] bg-[#0D1915] px-4 py-2.5 md:grid">
+                {["DISTRIBUIDORA", "REGIÃO", "DESCONTO", ""].map((h, i) => (
+                  <span key={i} className={`font-mono text-[10px] tracking-[0.14em] text-white/40 ${i === 3 ? "text-right" : ""}`}>
+                    {h || "AÇÃO"}
+                  </span>
+                ))}
+              </div>
+              <div className="divide-y divide-white/[0.05]">
+                {filtradas.map((c) => {
+                  const r = regiaoDe(c);
+                  const pct = Math.round((c.desconto / DESCONTO_MAXIMO) * 100);
+                  return (
+                    <button
+                      key={c.url}
+                      type="button"
+                      onClick={() => setSelecionada(c)}
+                      aria-label={`Simular com ${c.nome} ${c.uf !== "—" ? c.uf : ""} — ${c.desconto}% de desconto`}
+                      className="group flex w-full flex-col gap-3 px-4 py-4 text-left transition-colors hover:bg-[#10B981]/[0.05] md:grid md:h-[68px] md:grid-cols-[1.7fr_1fr_1fr_0.9fr] md:items-center md:gap-4 md:py-0"
+                    >
+                      <span className="flex w-full items-center gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#10B981]/20 bg-[#0D1915] font-mono text-[11px] font-bold text-[#34D399] transition group-hover:border-[#10B981]/50">
+                          {iniciais(c.nome)}
                         </span>
-                        <span className="mt-0.5 flex items-center gap-1 text-[11.5px] text-white/45">
-                          <span className="text-[10px]">📍</span>
-                          {c.uf === "—"
-                            ? "Região Sul / Sudeste"
-                            : `${c.uf} · ${regiaoDe(c)}`}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[14px] font-semibold tracking-[-0.01em] text-white">
+                            {c.nome}
+                          </span>
+                          <span className="mt-0.5 flex items-center gap-1.5 font-mono text-[10.5px] text-white/40">
+                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#10B981]" />
+                            Disponível · 100% digital
+                          </span>
                         </span>
-                      </span>
-                      <span className="shrink-0 text-right">
-                        <span className="block text-[22px] font-extrabold leading-none text-[#10B981]">
+                        <span className="font-mono text-[16px] font-bold text-[#34D399] md:hidden">
                           {c.desconto}%
                         </span>
-                        <span className="mt-1 block text-[9.5px] font-bold uppercase tracking-[0.12em] text-white/35">
-                          de desconto
+                      </span>
+
+                      <span className="flex pl-12 md:pl-0">
+                        <span className="inline-flex h-6 items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 font-mono text-[11px] text-white/60">
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ background: COR_REGIAO[r] ?? "#10B981" }} />
+                          {c.uf === "—" ? "Sul / Sudeste" : `${c.uf} · ${r}`}
                         </span>
                       </span>
-                    </div>
-                    <span className="mt-3.5 block h-1 w-full overflow-hidden rounded-full bg-white/[0.07]">
-                      <span
-                        className="block h-full rounded-full bg-gradient-to-r from-[#0A3D2E] via-[#10B981] to-[#16C784]"
-                        style={{
-                          width: `${Math.round((c.desconto / DESCONTO_MAXIMO) * 100)}%`,
-                        }}
-                      />
-                    </span>
-                  </button>
-                );
-              })}
-              {filtradas.length === 0 && (
-                <p className="col-span-full rounded-[14px] border border-white/[0.08] bg-white/[0.03] px-4 py-5 text-center text-[13px] text-white/50">
-                  Nenhuma distribuidora encontrada com esse termo.
-                </p>
-              )}
+
+                      <span className="hidden flex-col gap-1.5 md:flex">
+                        <span className="flex items-baseline gap-1.5">
+                          <span className="font-mono text-[17px] font-bold tracking-tight text-white">{c.desconto}%</span>
+                          <span className="font-mono text-[10px] text-white/35">de redução</span>
+                        </span>
+                        <span className="block h-1 w-24 overflow-hidden rounded-full bg-white/[0.07]">
+                          <span className="block h-full rounded-full bg-gradient-to-r from-[#0A3D2E] to-[#10B981]" style={{ width: `${pct}%` }} />
+                        </span>
+                      </span>
+
+                      <span className="flex w-full justify-end pl-12 md:pl-0">
+                        <span className="inline-flex h-8 items-center rounded-full bg-[#10B981] px-4 font-mono text-[11.5px] font-bold text-[#04110C] shadow-[0_6px_18px_-8px_rgba(16,185,129,0.8)] transition group-hover:bg-[#34D399]">
+                          {ocultarVideo ? "⚡ Gerar proposta" : "Simular e contratar →"}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+                {filtradas.length === 0 && (
+                  <div className="py-12 text-center">
+                    <p className="font-mono text-[12px] text-white/45">Nenhuma distribuidora encontrada para "{busca}"</p>
+                    <button
+                      type="button"
+                      onClick={() => { setBusca(""); setRegiao("Todas"); }}
+                      className="mt-2 font-mono text-[11px] text-[#34D399] underline underline-offset-4"
+                    >
+                      Limpar filtros
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <p className="mt-5 text-[11px] leading-relaxed text-white/30">
