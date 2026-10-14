@@ -1850,3 +1850,13 @@ select option {
 .home-simulator [class*="text-amber-800"] {
   color: #fbbf24;
 }
+
+/* PROSFEC Energy — paleta institucional da página de energia solar */
+@theme {
+  --color-energy-deep: #103B2B;
+  --color-energy-deeper: #0B2A1F;
+  --color-energy-lime: #A3E635;
+  --color-energy-paper: #F5F7F4;
+  --color-energy-ink: #202723;
+  --color-energy-line: #DDE3DC;
+}
