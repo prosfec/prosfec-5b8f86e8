@@ -2048,36 +2048,47 @@ export default function PartnerPortal({
                           </div>
                         )}
 
-                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-3">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-slate-200 rounded-xl overflow-hidden border border-slate-200">
+                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-3">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             {[
-                              { label: "Leads Totais", valor: String(energiaLeads.length) },
-                              { label: "Em Atendimento", valor: String(energiaByStatus.atendimento.length) },
-                              { label: "Contratos Fechados", valor: String(energiaByStatus.concluido.length) },
-                              { label: "Consumo Negociado", valor: `${consumoTotal.toLocaleString("pt-BR")}`, sufixo: "kWh/mês" },
+                              { label: "Leads Totais", valor: String(energiaLeads.length), legenda: "Base solar", Icon: Users, tone: "bg-emerald-50 text-[#00A86B] ring-emerald-100" },
+                              { label: "Em Atendimento", valor: String(energiaByStatus.atendimento.length), legenda: "Em negociação", Icon: Clock, tone: "bg-blue-50 text-blue-600 ring-blue-100" },
+                              { label: "Contratos Fechados", valor: String(energiaByStatus.concluido.length), legenda: "Concluídos", Icon: CheckCircle2, tone: "bg-emerald-50 text-[#00A86B] ring-emerald-100" },
+                              { label: "Consumo Negociado", valor: `${consumoTotal.toLocaleString("pt-BR")}`, sufixo: "kWh/mês", legenda: "Contratos fechados", Icon: Zap, tone: "bg-amber-50 text-amber-600 ring-amber-100" },
                             ].map(item => (
-                              <div key={item.label} className="bg-white p-4">
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em]">{item.label}</p>
-                                <p className="font-display text-2xl font-bold text-slate-900 mt-1 tabular-nums">
-                                  {item.valor}{item.sufixo && <span className="text-xs font-medium text-slate-400 ml-1">{item.sufixo}</span>}
-                                </p>
+                              <div key={item.label} className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col gap-3 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider truncate">{item.label}</p>
+                                  <span className={`w-8 h-8 rounded-xl ring-1 flex items-center justify-center shrink-0 ${item.tone}`}>
+                                    <item.Icon className="w-4 h-4" />
+                                  </span>
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-mono text-2xl font-black text-slate-900 tabular-nums leading-tight truncate">
+                                    {item.valor}{item.sufixo && <span className="text-xs font-semibold text-slate-400 ml-1 font-sans">{item.sufixo}</span>}
+                                  </p>
+                                  <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">{item.legenda}</p>
+                                </div>
                               </div>
                             ))}
                           </div>
 
-                          <div className="rounded-xl bg-slate-900 text-white p-4 flex flex-col gap-3">
-                            <div className="flex items-start justify-between">
+                          <div className="rounded-2xl bg-gradient-to-br from-[#0A3D2E] via-[#072B20] to-[#031A13] border border-emerald-900/60 shadow-md text-white p-4 flex flex-col gap-3">
+                            <div className="flex items-start justify-between gap-2">
                               <div>
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Comissão do Ciclo</p>
-                                <p className="font-display text-2xl font-bold tabular-nums mt-1">{formatCurrencyBRL(energiaComissaoAcumulada)}</p>
+                                <p className="text-[10px] font-semibold text-emerald-200/70 uppercase tracking-wider">Comissão do Ciclo</p>
+                                <p className="font-mono text-2xl font-black tabular-nums mt-1 text-emerald-400">{formatCurrencyBRL(energiaComissaoAcumulada)}</p>
                               </div>
-                              <span className="text-[10px] text-slate-400 text-right leading-tight">Fechamento dia 10<br />Pagamento dia 25</span>
+                              <span className="text-[10px] text-emerald-100/70 text-right leading-tight flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
+                                <span>Fechamento dia 10<br />Pagamento dia 25</span>
+                              </span>
                             </div>
                             {isJanelaSaqueMensal() && energiaComissaoAcumulada > 0 ? (
                               !energiaSaqueOpen ? (
                                 <button
                                   onClick={() => setEnergiaSaqueOpen(true)}
-                                  className="h-9 w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg font-semibold text-xs cursor-pointer transition-colors"
+                                  className="h-9 w-full bg-[#00A86B] hover:bg-[#008f5a] text-white font-black shadow-md rounded-lg font-semibold text-xs cursor-pointer transition-colors"
                                 >
                                   Solicitar Pagamento do Ciclo
                                 </button>
@@ -2088,7 +2099,7 @@ export default function PartnerPortal({
                                     value={energiaSaquePix}
                                     onChange={(e) => setEnergiaSaquePix(e.target.value)}
                                     placeholder="Sua chave PIX"
-                                    className="h-9 w-full px-3 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                                    className="h-9 w-full px-3 bg-black/30 border border-emerald-800/60 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[#00A86B]"
                                   />
                                   <div className="flex items-center gap-2">
                                     <button
@@ -2101,7 +2112,7 @@ export default function PartnerPortal({
                                     </button>
                                     <button
                                       onClick={() => setEnergiaSaqueOpen(false)}
-                                      className="h-9 px-3 border border-slate-700 text-slate-300 rounded-lg font-semibold text-xs cursor-pointer"
+                                      className="h-9 px-3 border border-emerald-800/60 text-emerald-100/80 rounded-lg font-semibold text-xs cursor-pointer"
                                     >
                                       Cancelar
                                     </button>
@@ -2109,7 +2120,7 @@ export default function PartnerPortal({
                                 </div>
                               )
                             ) : (
-                              <div className="h-9 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 text-[11px] font-medium">
+                              <div className="h-9 flex items-center justify-center rounded-lg bg-black/25 border border-emerald-900/60 text-emerald-100/70 text-[11px] font-medium">
                                 <Lock className="w-3 h-3 mr-1.5" /> {proximoPagamentoEnergiaLabel()}
                               </div>
                             )}
