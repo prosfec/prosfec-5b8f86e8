@@ -2166,7 +2166,7 @@ export default function PartnerPortal({
                                 : "#";
                               const energiaFollowUp = precisaFollowUpEnergia(lead);
                               return (
-                                <div key={lead.id} className="bg-white border border-amber-100 rounded-2xl p-3.5 space-y-2.5">
+                                <div key={lead.id} className="bg-white border border-slate-200 rounded-lg p-3 space-y-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 transition-colors">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                       {lead.ramo && (
@@ -2286,7 +2286,7 @@ export default function PartnerPortal({
                                       <button
                                         type="button"
                                         onClick={() => setPropostaEnergiaLeadId(lead.id)}
-                                        className="w-full px-2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                        className="w-full px-2 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-all font-semibold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
                                       >
                                         ⚡ Gerar Proposta
                                       </button>
@@ -2295,7 +2295,7 @@ export default function PartnerPortal({
                                           href={energiaWa}
                                           target="_blank"
                                           rel="noreferrer"
-                                          className="w-full px-2 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                          className="w-full px-2 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg transition-all font-semibold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
                                         >
                                           <Send className="w-3.5 h-3.5 text-white fill-current" />
                                           WhatsApp
@@ -2307,7 +2307,7 @@ export default function PartnerPortal({
                                         href={buildWhatsAppUrl(lead.telefone, buildEnergiaFollowUpWhatsAppMessage(lead.nomeEmpresa))}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                        className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all font-semibold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
                                       >
                                         <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                                         Cobrar Retorno (Follow-up)
@@ -2318,7 +2318,7 @@ export default function PartnerPortal({
                                         href={buildWhatsAppUrl(lead.telefone, buildCampanhaCPWhatsAppMessage(lead.nomeEmpresa))}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="w-full px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                        className="w-full px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 !text-slate-800 text-white rounded-lg transition-all font-semibold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
                                       >
                                         🚀 Campanha CP (Crédito Pessoal)
                                       </a>
@@ -2404,9 +2404,9 @@ export default function PartnerPortal({
                                         setExpandedEnergiaLeadId(isOpen ? null : lead.id);
                                         if (!isOpen) marcarEnergiaLeadVisto(lead);
                                       }}
-                                      className="text-[10px] font-extrabold text-amber-700 hover:text-amber-900 flex items-center gap-1 cursor-pointer"
+                                      className="text-[10px] font-extrabold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
                                     >
-                                      <MessageSquare className="w-3.5 h-3.5 text-amber-600" />
+                                      <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
                                       Anotações & Histórico ({notas.length})
                                     </button>
                                     {isOpen && (
@@ -2416,7 +2416,7 @@ export default function PartnerPortal({
                                             {notas.map((nota: any, idx: number) => {
                                               const daMesa = (nota.papel || "adm") !== "parceiro";
                                               return (
-                                                <div key={idx} className={`border rounded-lg p-1.5 ${daMesa ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-100"}`}>
+                                                <div key={idx} className={`border rounded-lg p-1.5 ${daMesa ? "bg-sky-50 border-sky-100" : "bg-slate-50 border-slate-100"}`}>
                                                   <p className="text-[10px] text-slate-700 font-medium leading-snug whitespace-pre-wrap">{nota.texto}</p>
                                                   <p className="text-[9px] text-slate-400 font-semibold">
                                                     {daMesa ? "Mesa PROSFEC" : (nota.autor || "Parceiro")} • {nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}
@@ -2435,12 +2435,12 @@ export default function PartnerPortal({
                                             value={energiaNotaDraft[lead.id] || ""}
                                             onChange={(e) => setEnergiaNotaDraft(prev => ({ ...prev, [lead.id]: e.target.value }))}
                                             onKeyDown={(e) => { if (e.key === "Enter") handleAddEnergiaNotaParceiro(lead.id); }}
-                                            className="flex-1 bg-white border border-slate-200 text-[10px] px-2.5 py-1.5 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                            className="flex-1 bg-white border border-slate-200 text-[10px] px-2.5 py-1.5 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400"
                                           />
                                           <button
                                             disabled={!energiaNotaDraft[lead.id]?.trim() || energiaNotaSavingId === lead.id}
                                             onClick={() => handleAddEnergiaNotaParceiro(lead.id)}
-                                            className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer"
                                           >
                                             {energiaNotaSavingId === lead.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
                                             Salvar
