@@ -270,13 +270,75 @@ export function createExpressApp() {
       results: []
     });
   });
+  // Limitador de taxa: no máximo 2 consultas externas de CNPJ por segundo
+  let cnpjThrottleChain: Promise<void> = Promise.resolve();
+  function cnpjThrottle(): Promise<void> {
+    const next = cnpjThrottleChain.then(() => new Promise<void>((r) => setTimeout(r, 500)));
+    const turn = cnpjThrottleChain;
+    cnpjThrottleChain = next;
+    return turn;
+  }
+  async function throttledFetch(url: string, init: RequestInit): Promise<Response> {
+    await cnpjThrottle();
+    return fetch(url, init);
+  }
+  const CNPJ_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 dias
+
+  // Dados extras (formato BrasilAPI / MinhaReceita)
+  function extraFromBrasilApi(data: any) {
+    const fone2 = String(data.ddd_telefone_2 || "");
+    const mf = data.identificador_matriz_filial;
+    return {
+      tipoEstabelecimento: data.descricao_identificador_matriz_filial || (mf === 1 ? "MATRIZ" : mf === 2 ? "FILIAL" : ""),
+      opcaoSimples: data.opcao_pelo_simples === true ? true : data.opcao_pelo_simples === false ? false : null,
+      opcaoMei: data.opcao_pelo_mei === true ? true : data.opcao_pelo_mei === false ? false : null,
+      dataSituacaoCadastral: data.data_situacao_cadastral || "",
+      motivoSituacaoCadastral: data.descricao_motivo_situacao_cadastral || "",
+      complemento: data.complemento || "",
+      cep: data.cep ? String(data.cep).replace(/\D/g, "").replace(/^(\d{5})(\d{3})$/, "$1-$2") : "",
+      telefone2: fone2.length >= 10 ? `(${fone2.slice(0, 2)}) ${fone2.slice(2)}` : "",
+      cnaesSecundarios: (data.cnaes_secundarios || [])
+        .filter((c: any) => c && c.codigo)
+        .map((c: any) => ({ codigo: String(c.codigo), descricao: c.descricao || "" })),
+      sociosDetalhados: (data.qsa || []).map((s: any) => ({
+        nome: s.nome_socio || s.nome || "",
+        qualificacao: s.qualificacao_socio || "Sócio",
+        dataEntrada: s.data_entrada_sociedade || "",
+        faixaEtaria: s.faixa_etaria || "",
+      })),
+    };
+  }
+
+  // Dados extras (formato ReceitaWS)
+  function extraFromReceitaWs(data: any) {
+    return {
+      tipoEstabelecimento: data.tipo || "",
+      opcaoSimples: data.simples ? !!data.simples.optante : null,
+      opcaoMei: data.simei ? !!data.simei.optante : null,
+      dataSituacaoCadastral: data.data_situacao || "",
+      motivoSituacaoCadastral: data.motivo_situacao || "",
+      complemento: data.complemento || "",
+      cep: data.cep || "",
+      telefone2: "",
+      cnaesSecundarios: (data.atividades_secundarias || [])
+        .filter((c: any) => c && c.code && c.code !== "00.00-0-00")
+        .map((c: any) => ({ codigo: c.code, descricao: c.text || "" })),
+      sociosDetalhados: (data.qsa || []).map((s: any) => ({
+        nome: s.nome || "",
+        qualificacao: s.qual || "Sócio",
+        dataEntrada: "",
+        faixaEtaria: "",
+      })),
+    };
+  }
+
     // Helper to fetch and normalize CNPJ details from multiple public APIs (BrasilAPI, ReceitaWS, MinhaReceita)
   async function fetchCnpjFromPublicApis(cleanCnpj: string): Promise<any | null> {
     if (!cleanCnpj || cleanCnpj.length !== 14) return null;
 
     // 1. Try BrasilAPI
     try {
-      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`, {
+      const response = await throttledFetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
         signal: AbortSignal.timeout(3500)
       });
@@ -305,7 +367,8 @@ export function createExpressApp() {
           })),
           qsa: data.qsa || [],
           telefone: data.ddd_telefone_1 ? `(${data.ddd_telefone_1.slice(0, 2)}) ${data.ddd_telefone_1.slice(2)}` : "",
-          email: data.email || ""
+          email: data.email || "",
+          ...extraFromBrasilApi(data)
         };
       }
     } catch (e) {
@@ -314,7 +377,7 @@ export function createExpressApp() {
 
     // 2. Fallback: ReceitaWS
     try {
-      const response = await fetch(`https://receitaws.com.br/v1/cnpj/${cleanCnpj}`, {
+      const response = await throttledFetch(`https://receitaws.com.br/v1/cnpj/${cleanCnpj}`, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
         signal: AbortSignal.timeout(3500)
       });
@@ -344,7 +407,8 @@ export function createExpressApp() {
             })),
             qsa: data.qsa || [],
             telefone: data.telefone || "",
-            email: data.email || ""
+            email: data.email || "",
+          ...extraFromReceitaWs(data)
           };
         }
       }
@@ -354,7 +418,7 @@ export function createExpressApp() {
 
     // 3. Fallback: MinhaReceita
     try {
-      const response = await fetch(`https://minhareceita.org/${cleanCnpj}`, {
+      const response = await throttledFetch(`https://minhareceita.org/${cleanCnpj}`, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
         signal: AbortSignal.timeout(3500)
       });
@@ -383,7 +447,8 @@ export function createExpressApp() {
           })),
           qsa: data.qsa || [],
           telefone: data.ddd_telefone_1 ? `(${data.ddd_telefone_1.slice(0, 2)}) ${data.ddd_telefone_1.slice(2)}` : "",
-          email: data.email || ""
+          email: data.email || "",
+          ...extraFromBrasilApi(data)
         };
       }
     } catch (e) {
@@ -481,7 +546,37 @@ export function createExpressApp() {
     return Array.from(found);
   }
 
-  // Etapa 3 — busca assistida por IA com pesquisa Google (somente lista de CNPJs)
+  // Etapa 3 — busca web pública (DuckDuckGo) por nome + cidade
+  async function discoverCnpjFromWebSearch(nomeEmpresa: string, cidade?: string, estado?: string): Promise<string[]> {
+    const q = [`"${nomeEmpresa}"`, cidade || "", estado || "", "CNPJ"].filter(Boolean).join(" ");
+    const urls = [
+      `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`,
+      `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(q)}`,
+    ];
+    for (const url of urls) {
+      try {
+        const resp = await fetch(url, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+            "Accept-Language": "pt-BR,pt;q=0.9",
+          },
+          signal: AbortSignal.timeout(6000),
+        });
+        if (!resp.ok) continue;
+        const html = (await resp.text()).slice(0, 500_000);
+        const found = Array.from(new Set(extractCnpjDigits(html))).slice(0, 6);
+        if (found.length > 0) {
+          console.log(`[CNPJ Discovery] ${found.length} candidato(s) via busca web.`);
+          return found;
+        }
+      } catch {
+        // busca indisponível — tenta a próxima
+      }
+    }
+    return [];
+  }
+
+  // Etapa 4 — busca assistida por IA com pesquisa Google (somente lista de CNPJs)
   async function discoverCnpjWithAiSearch(
     nomeEmpresa: string,
     cidade?: string,
@@ -553,7 +648,11 @@ export function createExpressApp() {
       (await discoverCnpjFromWebsite(website)).forEach((c) => candidateCnpjs.add(c));
       if (candidateCnpjs.size > 0) return Array.from(candidateCnpjs);
 
-      // 3. Busca assistida por IA com pesquisa Google
+      // 3. Busca web pública (sem custo)
+      (await discoverCnpjFromWebSearch(nomeEmpresa, cidade, estado)).forEach((c) => candidateCnpjs.add(c));
+      if (candidateCnpjs.size > 0) return Array.from(candidateCnpjs);
+
+      // 4. Busca assistida por IA (contingência)
       (await discoverCnpjWithAiSearch(nomeEmpresa, cidade, estado, address)).forEach((c) =>
         candidateCnpjs.add(c),
       );
@@ -576,7 +675,7 @@ export function createExpressApp() {
       // Check memory cache if CNPJ is direct
       if (cnpj && cnpj.length === 14 && cnpjCache.has(cnpj)) {
         const cached = cnpjCache.get(cnpj)!;
-        if (Date.now() - cached.timestamp < 3600000) { // 1 hour cache
+        if (Date.now() - cached.timestamp < CNPJ_CACHE_TTL) {
           return res.json({ success: true, cached: true, ...cached.data });
         }
       }
@@ -623,7 +722,7 @@ export function createExpressApp() {
 
           const cached = cnpjCache.get(candidate);
           const result =
-            cached && Date.now() - cached.timestamp < 3600000
+            cached && Date.now() - cached.timestamp < CNPJ_CACHE_TTL
               ? cached.data
               : await fetchCnpjFromPublicApis(candidate);
           if (!result) continue;
