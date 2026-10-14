@@ -2088,7 +2088,7 @@ export default function PartnerPortal({
                               !energiaSaqueOpen ? (
                                 <button
                                   onClick={() => setEnergiaSaqueOpen(true)}
-                                  className="h-9 w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg font-semibold text-xs cursor-pointer transition-colors"
+                                  className="h-9 w-full bg-[#00A86B] hover:bg-[#008f5a] text-white font-black shadow-md rounded-lg font-semibold text-xs cursor-pointer transition-colors"
                                 >
                                   Solicitar Pagamento do Ciclo
                                 </button>
@@ -2099,7 +2099,7 @@ export default function PartnerPortal({
                                     value={energiaSaquePix}
                                     onChange={(e) => setEnergiaSaquePix(e.target.value)}
                                     placeholder="Sua chave PIX"
-                                    className="h-9 w-full px-3 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                                    className="h-9 w-full px-3 bg-black/30 border border-emerald-800/60 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[#00A86B]"
                                   />
                                   <div className="flex items-center gap-2">
                                     <button
@@ -2112,7 +2112,7 @@ export default function PartnerPortal({
                                     </button>
                                     <button
                                       onClick={() => setEnergiaSaqueOpen(false)}
-                                      className="h-9 px-3 border border-slate-700 text-slate-300 rounded-lg font-semibold text-xs cursor-pointer"
+                                      className="h-9 px-3 border border-emerald-800/60 text-emerald-100/80 rounded-lg font-semibold text-xs cursor-pointer"
                                     >
                                       Cancelar
                                     </button>
@@ -2120,7 +2120,7 @@ export default function PartnerPortal({
                                 </div>
                               )
                             ) : (
-                              <div className="h-9 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 text-[11px] font-medium">
+                              <div className="h-9 flex items-center justify-center rounded-lg bg-black/25 border border-emerald-900/60 text-emerald-100/70 text-[11px] font-medium">
                                 <Lock className="w-3 h-3 mr-1.5" /> {proximoPagamentoEnergiaLabel()}
                               </div>
                             )}
