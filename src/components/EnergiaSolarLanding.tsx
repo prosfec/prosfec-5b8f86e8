@@ -1,839 +1,525 @@
 import { useEffect, useState } from "react";
-import heroImg from "@/assets/energia-solar-hero.jpg";
+import heroImg from "@/assets/usina-solar-hero.jpg";
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 
-const CTA_TEXT = "Simule e contrate aqui";
+const NAV = [
+  { label: "Benefícios", href: "#beneficios" },
+  { label: "Como funciona", href: "#como-funciona" },
+  { label: "Segurança", href: "#seguranca" },
+  { label: "Dúvidas", href: "#faq" },
+];
 
-function CtaButton({
-  children,
-  className = "",
-  onClick,
-}: {
-  children?: React.ReactNode;
-  className?: string;
-  onClick?: () => void;
-}) {
+const FOCUS =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-energy-lime focus-visible:ring-offset-2 focus-visible:ring-offset-energy-deep";
+
+function Arrow() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true">
+      <path d="M4 10h11m0 0-4.5-4.5M15 10l-4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PrimaryButton({ children, onClick, className = "" }: { children: React.ReactNode; onClick: () => void; className?: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-[#10B981] px-7 py-4 text-[15px] font-extrabold tracking-tight text-[#05070A] shadow-[0_10px_40px_-10px_rgba(16,185,129,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#16C784] ${className}`}
+      className={`group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-energy-lime px-6 text-[15px] font-bold text-energy-deeper transition-colors hover:bg-[#B5F04F] ${FOCUS} ${className}`}
     >
-      <span className="relative z-10">{children ?? CTA_TEXT}</span>
-      <span className="relative z-10 transition-transform duration-300 group-hover:translate-x-1">
-        →
-      </span>
-      <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-[1200ms] group-hover:translate-x-full" />
+      {children}
+      <Arrow />
     </button>
   );
 }
 
-function SectionTag({ children }: { children: React.ReactNode }) {
+function Eyebrow({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#10B981] backdrop-blur-xl">
+    <p className={`text-[12px] font-bold uppercase tracking-[0.16em] ${dark ? "text-energy-lime" : "text-energy-deep"}`}>
       {children}
+    </p>
+  );
+}
+
+function Icon({ path }: { path: string }) {
+  return (
+    <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-energy-deep text-energy-lime">
+      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+        <path d={path} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </span>
   );
 }
 
-function Glass({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+function Logo({ light = true }: { light?: boolean }) {
   return (
-    <div
-      className={`rounded-[20px] border border-white/[0.08] bg-white/[0.04] shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#10B981]/20 hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] ${className}`}
-    >
-      {children}
-    </div>
+    <span className="flex items-center gap-2.5">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-energy-lime text-energy-deeper">
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+          <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
+        </svg>
+      </span>
+      <span className="leading-none">
+        <span className={`block font-[Manrope,sans-serif] text-[15px] font-extrabold tracking-tight ${light ? "text-white" : "text-energy-ink"}`}>
+          PROSFEC <span className="font-semibold text-energy-lime">Energy</span>
+        </span>
+        <span className={`mt-1 block text-[10px] font-semibold uppercase tracking-[0.18em] ${light ? "text-white/50" : "text-energy-ink/50"}`}>
+          Inteligência energética
+        </span>
+      </span>
+    </span>
   );
 }
 
-const NAV = [
-  { label: "Como Funciona", href: "#como-funciona" },
-  { label: "Vantagens", href: "#pilares" },
-  { label: "Quem Pode Aderir", href: "#para-quem" },
-  { label: "Segurança Jurídica", href: "#seguranca" },
+const BENEFICIOS = [
+  {
+    t: "Economia na conta de energia",
+    d: "Desconto estimado de 15% a 25% sobre a energia compensada, conforme distribuidora e condições do programa.",
+    i: "M4 17l5-5 4 4 7-8M15 8h5v5",
+  },
+  {
+    t: "Sem instalação no imóvel",
+    d: "Nenhuma placa, obra ou equipamento. A energia é gerada em usinas solares participantes.",
+    i: "M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6",
+  },
+  {
+    t: "Contratação digital",
+    d: "Você conhece a proposta e inicia a adesão pela plataforma oficial do parceiro, sem sair de casa.",
+    i: "M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm3 15h2",
+  },
+];
+
+const ETAPAS = [
+  {
+    n: "01",
+    t: "Conheça a solução",
+    d: "Entenda o modelo de energia solar por assinatura e veja se faz sentido para o seu perfil.",
+  },
+  {
+    n: "02",
+    t: "Faça a simulação oficial",
+    d: "Escolha sua distribuidora e simule na plataforma do parceiro operacional, com a sua fatura em mãos.",
+  },
+  {
+    n: "03",
+    t: "Consulte as condições e contrate",
+    d: "Após a simulação, siga com a adesão conforme elegibilidade e disponibilidade apresentadas.",
+  },
+];
+
+const FAQ = [
+  {
+    q: "O que é energia solar por assinatura?",
+    a: "É um modelo de geração compartilhada: usinas solares geram energia que é convertida em créditos e aplicada na sua unidade consumidora pela distribuidora local, reduzindo o valor pago pela energia consumida.",
+  },
+  {
+    q: "Preciso instalar placas solares?",
+    a: "Não. Você não instala equipamentos nem faz obras. A energia é gerada em usinas participantes e chega pela mesma rede que você já utiliza.",
+  },
+  {
+    q: "Como funciona a economia?",
+    a: "Os créditos de energia são oferecidos com desconto estimado de 15% a 25% em relação à tarifa da distribuidora. O percentual efetivo depende da distribuidora, do seu consumo e das condições contratadas.",
+  },
+  {
+    q: "Continuarei recebendo a conta da distribuidora?",
+    a: "Sim. Você continua conectado à distribuidora local, que segue responsável pela rede, pela entrega da energia e pela emissão da fatura.",
+  },
+  {
+    q: "Quais cobranças podem permanecer na fatura?",
+    a: "A distribuidora pode continuar cobrando componentes tarifários, custo de disponibilidade, tributos, taxa de iluminação pública e outros valores aplicáveis. A solução não representa isenção total da conta.",
+  },
+  {
+    q: "Quem pode contratar?",
+    a: "Residências e empresas atendidas pelas distribuidoras participantes, com consumo médio a partir de R$ 100 por mês, sujeitas à análise de elegibilidade do parceiro.",
+  },
+  {
+    q: "Como faço a simulação?",
+    a: "Clique em “Simular minha economia”, selecione sua distribuidora e você será levado à plataforma oficial do parceiro, onde a simulação é feita com base na sua fatura.",
+  },
+  {
+    q: "Quais são as condições de cancelamento?",
+    a: "As condições de permanência e cancelamento constam no contrato apresentado pelo parceiro antes da adesão. Recomendamos a leitura completa antes de aceitar.",
+  },
 ];
 
 export default function EnergiaSolarLanding() {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const abrirModal = () => setModalOpen(true);
+  const abrirModal = () => {
+    setMenuOpen(false);
+    setModalOpen(true);
+  };
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => setScrolled(window.scrollY > 16);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#05070A] font-[Inter,system-ui,sans-serif] text-white antialiased">
-      {/* Fundos decorativos */}
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:40px_40px]" />
-        <div className="absolute -top-40 left-1/4 h-[520px] w-[520px] rounded-full bg-[#10B981]/20 blur-[120px]" />
-        <div className="absolute bottom-0 right-0 h-[420px] w-[420px] rounded-full bg-[#FACC15]/[0.07] blur-[120px]" />
-      </div>
-
-      {/* Header */}
+    <div className="min-h-screen overflow-x-hidden bg-energy-paper font-[Manrope,Inter,system-ui,sans-serif] text-energy-ink antialiased">
+      {/* Cabeçalho */}
       <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "border-b border-white/[0.06] bg-[#05070A]/80 backdrop-blur-[16px]"
-            : "bg-transparent"
+        className={`fixed inset-x-0 top-0 z-50 transition-colors duration-200 ${
+          scrolled || menuOpen ? "border-b border-white/10 bg-energy-deeper/95 backdrop-blur" : "bg-transparent"
         }`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
-          <a href="#hero" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#10B981] to-[#16C784] text-lg text-[#05070A]">
-              ⚡
-            </span>
-            <span className="flex flex-col leading-tight">
-              <span className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-white">
-                PROSFEC <span className="text-[#10B981]">&</span> SUNNE
-              </span>
-              <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-white/40">
-                Energia Inteligente
-              </span>
-            </span>
-
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 lg:h-[72px]">
+          <a href="#topo" className={`rounded-md ${FOCUS}`} aria-label="PROSFEC Energy — início">
+            <Logo />
           </a>
-          <nav className="hidden items-center gap-7 lg:flex">
+          <nav className="hidden items-center gap-8 lg:flex" aria-label="Principal">
             {NAV.map((n) => (
-              <a
-                key={n.href}
-                href={n.href}
-                className="text-[13px] font-semibold text-white/60 transition-colors hover:text-[#10B981]"
-              >
+              <a key={n.href} href={n.href} className={`rounded text-[14px] font-semibold text-white/75 transition-colors hover:text-white ${FOCUS}`}>
                 {n.label}
               </a>
             ))}
           </nav>
-          <button
-            type="button"
-            onClick={abrirModal}
-            className="hidden rounded-full bg-[#10B981] px-5 py-2.5 text-[13px] font-extrabold text-[#05070A] transition-all hover:bg-[#16C784] sm:inline-flex"
-          >
-            Simule e Contrate Agora
-          </button>
+          <div className="flex items-center gap-2">
+            <PrimaryButton onClick={abrirModal} className="hidden min-h-10 px-5 text-[14px] sm:inline-flex">
+              Simular minha economia
+            </PrimaryButton>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-controls="menu-mobile"
+              aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+              className={`flex h-11 w-11 items-center justify-center rounded-lg text-white lg:hidden ${FOCUS}`}
+            >
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden="true">
+                {menuOpen ? (
+                  <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                ) : (
+                  <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
+        {menuOpen && (
+          <nav id="menu-mobile" className="border-t border-white/10 px-5 pb-5 lg:hidden" aria-label="Menu móvel">
+            <ul className="flex flex-col py-2">
+              {NAV.map((n) => (
+                <li key={n.href}>
+                  <a
+                    href={n.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`flex min-h-12 items-center rounded-md text-[16px] font-semibold text-white/85 ${FOCUS}`}
+                  >
+                    {n.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <PrimaryButton onClick={abrirModal} className="w-full sm:hidden">
+              Simular minha economia
+            </PrimaryButton>
+          </nav>
+        )}
       </header>
 
-      <main className="relative z-10">
-        {/* HERO */}
-        <section id="hero" className="relative flex min-h-[100svh] items-center pt-28 pb-20">
-          <div className="absolute inset-0 -z-10">
-            <img
-              src={heroImg}
-              alt="Cidade iluminada conectada a uma grande fazenda solar"
-              width={1920}
-              height={1088}
-              className="h-full w-full object-cover opacity-70"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#05070A] via-[#05070A]/85 to-[#05070A]/40" />
-          </div>
+      <main>
+        {/* Primeira dobra */}
+        <section id="topo" className="relative isolate flex min-h-[640px] items-end overflow-hidden bg-energy-deeper pb-16 pt-32 sm:min-h-[92svh] sm:items-center sm:pb-24">
+          <img
+            src={heroImg}
+            alt="Usina solar em escala industrial com extensas fileiras de módulos fotovoltaicos ao pôr do sol"
+            width={1920}
+            height={1088}
+            fetchPriority="high"
+            className="absolute inset-0 -z-10 h-full w-full object-cover object-[60%_center]"
+          />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-t from-energy-deeper via-energy-deeper/80 to-energy-deeper/30 sm:bg-gradient-to-r sm:from-energy-deeper sm:via-energy-deeper/85 sm:to-energy-deeper/20" />
 
           <div className="mx-auto w-full max-w-7xl px-5">
-            <div className="max-w-4xl">
-              <SectionTag>● Parceria Oficial PROSFEC &amp; SUNNE · Lei 14.300 / ANEEL</SectionTag>
-              <h1 className="mt-6 font-[Manrope,sans-serif] text-[clamp(34px,7vw,86px)] font-extrabold leading-[0.95] tracking-[-0.03em]">
-                A Revolução da Energia Inteligente.
-                <span className="mt-3 block bg-gradient-to-r from-[#10B981] to-[#16C784] bg-clip-text text-transparent">
-                  Economize de 15% a 25% na sua conta de luz todo mês.
-                </span>
+            <div className="max-w-2xl">
+              <Eyebrow dark>Energia solar por assinatura</Eyebrow>
+              <h1 className="mt-5 text-[clamp(36px,6.2vw,72px)] font-extrabold leading-[1.02] tracking-[-0.035em] text-white">
+                Energia inteligente.
+                <span className="block text-energy-lime">Mais economia para você.</span>
               </h1>
-              <p className="mt-7 max-w-[62ch] text-[17px] leading-relaxed text-white/65">
-                Sem gastar um único centavo com placas, obras ou equipamentos. A mesma
-                energia que você já usa, entregue pelos mesmos postes, só que muito mais
-                barata.
+              <p className="mt-6 max-w-[54ch] text-[17px] leading-relaxed text-white/80 sm:text-[18px]">
+                Descubra uma nova forma de economizar na conta de energia com a energia solar por assinatura, sem
+                instalar placas solares no seu imóvel.
               </p>
-              <div className="mt-8 flex flex-wrap gap-2.5">
-                {[
-                  "Zero Custo de Instalação",
-                  "Sem Obras no Imóvel",
-                  "100% Digital em 3 Minutos",
-                ].map((p) => (
-                  <span
-                    key={p}
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[12px] font-semibold text-white/75 backdrop-blur-xl"
-                  >
-                    ✓ {p}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-10 flex flex-wrap items-center gap-4">
-                <CtaButton onClick={abrirModal}>Simule e Contrate Aqui</CtaButton>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <PrimaryButton onClick={abrirModal} className="min-h-[52px] px-7">
+                  Simular minha economia
+                </PrimaryButton>
                 <a
                   href="#como-funciona"
-                  className="rounded-full border border-white/12 bg-white/[0.04] px-7 py-4 text-[15px] font-bold text-white/85 backdrop-blur-xl transition-all hover:border-[#10B981]/30 hover:text-white"
+                  className={`inline-flex min-h-[52px] items-center justify-center rounded-lg border border-white/25 px-7 text-[15px] font-bold text-white transition-colors hover:bg-white/10 ${FOCUS}`}
                 >
-                  Entenda Como Funciona ↓
+                  Entenda como funciona
                 </a>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* PROBLEMA */}
-        <section className="border-t border-white/[0.06] py-24">
-          <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 lg:grid-cols-2">
-            <div>
-              <SectionTag>O Problema</SectionTag>
-              <h2 className="mt-5 font-[Manrope,sans-serif] text-[clamp(28px,5vw,52px)] font-bold leading-[1.02] tracking-[-0.02em]">
-                Você “aluga” energia e paga cada vez mais caro sem ter escolha.
-              </h2>
-              <p className="mt-6 max-w-[62ch] text-[16px] leading-relaxed text-white/60">
-                Historicamente, você sofre com reajustes anuais acima da inflação,
-                bandeiras tarifárias amarela e vermelha que punem o seu consumo e impostos
-                invisíveis. No modelo tradicional da distribuidora, a conta de luz é um
-                ralo de dinheiro imprevisível no qual você não tem nenhum poder de
-                negociação.
-              </p>
-              <Glass className="mt-8 border-l-2 border-l-[#FACC15]/60 p-5">
-                <p className="text-[15px] font-semibold italic text-[#FDE047]">
-                  “A tarifa da distribuidora só sobe. O seu controle sobre ela sempre foi
-                  zero — até hoje.”
-                </p>
-              </Glass>
-            </div>
-            <Glass className="p-7">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
-                    Custo da energia ao longo dos anos
-                  </p>
-                  <p className="mt-1.5 text-[13px] text-white/45">
-                    Tarifa média residencial em R$ por kWh
-                  </p>
-                </div>
-                <span className="rounded-full border border-[#FACC15]/25 bg-[#FACC15]/10 px-3 py-1.5 text-[11px] font-extrabold text-[#FDE047]">
-                  ▲ +69% em 5 anos
-                </span>
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-semibold">
-                <span className="flex items-center gap-2 text-white/55">
-                  <span className="h-2 w-2 rounded-full bg-[#FACC15]" />
-                  Tarifa tradicional da distribuidora
-                </span>
-                <span className="flex items-center gap-2 text-white/55">
-                  <span className="h-2 w-2 rounded-full bg-[#10B981]" />
-                  Com assinatura solar (−15% a −25%)
-                </span>
-              </div>
-
-              <svg
-                viewBox="0 0 480 232"
-                className="mt-5 w-full"
-                role="img"
-                aria-label="Gráfico comparativo da tarifa de energia da distribuidora contra o valor pago com assinatura solar entre 2021 e 2026"
-              >
-                <defs>
-                  <linearGradient id="gradTarifa" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#FACC15" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#FACC15" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient id="gradSolar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-
+              <dl className="mt-12 grid max-w-xl grid-cols-3 gap-4 border-t border-white/15 pt-6">
                 {[
-                  { y: 205, l: "0,40" },
-                  { y: 161.5, l: "0,60" },
-                  { y: 118, l: "0,80" },
-                  { y: 74.6, l: "1,00" },
-                  { y: 31.1, l: "1,20" },
-                ].map((g) => (
-                  <g key={g.l}>
-                    <line
-                      x1="46"
-                      x2="472"
-                      y1={g.y}
-                      y2={g.y}
-                      stroke="#ffffff"
-                      strokeOpacity="0.07"
-                      strokeWidth="1"
-                    />
-                    <text
-                      x="38"
-                      y={g.y + 3.5}
-                      textAnchor="end"
-                      fill="#ffffff"
-                      fillOpacity="0.32"
-                      fontSize="10"
-                      fontWeight="600"
-                    >
-                      {g.l}
-                    </text>
-                  </g>
+                  { k: "15% a 25%", v: "economia estimada*" },
+                  { k: "Zero", v: "obras no imóvel" },
+                  { k: "100%", v: "adesão digital" },
+                ].map((s) => (
+                  <div key={s.v}>
+                    <dt className="sr-only">{s.v}</dt>
+                    <dd className="text-[clamp(18px,3vw,26px)] font-extrabold tracking-tight text-white">{s.k}</dd>
+                    <dd className="mt-1 text-[12px] leading-snug text-white/60 sm:text-[13px]">{s.v}</dd>
+                  </div>
                 ))}
-
-                <path
-                  d="M46,144.1 L130,120.1 L214,102.7 L298,83.1 L382,61.4 L466,41.8 L466,205 L46,205 Z"
-                  fill="url(#gradTarifa)"
-                />
-                <path
-                  d="M46,176.7 L130,157.1 L214,144.1 L298,128.8 L382,111.4 L466,96.2 L466,205 L46,205 Z"
-                  fill="url(#gradSolar)"
-                />
-
-                <polyline
-                  points="46,144.1 130,120.1 214,102.7 298,83.1 382,61.4 466,41.8"
-                  fill="none"
-                  stroke="#FACC15"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <polyline
-                  points="46,176.7 130,157.1 214,144.1 298,128.8 382,111.4 466,96.2"
-                  fill="none"
-                  stroke="#10B981"
-                  strokeWidth="2.5"
-                  strokeDasharray="7 5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-
-                {[
-                  [46, 144.1],
-                  [130, 120.1],
-                  [214, 102.7],
-                  [298, 83.1],
-                  [382, 61.4],
-                  [466, 41.8],
-                ].map(([x, y]) => (
-                  <circle
-                    key={`t${x}`}
-                    cx={x}
-                    cy={y}
-                    r="3.5"
-                    fill="#05070A"
-                    stroke="#FACC15"
-                    strokeWidth="2.5"
-                  />
-                ))}
-                {[
-                  [46, 176.7],
-                  [130, 157.1],
-                  [214, 144.1],
-                  [298, 128.8],
-                  [382, 111.4],
-                  [466, 96.2],
-                ].map(([x, y]) => (
-                  <circle
-                    key={`s${x}`}
-                    cx={x}
-                    cy={y}
-                    r="3.5"
-                    fill="#05070A"
-                    stroke="#10B981"
-                    strokeWidth="2.5"
-                  />
-                ))}
-
-                <text
-                  x="46"
-                  y="132"
-                  fill="#FDE047"
-                  fontSize="11"
-                  fontWeight="800"
-                >
-                  R$ 0,68
-                </text>
-                <text
-                  x="466"
-                  y="30"
-                  textAnchor="end"
-                  fill="#FDE047"
-                  fontSize="12"
-                  fontWeight="800"
-                >
-                  R$ 1,15
-                </text>
-                <text
-                  x="466"
-                  y="114"
-                  textAnchor="end"
-                  fill="#10B981"
-                  fontSize="12"
-                  fontWeight="800"
-                >
-                  R$ 0,90
-                </text>
-
-                {["2021", "2022", "2023", "2024", "2025", "2026"].map((ano, i) => (
-                  <text
-                    key={ano}
-                    x={46 + i * 84}
-                    y="226"
-                    textAnchor={i === 0 ? "start" : i === 5 ? "end" : "middle"}
-                    fill="#ffffff"
-                    fillOpacity="0.35"
-                    fontSize="10"
-                    fontWeight="700"
-                  >
-                    {ano}
-                  </text>
-                ))}
-              </svg>
-
-              <p className="mt-5 text-[13px] leading-relaxed text-white/45">
-                Reajustes, bandeiras tarifárias e tributos em cascata seguem pressionando
-                a sua fatura ano após ano. Com a assinatura, a linha verde mostra o quanto
-                você deixa de pagar todos os meses.
+              </dl>
+              <p className="mt-4 text-[12px] text-white/50">
+                *Estimativa sujeita à elegibilidade, à distribuidora e às condições comerciais vigentes.
               </p>
-              <p className="mt-3 text-[11px] leading-relaxed text-white/30">
-                Fonte: histórico de tarifas homologadas pela ANEEL e projeções de mercado.
-                Valores médios ilustrativos, variáveis por distribuidora.
-              </p>
-            </Glass>
+            </div>
           </div>
         </section>
 
-        {/* SOLUÇÃO */}
-        <section className="border-t border-white/[0.06] py-24">
+        {/* Benefícios */}
+        <section id="beneficios" className="scroll-mt-20 py-20 sm:py-28">
           <div className="mx-auto max-w-7xl px-5">
-            <div className="max-w-3xl">
-              <SectionTag>A Solução</SectionTag>
-              <h2 className="mt-5 font-[Manrope,sans-serif] text-[clamp(28px,5vw,52px)] font-bold leading-[1.02] tracking-[-0.02em]">
-                E se você pudesse ter energia solar sem colocar a mão no bolso?
-              </h2>
-              <p className="mt-6 text-[16px] leading-relaxed text-white/60">
-                Comprar um sistema solar próprio custa de R$ 30.000 a R$ 150.000, exige
-                furar telhado, lidar com risco de infiltração, manutenções e anos para ter
-                retorno. Com a <strong className="text-white">Energia Solar por Assinatura</strong>,
-                a lógica inverteu: geramos energia limpa em usinas de alta tecnologia e
-                injetamos créditos diretamente no seu relógio. Você consome o crédito solar
-                e paga até 25% mais barato.
-              </p>
-            </div>
-
-            <div className="mt-12 grid gap-5 md:grid-cols-2">
-              <Glass className="border-l-2 border-l-red-500/40 p-7">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-red-400/80">
-                  ✕ Sistema próprio antigo
-                </p>
-                <ul className="mt-5 space-y-3 text-[15px] text-white/60">
-                  {[
-                    "Financiamento bancário pesado e anos de retorno",
-                    "Obras barulhentas e furos no telhado",
-                    "Risco de infiltração e dano ao imóvel",
-                    "Manutenção cara por sua conta",
-                  ].map((t) => (
-                    <li key={t} className="flex gap-3">
-                      <span className="text-red-400/70">✕</span>
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </Glass>
-              <Glass className="border-l-2 border-l-[#10B981]/60 p-7">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#10B981]">
-                  ✓ Assinatura inteligente
-                </p>
-                <ul className="mt-5 space-y-3 text-[15px] text-white/75">
-                  {[
-                    "Zero investimento e zero taxa de adesão",
-                    "Ativação 100% digital pelo celular",
-                    "Sem obra e sem placa no seu telhado",
-                    "Desconto de 15% a 25% creditado na fatura",
-                  ].map((t) => (
-                    <li key={t} className="flex gap-3">
-                      <span className="text-[#10B981]">✓</span>
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </Glass>
-            </div>
-
-            <p className="mt-10 text-center text-[17px] font-bold text-[#10B981]">
-              Economia sem obra. Sem investimento. Sem dor de cabeça.
-            </p>
-          </div>
-        </section>
-
-        {/* COMO FUNCIONA */}
-        <section id="como-funciona" className="border-t border-white/[0.06] py-24">
-          <div className="mx-auto max-w-7xl px-5">
-            <div className="max-w-3xl">
-              <SectionTag>Como Funciona</SectionTag>
-              <h2 className="mt-5 font-[Manrope,sans-serif] text-[clamp(28px,5vw,52px)] font-bold leading-[1.02] tracking-[-0.02em]">
-                Geração Compartilhada: 100% automática e invisível na sua rotina.
+            <div className="max-w-2xl">
+              <Eyebrow>Benefícios</Eyebrow>
+              <h2 className="mt-4 text-[clamp(28px,4vw,44px)] font-extrabold leading-[1.1] tracking-[-0.025em]">
+                Economia prática, sem investimento em equipamentos.
               </h2>
             </div>
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                {
-                  n: "01",
-                  t: "Nossas Usinas Geram",
-                  d: "Parques solares de alta potência geram eletricidade limpa em larga escala.",
-                },
-                {
-                  n: "02",
-                  t: "A Distribuidora Transporta",
-                  d: "A energia é injetada na rede local e chega ao seu imóvel pelos mesmos fios que você já tem hoje.",
-                },
-                {
-                  n: "03",
-                  t: "O Crédito é Injetado",
-                  d: "A energia gerada é convertida em créditos oficiais abatidos diretamente do seu consumo.",
-                },
-                {
-                  n: "04",
-                  t: "Sua Economia Real",
-                  d: "Você recebe a fatura com o desconto garantido de 15% a 25%. O dinheiro fica no seu caixa.",
-                },
-              ].map((s) => (
-                <Glass key={s.n} className="p-6">
-                  <span className="font-[Manrope,sans-serif] text-[34px] font-extrabold leading-none text-[#10B981]/30">
-                    {s.n}
-                  </span>
-                  <h3 className="mt-4 text-[17px] font-bold">{s.t}</h3>
-                  <p className="mt-2.5 text-[14px] leading-relaxed text-white/55">{s.d}</p>
-                </Glass>
-              ))}
-            </div>
-            <p className="mt-10 text-center text-[17px] font-bold text-white/85">
-              Nada muda na sua tomada. Só o valor que sai da sua conta bancária.
-            </p>
-          </div>
-        </section>
-
-        {/* PILARES */}
-        <section id="pilares" className="border-t border-white/[0.06] py-24">
-          <div className="mx-auto max-w-7xl px-5">
-            <div className="max-w-3xl">
-              <SectionTag>Os 4 Pilares do Benefício</SectionTag>
-              <h2 className="mt-5 font-[Manrope,sans-serif] text-[clamp(28px,5vw,52px)] font-bold leading-[1.02] tracking-[-0.02em]">
-                Por que líderes de mercado estão migrando agora?
-              </h2>
-            </div>
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                {
-                  i: "💰",
-                  t: "Zero Investimento",
-                  d: "Você não compra peças, não gasta reserva financeira e não paga taxa de matrícula.",
-                },
-                {
-                  i: "🏗️",
-                  t: "Zero Obras & Sem Furos",
-                  d: "Ideal para imóveis próprios ou alugados. Sem permissão de proprietário nem engenheiro.",
-                },
-                {
-                  i: "📉",
-                  t: "Economia de 15% a 25%",
-                  d: "Redução previsível mês após mês, aliviando o custo de empresas e o orçamento de famílias.",
-                },
-                {
-                  i: "🌱",
-                  t: "100% Sustentável",
-                  d: "Sua operação movida a energia renovável, valorizando a sua marca no mercado.",
-                },
-              ].map((p) => (
-                <Glass key={p.t} className="p-6">
-                  <span className="text-[26px]">{p.i}</span>
-                  <h3 className="mt-4 text-[17px] font-bold">{p.t}</h3>
-                  <p className="mt-2.5 text-[14px] leading-relaxed text-white/55">{p.d}</p>
-                </Glass>
+            <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-energy-line bg-energy-line md:grid-cols-3">
+              {BENEFICIOS.map((b) => (
+                <article key={b.t} className="bg-white p-7 sm:p-8">
+                  <Icon path={b.i} />
+                  <h3 className="mt-6 text-[19px] font-bold tracking-tight">{b.t}</h3>
+                  <p className="mt-2.5 text-[15px] leading-relaxed text-energy-ink/70">{b.d}</p>
+                </article>
               ))}
             </div>
           </div>
         </section>
 
-        {/* SEGURANÇA */}
-        <section id="seguranca" className="border-t border-white/[0.06] py-24">
-          <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 lg:grid-cols-2">
-            <div>
-              <SectionTag>Segurança Jurídica</SectionTag>
-              <h2 className="mt-5 font-[Manrope,sans-serif] text-[clamp(28px,5vw,52px)] font-bold leading-[1.02] tracking-[-0.02em]">
-                Regulamentado por Lei Federal, transparente e 100% seguro.
-              </h2>
-              <p className="mt-6 max-w-[62ch] text-[16px] leading-relaxed text-white/60">
-                A Geração Compartilhada é amparada pela{" "}
-                <strong className="text-white">Lei Federal nº 14.300/2022</strong> (Marco
-                Legal da GD) e fiscalizada pela{" "}
-                <strong className="text-white">ANEEL</strong> (Resolução Normativa nº
-                1.000/2021). Você continua conectado à distribuidora oficial da sua cidade:
-                não existe nenhum risco de corte ou falta de energia, pois a estabilidade da
-                rede continua sendo garantida pela concessionária pública.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                { t: "Lei 14.300/2022", d: "Marco Legal da Geração Distribuída" },
-                { t: "ANEEL RN 1.000/2021", d: "Fiscalização e regulação oficial" },
-                { t: "Mesma Distribuidora", d: "Nenhum risco de falta de energia" },
-                { t: "Contrato Digital", d: "Transparente, sem letras miúdas" },
-              ].map((s) => (
-                <Glass key={s.t} className="p-5">
-                  <p className="text-[14px] font-extrabold text-[#FDE047]">{s.t}</p>
-                  <p className="mt-1.5 text-[13px] text-white/50">{s.d}</p>
-                </Glass>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* O QUE MUDA */}
-        <section className="border-t border-white/[0.06] py-24">
+        {/* Como funciona */}
+        <section id="como-funciona" className="scroll-mt-20 bg-white py-20 sm:py-28">
           <div className="mx-auto max-w-7xl px-5">
-            <h2 className="max-w-3xl font-[Manrope,sans-serif] text-[clamp(28px,5vw,52px)] font-bold leading-[1.02] tracking-[-0.02em]">
-              A energia é a mesma. O valor que você paga, não.
-            </h2>
-            <div className="mt-12 grid gap-5 md:grid-cols-2">
-              <Glass className="p-7">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
-                  Modelo tradicional
-                </p>
-                <ul className="mt-5 space-y-3 text-[15px] text-white/55">
-                  {[
-                    "Tarifa cheia da concessionária",
-                    "Bandeiras tarifárias arbitrárias",
-                    "Reajustes surpresa acima da inflação",
-                    "Zero desconto e zero previsibilidade",
-                  ].map((t) => (
-                    <li key={t} className="flex gap-3">
-                      <span className="text-white/25">—</span>
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </Glass>
-              <Glass className="border-[#10B981]/25 bg-[#10B981]/[0.06] p-7">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#10B981]">
-                  Energia solar por assinatura
-                </p>
-                <ul className="mt-5 space-y-3 text-[15px] text-white/80">
-                  {[
-                    "Desconto garantido de 15% a 25%",
-                    "Proteção contra bandeiras tarifárias",
-                    "Créditos solares injetados todo mês",
-                    "Previsibilidade total de custos",
-                  ].map((t) => (
-                    <li key={t} className="flex gap-3">
-                      <span className="text-[#10B981]">✓</span>
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </Glass>
-            </div>
-            <p className="mt-10 text-center text-[17px] font-bold text-[#10B981]">
-              O único impacto na sua rotina será o dinheiro sobrando no seu caixa.
-            </p>
-          </div>
-        </section>
-
-        {/* PARA QUEM */}
-        <section id="para-quem" className="border-t border-white/[0.06] py-24">
-          <div className="mx-auto max-w-7xl px-5">
-            <div className="max-w-3xl">
-              <SectionTag>Quem Pode Aderir</SectionTag>
-              <h2 className="mt-5 font-[Manrope,sans-serif] text-[clamp(28px,5vw,52px)] font-bold leading-[1.02] tracking-[-0.02em]">
-                Inteligência financeira para todos os perfis.
-              </h2>
-              <p className="mt-6 text-[16px] leading-relaxed text-white/60">
-                Se você paga{" "}
-                <strong className="text-[#FDE047]">a partir de R$ 100,00 por mês</strong> de
-                energia (média), você já pode ativar o benefício agora.
-              </p>
-            </div>
-            <div className="mt-12 grid gap-5 md:grid-cols-2">
-              <Glass className="p-7">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#10B981]">
-                  Empresas (B2B)
-                </p>
-                <p className="mt-4 text-[15px] leading-relaxed text-white/65">
-                  Comércios, indústrias, clínicas, academias, supermercados, padarias,
-                  escritórios e agronegócio.
-                </p>
-              </Glass>
-              <Glass className="p-7">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#FDE047]">
-                  Famílias (B2C)
-                </p>
-                <p className="mt-4 text-[15px] leading-relaxed text-white/65">
-                  Casas, apartamentos, condomínios e residências de alto padrão com consumo
-                  moderado ou alto.
-                </p>
-              </Glass>
-            </div>
-          </div>
-        </section>
-
-        {/* ZERO FIDELIDADE */}
-        <section className="border-t border-white/[0.06] py-24">
-          <div className="mx-auto max-w-4xl px-5 text-center">
-            <SectionTag>Zero Fidelidade Abusiva</SectionTag>
-            <h2 className="mt-5 font-[Manrope,sans-serif] text-[clamp(28px,5vw,52px)] font-bold leading-[1.02] tracking-[-0.02em]">
-              O poder de decisão continua 100% nas suas mãos.
-            </h2>
-            <p className="mx-auto mt-6 max-w-[62ch] text-[16px] leading-relaxed text-white/60">
-              Nós não prendemos ninguém com multas contratuais absurdas. Nossa retenção
-              acontece por um motivo simples: a economia no final do mês é real. Você adere
-              sem burocracia e tem total liberdade sobre o seu consumo. Se quiser cancelar,
-              basta solicitar.
-            </p>
-            <p className="mt-8 text-[17px] font-bold text-[#10B981]">
-              Você fica porque o dinheiro está sobrando no seu bolso, não porque um contrato
-              te obriga.
-            </p>
-          </div>
-        </section>
-
-        {/* PASSO A PASSO */}
-        <section className="border-t border-white/[0.06] py-24">
-          <div className="mx-auto max-w-7xl px-5">
-            <h2 className="max-w-3xl font-[Manrope,sans-serif] text-[clamp(28px,5vw,52px)] font-bold leading-[1.02] tracking-[-0.02em]">
-              3 passos para ativar a sua economia hoje.
-            </h2>
-            <div className="mt-12 grid gap-5 md:grid-cols-3">
-              {[
-                {
-                  n: "1",
-                  t: "Envie sua Conta",
-                  d: "Basta anexar uma foto ou PDF da sua última conta de luz.",
-                },
-                {
-                  n: "2",
-                  t: "Veja a Proposta na Tela",
-                  d: "O sistema calcula na hora a sua economia exata em reais.",
-                },
-                {
-                  n: "3",
-                  t: "Ative com Assinatura Digital",
-                  d: "Sem cartório e sem filas. O desconto entra em vigor nas faturas seguintes.",
-                },
-              ].map((s) => (
-                <Glass key={s.n} className="p-7">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#10B981] text-[16px] font-extrabold text-[#05070A]">
-                    {s.n}
-                  </span>
-                  <h3 className="mt-5 text-[18px] font-bold">{s.t}</h3>
-                  <p className="mt-2.5 text-[14px] leading-relaxed text-white/55">{s.d}</p>
-                </Glass>
-              ))}
-            </div>
-            <p className="mt-10 text-center text-[15px] font-semibold text-white/55">
-              100% digital. Sem burocracia. Sem visita técnica no seu imóvel.
-            </p>
-          </div>
-        </section>
-
-        {/* AVERSÃO À PERDA */}
-        <section className="border-t border-white/[0.06] py-24">
-          <div className="mx-auto max-w-4xl px-5 text-center">
-            <h2 className="font-[Manrope,sans-serif] text-[clamp(28px,5vw,52px)] font-bold leading-[1.02] tracking-[-0.02em]">
-              Quanto dinheiro você já deixou na mesa este ano pagando a tarifa cheia?
-            </h2>
-            <p className="mx-auto mt-6 max-w-[62ch] text-[16px] leading-relaxed text-white/60">
-              Cada mês que você passa adiando a migração é um mês jogando de 15% a 25% do
-              valor da sua conta no lixo. Esse é um dinheiro que poderia estar virando lucro
-              no caixa da sua empresa ou conforto para a sua família.
-            </p>
-            <p className="mt-8 text-[17px] font-bold text-[#FDE047]">
-              Continuar no modelo tradicional é uma escolha que custa caro todos os meses.
-            </p>
-          </div>
-        </section>
-
-        {/* CTA FINAL */}
-        <section className="border-t border-white/[0.06] py-24">
-          <div className="mx-auto max-w-5xl px-5">
-            <Glass className="relative overflow-hidden p-8 text-center sm:p-14">
-              <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#10B981]/25 blur-[100px]" />
-              <div className="relative">
-                <h2 className="font-[Manrope,sans-serif] text-[clamp(28px,5vw,54px)] font-extrabold leading-[1.02] tracking-[-0.02em]">
-                  Descubra agora quanto você vai{" "}
-                  <span className="bg-gradient-to-r from-[#10B981] to-[#16C784] bg-clip-text text-transparent">
-                    economizar
-                  </span>
-                  .
+            <div className="grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
+              <div className="max-w-md">
+                <Eyebrow>Como funciona</Eyebrow>
+                <h2 className="mt-4 text-[clamp(28px,4vw,44px)] font-extrabold leading-[1.1] tracking-[-0.025em]">
+                  Três etapas até a sua economia.
                 </h2>
-                <p className="mx-auto mt-6 max-w-[58ch] text-[16px] leading-relaxed text-white/65">
-                  Leva menos de 2 minutos para simular. É 100% gratuito e não exige cartão
-                  de crédito.
+                <p className="mt-5 text-[16px] leading-relaxed text-energy-ink/70">
+                  A energia é gerada em usinas solares, entregue pela mesma rede da sua distribuidora e convertida em
+                  créditos na sua fatura. Nada muda na sua tomada.
                 </p>
-                <div className="mt-9 flex justify-center">
-                  <CtaButton className="px-9 py-5 text-[16px]" onClick={abrirModal}>
-                    Simule e Contrate Aqui
-                  </CtaButton>
-                </div>
-                <div className="mt-8 flex flex-wrap justify-center gap-2.5">
-                  {[
-                    "🔒 Seus dados protegidos pela LGPD",
-                    "⚡ Sem custo de adesão",
-                    "📜 Lei 14.300/2022",
-                  ].map((b) => (
-                    <span
-                      key={b}
-                      className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[12px] font-semibold text-white/65"
-                    >
-                      {b}
-                    </span>
-                  ))}
-                </div>
-                <p className="mx-auto mt-10 max-w-[60ch] text-[14px] italic leading-relaxed text-white/40">
-                  “A inteligência não está em gastar menos energia, mas em pagar menos pela
-                  energia que você já consome.”
-                </p>
+                <PrimaryButton onClick={abrirModal} className="mt-8 w-full bg-energy-deep text-white hover:bg-energy-deeper sm:w-auto">
+                  Simular minha economia
+                </PrimaryButton>
               </div>
-            </Glass>
+              <ol className="relative grid gap-4">
+                {ETAPAS.map((e) => (
+                  <li key={e.n} className="flex gap-5 rounded-2xl border border-energy-line bg-energy-paper p-6 sm:p-7">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-energy-deep/20 bg-white text-[14px] font-extrabold text-energy-deep">
+                      {e.n}
+                    </span>
+                    <div>
+                      <h3 className="text-[18px] font-bold tracking-tight">{e.t}</h3>
+                      <p className="mt-1.5 text-[15px] leading-relaxed text-energy-ink/70">{e.d}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        {/* Visual de economia */}
+        <section className="bg-energy-deep py-20 text-white sm:py-28">
+          <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 lg:grid-cols-2 lg:gap-16">
+            <div>
+              <Eyebrow dark>Entenda a economia</Eyebrow>
+              <h2 className="mt-4 text-[clamp(28px,4vw,44px)] font-extrabold leading-[1.1] tracking-[-0.025em]">
+                A energia é a mesma. O valor que você paga, não.
+              </h2>
+              <p className="mt-5 max-w-[52ch] text-[16px] leading-relaxed text-white/75">
+                A tarifa tradicional sofre reajustes anuais e bandeiras tarifárias. Com a assinatura, os créditos solares
+                são oferecidos com desconto sobre a tarifa da distribuidora.
+              </p>
+              <ul className="mt-8 grid gap-3 text-[15px] sm:grid-cols-2">
+                {["Mesma rede elétrica", "Sem obra ou equipamento", "Créditos aplicados na fatura", "Contrato digital"].map((t) => (
+                  <li key={t} className="flex items-center gap-3 text-white/85">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-energy-lime" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <figure className="rounded-2xl border border-white/10 bg-energy-deeper p-6 sm:p-8">
+              <figcaption className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/50">
+                Exemplo ilustrativo
+              </figcaption>
+              <p className="mt-2 text-[15px] text-white/70">Parcela de energia de R$ 1.000 por mês</p>
+              <div className="mt-8 space-y-6">
+                <div>
+                  <div className="flex items-baseline justify-between text-[14px]">
+                    <span className="text-white/70">Tarifa tradicional</span>
+                    <span className="font-bold tabular-nums">R$ 1.000</span>
+                  </div>
+                  <div className="mt-2 h-3 rounded-full bg-white/25" />
+                </div>
+                <div>
+                  <div className="flex items-baseline justify-between text-[14px]">
+                    <span className="text-white/70">Com assinatura (−15% a −25%)</span>
+                    <span className="font-bold tabular-nums text-energy-lime">R$ 750 a R$ 850</span>
+                  </div>
+                  <div className="relative mt-2 h-3 rounded-full bg-white/10">
+                    <div className="absolute inset-y-0 left-0 w-[75%] rounded-full bg-energy-lime" />
+                    <div className="absolute inset-y-0 left-[75%] w-[10%] rounded-r-full bg-energy-lime/40" />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-8 flex items-baseline gap-3 border-t border-white/10 pt-6">
+                <span className="text-[clamp(26px,4vw,34px)] font-extrabold tabular-nums tracking-tight">R$ 150 a R$ 250</span>
+                <span className="text-[14px] text-white/60">por mês</span>
+              </div>
+              <p className="mt-4 text-[12px] leading-relaxed text-white/50">
+                Exemplo simplificado, não constitui proposta. A economia efetiva depende da elegibilidade, da
+                distribuidora, dos créditos aplicados e dos componentes da fatura que permanecem devidos.
+              </p>
+            </figure>
+          </div>
+        </section>
+
+        {/* Segurança e credibilidade */}
+        <section id="seguranca" className="scroll-mt-20 py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl px-5">
+            <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+              <div>
+                <Eyebrow>Segurança e transparência</Eyebrow>
+                <h2 className="mt-4 text-[clamp(28px,4vw,44px)] font-extrabold leading-[1.1] tracking-[-0.025em]">
+                  Um modelo regulamentado, com papéis claros.
+                </h2>
+                <p className="mt-5 max-w-[56ch] text-[16px] leading-relaxed text-energy-ink/70">
+                  A geração compartilhada é amparada pela Lei Federal nº 14.300/2022 e regulada pela ANEEL. Você continua
+                  conectado à distribuidora da sua cidade, que mantém a estabilidade do fornecimento.
+                </p>
+                <dl className="mt-8 grid gap-6 sm:grid-cols-2">
+                  <div className="border-l-2 border-energy-deep pl-4">
+                    <dt className="text-[15px] font-bold">PROSFEC Energy</dt>
+                    <dd className="mt-1 text-[14px] leading-relaxed text-energy-ink/70">
+                      Apresenta a solução, orienta e encaminha você para a simulação oficial.
+                    </dd>
+                  </div>
+                  <div className="border-l-2 border-energy-lime pl-4">
+                    <dt className="text-[15px] font-bold">Sunne — parceira operacional</dt>
+                    <dd className="mt-1 text-[14px] leading-relaxed text-energy-ink/70">
+                      Realiza a simulação, a análise de elegibilidade e a contratação.
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+              <ul className="grid gap-4 sm:grid-cols-2">
+                {[
+                  { t: "Lei 14.300/2022", d: "Marco legal da geração distribuída." },
+                  { t: "ANEEL", d: "Regulação e fiscalização do setor elétrico." },
+                  { t: "Mesma distribuidora", d: "A rede e a entrega da energia não mudam." },
+                  { t: "LGPD", d: "Seus dados tratados conforme a legislação." },
+                ].map((s) => (
+                  <li key={s.t} className="rounded-2xl border border-energy-line bg-white p-6">
+                    <p className="text-[16px] font-bold text-energy-deep">{s.t}</p>
+                    <p className="mt-1.5 text-[14px] leading-relaxed text-energy-ink/70">{s.d}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section id="faq" className="scroll-mt-20 bg-white py-20 sm:py-28">
+          <div className="mx-auto grid max-w-7xl gap-10 px-5 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
+            <div>
+              <Eyebrow>Perguntas frequentes</Eyebrow>
+              <h2 className="mt-4 text-[clamp(28px,4vw,44px)] font-extrabold leading-[1.1] tracking-[-0.025em]">
+                Tire suas dúvidas.
+              </h2>
+            </div>
+            <div className="divide-y divide-energy-line border-y border-energy-line">
+              {FAQ.map((f) => (
+                <details key={f.q} className="group">
+                  <summary
+                    className={`flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-5 text-[16px] font-bold sm:text-[17px] [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-energy-deep`}
+                  >
+                    {f.q}
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-energy-line text-energy-deep transition-transform duration-200 group-open:rotate-45 motion-reduce:transition-none" aria-hidden="true">
+                      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none">
+                        <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                  </summary>
+                  <p className="max-w-[68ch] pb-6 pr-12 text-[15px] leading-relaxed text-energy-ink/70">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA final */}
+        <section className="py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl px-5">
+            <div className="rounded-3xl bg-energy-deep px-6 py-14 text-center text-white sm:px-12 sm:py-20">
+              <h2 className="mx-auto max-w-2xl text-[clamp(28px,4.5vw,48px)] font-extrabold leading-[1.08] tracking-[-0.03em]">
+                Pronto para pagar menos pela energia que você já usa?
+              </h2>
+              <p className="mx-auto mt-5 max-w-[50ch] text-[16px] leading-relaxed text-white/75">
+                Tenha sua fatura recente em mãos, escolha sua distribuidora e faça a simulação na plataforma oficial.
+              </p>
+              <PrimaryButton onClick={abrirModal} className="mt-9 min-h-[52px] w-full px-8 sm:w-auto">
+                Quero conhecer minha economia
+              </PrimaryButton>
+            </div>
           </div>
         </section>
       </main>
 
-      {/* FOOTER */}
-      <footer className="relative z-10 border-t border-white/[0.06] py-14">
+      {/* Rodapé */}
+      <footer className="bg-energy-deeper py-14 text-white">
         <div className="mx-auto max-w-7xl px-5">
-          <div className="flex flex-wrap items-center justify-between gap-5">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#10B981] to-[#16C784] text-lg text-[#05070A]">
-                ⚡
-              </span>
-              <span className="text-[13px] font-extrabold uppercase tracking-[0.16em]">
-                PROSFEC <span className="text-[#10B981]">&</span> SUNNE
-              </span>
+          <div className="grid gap-10 md:grid-cols-[1.4fr_1fr]">
+            <div>
+              <Logo />
+              <p className="mt-5 max-w-[52ch] text-[14px] leading-relaxed text-white/60">
+                Energia solar por assinatura da PROSFEC Energy em parceria operacional com a Sunne, no modelo de geração
+                compartilhada regulamentado pela Lei Federal nº 14.300/2022 e pela ANEEL.
+              </p>
             </div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/35">
-              Geração Compartilhada • Energia Solar por Assinatura
-            </p>
+            <nav aria-label="Rodapé">
+              <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/45">Navegação</p>
+              <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1">
+                {NAV.map((n) => (
+                  <li key={n.href}>
+                    <a href={n.href} className={`inline-flex min-h-10 items-center rounded text-[14px] text-white/75 hover:text-white ${FOCUS}`}>
+                      {n.label}
+                    </a>
+                  </li>
+                ))}
+                <li>
+                  <a href="/" className={`inline-flex min-h-10 items-center rounded text-[14px] text-white/75 hover:text-white ${FOCUS}`}>
+                    PROSFEC
+                  </a>
+                </li>
+              </ul>
+            </nav>
           </div>
-          <p className="mt-8 max-w-[90ch] text-[12px] leading-relaxed text-white/35">
-            Programa de energia por assinatura da PROSFEC em parceria com a SUNNE, no
-            modelo de Geração Compartilhada regulamentado pela Lei Federal nº 14.300/2022 e
-            Resolução Normativa ANEEL nº 1.000/2021. A economia é estimada e depende de
-            fatores como distribuidora, tributação local e perfil de consumo. Não há
-            garantia de fornecimento de energia pela geradora. Você permanece conectado à
-            distribuidora local.
+          <p className="mt-10 border-t border-white/10 pt-6 text-[12px] leading-relaxed text-white/45">
+            A economia é estimada e depende de fatores como distribuidora, tributação local e perfil de consumo. A
+            distribuidora pode continuar cobrando componentes tarifários, tributos e iluminação pública. Você permanece
+            conectado à distribuidora local.
           </p>
-          <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.16em] text-white/25">
-            © {new Date().getFullYear()} PROSFEC &amp; SUNNE • Todos os direitos reservados
+          <p className="mt-4 text-[12px] text-white/35">
+            © {new Date().getFullYear()} PROSFEC Energy · Todos os direitos reservados
           </p>
-
         </div>
       </footer>
-
-      {/* CTA FLUTUANTE */}
-      <div className="fixed bottom-5 right-5 z-50 sm:bottom-7 sm:right-7">
-        <button
-          type="button"
-          onClick={abrirModal}
-          className="flex items-center gap-2 rounded-full bg-[#10B981] px-6 py-4 text-[14px] font-extrabold text-[#05070A] shadow-[0_10px_45px_-8px_rgba(16,185,129,0.9)] transition-all hover:-translate-y-0.5 hover:bg-[#16C784]"
-        >
-          ⚡ Simule e contrate aqui
-        </button>
-      </div>
 
       <EnergiaContratacaoModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
