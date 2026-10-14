@@ -178,7 +178,7 @@ export default function EnergiaSolarLanding() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <PrimaryButton onClick={abrirModal} className="hidden min-h-10 whitespace-nowrap px-5 text-[14px] md:inline-flex">
+            <PrimaryButton onClick={abrirModal} className="min-h-10 whitespace-nowrap px-5 text-[14px] max-md:hidden!">
               Simular minha economia
             </PrimaryButton>
             <button
