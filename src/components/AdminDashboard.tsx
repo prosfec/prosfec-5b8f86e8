@@ -7554,6 +7554,72 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 </h4>
                 <div className="border border-slate-150 p-4 rounded-xl bg-white shadow-xs space-y-3">
                   {(() => {
+                    if ((selectedPartner.plano || "").toUpperCase().includes("ASSESSOR DE ENERGIA")) {
+                      const solares = leadsEnergia
+                        .filter((l: any) => l.parceiroId === selectedPartner.id)
+                        .sort((a: any, b: any) => String(b.dataCriacao || b.criadoEm || "").localeCompare(String(a.dataCriacao || a.criadoEm || "")));
+                      const cont = (s: string) => solares.filter((l: any) => (l.status || "novo") === s).length;
+                      const statusLabel: Record<string, string> = { novo: "Novo", em_atendimento: "Em atendimento", concluido: "Concluído", arquivado: "Cancelado" };
+                      const statusTone: Record<string, string> = { novo: "bg-sky-50 text-sky-700", em_atendimento: "bg-amber-50 text-amber-700", concluido: "bg-emerald-50 text-emerald-700", arquivado: "bg-rose-50 text-rose-700" };
+                      const fmtData = (v: any) => { const d = v?.toDate ? v.toDate() : (v ? new Date(v) : null); return d && !isNaN(d.getTime()) ? d.toLocaleDateString("pt-BR") : "-"; };
+                      return (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-5 gap-2 text-center">
+                            {[["Total", solares.length], ["Novos", cont("novo")], ["Atendimento", cont("em_atendimento")], ["Concluídos", cont("concluido")], ["Cancelados", cont("arquivado")]].map(([k, v]) => (
+                              <div key={k as string} className="rounded-lg bg-slate-50 border border-slate-100 py-2">
+                                <p className="text-lg font-black text-slate-900">{v as number}</p>
+                                <p className="text-[10px] font-bold uppercase text-slate-500">{k as string}</p>
+                              </div>
+                            ))}
+                          </div>
+                          {solares.length === 0 ? (
+                            <p className="text-xs text-slate-500 text-center py-6 font-medium">Nenhum lead de energia solar cadastrado por este assessor até o momento.</p>
+                          ) : (
+                            <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                              {solares.map((l: any) => {
+                                const st = l.status || "novo";
+                                const notas = Array.isArray(l.anotacoes) ? l.anotacoes : [];
+                                const ultima = notas[notas.length - 1];
+                                return (
+                                  <div key={l.id} className="border border-slate-100 rounded-lg p-3 bg-white space-y-1.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="min-w-0">
+                                        <p className="text-sm font-bold text-slate-900 truncate flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />{l.nome || l.nomeEmpresa || l.empresa || "Lead sem nome"}</p>
+                                        <p className="text-[11px] text-slate-500">Cadastro: {fmtData(l.dataCriacao || l.criadoEm)}</p>
+                                      </div>
+                                      {st === "concluido" ? (
+                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${statusTone[st]}`}>{statusLabel[st]}</span>
+                                      ) : (
+                                        <select
+                                          value={st}
+                                          onChange={(e) => handleUpdateEnergiaStatus(l.id, e.target.value)}
+                                          className={`text-[10px] font-bold px-2 py-1 rounded-md cursor-pointer ${statusTone[st] || ""}`}
+                                        >
+                                          <option value="novo">Novo</option>
+                                          <option value="em_atendimento">Em atendimento</option>
+                                          <option value="arquivado">Cancelado</option>
+                                        </select>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-600">
+                                      {(l.telefone || l.whatsapp) && (
+                                        <a href={buildWhatsAppUrl(l.telefone || l.whatsapp)} target="_blank" rel="noopener noreferrer" className="text-emerald-700 font-semibold hover:underline">{l.telefone || l.whatsapp}</a>
+                                      )}
+                                      {l.consumoKwhMes ? <span>{Number(l.consumoKwhMes).toLocaleString("pt-BR")} kWh/mês</span> : l.valorFatura ? <span>Fatura {formatCurrencyBRL(Number(l.valorFatura))}</span> : null}
+                                      {l.cidade && <span>{l.cidade}</span>}
+                                    </div>
+                                    {ultima?.texto && (
+                                      <p className="text-[11px] text-slate-500 bg-slate-50 rounded px-2 py-1 line-clamp-2">Última anotação: {ultima.texto}</p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <p className="text-[10px] text-slate-400">Para concluir um contrato, use a aba Leads Energia (registra consumo e comissão).</p>
+                        </div>
+                      );
+                    }
                     const isFranquia = selectedPartner.plano?.toUpperCase().includes("FRANQUIA") || selectedPartner.plano?.toUpperCase().includes("DIGITAL") || selectedPartner.plano?.toUpperCase().includes("MASTER") || selectedPartner.plano?.toUpperCase() === "PLATINUM";
                     const teamMembers = partners.filter(p => p.parentPartnerId === selectedPartner.id);
                     const directLeads = leads.filter(l => l.parceiroId === selectedPartner.id);
