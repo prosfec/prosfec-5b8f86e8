@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import videoAsset from "@/assets/apresentacao-energia.mp4.asset.json";
 
 export type Concessionaria = {
@@ -274,11 +275,13 @@ export default function EnergiaContratacaoModal({
   }, [busca, regiao, ordem]);
 
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  // Renderizado fora do escopo .soft-ui do portal para que o tema do parceiro
+  // (Claro/Tecnológico) não sobrescreva as cores do modal.
+  return createPortal(
     <div
-      className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-[#0A3D2E]/55 p-3 backdrop-blur-sm sm:items-center sm:p-6"
+      className="prosfec-modal-clean fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-[rgba(4,29,22,0.6)] p-3 backdrop-blur-sm sm:items-center sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Simulação e contratação de energia por assinatura"
@@ -602,6 +605,7 @@ export default function EnergiaContratacaoModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
