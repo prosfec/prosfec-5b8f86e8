@@ -1679,7 +1679,7 @@ export default function PartnerPortal({
     novo: "Novo",
     atendimento: "Atendimento",
     concluido: "Concluído",
-    arquivado: "Arquivado"
+    arquivado: "Cancelado"
   };
 
   const energiaLeadKey = (place: any) => `${(place?.nome || "").trim().toLowerCase()}_${(place?.telefone || "").replace(/\D/g, "")}`;
@@ -1970,7 +1970,7 @@ export default function PartnerPortal({
                           { key: "novo", label: "Novos", dot: "bg-slate-400" },
                           { key: "atendimento", label: "Em Atendimento", dot: "bg-sky-500" },
                           { key: "concluido", label: "Concluídos", dot: "bg-emerald-500" },
-                          { key: "arquivado", label: "Arquivados", dot: "bg-slate-300" },
+                          { key: "arquivado", label: "Cancelados", dot: "bg-rose-400" },
                         ];
                         return (
                       <div className="space-y-5">
@@ -2049,12 +2049,13 @@ export default function PartnerPortal({
                         )}
 
                         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-3">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                             {[
                               { label: "Leads Totais", valor: String(energiaLeads.length), legenda: "Base solar", Icon: Users, tone: "bg-emerald-50 text-[#00A86B] ring-emerald-100" },
                               { label: "Em Atendimento", valor: String(energiaByStatus.atendimento.length), legenda: "Em negociação", Icon: Clock, tone: "bg-blue-50 text-blue-600 ring-blue-100" },
                               { label: "Contratos Fechados", valor: String(energiaByStatus.concluido.length), legenda: "Concluídos", Icon: CheckCircle2, tone: "bg-emerald-50 text-[#00A86B] ring-emerald-100" },
                               { label: "Consumo Negociado", valor: `${consumoTotal.toLocaleString("pt-BR")}`, sufixo: "kWh/mês", legenda: "Contratos fechados", Icon: Zap, tone: "bg-amber-50 text-amber-600 ring-amber-100" },
+                              { label: "Cancelados", valor: String(energiaByStatus.arquivado.length), legenda: "Sem adesão", Icon: XCircle, tone: "bg-rose-50 text-rose-600 ring-rose-100" },
                             ].map(item => (
                               <div key={item.label} className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col gap-3 min-w-0">
                                 <div className="flex items-center justify-between gap-2">
