@@ -492,7 +492,7 @@ export default function EnergiaContratacaoModal({
 
             {/* Lista */}
             <div className="mt-4 overflow-hidden rounded-2xl border border-[#10B981]/15 bg-[#0A1210]">
-              <div className="hidden grid-cols-[1.7fr_1fr_1fr_0.9fr] gap-4 border-b border-white/[0.06] bg-[#0D1915] px-4 py-2.5 md:grid">
+              <div className="hidden grid-cols-[1.6fr_0.9fr_1fr_1.15fr] gap-4 border-b border-white/[0.06] bg-[#0D1915] px-4 py-2.5 md:grid">
                 {["DISTRIBUIDORA", "REGIÃO", "DESCONTO", ""].map((h, i) => (
                   <span key={i} className={`font-mono text-[10px] tracking-[0.14em] text-white/40 ${i === 3 ? "text-right" : ""}`}>
                     {h || "AÇÃO"}
@@ -509,7 +509,7 @@ export default function EnergiaContratacaoModal({
                       type="button"
                       onClick={() => setSelecionada(c)}
                       aria-label={`Simular com ${c.nome} ${c.uf !== "—" ? c.uf : ""} — ${c.desconto}% de desconto`}
-                      className="group flex w-full flex-col gap-3 px-4 py-4 text-left transition-colors hover:bg-[#10B981]/[0.05] md:grid md:h-[68px] md:grid-cols-[1.7fr_1fr_1fr_0.9fr] md:items-center md:gap-4 md:py-0"
+                      className="group flex w-full flex-col gap-3 px-4 py-4 text-left transition-colors hover:bg-[#10B981]/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#10B981]/45 md:grid md:h-[68px] md:grid-cols-[1.6fr_0.9fr_1fr_1.15fr] md:items-center md:gap-4 md:py-0"
                     >
                       <span className="flex w-full items-center gap-3">
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#10B981]/20 bg-[#0D1915] font-mono text-[11px] font-bold text-[#34D399] transition group-hover:border-[#10B981]/50">
@@ -546,9 +546,34 @@ export default function EnergiaContratacaoModal({
                         </span>
                       </span>
 
-                      <span className="flex w-full justify-end pl-12 md:pl-0">
-                        <span className="inline-flex h-8 items-center rounded-full bg-[#10B981] px-4 font-mono text-[11.5px] font-bold text-[#04110C] shadow-[0_6px_18px_-8px_rgba(16,185,129,0.8)] transition group-hover:bg-[#34D399]">
-                          {ocultarVideo ? "⚡ Gerar proposta" : "Simular e contratar →"}
+                      <span className="flex w-full justify-end">
+                        <span
+                          aria-hidden="true"
+                          className="inline-flex h-9 w-full max-w-[212px] items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[#0A3D2E] bg-gradient-to-b from-[#14C98A] to-[#089B62] px-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[#04110C] shadow-[0_10px_22px_-14px_rgba(16,185,129,0.95)] transition-all duration-200 ease-out group-hover:border-[#34D399]/60 group-hover:from-[#22D39A] group-hover:to-[#0AA96B] group-hover:shadow-[0_16px_30px_-14px_rgba(16,185,129,0.95)] group-focus-visible:border-[#34D399]/60 group-focus-visible:from-[#22D39A] group-focus-visible:to-[#0AA96B] group-active:translate-y-[1px] motion-reduce:transition-none"
+                        >
+                          <span>{ocultarVideo ? "Gerar proposta" : "Simular e contratar"}</span>
+                          <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            className="shrink-0 transition-transform duration-200 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
+                          >
+                            {ocultarVideo ? (
+                              <path d="M9.2 1.6 3.6 9.1h3.2l-.9 5.3 5.6-7.6H8.3l.9-5.2Z" fill="currentColor" />
+                            ) : (
+                              <>
+                                <path d="M2.6 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                                <path
+                                  d="M9 4.6 12.6 8 9 11.4"
+                                  stroke="currentColor"
+                                  strokeWidth="1.6"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </>
+                            )}
+                          </svg>
                         </span>
                       </span>
                     </button>
