@@ -598,8 +598,13 @@ export function createExpressApp() {
       .filter(Boolean)
       .join("\n");
 
-    const models = ["gemini-3.6-flash", "gemini-flash-latest"];
-    for (const model of models) {
+    // Tenta com pesquisa Google (exige faturamento); se recusar, consulta direta ao modelo.
+    const attempts: Array<{ model: string; search: boolean }> = [
+      { model: "gemini-3.1-flash-lite", search: true },
+      { model: "gemini-3.1-flash-lite", search: false },
+      { model: "gemini-flash-lite-latest", search: false },
+    ];
+    for (const { model, search } of attempts) {
       try {
         const resp = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
@@ -608,7 +613,7 @@ export function createExpressApp() {
             headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
-              tools: [{ google_search: {} }],
+              ...(search ? { tools: [{ google_search: {} }] } : {}),
             }),
             signal: AbortSignal.timeout(20_000),
           },
