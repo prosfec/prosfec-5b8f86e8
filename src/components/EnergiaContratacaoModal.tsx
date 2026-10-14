@@ -288,7 +288,7 @@ export default function EnergiaContratacaoModal({
     >
       <div className="relative my-auto w-full max-w-4xl overflow-hidden rounded-[22px] border border-[#0A3D2E]/10 bg-white shadow-[0_30px_90px_-20px_rgba(10,61,46,0.45)]">
         {/* Cabeçalho */}
-        <div className="flex items-center justify-between gap-3 border-b border-white/[0.07] bg-[#0A3D2E] px-5 py-4">
+        <div className="flex items-center justify-between gap-3 border-b border-[#0A3D2E] bg-[#0A3D2E] px-5 py-4">
           <div className="flex items-center gap-3">
             {selecionada && (
               <button
@@ -491,7 +491,7 @@ export default function EnergiaContratacaoModal({
             </div>
 
             {/* Lista */}
-            <div className="mt-4 overflow-hidden rounded-2xl border border-[#10B981]/15 bg-[#0A1210]">
+            <div className="mt-4 overflow-hidden rounded-2xl border border-[#0A3D2E]/10 bg-white shadow-[0_8px_30px_-18px_rgba(10,61,46,0.35)]">
               <div className="hidden grid-cols-[1.6fr_0.9fr_1fr_1.15fr] gap-4 border-b border-[#0A3D2E]/[0.06] bg-[#EEF7F2] px-4 py-2.5 md:grid">
                 {["DISTRIBUIDORA", "REGIÃO", "DESCONTO", ""].map((h, i) => (
                   <span key={i} className={`font-mono text-[10px] tracking-[0.14em] text-[#0A3D2E]/40 ${i === 3 ? "text-right" : ""}`}>
