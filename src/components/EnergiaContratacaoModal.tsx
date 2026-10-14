@@ -605,6 +605,7 @@ export default function EnergiaContratacaoModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
