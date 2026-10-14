@@ -2344,17 +2344,6 @@ export default function PartnerPortal({
                                   </div>
 
                                   <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 flex-wrap">
-                                    <button
-                                      onClick={() => handleFetchCnpj(energiaPlaceObj, energiaCnpj || undefined)}
-                                      disabled={!!cnpjQueryLoading[lead.id]}
-                                      className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                                    >
-                                      {cnpjQueryLoading[lead.id] ? (
-                                        <><RefreshCw className="w-3 h-3 animate-spin text-blue-600" />Buscando CNPJ...</>
-                                      ) : (
-                                        <><FileText className="w-3 h-3 text-blue-600" />{energiaCnpjData ? "Ver Ficha CNPJ" : "Consultar CNPJ"}</>
-                                      )}
-                                    </button>
 
                                     {!isEnergiaOnly && (
                                     <button
@@ -8672,36 +8661,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                             <span className="text-[10px] font-semibold text-slate-600 block line-clamp-1">{lead.cnpjDetails.razaoSocial}</span>
                                           )}
                                         </div>
-                                        <button
-                                          onClick={() => handleFetchCnpj(leadPlaceObj, leadCnpj)}
-                                          className="px-2.5 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1 cursor-pointer shrink-0 shadow-xs"
-                                        >
-                                          <FileText className="w-3 h-3" />
-                                          Ficha CNPJ
-                                        </button>
                                       </div>
                                     ) : (
                                       <div className="flex items-center justify-between gap-2">
                                         <span className="text-[10px] font-bold text-slate-500">
                                           CNPJ não informado
                                         </span>
-                                        <button
-                                          disabled={isFetchingCnpj}
-                                          onClick={() => handleFetchCnpj(leadPlaceObj)}
-                                          className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
-                                        >
-                                          {isFetchingCnpj ? (
-                                            <>
-                                              <RefreshCw className="w-3 h-3 animate-spin" />
-                                              Buscando...
-                                            </>
-                                          ) : (
-                                            <>
-                                              <Search className="w-3 h-3" />
-                                              Buscar CNPJ Receita
-                                            </>
-                                          )}
-                                        </button>
                                       </div>
                                     )}
                                   </div>
@@ -9673,7 +9638,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       <div className="bg-emerald-50/60 border border-emerald-100/60 p-4 rounded-2xl space-y-2 text-[11px] text-emerald-800 font-medium">
                         <span className="font-extrabold block">💡 Como funciona o fluxo de captação ativa?</span>
                         <ul className="list-disc pl-4 space-y-1 text-slate-600 leading-normal">
-                          <li>Clique em <strong className="text-[#0A3D2E]">Consultar CNPJ</strong> para enriquecer a busca com o cartão completo da Receita Federal e quadro societário.</li>
                           <li>Utilize <strong className="text-[#0A3D2E]">Cadastrar Lead</strong> para criar um cadastro diretamente no seu CRM de atendimento.</li>
                           <li>Ou clique em <strong className="text-[#0A3D2E]">Iniciar Prospecção</strong> para abrir o WhatsApp e enviar a proposta de fomento de capital de giro!</li>
                         </ul>
