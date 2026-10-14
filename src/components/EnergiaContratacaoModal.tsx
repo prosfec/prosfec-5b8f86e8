@@ -278,7 +278,7 @@ export default function EnergiaContratacaoModal({
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-black/80 p-3 backdrop-blur-sm sm:items-center sm:p-6"
+      className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-[#0A3D2E]/55 p-3 backdrop-blur-sm sm:items-center sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Simulação e contratação de energia por assinatura"
@@ -286,9 +286,9 @@ export default function EnergiaContratacaoModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative my-auto w-full max-w-4xl overflow-hidden rounded-[22px] border border-white/10 bg-[#070D0B] shadow-[0_30px_90px_rgba(0,0,0,0.7)]">
+      <div className="relative my-auto w-full max-w-4xl overflow-hidden rounded-[22px] border border-[#0A3D2E]/10 bg-white shadow-[0_30px_90px_-20px_rgba(10,61,46,0.45)]">
         {/* Cabeçalho */}
-        <div className="flex items-center justify-between gap-3 border-b border-white/[0.07] bg-[#0B0F14] px-5 py-4">
+        <div className="flex items-center justify-between gap-3 border-b border-white/[0.07] bg-[#0A3D2E] px-5 py-4">
           <div className="flex items-center gap-3">
             {selecionada && (
               <button
@@ -300,7 +300,7 @@ export default function EnergiaContratacaoModal({
               </button>
             )}
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#10B981]">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#B7F34A]">
                 PROSFEC &amp; SUNNE ·{" "}
                 {selecionada ? "Simulação e Contratação" : "Passo 1 de 2"}
               </p>
@@ -323,15 +323,15 @@ export default function EnergiaContratacaoModal({
         </div>
 
         {selecionada ? (
-          <div className="bg-[#05070A]">
+          <div className="bg-[#F6F8F7]">
             {/* Dicas de leitura da fatura */}
-            <div className="border-b border-white/[0.07] bg-[#0B0F14]">
+            <div className="border-b border-[#0A3D2E]/[0.07] bg-white">
               <button
                 type="button"
                 onClick={() => setDicasAbertas((v) => !v)}
                 className="flex w-full items-center justify-between gap-3 px-5 py-2.5 text-left"
               >
-                <span className="text-[12px] font-semibold text-white/60">
+                <span className="text-[12px] font-semibold text-[#0A3D2E]/60">
                   💡 Dúvidas com esses campos? Veja onde achar na sua conta
                 </span>
                 <span className="shrink-0 rounded-full border border-[#10B981]/30 bg-[#10B981]/10 px-3 py-1 text-[11px] font-extrabold text-[#10B981]">
@@ -356,10 +356,10 @@ export default function EnergiaContratacaoModal({
                   ].map((i) => (
                     <div
                       key={i.t}
-                      className="rounded-[14px] border border-white/[0.08] bg-white/[0.03] px-4 py-3"
+                      className="rounded-[14px] border border-[#0A3D2E]/[0.08] bg-[#0A3D2E]/[0.03] px-4 py-3"
                     >
                       <p className="text-[12px] font-extrabold text-[#10B981]">{i.t}</p>
-                      <p className="mt-1.5 text-[11.5px] leading-relaxed text-white/55">
+                      <p className="mt-1.5 text-[11.5px] leading-relaxed text-[#0A3D2E]/55">
                         {i.d}
                       </p>
                     </div>
@@ -374,8 +374,8 @@ export default function EnergiaContratacaoModal({
               className="h-[72vh] w-full border-0 bg-white"
               allow="clipboard-write; camera"
             />
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.07] px-5 py-3">
-              <p className="text-[12px] text-white/45">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#0A3D2E]/[0.07] px-5 py-3">
+              <p className="text-[12px] text-[#0A3D2E]/45">
                 Tenha sua fatura recente em mãos para preencher e fazer a simulação.
               </p>
               <a
@@ -393,7 +393,7 @@ export default function EnergiaContratacaoModal({
             {!ocultarVideo && (
               <>
                 {/* Vídeo */}
-                <div className="overflow-hidden rounded-[16px] border border-white/10 bg-black">
+                <div className="overflow-hidden rounded-[16px] border border-[#0A3D2E]/10 bg-[#0A3D2E]">
                   <video
                     src={videoAsset.url}
                     controls
@@ -406,7 +406,7 @@ export default function EnergiaContratacaoModal({
                 {/* Aviso da fatura */}
                 <div className="mt-5 flex items-start gap-3 rounded-[14px] border border-[#FACC15]/25 bg-[#FACC15]/[0.08] px-4 py-3.5">
                   <span className="text-[18px]">📄</span>
-                  <p className="text-[14px] font-semibold leading-relaxed text-[#FDE047]">
+                  <p className="text-[14px] font-semibold leading-relaxed text-[#7A5B00]">
                     Tenha sua fatura recente em mãos para preencher e fazer a simulação.
                   </p>
                 </div>
@@ -422,15 +422,15 @@ export default function EnergiaContratacaoModal({
                     PROSFEC Energy · Rede de distribuição
                   </p>
                   <div className="mt-1.5 flex items-center gap-2.5">
-                    <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-white">
+                    <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0A3D2E]">
                       Concessionárias
                     </h3>
-                    <span className="rounded-full border border-[#10B981]/20 bg-[#10B981]/10 px-2 py-0.5 font-mono text-[10.5px] text-[#34D399]">
+                    <span className="rounded-full border border-[#10B981]/20 bg-[#10B981]/10 px-2 py-0.5 font-mono text-[10.5px] text-[#0A8F5A]">
                       {CONCESSIONARIAS.length} ativas
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] p-1">
+                <div className="flex items-center gap-1 rounded-full border border-[#0A3D2E]/[0.08] bg-[#0A3D2E]/[0.03] p-1">
                   {(["desconto", "az"] as const).map((o) => (
                     <button
                       key={o}
@@ -438,7 +438,7 @@ export default function EnergiaContratacaoModal({
                       onClick={() => setOrdem(o)}
                       aria-pressed={ordem === o}
                       className={`rounded-full px-3 py-1 font-mono text-[11px] transition ${
-                        ordem === o ? "bg-[#10B981] font-bold text-[#04110C]" : "text-white/50 hover:text-white"
+                        ordem === o ? "bg-[#10B981] font-bold text-[#04110C]" : "text-[#0A3D2E]/50 hover:text-[#0A3D2E]"
                       }`}
                     >
                       {o === "desconto" ? "Maior desconto" : "A–Z"}
@@ -448,7 +448,7 @@ export default function EnergiaContratacaoModal({
               </div>
 
               <div className="relative mt-4">
-                <svg width="14" height="14" viewBox="0 0 16 16" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/35">
+                <svg width="14" height="14" viewBox="0 0 16 16" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#0A3D2E]/35">
                   <path d="M11.5 11.5L14 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                   <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" fill="none" />
                 </svg>
@@ -458,7 +458,7 @@ export default function EnergiaContratacaoModal({
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   placeholder="Buscar por nome, sigla ou estado (ex.: CEMIG, MG, Sul)"
-                  className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#0D1915] pl-10 pr-4 text-[13.5px] text-white placeholder:text-white/30 outline-none transition focus:border-[#10B981]/50 focus:ring-2 focus:ring-[#10B981]/15"
+                  className="h-11 w-full rounded-xl border border-[#0A3D2E]/[0.08] bg-[#EEF7F2] pl-10 pr-4 text-[13.5px] text-[#0A3D2E] placeholder:text-[#0A3D2E]/30 outline-none transition focus:border-[#10B981]/50 focus:ring-2 focus:ring-[#10B981]/15"
                 />
               </div>
 
@@ -474,7 +474,7 @@ export default function EnergiaContratacaoModal({
                       className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3.5 font-mono text-[11.5px] transition ${
                         ativo
                           ? "border-[#10B981] bg-[#10B981] font-bold text-[#04110C]"
-                          : "border-white/[0.08] bg-white/[0.03] text-white/55 hover:border-white/20 hover:text-white"
+                          : "border-[#0A3D2E]/[0.08] bg-[#0A3D2E]/[0.03] text-[#0A3D2E]/55 hover:border-[#0A3D2E]/20 hover:text-[#0A3D2E]"
                       }`}
                     >
                       {r !== "Todas" && (
@@ -484,7 +484,7 @@ export default function EnergiaContratacaoModal({
                     </button>
                   );
                 })}
-                <span className="ml-1 shrink-0 border-l border-white/10 pl-3 font-mono text-[10.5px] text-white/35">
+                <span className="ml-1 shrink-0 border-l border-[#0A3D2E]/10 pl-3 font-mono text-[10.5px] text-[#0A3D2E]/35">
                   {filtradas.length} resultados
                 </span>
               </div>
@@ -492,14 +492,14 @@ export default function EnergiaContratacaoModal({
 
             {/* Lista */}
             <div className="mt-4 overflow-hidden rounded-2xl border border-[#10B981]/15 bg-[#0A1210]">
-              <div className="hidden grid-cols-[1.6fr_0.9fr_1fr_1.15fr] gap-4 border-b border-white/[0.06] bg-[#0D1915] px-4 py-2.5 md:grid">
+              <div className="hidden grid-cols-[1.6fr_0.9fr_1fr_1.15fr] gap-4 border-b border-[#0A3D2E]/[0.06] bg-[#EEF7F2] px-4 py-2.5 md:grid">
                 {["DISTRIBUIDORA", "REGIÃO", "DESCONTO", ""].map((h, i) => (
-                  <span key={i} className={`font-mono text-[10px] tracking-[0.14em] text-white/40 ${i === 3 ? "text-right" : ""}`}>
+                  <span key={i} className={`font-mono text-[10px] tracking-[0.14em] text-[#0A3D2E]/40 ${i === 3 ? "text-right" : ""}`}>
                     {h || "AÇÃO"}
                   </span>
                 ))}
               </div>
-              <div className="divide-y divide-white/[0.05]">
+              <div className="divide-y divide-[#0A3D2E]/[0.05]">
                 {filtradas.map((c) => {
                   const r = regiaoDe(c);
                   const pct = Math.round((c.desconto / DESCONTO_MAXIMO) * 100);
@@ -512,25 +512,25 @@ export default function EnergiaContratacaoModal({
                       className="group flex w-full flex-col gap-3 px-4 py-4 text-left transition-colors hover:bg-[#10B981]/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#10B981]/45 md:grid md:h-[68px] md:grid-cols-[1.6fr_0.9fr_1fr_1.15fr] md:items-center md:gap-4 md:py-0"
                     >
                       <span className="flex w-full items-center gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#10B981]/20 bg-[#0D1915] font-mono text-[11px] font-bold text-[#34D399] transition group-hover:border-[#10B981]/50">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#10B981]/20 bg-[#EEF7F2] font-mono text-[11px] font-bold text-[#0A8F5A] transition group-hover:border-[#10B981]/50">
                           {iniciais(c.nome)}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[14px] font-semibold tracking-[-0.01em] text-white">
+                          <span className="block truncate text-[14px] font-semibold tracking-[-0.01em] text-[#0A3D2E]">
                             {c.nome}
                           </span>
-                          <span className="mt-0.5 flex items-center gap-1.5 font-mono text-[10.5px] text-white/40">
+                          <span className="mt-0.5 flex items-center gap-1.5 font-mono text-[10.5px] text-[#0A3D2E]/40">
                             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#10B981]" />
                             Disponível · 100% digital
                           </span>
                         </span>
-                        <span className="font-mono text-[16px] font-bold text-[#34D399] md:hidden">
+                        <span className="font-mono text-[16px] font-bold text-[#0A8F5A] md:hidden">
                           {c.desconto}%
                         </span>
                       </span>
 
                       <span className="flex pl-12 md:pl-0">
-                        <span className="inline-flex h-6 items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 font-mono text-[11px] text-white/60">
+                        <span className="inline-flex h-6 items-center gap-2 rounded-full border border-[#0A3D2E]/[0.08] bg-[#0A3D2E]/[0.03] px-2.5 font-mono text-[11px] text-[#0A3D2E]/60">
                           <span className="h-1.5 w-1.5 rounded-full" style={{ background: COR_REGIAO[r] ?? "#10B981" }} />
                           {c.uf === "—" ? "Sul / Sudeste" : `${c.uf} · ${r}`}
                         </span>
@@ -538,10 +538,10 @@ export default function EnergiaContratacaoModal({
 
                       <span className="hidden flex-col gap-1.5 md:flex">
                         <span className="flex items-baseline gap-1.5">
-                          <span className="font-mono text-[17px] font-bold tracking-tight text-white">{c.desconto}%</span>
-                          <span className="font-mono text-[10px] text-white/35">de redução</span>
+                          <span className="font-mono text-[17px] font-bold tracking-tight text-[#0A3D2E]">{c.desconto}%</span>
+                          <span className="font-mono text-[10px] text-[#0A3D2E]/35">de redução</span>
                         </span>
-                        <span className="block h-1 w-24 overflow-hidden rounded-full bg-white/[0.07]">
+                        <span className="block h-1 w-24 overflow-hidden rounded-full bg-[#0A3D2E]/[0.07]">
                           <span className="block h-full rounded-full bg-gradient-to-r from-[#0A3D2E] to-[#10B981]" style={{ width: `${pct}%` }} />
                         </span>
                       </span>
@@ -581,11 +581,11 @@ export default function EnergiaContratacaoModal({
                 })}
                 {filtradas.length === 0 && (
                   <div className="py-12 text-center">
-                    <p className="font-mono text-[12px] text-white/45">Nenhuma distribuidora encontrada para "{busca}"</p>
+                    <p className="font-mono text-[12px] text-[#0A3D2E]/45">Nenhuma distribuidora encontrada para "{busca}"</p>
                     <button
                       type="button"
                       onClick={() => { setBusca(""); setRegiao("Todas"); }}
-                      className="mt-2 font-mono text-[11px] text-[#34D399] underline underline-offset-4"
+                      className="mt-2 font-mono text-[11px] text-[#0A8F5A] underline underline-offset-4"
                     >
                       Limpar filtros
                     </button>
@@ -594,7 +594,7 @@ export default function EnergiaContratacaoModal({
               </div>
             </div>
 
-            <p className="mt-5 text-[11px] leading-relaxed text-white/30">
+            <p className="mt-5 text-[11px] leading-relaxed text-[#0A3D2E]/30">
               Percentuais de desconto conforme disponibilidade de cada distribuidora. A
               simulação é gratuita e não gera compromisso.
             </p>
