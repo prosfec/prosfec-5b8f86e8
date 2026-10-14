@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import EnergiaSolarLanding from "@/components/EnergiaSolarLanding";
-import energySocialAsset from "@/assets/energy-social.png.asset.json";
+import energySocialAsset from "@/assets/energia-social-hero.jpg.asset.json";
 
 const TITLE = "Energia Solar por Assinatura | Economize de 15% a 25% na Conta de Luz";
 const DESCRIPTION =
