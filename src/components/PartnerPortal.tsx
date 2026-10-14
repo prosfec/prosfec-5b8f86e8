@@ -11975,8 +11975,102 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 </div>
               </div>
 
-              {/* Quadro de Sócios (QSA) */}
-              {activeCnpjModal.details.qsa && activeCnpjModal.details.qsa.length > 0 && (
+              {/* Regime, estabelecimento e tempo de mercado */}
+              {(() => {
+                const d = activeCnpjModal.details;
+                const parseData = (v: string) => {
+                  if (!v) return null;
+                  const br = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
+                  const dt = br ? new Date(`${br[3]}-${br[2]}-${br[1]}T00:00:00`) : new Date(v);
+                  return isNaN(dt.getTime()) ? null : dt;
+                };
+                const abertura = parseData(d.dataAbertura);
+                let tempo = "N/I";
+                if (abertura) {
+                  const meses = Math.max(0, (new Date().getFullYear() - abertura.getFullYear()) * 12 + new Date().getMonth() - abertura.getMonth());
+                  const a = Math.floor(meses / 12), m = meses % 12;
+                  tempo = a > 0 ? `${a} ano${a > 1 ? "s" : ""}${m ? ` e ${m} ${m > 1 ? "meses" : "mês"}` : ""}` : `${m} ${m === 1 ? "mês" : "meses"}`;
+                }
+                const simNao = (v: any) => (v === true ? "SIM" : v === false ? "NÃO" : "N/I");
+                const regime = d.opcaoMei === true ? "MEI" : d.opcaoSimples === true ? "Simples Nacional" : d.opcaoSimples === false ? "Lucro Presumido / Real" : "N/I";
+                const itens = [
+                  { l: "Estabelecimento", v: d.tipoEstabelecimento || "N/I" },
+                  { l: "Regime Tributário", v: regime },
+                  { l: "Optante MEI", v: simNao(d.opcaoMei) },
+                  { l: "Tempo de Mercado", v: tempo },
+                  { l: "Natureza Jurídica", v: d.naturezaJuridica || "N/I" },
+                  { l: "Data da Situação", v: d.dataSituacaoCadastral || "N/I" },
+                ];
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {itens.map((it) => (
+                      <div key={it.l} className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <span className="text-[9px] uppercase font-black text-slate-400 block">{it.l}</span>
+                        <span className="text-xs font-black text-slate-800 block mt-0.5 break-words">{it.v}</span>
+                      </div>
+                    ))}
+                    {d.motivoSituacaoCadastral && !/sem motivo/i.test(d.motivoSituacaoCadastral) && (
+                      <div className="col-span-2 sm:col-span-3 bg-amber-50 p-3 rounded-2xl border border-amber-100 text-xs">
+                        <span className="text-[9px] uppercase font-black text-amber-700 block">Motivo da Situação</span>
+                        <span className="font-bold text-amber-900">{d.motivoSituacaoCadastral}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Contatos oficiais e CEP */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">CEP</span>
+                  <span className="font-extrabold text-slate-800">{activeCnpjModal.details.cep || "N/I"}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">E-mail na Receita</span>
+                  <span className="font-extrabold text-slate-800 break-all">{activeCnpjModal.details.email || "N/I"}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Telefone 1</span>
+                  <span className="font-extrabold text-slate-800">{activeCnpjModal.details.telefone || "N/I"}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Telefone 2</span>
+                  <span className="font-extrabold text-slate-800">{activeCnpjModal.details.telefone2 || "N/I"}</span>
+                </div>
+              </div>
+
+              {/* CNAEs secundários */}
+              {Array.isArray(activeCnpjModal.details.cnaesSecundarios) && activeCnpjModal.details.cnaesSecundarios.length > 0 && (
+                <details className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs">
+                  <summary className="cursor-pointer text-[11px] font-black uppercase text-slate-500 tracking-wider">
+                    Atividades Secundárias ({activeCnpjModal.details.cnaesSecundarios.length})
+                  </summary>
+                  <ul className="mt-2 space-y-1.5">
+                    {activeCnpjModal.details.cnaesSecundarios.map((c: any, i: number) => (
+                      <li key={i} className="text-slate-700"><span className="font-mono font-bold text-slate-500">{c.codigo}</span> — {c.descricao}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+
+              {/* Sócios detalhados (data de entrada e faixa etária) */}
+              {Array.isArray(activeCnpjModal.details.sociosDetalhados) && activeCnpjModal.details.sociosDetalhados.length > 0 ? (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-black uppercase text-slate-500 block tracking-wider">
+                    👥 Quadro de Sócios e Administradores ({activeCnpjModal.details.sociosDetalhados.length})
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {activeCnpjModal.details.sociosDetalhados.map((socio: any, idx: number) => (
+                      <div key={idx} className="bg-emerald-50/50 border border-emerald-100 p-3 rounded-xl space-y-0.5 text-xs">
+                        <span className="font-black text-slate-800 block">{socio.nome}</span>
+                        <span className="text-[10px] font-bold text-emerald-800 block">{socio.qualificacao || "Sócio / Administrador"}</span>
+                        {socio.dataEntrada && <span className="text-[10px] text-slate-500 block">Na sociedade desde {socio.dataEntrada}</span>}
+                        {socio.faixaEtaria && <span className="text-[10px] text-slate-500 block">Faixa etária: {socio.faixaEtaria}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : activeCnpjModal.details.qsa && activeCnpjModal.details.qsa.length > 0 && (
                 <div className="space-y-2">
                   <span className="text-[11px] font-black uppercase text-slate-500 block tracking-wider">
                     👥 Quadro de Sócios e Administradores ({activeCnpjModal.details.qsa.length})
@@ -12001,6 +12095,20 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               >
                 Fechar
               </button>
+              {isEnergiaOnly ? (
+              <button
+                disabled={energiaSavingId === activeCnpjModal.place.id}
+                onClick={async () => {
+                  const place = activeCnpjModal.place;
+                  setCnpjDetailsMap(prev => ({ ...prev, [place.id]: activeCnpjModal.details }));
+                  setActiveCnpjModal(null);
+                  await handleMarcarEnergiaSolar({ ...place, cnpj: activeCnpjModal.details.cnpj, cnpjDetails: activeCnpjModal.details });
+                }}
+                className="py-2.5 px-5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
+              >
+                ⚡ Iniciar Atendimento Solar
+              </button>
+              ) : (
               <button
                 onClick={() => {
                   const place = activeCnpjModal.place;
@@ -12022,6 +12130,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 <Plus className="w-4 h-4" />
                 Importar e Cadastrar Lead
               </button>
+              )}
             </div>
           </motion.div>
         </div>
