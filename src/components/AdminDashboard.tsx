@@ -7559,13 +7559,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         .filter((l: any) => l.parceiroId === selectedPartner.id)
                         .sort((a: any, b: any) => String(b.dataCriacao || b.criadoEm || "").localeCompare(String(a.dataCriacao || a.criadoEm || "")));
                       const cont = (s: string) => solares.filter((l: any) => (l.status || "novo") === s).length;
-                      const statusLabel: Record<string, string> = { novo: "Novo", em_atendimento: "Em atendimento", concluido: "Concluído", arquivado: "Cancelado" };
-                      const statusTone: Record<string, string> = { novo: "bg-sky-50 text-sky-700", em_atendimento: "bg-amber-50 text-amber-700", concluido: "bg-emerald-50 text-emerald-700", arquivado: "bg-rose-50 text-rose-700" };
+                      const statusLabel: Record<string, string> = { novo: "Novo", atendimento: "Em atendimento", concluido: "Concluído", arquivado: "Cancelado" };
+                      const statusTone: Record<string, string> = { novo: "bg-sky-50 text-sky-700", atendimento: "bg-amber-50 text-amber-700", concluido: "bg-emerald-50 text-emerald-700", arquivado: "bg-rose-50 text-rose-700" };
                       const fmtData = (v: any) => { const d = v?.toDate ? v.toDate() : (v ? new Date(v) : null); return d && !isNaN(d.getTime()) ? d.toLocaleDateString("pt-BR") : "-"; };
                       return (
                         <div className="space-y-3">
                           <div className="grid grid-cols-5 gap-2 text-center">
-                            {[["Total", solares.length], ["Novos", cont("novo")], ["Atendimento", cont("em_atendimento")], ["Concluídos", cont("concluido")], ["Cancelados", cont("arquivado")]].map(([k, v]) => (
+                            {[["Total", solares.length], ["Novos", cont("novo")], ["Atendimento", cont("atendimento")], ["Concluídos", cont("concluido")], ["Cancelados", cont("arquivado")]].map(([k, v]) => (
                               <div key={k as string} className="rounded-lg bg-slate-50 border border-slate-100 py-2">
                                 <p className="text-lg font-black text-slate-900">{v as number}</p>
                                 <p className="text-[10px] font-bold uppercase text-slate-500">{k as string}</p>
@@ -7596,7 +7596,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                           className={`text-[10px] font-bold px-2 py-1 rounded-md cursor-pointer ${statusTone[st] || ""}`}
                                         >
                                           <option value="novo">Novo</option>
-                                          <option value="em_atendimento">Em atendimento</option>
+                                          <option value="atendimento">Em atendimento</option>
                                           <option value="arquivado">Cancelado</option>
                                         </select>
                                       )}
