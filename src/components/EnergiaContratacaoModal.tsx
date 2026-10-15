@@ -428,7 +428,7 @@ export default function EnergiaContratacaoModal({
                     <h3 className="text-[22px] font-bold tracking-[-0.02em] text-[#0A3D2E]">
                       Escolha sua distribuidora
                     </h3>
-                    <span className="rounded-full bg-[#10B981]/10 px-2.5 py-0.5 text-[12px] font-semibold tabular-nums text-[#0A8F5A]">
+                    <span className="whitespace-nowrap rounded-full bg-[#10B981]/10 px-2.5 py-0.5 text-[12px] font-semibold tabular-nums text-[#0A8F5A]">
                       {CONCESSIONARIAS.length} ativas
                     </span>
                   </div>
@@ -450,8 +450,8 @@ export default function EnergiaContratacaoModal({
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 lg:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="mt-5 flex flex-col gap-3">
+                <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible md:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {REGIOES.map((r) => {
                     const ativo = r === regiao;
                     return (
@@ -475,7 +475,7 @@ export default function EnergiaContratacaoModal({
                   })}
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="relative flex-1 lg:w-64 lg:flex-none">
+                  <div className="relative flex-1">
                     <svg width="15" height="15" viewBox="0 0 16 16" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                       <path d="M11.5 11.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                       <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
