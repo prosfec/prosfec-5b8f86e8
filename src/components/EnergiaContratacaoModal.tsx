@@ -418,30 +418,30 @@ export default function EnergiaContratacaoModal({
 
 
             {/* Cabeçalho da rede + filtros */}
-            <div className={ocultarVideo ? "" : "mt-6"}>
+            <div className={ocultarVideo ? "" : "mt-7"}>
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#10B981]/80">
+                  <p className="text-[12px] font-semibold text-[#0A8F5A]">
                     PROSFEC Energy · Rede de distribuição
                   </p>
-                  <div className="mt-1.5 flex items-center gap-2.5">
-                    <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0A3D2E]">
-                      Concessionárias
+                  <div className="mt-1 flex items-center gap-2.5">
+                    <h3 className="text-[22px] font-bold tracking-[-0.02em] text-[#0A3D2E]">
+                      Escolha sua distribuidora
                     </h3>
-                    <span className="rounded-full border border-[#10B981]/20 bg-[#10B981]/10 px-2 py-0.5 font-mono text-[10.5px] text-[#0A8F5A]">
+                    <span className="whitespace-nowrap rounded-full bg-[#10B981]/10 px-2.5 py-0.5 text-[12px] font-semibold tabular-nums text-[#0A8F5A]">
                       {CONCESSIONARIAS.length} ativas
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 rounded-full border border-[#0A3D2E]/[0.08] bg-[#0A3D2E]/[0.03] p-1">
+                <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 p-0.5">
                   {(["desconto", "az"] as const).map((o) => (
                     <button
                       key={o}
                       type="button"
                       onClick={() => setOrdem(o)}
                       aria-pressed={ordem === o}
-                      className={`rounded-full px-3 py-1 font-mono text-[11px] transition ${
-                        ordem === o ? "bg-[#10B981] font-bold text-[#04110C]" : "text-[#0A3D2E]/50 hover:text-[#0A3D2E]"
+                      className={`rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-all duration-200 ${
+                        ordem === o ? "bg-white text-[#0A3D2E] shadow-sm" : "text-slate-500 hover:text-[#0A3D2E]"
                       }`}
                     >
                       {o === "desconto" ? "Maior desconto" : "A–Z"}
@@ -450,61 +450,65 @@ export default function EnergiaContratacaoModal({
                 </div>
               </div>
 
-              <div className="relative mt-4">
-                <svg width="14" height="14" viewBox="0 0 16 16" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#0A3D2E]/35">
-                  <path d="M11.5 11.5L14 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" fill="none" />
-                </svg>
-                <input
-                  id="busca-concessionaria"
-                  aria-label="Buscar distribuidora"
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  placeholder="Buscar por nome, sigla ou estado (ex.: CEMIG, MG, Sul)"
-                  className="h-11 w-full rounded-xl border border-[#0A3D2E]/[0.08] bg-[#EEF7F2] pl-10 pr-4 text-[13.5px] text-[#0A3D2E] placeholder:text-[#0A3D2E]/30 outline-none transition focus:border-[#10B981]/50 focus:ring-2 focus:ring-[#10B981]/15"
-                />
-              </div>
-
-              <div className="-mx-1 mt-3 flex items-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {REGIOES.map((r) => {
-                  const ativo = r === regiao;
-                  return (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => setRegiao(r)}
-                      aria-pressed={ativo}
-                      className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3.5 font-mono text-[11.5px] transition ${
-                        ativo
-                          ? "border-[#10B981] bg-[#10B981] font-bold text-[#04110C]"
-                          : "border-[#0A3D2E]/[0.08] bg-[#0A3D2E]/[0.03] text-[#0A3D2E]/55 hover:border-[#0A3D2E]/20 hover:text-[#0A3D2E]"
-                      }`}
-                    >
-                      {r !== "Todas" && (
-                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: COR_REGIAO[r] }} />
-                      )}
-                      {r}
-                    </button>
-                  );
-                })}
-                <span className="ml-1 shrink-0 border-l border-[#0A3D2E]/10 pl-3 font-mono text-[10.5px] text-[#0A3D2E]/35">
-                  {filtradas.length} resultados
-                </span>
+              <div className="mt-5 flex flex-col gap-3">
+                <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible md:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {REGIOES.map((r) => {
+                    const ativo = r === regiao;
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setRegiao(r)}
+                        aria-pressed={ativo}
+                        className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-medium transition-all duration-200 ${
+                          ativo
+                            ? "border-[#0A3D2E] bg-[#0A3D2E] text-white shadow-sm"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        {r !== "Todas" && (
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ background: COR_REGIAO[r] }} />
+                        )}
+                        {r}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <svg width="15" height="15" viewBox="0 0 16 16" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                      <path d="M11.5 11.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                    </svg>
+                    <input
+                      id="busca-concessionaria"
+                      aria-label="Buscar distribuidora"
+                      value={busca}
+                      onChange={(e) => setBusca(e.target.value)}
+                      placeholder="Buscar distribuidora ou UF..."
+                      className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-[13.5px] text-[#0A3D2E] placeholder:text-slate-400 outline-none transition focus:border-[#10B981]/60 focus:ring-2 focus:ring-[#10B981]/15"
+                    />
+                  </div>
+                  <span className="shrink-0 rounded-md bg-slate-100 px-2.5 py-1.5 text-[12px] font-medium tabular-nums text-slate-600">
+                    {filtradas.length} resultados
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Lista */}
-            <div className="mt-4 overflow-hidden rounded-2xl border border-[#0A3D2E]/10 bg-white shadow-[0_8px_30px_-18px_rgba(10,61,46,0.35)]">
-              <div className="hidden grid-cols-[1.6fr_0.9fr_1fr_1.15fr] gap-4 border-b border-[#0A3D2E]/[0.06] bg-[#EEF7F2] px-4 py-2.5 md:grid">
-                {["DISTRIBUIDORA", "REGIÃO", "DESCONTO", ""].map((h, i) => (
-                  <span key={i} className={`font-mono text-[10px] tracking-[0.14em] text-[#0A3D2E]/40 ${i === 3 ? "text-right" : ""}`}>
-                    {h || "AÇÃO"}
+            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+              <div className="hidden grid-cols-[1.6fr_0.9fr_1fr_1.1fr] gap-4 border-b border-slate-200/80 bg-slate-50/80 px-5 py-3 md:grid">
+                {["Distribuidora", "Região", "Desconto", "Ação"].map((h, i) => (
+                  <span key={h} className={`text-[11px] font-semibold uppercase tracking-wider text-slate-500 ${i === 3 ? "text-right" : ""}`}>
+                    {h}
                   </span>
                 ))}
               </div>
-              <div className="divide-y divide-[#0A3D2E]/[0.05]">
+              <div className="divide-y divide-slate-100">
                 {filtradas.map((c) => {
                   const r = regiaoDe(c);
+                  const cor = COR_REGIAO[r] ?? "#10B981";
                   const pct = Math.round((c.desconto / DESCONTO_MAXIMO) * 100);
                   return (
                     <button
@@ -512,68 +516,69 @@ export default function EnergiaContratacaoModal({
                       type="button"
                       onClick={() => setSelecionada(c)}
                       aria-label={`Simular com ${c.nome} ${c.uf !== "—" ? c.uf : ""} — ${c.desconto}% de desconto`}
-                      className="group flex w-full flex-col gap-3 px-4 py-4 text-left transition-colors hover:bg-[#10B981]/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#10B981]/45 md:grid md:h-[68px] md:grid-cols-[1.6fr_0.9fr_1fr_1.15fr] md:items-center md:gap-4 md:py-0"
+                      className="group flex w-full cursor-pointer flex-col gap-3 px-4 py-4 text-left transition-colors duration-150 hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#10B981]/45 md:grid md:min-h-[76px] md:grid-cols-[1.6fr_0.9fr_1fr_1.1fr] md:items-center md:gap-4 md:px-5 md:py-3"
                     >
                       <span className="flex w-full items-center gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#10B981]/20 bg-[#EEF7F2] font-mono text-[11px] font-bold text-[#0A8F5A] transition group-hover:border-[#10B981]/50">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200/60 bg-gradient-to-br from-emerald-50 to-teal-100/70 text-[12px] font-bold text-emerald-800 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
                           {iniciais(c.nome)}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[14px] font-semibold tracking-[-0.01em] text-[#0A3D2E]">
+                          <span className="block truncate text-[15px] font-semibold text-slate-900">
                             {c.nome}
                           </span>
-                          <span className="mt-0.5 flex items-center gap-1.5 font-mono text-[10.5px] text-[#0A3D2E]/40">
-                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#10B981]" />
+                          <span className="mt-0.5 flex items-center gap-1.5 text-[12px] text-slate-500">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:hidden" />
+                              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            </span>
                             Disponível · 100% digital
                           </span>
                         </span>
-                        <span className="font-mono text-[16px] font-bold text-[#0A8F5A] md:hidden">
-                          {c.desconto}%
+                        <span className="flex flex-col items-end md:hidden">
+                          <span className="text-[18px] font-bold leading-none tabular-nums text-slate-900">{c.desconto}%</span>
+                          <span className="mt-1 text-[11px] text-slate-500">de redução</span>
                         </span>
                       </span>
 
-                      <span className="flex pl-12 md:pl-0">
-                        <span className="inline-flex h-6 items-center gap-2 rounded-full border border-[#0A3D2E]/[0.08] bg-[#0A3D2E]/[0.03] px-2.5 font-mono text-[11px] text-[#0A3D2E]/60">
-                          <span className="h-1.5 w-1.5 rounded-full" style={{ background: COR_REGIAO[r] ?? "#10B981" }} />
+                      <span className="flex pl-[52px] md:pl-0">
+                        <span
+                          className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12px] font-medium text-slate-700"
+                          style={{ background: `${cor}14`, borderColor: `${cor}40` }}
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ background: cor }} />
                           {c.uf === "—" ? "Sul / Sudeste" : `${c.uf} · ${r}`}
                         </span>
                       </span>
 
                       <span className="hidden flex-col gap-1.5 md:flex">
                         <span className="flex items-baseline gap-1.5">
-                          <span className="font-mono text-[17px] font-bold tracking-tight text-[#0A3D2E]">{c.desconto}%</span>
-                          <span className="font-mono text-[10px] text-[#0A3D2E]/35">de redução</span>
+                          <span className="text-[18px] font-bold tabular-nums text-slate-900">{c.desconto}%</span>
+                          <span className="text-[12px] text-slate-500">de redução</span>
                         </span>
-                        <span className="block h-1 w-24 overflow-hidden rounded-full bg-[#0A3D2E]/[0.07]">
-                          <span className="block h-full rounded-full bg-gradient-to-r from-[#0A3D2E] to-[#10B981]" style={{ width: `${pct}%` }} />
+                        <span className="block h-1.5 w-28 overflow-hidden rounded-full bg-slate-100">
+                          <span className="block h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400" style={{ width: `${pct}%` }} />
                         </span>
                       </span>
 
-                      <span className="flex w-full justify-end">
+                      <span className="flex w-full md:justify-end">
                         <span
                           aria-hidden="true"
-                          className="inline-flex h-9 w-full max-w-[212px] items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[#0A3D2E] bg-gradient-to-b from-[#14C98A] to-[#089B62] px-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[#04110C] shadow-[0_10px_22px_-14px_rgba(16,185,129,0.95)] transition-all duration-200 ease-out group-hover:border-[#34D399]/60 group-hover:from-[#22D39A] group-hover:to-[#0AA96B] group-hover:shadow-[0_16px_30px_-14px_rgba(16,185,129,0.95)] group-focus-visible:border-[#34D399]/60 group-focus-visible:from-[#22D39A] group-focus-visible:to-[#0AA96B] group-active:translate-y-[1px] motion-reduce:transition-none"
+                          className="inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-emerald-200/80 bg-emerald-50 px-4 text-[13.5px] font-medium text-emerald-700 transition-all duration-200 group-hover:border-emerald-600 group-hover:bg-emerald-600 group-hover:text-white group-hover:shadow-sm group-hover:shadow-emerald-600/20 group-focus-visible:border-emerald-600 group-focus-visible:bg-emerald-600 group-focus-visible:text-white md:h-9 md:w-auto motion-reduce:transition-none"
                         >
                           <span>{ocultarVideo ? "Gerar proposta" : "Simular e contratar"}</span>
                           <svg
-                            width="13"
-                            height="13"
+                            width="14"
+                            height="14"
                             viewBox="0 0 16 16"
                             fill="none"
-                            className="shrink-0 transition-transform duration-200 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
+                            className="shrink-0 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
                           >
                             {ocultarVideo ? (
                               <path d="M9.2 1.6 3.6 9.1h3.2l-.9 5.3 5.6-7.6H8.3l.9-5.2Z" fill="currentColor" />
                             ) : (
                               <>
                                 <path d="M2.6 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                                <path
-                                  d="M9 4.6 12.6 8 9 11.4"
-                                  stroke="currentColor"
-                                  strokeWidth="1.6"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
+                                <path d="M9 4.6 12.6 8 9 11.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                               </>
                             )}
                           </svg>
@@ -584,11 +589,11 @@ export default function EnergiaContratacaoModal({
                 })}
                 {filtradas.length === 0 && (
                   <div className="py-12 text-center">
-                    <p className="font-mono text-[12px] text-[#0A3D2E]/45">Nenhuma distribuidora encontrada para "{busca}"</p>
+                    <p className="text-[13px] text-slate-500">Nenhuma distribuidora encontrada para "{busca}"</p>
                     <button
                       type="button"
                       onClick={() => { setBusca(""); setRegiao("Todas"); }}
-                      className="mt-2 font-mono text-[11px] text-[#0A8F5A] underline underline-offset-4"
+                      className="mt-2 text-[13px] font-medium text-[#0A8F5A] underline underline-offset-4"
                     >
                       Limpar filtros
                     </button>
@@ -596,6 +601,7 @@ export default function EnergiaContratacaoModal({
                 )}
               </div>
             </div>
+
 
             <p className="mt-5 text-[11px] leading-relaxed text-[#0A3D2E]/30">
               Percentuais de desconto conforme disponibilidade de cada distribuidora. A
