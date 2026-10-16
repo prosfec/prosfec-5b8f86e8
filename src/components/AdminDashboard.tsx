@@ -4949,7 +4949,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             </div>
 
                             {/* Dados cadastrais */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-slate-600 font-medium">
+                            <div className="grid grid-cols-1 gap-1.5 text-[11px] text-slate-600 font-medium break-words">
                               {lead.cnpj && (
                                 <p className="flex items-center gap-1">
                                   <FileText className="w-3.5 h-3.5 text-slate-400" /> {lead.cnpj}
@@ -5139,7 +5139,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
                         );
                       })}
+                      </div>
                     </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  </>
                   )}
                 </div>
               )}
