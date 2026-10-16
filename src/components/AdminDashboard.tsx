@@ -4893,8 +4893,33 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <p className="text-xs mt-1">Os parceiros enviam leads pelo botão ⚡ Energia Solar no Painel de Oportunidades.</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                      {filteredLeadsEnergia.map((lead: any) => {
+                    <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 lg:grid lg:grid-cols-4 lg:overflow-visible">
+                      {[
+                        { key: "novo", label: "Novos", dot: "bg-amber-500" },
+                        { key: "atendimento", label: "Em Atendimento", dot: "bg-blue-500" },
+                        { key: "concluido", label: "Concluídos", dot: "bg-emerald-500" },
+                        { key: "arquivado", label: "Cancelados", dot: "bg-slate-400" }
+                      ].map(col => {
+                        const colLeads = filteredLeadsEnergia.filter((l: any) => {
+                          const s = l.status || "novo";
+                          if (col.key === "arquivado") return s === "arquivado" || s === "cancelado";
+                          if (col.key === "novo") return s === "novo" || !["atendimento", "concluido", "arquivado", "cancelado"].includes(s);
+                          return s === col.key;
+                        });
+                        return (
+                    <div key={col.key} className="snap-start shrink-0 w-[85vw] max-w-[340px] lg:w-auto lg:max-w-none bg-slate-50/80 border border-slate-200 rounded-2xl flex flex-col min-h-[200px]">
+                      <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-200">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${col.dot}`} />
+                          <p className="text-[11px] font-black text-slate-800 uppercase tracking-wide">{col.label}</p>
+                        </div>
+                        <span className="text-[10px] font-black text-slate-500 bg-white border border-slate-200 rounded-full px-2 py-0.5 tabular-nums">{colLeads.length}</span>
+                      </div>
+                      <div className="p-2 space-y-2.5 overflow-y-auto max-h-[75vh]">
+                      {colLeads.length === 0 && (
+                        <p className="text-[11px] text-slate-400 font-medium text-center py-6">Nenhum lead nesta etapa.</p>
+                      )}
+                      {colLeads.map((lead: any) => {
                         const status = lead.status || "novo";
                         const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
                         const socios = lead.cnpjDetails?.socios || [];
