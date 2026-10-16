@@ -476,6 +476,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   // ⚡ Leads Energia Solar (coleção leads_energia — esteira isolada do crédito)
   const [leadsEnergia, setLeadsEnergia] = useState<any[]>([]);
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<"todos" | "novo" | "atendimento" | "concluido" | "arquivado">("todos");
+  const [energiaSubTab, setEnergiaSubTab] = useState<"kanban" | "ciclo">("kanban");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<Record<string, string>>({});
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [energiaParceiroFilter, setEnergiaParceiroFilter] = useState<string>("todos");
@@ -4756,18 +4757,43 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       { label: "Total de Leads", valor: String(energiaTotais.total), cor: "text-slate-800" },
                       { label: "Em Atendimento", valor: String(energiaTotais.atendimento), cor: "text-blue-700" },
                       { label: "Contratos Concluídos", valor: String(energiaTotais.concluidos), cor: "text-emerald-700" },
-                      { label: "Consumo Negociado", valor: `${energiaTotais.volumeKwh.toLocaleString("pt-BR")} kWh/mês`, cor: "text-slate-800" },
-                      { label: "Comissões do Ciclo", valor: formatCurrencyBRL(energiaTotais.comissoesQuinzena), cor: "text-amber-700" }
+                      { label: "Cancelados", valor: String(leadsEnergia.filter((l: any) => ["arquivado", "cancelado"].includes(l.status)).length), cor: "text-slate-500" },
+                      { label: "Consumo Negociado", valor: `${energiaTotais.volumeKwh.toLocaleString("pt-BR")} kWh/mês`, cor: "text-slate-800" }
                     ].map(card => (
                       <div key={card.label} className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3">
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">{card.label}</p>
-                        <p className={`font-black text-base mt-0.5 ${card.cor}`}>{card.valor}</p>
+                        <p className={`font-black text-base mt-0.5 tabular-nums ${card.cor}`}>{card.valor}</p>
                       </div>
                     ))}
                   </div>
 
-                  {/* Régua do ciclo mensal de comissões (uso interno da Mesa) */}
+                  {/* Sub-abas */}
+                  <div className="inline-flex p-1 bg-slate-100 border border-slate-200 rounded-xl gap-1">
+                    {[
+                      { key: "kanban", label: "Funil Kanban de Leads", icon: <Zap className="w-3.5 h-3.5" /> },
+                      { key: "ciclo", label: "Ciclo & Comissões", icon: <DollarSign className="w-3.5 h-3.5" /> }
+                    ].map(t => (
+                      <button
+                        key={t.key}
+                        onClick={() => setEnergiaSubTab(t.key as "kanban" | "ciclo")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer ${
+                          energiaSubTab === t.key ? "bg-white text-slate-900 shadow-sm border border-slate-200" : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        {t.icon} {t.label}
+                        {t.key === "ciclo" && energiaPagamentosPorParceiro.length > 0 && (
+                          <span className="ml-0.5 bg-amber-500 text-white rounded-full px-1.5 text-[9px] tabular-nums">{energiaPagamentosPorParceiro.length}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {energiaSubTab === "ciclo" && (
                   <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2 flex-wrap bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                      <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">Comissões do ciclo (acumuladas)</p>
+                      <p className="font-black text-sm text-amber-800 tabular-nums">{formatCurrencyBRL(energiaTotais.comissoesQuinzena)}</p>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Zap className="w-3.5 h-3.5 text-amber-600" />
                       <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-wide">Ciclo Mensal de Comissões — Energia Solar</h4>
