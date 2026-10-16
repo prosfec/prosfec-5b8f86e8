@@ -2294,7 +2294,8 @@ export default function PartnerPortal({
                                   </div>
 
                                   <div className="space-y-2">
-                                    <div className={`grid gap-2 ${lead.telefone ? "grid-cols-2" : "grid-cols-1"}`}>
+                                    <div className={`grid gap-2 ${lead.telefone && (statusKey === "novo" || statusKey === "atendimento") ? "grid-cols-2" : "grid-cols-1"}`}>
+                                      {(statusKey === "novo" || statusKey === "atendimento") && (
                                       <button
                                         type="button"
                                         onClick={() => setPropostaEnergiaLeadId(lead.id)}
@@ -2302,6 +2303,7 @@ export default function PartnerPortal({
                                       >
                                         ⚡ Gerar Proposta
                                       </button>
+                                      )}
                                       {lead.telefone && (
                                         <a
                                           href={energiaWa}
