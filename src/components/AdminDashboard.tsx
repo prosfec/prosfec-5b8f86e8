@@ -4830,8 +4830,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       </div>
                     )}
                   </div>
+                  )}
 
-
+                  {energiaSubTab === "kanban" && (
+                  <>
                   {/* Barra de filtros */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <input
@@ -4863,27 +4865,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </select>
                   </div>
 
-                  {/* Filtros por etapa */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {[{ value: "todos", label: "Todos" }, ...ENERGIA_STATUS_OPTIONS].map(opt => (
-                      <button
-                        key={opt.value}
-                        onClick={() => setEnergiaStatusFilter(opt.value as any)}
-                        className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${
-                          energiaStatusFilter === opt.value
-                            ? "bg-amber-500 text-white border-amber-500"
-                            : "bg-white/75 text-slate-600 border-slate-200 hover:bg-slate-50"
-                        }`}
-                      >
-                        {opt.label}
-                        <span className="ml-1 opacity-70">
-                          {opt.value === "todos"
-                            ? leadsEnergia.length
-                            : leadsEnergia.filter((l: any) => (l.status || "novo") === opt.value).length}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
 
 
                   {filteredLeadsEnergia.length === 0 ? (
