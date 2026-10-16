@@ -2330,7 +2330,8 @@ export default function PartnerPortal({
                                         href={buildWhatsAppUrl(lead.telefone, buildCampanhaCPWhatsAppMessage(lead.nomeEmpresa))}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="w-full px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 !text-slate-800 text-white rounded-lg transition-all font-semibold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                        style={{ backgroundColor: "#2563EB", color: "#FFFFFF", borderColor: "#3B82F6" }}
+                                        className="w-full px-3 py-2 border hover:brightness-110 rounded-lg transition-all font-semibold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
                                       >
                                         🚀 Campanha CP (Crédito Pessoal)
                                       </a>
