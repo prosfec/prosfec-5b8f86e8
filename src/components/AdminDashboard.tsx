@@ -476,6 +476,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   // ⚡ Leads Energia Solar (coleção leads_energia — esteira isolada do crédito)
   const [leadsEnergia, setLeadsEnergia] = useState<any[]>([]);
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<"todos" | "novo" | "atendimento" | "concluido" | "arquivado">("todos");
+  const [energiaSubTab, setEnergiaSubTab] = useState<"kanban" | "ciclo">("kanban");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<Record<string, string>>({});
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [energiaParceiroFilter, setEnergiaParceiroFilter] = useState<string>("todos");
@@ -4756,18 +4757,43 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       { label: "Total de Leads", valor: String(energiaTotais.total), cor: "text-slate-800" },
                       { label: "Em Atendimento", valor: String(energiaTotais.atendimento), cor: "text-blue-700" },
                       { label: "Contratos Concluídos", valor: String(energiaTotais.concluidos), cor: "text-emerald-700" },
-                      { label: "Consumo Negociado", valor: `${energiaTotais.volumeKwh.toLocaleString("pt-BR")} kWh/mês`, cor: "text-slate-800" },
-                      { label: "Comissões do Ciclo", valor: formatCurrencyBRL(energiaTotais.comissoesQuinzena), cor: "text-amber-700" }
+                      { label: "Cancelados", valor: String(leadsEnergia.filter((l: any) => ["arquivado", "cancelado"].includes(l.status)).length), cor: "text-slate-500" },
+                      { label: "Consumo Negociado", valor: `${energiaTotais.volumeKwh.toLocaleString("pt-BR")} kWh/mês`, cor: "text-slate-800" }
                     ].map(card => (
                       <div key={card.label} className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3">
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">{card.label}</p>
-                        <p className={`font-black text-base mt-0.5 ${card.cor}`}>{card.valor}</p>
+                        <p className={`font-black text-base mt-0.5 tabular-nums ${card.cor}`}>{card.valor}</p>
                       </div>
                     ))}
                   </div>
 
-                  {/* Régua do ciclo mensal de comissões (uso interno da Mesa) */}
+                  {/* Sub-abas */}
+                  <div className="inline-flex p-1 bg-slate-100 border border-slate-200 rounded-xl gap-1">
+                    {[
+                      { key: "kanban", label: "Funil Kanban de Leads", icon: <Zap className="w-3.5 h-3.5" /> },
+                      { key: "ciclo", label: "Ciclo & Comissões", icon: <DollarSign className="w-3.5 h-3.5" /> }
+                    ].map(t => (
+                      <button
+                        key={t.key}
+                        onClick={() => setEnergiaSubTab(t.key as "kanban" | "ciclo")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer ${
+                          energiaSubTab === t.key ? "bg-white text-slate-900 shadow-sm border border-slate-200" : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        {t.icon} {t.label}
+                        {t.key === "ciclo" && energiaPagamentosPorParceiro.length > 0 && (
+                          <span className="ml-0.5 bg-amber-500 text-white rounded-full px-1.5 text-[9px] tabular-nums">{energiaPagamentosPorParceiro.length}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {energiaSubTab === "ciclo" && (
                   <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2 flex-wrap bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                      <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">Comissões do ciclo (acumuladas)</p>
+                      <p className="font-black text-sm text-amber-800 tabular-nums">{formatCurrencyBRL(energiaTotais.comissoesQuinzena)}</p>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Zap className="w-3.5 h-3.5 text-amber-600" />
                       <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-wide">Ciclo Mensal de Comissões — Energia Solar</h4>
@@ -4830,8 +4856,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       </div>
                     )}
                   </div>
+                  )}
 
-
+                  {energiaSubTab === "kanban" && (
+                  <>
                   {/* Barra de filtros */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <input
@@ -4863,27 +4891,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </select>
                   </div>
 
-                  {/* Filtros por etapa */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {[{ value: "todos", label: "Todos" }, ...ENERGIA_STATUS_OPTIONS].map(opt => (
-                      <button
-                        key={opt.value}
-                        onClick={() => setEnergiaStatusFilter(opt.value as any)}
-                        className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${
-                          energiaStatusFilter === opt.value
-                            ? "bg-amber-500 text-white border-amber-500"
-                            : "bg-white/75 text-slate-600 border-slate-200 hover:bg-slate-50"
-                        }`}
-                      >
-                        {opt.label}
-                        <span className="ml-1 opacity-70">
-                          {opt.value === "todos"
-                            ? leadsEnergia.length
-                            : leadsEnergia.filter((l: any) => (l.status || "novo") === opt.value).length}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
 
 
                   {filteredLeadsEnergia.length === 0 ? (
@@ -4893,8 +4900,33 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <p className="text-xs mt-1">Os parceiros enviam leads pelo botão ⚡ Energia Solar no Painel de Oportunidades.</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                      {filteredLeadsEnergia.map((lead: any) => {
+                    <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 lg:grid lg:grid-cols-4 lg:overflow-visible">
+                      {[
+                        { key: "novo", label: "Novos", dot: "bg-amber-500" },
+                        { key: "atendimento", label: "Em Atendimento", dot: "bg-blue-500" },
+                        { key: "concluido", label: "Concluídos", dot: "bg-emerald-500" },
+                        { key: "arquivado", label: "Cancelados", dot: "bg-slate-400" }
+                      ].map(col => {
+                        const colLeads = filteredLeadsEnergia.filter((l: any) => {
+                          const s = l.status || "novo";
+                          if (col.key === "arquivado") return s === "arquivado" || s === "cancelado";
+                          if (col.key === "novo") return s === "novo" || !["atendimento", "concluido", "arquivado", "cancelado"].includes(s);
+                          return s === col.key;
+                        });
+                        return (
+                    <div key={col.key} className="snap-start shrink-0 w-[85vw] max-w-[340px] lg:w-auto lg:max-w-none bg-slate-50/80 border border-slate-200 rounded-2xl flex flex-col min-h-[200px]">
+                      <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-200">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${col.dot}`} />
+                          <p className="text-[11px] font-black text-slate-800 uppercase tracking-wide">{col.label}</p>
+                        </div>
+                        <span className="text-[10px] font-black text-slate-500 bg-white border border-slate-200 rounded-full px-2 py-0.5 tabular-nums">{colLeads.length}</span>
+                      </div>
+                      <div className="p-2 space-y-2.5 overflow-y-auto max-h-[75vh]">
+                      {colLeads.length === 0 && (
+                        <p className="text-[11px] text-slate-400 font-medium text-center py-6">Nenhum lead nesta etapa.</p>
+                      )}
+                      {colLeads.map((lead: any) => {
                         const status = lead.status || "novo";
                         const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
                         const socios = lead.cnpjDetails?.socios || [];
@@ -4924,7 +4956,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             </div>
 
                             {/* Dados cadastrais */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-slate-600 font-medium">
+                            <div className="grid grid-cols-1 gap-1.5 text-[11px] text-slate-600 font-medium break-words">
                               {lead.cnpj && (
                                 <p className="flex items-center gap-1">
                                   <FileText className="w-3.5 h-3.5 text-slate-400" /> {lead.cnpj}
@@ -5114,7 +5146,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
                         );
                       })}
+                      </div>
                     </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  </>
                   )}
                 </div>
               )}
