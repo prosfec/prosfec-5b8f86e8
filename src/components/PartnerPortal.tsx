@@ -29,7 +29,7 @@ import { db, auth, handleFirestoreError, OperationType, createNotification } fro
 import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildCampanhaCPWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel } from "../utils";
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
-import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA } from "./AssessorEnergiaContratos";
+import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA, etapaAssessorEnergia, MSG_RECUSA_ENERGIA } from "./AssessorEnergiaContratos";
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
@@ -1719,6 +1719,10 @@ export default function PartnerPortal({
 
   const handleMarcarEnergiaSolar = async (place: any) => {
     if (!currentPartner) return;
+    if (isEnergiaOnly && (currentPartner as any).avaliacaoEnergiaStatus === "recusado") {
+      toast.error("Parceria encerrada: o cadastro de novos leads não está mais disponível.");
+      return;
+    }
     const key = energiaLeadKey(place);
     if (energiaEnvioLock.has(key)) return;
     if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
@@ -1775,6 +1779,10 @@ export default function PartnerPortal({
   // ⚡ Cadastro manual de lead de energia solar (mesma esteira do Painel de Oportunidades)
   const handleCadastrarEnergiaManual = async () => {
     if (!currentPartner) return;
+    if (isEnergiaOnly && (currentPartner as any).avaliacaoEnergiaStatus === "recusado") {
+      toast.error("Parceria encerrada: o cadastro de novos leads não está mais disponível.");
+      return;
+    }
     const nome = energiaManualForm.nome.trim();
     const telefoneDigits = energiaManualForm.telefone.replace(/\D/g, "");
     const email = energiaManualForm.email.trim();
@@ -5957,9 +5965,15 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     </AceiteContratoModal>
                   );
                 }
-                if (contratoDefinitivoLiberado(cp.termoCapacitacaoEnergiaAceitoEm) && !cp.contratoPrestacaoEnergiaAceitoEm) {
+                if (contratoDefinitivoLiberado(cp) && !cp.contratoPrestacaoEnergiaAceitoEm) {
                   return (
                     <AceiteContratoModal key="def" titulo="Contrato de Prestação de Serviços Comerciais Autônomos" salvando={salvandoAceiteEnergia} onAceitar={() => registrarAceiteEnergia("contratoPrestacaoEnergiaAceitoEm")}>
+                      {cp.avaliacaoEnergiaMensagem && (
+                        <div className="mb-4 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-xs text-emerald-900">
+                          <p className="font-extrabold mb-1">✅ Avaliação aprovada pela PROSFEC</p>
+                          <p className="whitespace-pre-line">{cp.avaliacaoEnergiaMensagem}</p>
+                        </div>
+                      )}
                       <ContratoPrestacaoEnergia prestador={prestador} />
                     </AceiteContratoModal>
                   );
@@ -5970,6 +5984,27 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 <div className="max-w-6xl mx-auto space-y-6">
+                {isEnergiaOnly && currentPartner && (() => {
+                  const et = etapaAssessorEnergia(currentPartner);
+                  const msg = (currentPartner as any).avaliacaoEnergiaMensagem;
+                  if (et.etapa === "recusado") {
+                    return (
+                      <div className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-xs text-rose-900 space-y-1">
+                        <p className="font-extrabold text-sm">Resultado da avaliação do período inicial</p>
+                        <p className="whitespace-pre-line">{msg || MSG_RECUSA_ENERGIA}</p>
+                        <p className="font-semibold pt-1">O cadastro de novos leads foi encerrado. Seus leads e comissões já registrados continuam disponíveis para consulta.</p>
+                      </div>
+                    );
+                  }
+                  if (et.etapa === "avaliacao_pendente") {
+                    return (
+                      <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900 font-semibold">
+                        Período inicial de {DIAS_CAPACITACAO_ENERGIA} dias concluído! Sua atuação está em avaliação pela diretoria PROSFEC. Assim que aprovado, o Contrato de Prestação de Serviços será liberado aqui no seu painel.
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 {/* Unique Indicator Link Card */}
                 {!isEnergiaOnly && (
                 <div className="pf-tool bg-white text-slate-800 px-4 py-3 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
