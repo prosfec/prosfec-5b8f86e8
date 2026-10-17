@@ -65,7 +65,10 @@ service cloud.firestore {
         .hasAny([
           "senha", "role", "perfil", "isAdmin", "aprovado", "status",
           "saldo", "saldoDisponivel", "comissaoTotal", "creditos",
-          "percentualComissao", "nivel", "authUid"
+          "percentualComissao", "nivel", "authUid",
+          "avaliacaoEnergiaStatus", "avaliacaoEnergiaData", "avaliacaoEnergiaPor",
+          "avaliacaoEnergiaMensagem", "avaliacaoEnergiaHistorico",
+          "contratoPrestacaoLiberadoPorAdm"
         ]);
     }
 
