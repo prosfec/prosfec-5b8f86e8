@@ -20,9 +20,42 @@ export function diasDesdeCapacitacao(aceitoEm?: string | null): number {
   return Math.floor((Date.now() - t) / DIA_MS);
 }
 
-export function contratoDefinitivoLiberado(aceitoEm?: string | null): boolean {
+/** Período inicial de 22 dias já cumprido (não libera o contrato sozinho). */
+export function periodoCapacitacaoConcluido(aceitoEm?: string | null): boolean {
   return !!aceitoEm && diasDesdeCapacitacao(aceitoEm) >= DIAS_CAPACITACAO_ENERGIA;
 }
+
+/** O contrato definitivo só abre com aprovação expressa do ADM. */
+export function contratoDefinitivoLiberado(p: any): boolean {
+  return !!p?.termoCapacitacaoEnergiaAceitoEm && p?.avaliacaoEnergiaStatus === "aprovado" && p?.contratoPrestacaoLiberadoPorAdm === true;
+}
+
+export type EtapaAssessorEnergia = "sem_termo" | "capacitacao" | "avaliacao_pendente" | "contrato_liberado" | "ativo" | "recusado";
+
+export function etapaAssessorEnergia(p: any): { etapa: EtapaAssessorEnergia; label: string; dia: number } {
+  const cap = p?.termoCapacitacaoEnergiaAceitoEm;
+  const dia = Math.min(DIAS_CAPACITACAO_ENERGIA, diasDesdeCapacitacao(cap) + 1);
+  if (p?.contratoPrestacaoEnergiaAceitoEm) return { etapa: "ativo", label: "Prestador de serviço ativo", dia };
+  if (p?.avaliacaoEnergiaStatus === "recusado") return { etapa: "recusado", label: "Parceria recusada", dia };
+  if (!cap) return { etapa: "sem_termo", label: "Aguardando aceite do termo inicial", dia: 0 };
+  if (contratoDefinitivoLiberado(p)) return { etapa: "contrato_liberado", label: "Contrato liberado (aguardando assinatura)", dia };
+  if (periodoCapacitacaoConcluido(cap)) return { etapa: "avaliacao_pendente", label: "Treinamento concluído — avaliação pendente", dia };
+  return { etapa: "capacitacao", label: `Capacitação — dia ${dia} de ${DIAS_CAPACITACAO_ENERGIA}`, dia };
+}
+
+export const MSG_APROVACAO_ENERGIA =
+  "Parabéns pelo seu desempenho durante o período de capacitação e prática comercial! A diretoria da PROSFEC Energy aprovou sua continuidade como prestador autônomo. O seu Contrato de Prestação de Serviços Comerciais Autônomos já está disponível para leitura e assinatura eletrônica no seu painel.";
+export const MSG_RECUSA_ENERGIA =
+  "Agradecemos a sua dedicação e empenho durante o período inicial de capacitação. Após a análise dos critérios comerciais e operacionais desta etapa, informamos que a parceria não terá continuidade neste momento. Conforme previsto contratualmente, eventuais comissões de contratos já validados e ativados durante seu período ativo permanecem devidamente asseguradas para pagamento no ciclo correspondente.";
+
+export const ETAPA_ENERGIA_TONE: Record<EtapaAssessorEnergia, string> = {
+  sem_termo: "bg-slate-50 text-slate-700 border-slate-200",
+  capacitacao: "bg-sky-50 text-sky-700 border-sky-200",
+  avaliacao_pendente: "bg-amber-50 text-amber-800 border-amber-300",
+  contrato_liberado: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  ativo: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  recusado: "bg-rose-50 text-rose-700 border-rose-200",
+};
 
 const v = (x?: string, ph = "") => (x && String(x).trim()) || ph;
 const dataBR = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR"));
