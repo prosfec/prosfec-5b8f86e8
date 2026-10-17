@@ -19,6 +19,8 @@ import {
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
 import { db, auth, createNotification } from "../firebase";
+import { AdminAvaliacaoAssessorEnergia } from "./AdminAvaliacaoAssessorEnergia";
+import { etapaAssessorEnergia, ETAPA_ENERGIA_TONE } from "./AssessorEnergiaContratos";
 import { PendenciaItem, SolicitacaoComissao } from "../types";
 import { 
   Users, 
@@ -5252,6 +5254,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </div>
                               )}
                               
+                              {(partner.plano || "").toUpperCase().includes("ASSESSOR DE ENERGIA") && (() => {
+                                const et = etapaAssessorEnergia(partner);
+                                return (
+                                  <div className="pt-1">
+                                    <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${ETAPA_ENERGIA_TONE[et.etapa]}`}>
+                                      ⚡ {et.label}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
+
                               {/* Access Status Badge inside Card */}
                               <div className="pt-1">
                                 {(() => {
@@ -7584,6 +7597,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   })()}
                 </div>
               </div>
+
+              {(selectedPartner.plano || "").toUpperCase().includes("ASSESSOR DE ENERGIA") && (
+                <AdminAvaliacaoAssessorEnergia
+                  partner={selectedPartner}
+                  leadsEnergia={leadsEnergia}
+                  onUpdated={(updates) => {
+                    const id = selectedPartner.id;
+                    setPartners(prev => prev.map(p => p.id === id ? { ...p, ...updates } as any : p));
+                    setSelectedPartner(prev => prev && prev.id === id ? ({ ...prev, ...updates } as any) : prev);
+                  }}
+                />
+              )}
 
               {/* Referred Leads by this Partner & Team Operation */}
               <div className="space-y-3">
