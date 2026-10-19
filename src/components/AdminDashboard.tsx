@@ -3312,10 +3312,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         anotacoes: arrayUnion(novaNota),
         atualizadoEm: agora,
         ultimaMovimentacaoMesaEm: agora,
-        ultimaMovimentacaoMesaTexto: "Nova anotação da Mesa PROSFEC"
+        ultimaMovimentacaoMesaTexto: "Nova anotação da Mesa PROSFEC",
+        vistoPeloAdmEm: agora
       });
       setLeadsEnergia(prev => prev.map((l: any) =>
-        l.id === leadId ? { ...l, anotacoes: novasNotas, atualizadoEm: agora, ultimaMovimentacaoMesaEm: agora } : l
+        l.id === leadId ? { ...l, anotacoes: novasNotas, atualizadoEm: agora, ultimaMovimentacaoMesaEm: agora, vistoPeloAdmEm: agora } : l
       ));
       setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: "" }));
       toast.success("Anotação registrada e compartilhada com o parceiro.");
@@ -4933,7 +4934,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
                         const socios = lead.cnpjDetails?.socios || [];
                         return (
-                          <div key={lead.id} className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 space-y-3">
+                          <div key={lead.id} className="relative bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 space-y-3">
+                            {energiaNovidadeParceiro(lead) && (
+                              <button
+                                type="button"
+                                onClick={() => marcarEnergiaVistoAdm(lead)}
+                                className="absolute -top-1 -right-1 z-10 flex w-3 h-3 cursor-pointer"
+                                title="Nova mensagem no chamado (clique para marcar como lida)"
+                                aria-label="Nova mensagem no chamado"
+                              >
+                                <span className="absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping" style={{ backgroundColor: "#EF4444" }} />
+                                <span className="relative inline-flex w-3 h-3 rounded-full border-2" style={{ backgroundColor: "#DC2626", borderColor: "#FFFFFF" }} />
+                              </button>
+                            )}
                             {/* Identificação */}
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
@@ -5111,8 +5124,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
 
                             {/* Histórico e anotações */}
-                            <div className="pt-2.5 border-t border-slate-100 space-y-2">
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Histórico de Movimentações</p>
+                            <div className="pt-2.5 border-t border-slate-100 space-y-2" onClick={() => marcarEnergiaVistoAdm(lead)} onFocusCapture={() => marcarEnergiaVistoAdm(lead)}>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
+                                Histórico de Movimentações
+                                {energiaNovidadeParceiro(lead) && (
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#DC2626" }} />
+                                )}
+                              </p>
                               {notas.length === 0 ? (
                                 <p className="text-[11px] text-slate-400 font-medium">Sem movimentações registradas.</p>
                               ) : (
