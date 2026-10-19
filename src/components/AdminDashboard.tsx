@@ -3296,6 +3296,24 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
 
 
+  // Chamado novo do parceiro ainda não lido pela Mesa (persistido no lead, compartilhado entre a equipe)
+  const energiaNovidadeParceiro = (lead: any) => {
+    if (!lead?.ultimaMovimentacaoParceiroEm) return false;
+    const visto = lead.vistoPeloAdmEm ? new Date(lead.vistoPeloAdmEm).getTime() : 0;
+    return new Date(lead.ultimaMovimentacaoParceiroEm).getTime() > visto;
+  };
+
+  const marcarEnergiaVistoAdm = async (lead: any) => {
+    if (!energiaNovidadeParceiro(lead)) return;
+    const agora = new Date().toISOString();
+    setLeadsEnergia(prev => prev.map((l: any) => l.id === lead.id ? { ...l, vistoPeloAdmEm: agora } : l));
+    try {
+      await updateDoc(doc(db, "leads_energia", lead.id), { vistoPeloAdmEm: agora });
+    } catch (error) {
+      console.error("Erro ao marcar chamado como lido:", error);
+    }
+  };
+
   const handleAddEnergiaNota = async (leadId: string) => {
     const texto = (energiaNotaDraft[leadId] || "").trim();
     if (!texto) return;
