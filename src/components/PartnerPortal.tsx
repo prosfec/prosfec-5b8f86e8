@@ -1861,10 +1861,12 @@ export default function PartnerPortal({
       };
       await updateDoc(doc(db, "leads_energia", leadId), {
         anotacoes: arrayUnion(nota),
-        atualizadoEm: new Date().toISOString()
+        atualizadoEm: nota.data,
+        ultimaMovimentacaoParceiroEm: nota.data,
+        vistoPeloParceiroEm: nota.data
       });
       setEnergiaLeads(prev => prev.map(l => l.id === leadId
-        ? { ...l, anotacoes: [...(Array.isArray(l.anotacoes) ? l.anotacoes : []), nota] }
+        ? { ...l, anotacoes: [...(Array.isArray(l.anotacoes) ? l.anotacoes : []), nota], ultimaMovimentacaoParceiroEm: nota.data, vistoPeloParceiroEm: nota.data }
         : l));
       setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: "" }));
       toast.success("Anotação registrada e compartilhada com a Mesa PROSFEC.");
@@ -2186,7 +2188,13 @@ export default function PartnerPortal({
                                 : "#";
                               const energiaFollowUp = precisaFollowUpEnergia(lead);
                               return (
-                                <div key={lead.id} className="bg-white border border-slate-200 rounded-lg p-3 space-y-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 transition-colors">
+                                <div key={lead.id} className="relative bg-white border border-slate-200 rounded-lg p-3 space-y-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 transition-colors">
+                                  {energiaTemNovidade(lead) && (
+                                    <span className="absolute -top-1 -right-1 z-10 flex w-3 h-3" title="Nova mensagem no chamado" aria-label="Nova mensagem no chamado">
+                                      <span className="absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping" style={{ backgroundColor: "#EF4444" }} />
+                                      <span className="relative inline-flex w-3 h-3 rounded-full border-2" style={{ backgroundColor: "#DC2626", borderColor: "#FFFFFF" }} />
+                                    </span>
+                                  )}
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                       {lead.ramo && (
@@ -2219,12 +2227,6 @@ export default function PartnerPortal({
                                     </div>
                                   )}
 
-                                  {energiaTemNovidade(lead) && (
-                                    <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-2 py-1">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                      <span className="text-[9px] font-extrabold uppercase tracking-wide">Nova atualização da Mesa</span>
-                                    </div>
-                                  )}
 
                                   {Number(lead.comissaoParceiro) > 0 && (
                                     <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 space-y-0.5">
