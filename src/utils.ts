@@ -223,6 +223,36 @@ export function etapaCicloEnergia(date: Date = new Date()): "apuracao" | "nota_f
   return "encerrado";
 }
 
+// Corte do ciclo vigente: fim do dia 10 do mês corrente
+export function corteCicloEnergia(date: Date = new Date()): Date {
+  return new Date(date.getFullYear(), date.getMonth(), CICLO_ENERGIA_FECHAMENTO, 23, 59, 59, 999);
+}
+
+// Data de referência do contrato concluído (fechadoEm → atualizadoEm → criação)
+export function dataFechamentoEnergia(lead: any): Date | null {
+  const raw = lead?.fechadoEm || lead?.atualizadoEm || lead?.dataCriacao || lead?.criadoEm;
+  if (!raw) return null;
+  const d = typeof raw?.toDate === "function" ? raw.toDate() : new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// "vigente" = fechado até o dia 10 do mês atual (ou já com saque solicitado); "futuro" = após o corte
+export function cicloComissaoEnergia(lead: any, hoje: Date = new Date()): "vigente" | "futuro" {
+  if (lead?.comissaoStatus === "solicitada") return "vigente";
+  const d = dataFechamentoEnergia(lead);
+  if (!d) return "vigente";
+  return d.getTime() <= corteCicloEnergia(hoje).getTime() ? "vigente" : "futuro";
+}
+
+// Dias até o próximo dia N do mês (0 se hoje)
+export function diasAteProximoDia(diaAlvo: number, date: Date = new Date()): number {
+  const base = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  let alvo = new Date(date.getFullYear(), date.getMonth(), diaAlvo);
+  if (alvo < base) alvo = new Date(date.getFullYear(), date.getMonth() + 1, diaAlvo);
+  return Math.round((alvo.getTime() - base.getTime()) / 86400000);
+}
+
+
 
 // Format CEP: 99999-999
 export function formatCEP(value: string): string {
