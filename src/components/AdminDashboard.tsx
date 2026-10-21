@@ -102,6 +102,8 @@ import {
   buildWhatsAppUrl,
   buildEnergiaSolarWhatsAppMessage,
   etapaCicloEnergia,
+  cicloComissaoEnergia,
+  diasAteProximoDia,
   CICLO_ENERGIA_FECHAMENTO,
   CICLO_ENERGIA_NOTA_FISCAL,
   CICLO_ENERGIA_PAGAMENTO
@@ -3238,7 +3240,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
     const elegiveis = leadsEnergia.filter((l: any) =>
       (l.parceiroId || "") === parceiroId && (l.status || "novo") === "concluido" &&
-      (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0
+      (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0 &&
+      cicloComissaoEnergia(l) === "vigente"
     );
     if (elegiveis.length === 0) return;
     const total = elegiveis.reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
@@ -3387,10 +3390,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   // Ciclo mensal: fechamento dia 10, NF dia 20 (interno), pagamento dia 25
   const energiaCicloEtapa = etapaCicloEnergia();
 
-  // Consolidado por parceiro para liquidação direta pela Mesa
-  const energiaPagamentosPorParceiro = Array.from(
+  // Consolidado por parceiro, separado em ciclo vigente (até dia 10) e comissões futuras
+  const agruparEnergiaPorParceiro = (ciclo: "vigente" | "futuro") => Array.from(
     energiaConcluidos
-      .filter((l: any) => (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0)
+      .filter((l: any) => (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0 && cicloComissaoEnergia(l) === ciclo)
       .reduce((acc: Map<string, { id: string; nome: string; contratos: number; total: number; solicitado: boolean }>, l: any) => {
         const id = l.parceiroId || "";
         if (!id) return acc;
@@ -3405,6 +3408,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         return acc;
       }, new Map()).values()
   ).sort((a, b) => b.total - a.total);
+  const energiaPagamentosPorParceiro = agruparEnergiaPorParceiro("vigente");
+  const energiaFuturasPorParceiro = agruparEnergiaPorParceiro("futuro");
+  const energiaTotalVigente = energiaPagamentosPorParceiro.reduce((a, p) => a + p.total, 0);
+  const energiaTotalFuturo = energiaFuturasPorParceiro.reduce((a, p) => a + p.total, 0);
+  const energiaProximoMesLabel = (() => {
+    const h = new Date();
+    return new Date(h.getFullYear(), h.getMonth() + 1, 1).toLocaleDateString("pt-BR", { month: "long" });
+  })();
 
 
   const adminNavItems = [
@@ -4811,10 +4822,27 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                   {energiaSubTab === "ciclo" && (
                   <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3 space-y-2.5">
-                    <div className="flex items-center justify-between gap-2 flex-wrap bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                      <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">Comissões do ciclo (acumuladas)</p>
-                      <p className="font-black text-sm text-amber-800 tabular-nums">{formatCurrencyBRL(energiaTotais.comissoesQuinzena)}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                        <p className="text-[9px] font-black text-amber-700 uppercase tracking-wide">Ciclo vigente (dia {CICLO_ENERGIA_PAGAMENTO})</p>
+                        <p className="font-black text-sm text-amber-800 tabular-nums">{formatCurrencyBRL(energiaTotalVigente)}</p>
+                      </div>
+                      <div className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-2">
+                        <p className="text-[9px] font-black text-sky-700 uppercase tracking-wide">Previsão próximo ciclo</p>
+                        <p className="font-black text-sm text-sky-800 tabular-nums">{formatCurrencyBRL(energiaTotalFuturo)}</p>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-wide">Total em aberto</p>
+                        <p className="font-black text-sm text-slate-800 tabular-nums">{formatCurrencyBRL(energiaTotalVigente + energiaTotalFuturo)}</p>
+                      </div>
                     </div>
+                    {energiaCicloEtapa === "encerrado" && (
+                      <div className="bg-emerald-900 border border-emerald-800 rounded-xl px-3 py-2">
+                        <p className="text-[10px] font-bold text-emerald-50">
+                          Ciclo do mês encerrado. Próximo fechamento no dia {CICLO_ENERGIA_FECHAMENTO} (em {diasAteProximoDia(CICLO_ENERGIA_FECHAMENTO)} dias) e pagamento no dia {CICLO_ENERGIA_PAGAMENTO} (em {diasAteProximoDia(CICLO_ENERGIA_PAGAMENTO)} dias).
+                        </p>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Zap className="w-3.5 h-3.5 text-amber-600" />
                       <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-wide">Ciclo Mensal de Comissões — Energia Solar</h4>
@@ -4855,7 +4883,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                     {energiaPagamentosPorParceiro.length > 0 && (
                       <div className="space-y-1.5">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Comissões a pagar por parceiro</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Ciclo vigente — prontas para pagamento</p>
                         {energiaPagamentosPorParceiro.map(p => (
                           <div key={p.id} className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
                             <div className="min-w-0">
@@ -4875,6 +4903,29 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
                         ))}
                       </div>
+                    )}
+
+                    {energiaFuturasPorParceiro.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Comissões futuras — próximo ciclo</p>
+                        {energiaFuturasPorParceiro.map(p => (
+                          <div key={p.id} className="flex items-center justify-between gap-2 bg-sky-50/60 border border-sky-200 rounded-xl px-3 py-2">
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-black text-slate-800 truncate">{p.nome}</p>
+                              <p className="text-[10px] font-semibold text-slate-500">
+                                {p.contratos} contrato{p.contratos > 1 ? "s" : ""} • {formatCurrencyBRL(p.total)}
+                              </p>
+                            </div>
+                            <span className="shrink-0 px-2 py-1 bg-sky-100 text-sky-800 rounded-lg font-extrabold text-[9px] uppercase tracking-wide">
+                              Agendado para {energiaProximoMesLabel}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {energiaPagamentosPorParceiro.length === 0 && energiaFuturasPorParceiro.length === 0 && (
+                      <p className="text-[10px] font-semibold text-slate-400 text-center py-3">Nenhuma comissão em aberto.</p>
                     )}
                   </div>
                   )}
