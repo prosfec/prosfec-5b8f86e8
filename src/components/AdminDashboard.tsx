@@ -4822,10 +4822,27 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                   {energiaSubTab === "ciclo" && (
                   <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3 space-y-2.5">
-                    <div className="flex items-center justify-between gap-2 flex-wrap bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                      <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">Comissões do ciclo (acumuladas)</p>
-                      <p className="font-black text-sm text-amber-800 tabular-nums">{formatCurrencyBRL(energiaTotais.comissoesQuinzena)}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                        <p className="text-[9px] font-black text-amber-700 uppercase tracking-wide">Ciclo vigente (dia {CICLO_ENERGIA_PAGAMENTO})</p>
+                        <p className="font-black text-sm text-amber-800 tabular-nums">{formatCurrencyBRL(energiaTotalVigente)}</p>
+                      </div>
+                      <div className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-2">
+                        <p className="text-[9px] font-black text-sky-700 uppercase tracking-wide">Previsão próximo ciclo</p>
+                        <p className="font-black text-sm text-sky-800 tabular-nums">{formatCurrencyBRL(energiaTotalFuturo)}</p>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-wide">Total em aberto</p>
+                        <p className="font-black text-sm text-slate-800 tabular-nums">{formatCurrencyBRL(energiaTotalVigente + energiaTotalFuturo)}</p>
+                      </div>
                     </div>
+                    {energiaCicloEtapa === "encerrado" && (
+                      <div className="bg-emerald-900 border border-emerald-800 rounded-xl px-3 py-2">
+                        <p className="text-[10px] font-bold text-emerald-50">
+                          Ciclo do mês encerrado. Próximo fechamento no dia {CICLO_ENERGIA_FECHAMENTO} (em {diasAteProximoDia(CICLO_ENERGIA_FECHAMENTO)} dias) e pagamento no dia {CICLO_ENERGIA_PAGAMENTO} (em {diasAteProximoDia(CICLO_ENERGIA_PAGAMENTO)} dias).
+                        </p>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Zap className="w-3.5 h-3.5 text-amber-600" />
                       <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-wide">Ciclo Mensal de Comissões — Energia Solar</h4>
