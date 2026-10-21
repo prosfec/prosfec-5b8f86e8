@@ -4883,7 +4883,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                     {energiaPagamentosPorParceiro.length > 0 && (
                       <div className="space-y-1.5">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Comissões a pagar por parceiro</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Ciclo vigente — prontas para pagamento</p>
                         {energiaPagamentosPorParceiro.map(p => (
                           <div key={p.id} className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
                             <div className="min-w-0">
@@ -4903,6 +4903,29 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
                         ))}
                       </div>
+                    )}
+
+                    {energiaFuturasPorParceiro.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Comissões futuras — próximo ciclo</p>
+                        {energiaFuturasPorParceiro.map(p => (
+                          <div key={p.id} className="flex items-center justify-between gap-2 bg-sky-50/60 border border-sky-200 rounded-xl px-3 py-2">
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-black text-slate-800 truncate">{p.nome}</p>
+                              <p className="text-[10px] font-semibold text-slate-500">
+                                {p.contratos} contrato{p.contratos > 1 ? "s" : ""} • {formatCurrencyBRL(p.total)}
+                              </p>
+                            </div>
+                            <span className="shrink-0 px-2 py-1 bg-sky-100 text-sky-800 rounded-lg font-extrabold text-[9px] uppercase tracking-wide">
+                              Agendado para {energiaProximoMesLabel}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {energiaPagamentosPorParceiro.length === 0 && energiaFuturasPorParceiro.length === 0 && (
+                      <p className="text-[10px] font-semibold text-slate-400 text-center py-3">Nenhuma comissão em aberto.</p>
                     )}
                   </div>
                   )}
