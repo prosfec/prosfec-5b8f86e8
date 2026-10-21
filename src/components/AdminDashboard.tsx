@@ -102,6 +102,8 @@ import {
   buildWhatsAppUrl,
   buildEnergiaSolarWhatsAppMessage,
   etapaCicloEnergia,
+  cicloComissaoEnergia,
+  diasAteProximoDia,
   CICLO_ENERGIA_FECHAMENTO,
   CICLO_ENERGIA_NOTA_FISCAL,
   CICLO_ENERGIA_PAGAMENTO
@@ -3238,7 +3240,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
     const elegiveis = leadsEnergia.filter((l: any) =>
       (l.parceiroId || "") === parceiroId && (l.status || "novo") === "concluido" &&
-      (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0
+      (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0 &&
+      cicloComissaoEnergia(l) === "vigente"
     );
     if (elegiveis.length === 0) return;
     const total = elegiveis.reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
@@ -3387,10 +3390,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   // Ciclo mensal: fechamento dia 10, NF dia 20 (interno), pagamento dia 25
   const energiaCicloEtapa = etapaCicloEnergia();
 
-  // Consolidado por parceiro para liquidação direta pela Mesa
-  const energiaPagamentosPorParceiro = Array.from(
+  // Consolidado por parceiro, separado em ciclo vigente (até dia 10) e comissões futuras
+  const agruparEnergiaPorParceiro = (ciclo: "vigente" | "futuro") => Array.from(
     energiaConcluidos
-      .filter((l: any) => (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0)
+      .filter((l: any) => (l.comissaoStatus || "acumulada") !== "paga" && Number(l.comissaoParceiro) > 0 && cicloComissaoEnergia(l) === ciclo)
       .reduce((acc: Map<string, { id: string; nome: string; contratos: number; total: number; solicitado: boolean }>, l: any) => {
         const id = l.parceiroId || "";
         if (!id) return acc;
@@ -3405,6 +3408,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         return acc;
       }, new Map()).values()
   ).sort((a, b) => b.total - a.total);
+  const energiaPagamentosPorParceiro = agruparEnergiaPorParceiro("vigente");
+  const energiaFuturasPorParceiro = agruparEnergiaPorParceiro("futuro");
+  const energiaTotalVigente = energiaPagamentosPorParceiro.reduce((a, p) => a + p.total, 0);
+  const energiaTotalFuturo = energiaFuturasPorParceiro.reduce((a, p) => a + p.total, 0);
+  const energiaProximoMesLabel = (() => {
+    const h = new Date();
+    return new Date(h.getFullYear(), h.getMonth() + 1, 1).toLocaleDateString("pt-BR", { month: "long" });
+  })();
 
 
   const adminNavItems = [
