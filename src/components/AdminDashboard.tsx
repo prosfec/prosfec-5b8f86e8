@@ -1864,6 +1864,67 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
+  // Sincronização por aba: recarrega apenas as coleções da aba aberta,
+  // evitando baixar o banco inteiro a cada clique em "Sincronizar".
+  const syncActiveTab = async () => {
+    if (activeTab === "precos" || activeTab === "servicos_contabilidade") {
+      await fetchData();
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const loadLeads = async () => {
+        const snap = await getDocs(query(collection(db, "leads"), orderBy("dataCriacao", "desc")));
+        return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Lead[];
+      };
+      const loadPartners = async () => {
+        const snap = await getDocs(query(collection(db, "parceiros"), orderBy("dataCriacao", "desc")));
+        return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Partner[];
+      };
+      const updateStats = (leadsList: Lead[], partnersList: Partner[]) => {
+        const faturamentos = leadsList.filter(l => l.faturamentoAnual).map(l => l.faturamentoAnual || 0);
+        setStats({
+          totalLeads: leadsList.length,
+          totalPartners: partnersList.length,
+          totalCreditSimulated: leadsList.reduce((acc, l) => acc + (l.limiteEstimado || 0), 0),
+          avgFaturamento: faturamentos.length > 0 ? faturamentos.reduce((a, v) => a + v, 0) / faturamentos.length : 0,
+        });
+      };
+
+      if (activeTab === "leads" || activeTab === "funnel") {
+        const leadsList = await loadLeads();
+        setLeads(leadsList);
+        updateStats(leadsList, partners);
+        await loadPendingReports();
+      } else if (activeTab === "partners") {
+        const partnersList = await loadPartners();
+        setPartners(partnersList);
+        updateStats(leads, partnersList);
+      } else if (activeTab === "leads_energia") {
+        const snap = await getDocs(collection(db, "leads_energia"));
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        list.sort((a: any, b: any) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime());
+        setLeadsEnergia(list);
+      } else if (activeTab === "announcements") {
+        const snap = await getDocs(query(collection(db, "comunicados"), orderBy("dataCriacao", "desc")));
+        setAnnouncements(snap.docs.map(d => ({ id: d.id, ...d.data() })) as Announcement[]);
+      } else if (activeTab === "recargas") {
+        const snap = await getDocs(query(collection(db, "recargas"), orderBy("dataSolicitacao", "desc")));
+        setRecargas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      } else if (activeTab === "comissoes") {
+        const snap = await getDocs(query(collection(db, "solicitacoes_comissao"), orderBy("dataSolicitacao", "desc")));
+        setComissoes(snap.docs.map(d => ({ id: d.id, ...d.data() })) as SolicitacaoComissao[]);
+      }
+    } catch (err: any) {
+      console.error("Error syncing active tab:", err);
+      setError("Erro ao sincronizar esta aba. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   useEffect(() => {
     if (!isAuthenticated) return;
     let cancelled = false;
