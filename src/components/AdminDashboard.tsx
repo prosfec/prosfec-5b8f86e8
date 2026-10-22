@@ -113,6 +113,7 @@ import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
 import FunnelAnalyticsDashboard from "./FunnelAnalyticsDashboard";
 import AdminServicosContabilidadeTab from "./AdminServicosContabilidadeTab";
+import FichaLeadEnergiaModal, { fichaDocumentosEnviados } from "./FichaLeadEnergiaModal";
 
 const getStatusLabel = (status: string) => {
   switch (status.toLowerCase()) {
@@ -4931,6 +4932,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   </div>
                   )}
 
+                  {fichaEnergiaLeadId && leadsEnergia.find((l: any) => l.id === fichaEnergiaLeadId) && (
+                    <FichaLeadEnergiaModal
+                      lead={leadsEnergia.find((l: any) => l.id === fichaEnergiaLeadId)}
+                      podeEditar={false}
+                      onClose={() => setFichaEnergiaLeadId(null)}
+                    />
+                  )}
                   {energiaSubTab === "kanban" && (
                   <>
                   {/* Barra de filtros */}

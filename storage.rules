@@ -54,6 +54,16 @@ service firebase.storage {
       allow delete: if isStaff();
     }
 
+    // Ficha & Documentos dos leads de energia solar (RG/CNH e conta de luz).
+    // Leitura, envio e remoção: somente usuários logados (parceiro e equipe).
+    match /documentos_energia/{leadId}/{arquivo} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('application/pdf|image/(jpeg|png|webp)');
+      allow delete: if isSignedIn();
+    }
+
     // Tudo o mais permanece bloqueado.
     match /{allPaths=**} {
       allow read, write: if false;
