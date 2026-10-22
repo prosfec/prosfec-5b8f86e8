@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA, etapaAssessorEnergia, MSG_RECUSA_ENERGIA } from "./AssessorEnergiaContratos";
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
+import FichaLeadEnergiaModal, { fichaDocumentosEnviados } from "./FichaLeadEnergiaModal";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
 import { LeadData, SimulationResult, SolicitacaoComissao } from "../types";
@@ -1093,6 +1094,7 @@ export default function PartnerPortal({
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [expandedEnergiaLeadId, setExpandedEnergiaLeadId] = useState<string | null>(null);
   const [propostaEnergiaLeadId, setPropostaEnergiaLeadId] = useState<string | null>(null);
+  const [fichaEnergiaLeadId, setFichaEnergiaLeadId] = useState<string | null>(null);
   const [energiaPanelOpen, setEnergiaPanelOpen] = useState(true);
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<string>("todos");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<{ [leadId: string]: string }>({});
@@ -2348,6 +2350,13 @@ export default function PartnerPortal({
                                         🚀 Campanha CP (Crédito Pessoal)
                                       </a>
                                     )}
+                                    <button
+                                      type="button"
+                                      onClick={() => setFichaEnergiaLeadId(lead.id)}
+                                      className="w-full px-3 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-lg transition-all font-semibold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
+                                    >
+                                      📋 Ficha & Documentos ({fichaDocumentosEnviados(lead)}/3)
+                                    </button>
                                   </div>
 
                                   <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 flex-wrap">
@@ -2485,6 +2494,14 @@ export default function PartnerPortal({
                         )}
                         {propostaEnergiaLeadId && (
                           <EnergiaContratacaoModal open ocultarVideo onClose={() => setPropostaEnergiaLeadId(null)} />
+                        )}
+                        {fichaEnergiaLeadId && energiaLeads.find((l: any) => l.id === fichaEnergiaLeadId) && (
+                          <FichaLeadEnergiaModal
+                            lead={energiaLeads.find((l: any) => l.id === fichaEnergiaLeadId)}
+                            podeEditar
+                            onClose={() => setFichaEnergiaLeadId(null)}
+                            onUpdated={(u) => setEnergiaLeads(prev => prev.map((l: any) => l.id === fichaEnergiaLeadId ? { ...l, ...u } : l))}
+                          />
                         )}
                       </div>
                         );

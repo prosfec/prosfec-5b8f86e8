@@ -113,6 +113,7 @@ import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
 import FunnelAnalyticsDashboard from "./FunnelAnalyticsDashboard";
 import AdminServicosContabilidadeTab from "./AdminServicosContabilidadeTab";
+import FichaLeadEnergiaModal, { fichaDocumentosEnviados } from "./FichaLeadEnergiaModal";
 
 const getStatusLabel = (status: string) => {
   switch (status.toLowerCase()) {
@@ -487,6 +488,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [energiaEstadoFilter, setEnergiaEstadoFilter] = useState<string>("todos");
   const [energiaBusca, setEnergiaBusca] = useState<string>("");
   const [energiaFechamentoLeadId, setEnergiaFechamentoLeadId] = useState<string | null>(null);
+  const [fichaEnergiaLeadId, setFichaEnergiaLeadId] = useState<string | null>(null);
   const [energiaFechamentoFatura, setEnergiaFechamentoFatura] = useState<string>("");
   const [energiaFechamentoComissao, setEnergiaFechamentoComissao] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -4930,6 +4932,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   </div>
                   )}
 
+                  {fichaEnergiaLeadId && leadsEnergia.find((l: any) => l.id === fichaEnergiaLeadId) && (
+                    <FichaLeadEnergiaModal
+                      lead={leadsEnergia.find((l: any) => l.id === fichaEnergiaLeadId)}
+                      podeEditar={false}
+                      onClose={() => setFichaEnergiaLeadId(null)}
+                    />
+                  )}
                   {energiaSubTab === "kanban" && (
                   <>
                   {/* Barra de filtros */}
@@ -5181,6 +5190,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   Editar valores
                                 </button>
                               )}
+                              <button
+                                onClick={() => setFichaEnergiaLeadId(lead.id)}
+                                className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 rounded-lg font-extrabold text-[10px] cursor-pointer"
+                              >
+                                📋 Ficha & Documentos ({fichaDocumentosEnviados(lead)}/3)
+                              </button>
                               <button
                                 onClick={() => handleDeleteEnergiaLead(lead.id, lead.nomeEmpresa)}
                                 disabled={energiaSavingId === lead.id}
