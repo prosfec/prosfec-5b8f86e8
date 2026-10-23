@@ -5082,6 +5082,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           if (col.key === "arquivado") return s === "arquivado" || s === "cancelado";
                           if (col.key === "novo") return s === "novo" || !["atendimento", "concluido", "arquivado", "cancelado"].includes(s);
                           return s === col.key;
+                        }).sort((a: any, b: any) => {
+                          const pa = energiaNovidadeParceiro(a), pb = energiaNovidadeParceiro(b);
+                          if (pa !== pb) return pa ? -1 : 1;
+                          if (pa && pb) return new Date(b.ultimaMovimentacaoParceiroEm).getTime() - new Date(a.ultimaMovimentacaoParceiroEm).getTime();
+                          return 0;
                         });
                         return (
                     <div key={col.key} className="snap-start shrink-0 w-[85vw] max-w-[340px] lg:w-auto lg:max-w-none bg-slate-50/80 border border-slate-200 rounded-2xl flex flex-col min-h-[200px]">
@@ -5298,12 +5303,25 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                             {/* Histórico e anotações */}
                             <div className="pt-2.5 border-t border-slate-100 space-y-2" onClick={() => marcarEnergiaVistoAdm(lead)} onFocusCapture={() => marcarEnergiaVistoAdm(lead)}>
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
-                                Histórico de Movimentações
-                                {energiaNovidadeParceiro(lead) && (
-                                  <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#DC2626" }} />
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
+                                  Histórico de Movimentações
+                                  {energiaNovidadeParceiro(lead) && (
+                                    <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#DC2626" }} />
+                                  )}
+                                </p>
+                                {notas.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); handleLimparHistoricoEnergia(lead.id); }}
+                                    disabled={energiaSavingId === lead.id}
+                                    className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-extrabold cursor-pointer disabled:opacity-40 ${energiaLimparConfirmId === lead.id ? "bg-red-600 text-white" : "text-slate-400 hover:text-red-600 hover:bg-red-50"}`}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                    {energiaLimparConfirmId === lead.id ? "Clique para confirmar" : "Limpar"}
+                                  </button>
                                 )}
-                              </p>
+                              </div>
                               {notas.length === 0 ? (
                                 <p className="text-[11px] text-slate-400 font-medium">Sem movimentações registradas.</p>
                               ) : (
