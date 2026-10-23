@@ -484,6 +484,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [energiaSubTab, setEnergiaSubTab] = useState<"kanban" | "ciclo">("kanban");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<Record<string, string>>({});
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
+  const [energiaLimparConfirmId, setEnergiaLimparConfirmId] = useState<string | null>(null);
   const [energiaParceiroFilter, setEnergiaParceiroFilter] = useState<string>("todos");
   const [energiaEstadoFilter, setEnergiaEstadoFilter] = useState<string>("todos");
   const [energiaBusca, setEnergiaBusca] = useState<string>("");
@@ -3412,7 +3413,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
-  const [energiaLimparConfirmId, setEnergiaLimparConfirmId] = useState<string | null>(null);
 
   const handleLimparHistoricoEnergia = async (leadId: string) => {
     if (energiaLimparConfirmId !== leadId) {
