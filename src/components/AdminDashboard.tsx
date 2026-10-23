@@ -3412,6 +3412,34 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
+  const [energiaLimparConfirmId, setEnergiaLimparConfirmId] = useState<string | null>(null);
+
+  const handleLimparHistoricoEnergia = async (leadId: string) => {
+    if (energiaLimparConfirmId !== leadId) {
+      setEnergiaLimparConfirmId(leadId);
+      setTimeout(() => setEnergiaLimparConfirmId(prev => (prev === leadId ? null : prev)), 4000);
+      return;
+    }
+    setEnergiaLimparConfirmId(null);
+    setEnergiaSavingId(leadId);
+    try {
+      const agora = new Date().toISOString();
+      await updateDoc(doc(db, "leads_energia", leadId), {
+        anotacoes: [],
+        ultimaMovimentacaoParceiroEm: null,
+        vistoPeloAdmEm: agora
+      });
+      setLeadsEnergia(prev => prev.map((l: any) => l.id === leadId
+        ? { ...l, anotacoes: [], ultimaMovimentacaoParceiroEm: null, vistoPeloAdmEm: agora }
+        : l));
+    } catch (error) {
+      console.error("Erro ao limpar histórico:", error);
+      alert("Não foi possível limpar o histórico. Tente novamente.");
+    } finally {
+      setEnergiaSavingId(null);
+    }
+  };
+
   const filteredLeadsEnergia = leadsEnergia.filter((l: any) => {
     const statusOk = energiaStatusFilter === "todos" || (l.status || "novo") === energiaStatusFilter;
     const termo = `${searchTerm || ""} ${energiaBusca || ""}`.toLowerCase().trim();
