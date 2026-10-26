@@ -1107,7 +1107,7 @@ export default function PartnerPortal({
   const [energiaManualSaving, setEnergiaManualSaving] = useState(false);
   const [energiaManualForm, setEnergiaManualForm] = useState({ nome: "", telefone: "", email: "" });
   // 📝 Anotações privadas de prospecção (Painel de Oportunidades — só o parceiro vê)
-  const [prospectNotes, setProspectNotes] = useState<Record<string, { id: string; notas: any[] }>>({});
+  const [prospectNotes, setProspectNotes] = useState<Record<string, { id: string; notas: any[]; cnpjDetails?: any }>>({});
   const [prospectNoteDraft, setProspectNoteDraft] = useState<Record<string, string>>({});
   const [expandedProspectNoteKey, setExpandedProspectNoteKey] = useState<string | null>(null);
   const [savingProspectNoteKey, setSavingProspectNoteKey] = useState<string | null>(null);
@@ -2520,13 +2520,14 @@ export default function PartnerPortal({
         where("criadoPorId", "==", partnerId)
       );
       const snap = await getDocs(q);
-      const map: Record<string, { id: string; notas: any[] }> = {};
+      const map: Record<string, { id: string; notas: any[]; cnpjDetails?: any }> = {};
       snap.docs.forEach(docSnap => {
         const data: any = docSnap.data();
         if (data.tipoRegistro !== "nota_prospeccao") return;
         map[prospectNoteKey({ nome: data.nomeEmpresa, telefone: data.telefone })] = {
           id: docSnap.id,
-          notas: Array.isArray(data.notas) ? data.notas : []
+          notas: Array.isArray(data.notas) ? data.notas : [],
+          cnpjDetails: data.cnpjDetails || null
         };
       });
       setProspectNotes(map);
@@ -2583,7 +2584,7 @@ export default function PartnerPortal({
         });
         setProspectNotes(prev => ({
           ...prev,
-          [key]: { id: existente.id, notas: [...(prev[key]?.notas || []), nota] }
+          [key]: { ...prev[key], id: existente.id, notas: [...(prev[key]?.notas || []), nota] }
         }));
       } else {
         const payload: any = {
@@ -2611,6 +2612,57 @@ export default function PartnerPortal({
     } finally {
       setSavingProspectNoteKey(null);
     }
+  };
+
+  // 🔍 Grava a Ficha CNPJ consultada no registro do lead do Painel de Oportunidades
+  const salvarCnpjProspect = async (place: any, details: any) => {
+    if (!currentPartner) return;
+    const key = prospectNoteKey(place);
+    const agora = new Date().toISOString();
+    try {
+      const existente = prospectNotes[key];
+      if (existente?.id) {
+        await updateDoc(doc(db, "leads_distribuidos", existente.id), {
+          cnpj: details.cnpj || "",
+          cnpjDetails: details,
+          atualizadoEm: agora
+        });
+        setProspectNotes(prev => ({ ...prev, [key]: { ...prev[key], id: existente.id, notas: prev[key]?.notas || [], cnpjDetails: details } }));
+      } else {
+        const payload: any = {
+          tipoRegistro: "nota_prospeccao",
+          criadoPorId: currentPartner.id,
+          criadoPorNome: currentPartner.nome || "",
+          nomeEmpresa: place?.nome || place?.nomeEmpresa || "",
+          telefone: place?.telefone || "",
+          endereco: place?.endereco || "",
+          cidade: place?.cidade || huntCity || "",
+          estado: place?.estado || huntState || "",
+          categoria: place?.categoria || huntKeyword || "",
+          notas: [],
+          cnpj: details.cnpj || "",
+          cnpjDetails: details,
+          criadoEm: agora,
+          atualizadoEm: agora
+        };
+        const docRef = await addDoc(collection(db, "leads_distribuidos"), payload);
+        setProspectNotes(prev => ({ ...prev, [key]: { id: docRef.id, notas: [], cnpjDetails: details } }));
+      }
+      toast.success("Ficha CNPJ salva no card do lead.");
+    } catch (error) {
+      console.error("Erro ao salvar Ficha CNPJ do lead:", error);
+      toast.error("A ficha foi consultada, mas não foi possível salvá-la no card.");
+    }
+  };
+
+  // Abre a consulta manual de CNPJ do card (ou a ficha já salva)
+  const abrirConsultaCnpjCard = (place: any, trocar = false) => {
+    const salvo = prospectNotes[prospectNoteKey(place)]?.cnpjDetails;
+    if (salvo && !trocar) {
+      setActiveCnpjModal({ place, details: salvo });
+      return;
+    }
+    setCnpjInputModal({ place: { ...place, _origemCard: true }, inputCnpj: "" });
   };
 
   // Fetch leads distributed to me (for Team Member/Consultant view)
@@ -3806,6 +3858,12 @@ export default function PartnerPortal({
 
     const cleanCnpj = cnpjInput ? cnpjInput.replace(/\D/g, "") : (place.cnpj ? place.cnpj.replace(/\D/g, "") : "");
 
+    // Card do Painel de Oportunidades: consulta somente pelo CNPJ informado pelo lead
+    if (place._origemCard && cleanCnpj.length === 0) {
+      setCnpjInputModal({ place, inputCnpj: cnpjInput || "", error: "Digite os 14 dígitos do CNPJ informado pelo lead." });
+      return;
+    }
+
     // Se o parceiro digitou o CNPJ, valida antes de consultar (evita ida e volta inútil)
     if (cnpjInput && (cleanCnpj.length !== 14 || !validateCNPJ(cleanCnpj))) {
       setCnpjInputModal({
@@ -3859,6 +3917,10 @@ export default function PartnerPortal({
       setCnpjDetailsMap(prev => ({ ...prev, [placeId]: data }));
       setActiveCnpjModal({ place, details: data });
       setCnpjInputModal(null);
+
+      if (place._origemCard) {
+        await salvarCnpjProspect(place, data);
+      }
 
       // If this is a distributed lead, update the document in Firestore so consultant keeps CNPJ saved
       if (place.distributedLeadId) {
@@ -9328,7 +9390,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         {huntResults.map((place) => {
                           const placeId = place.id;
                           const hasPhone = !!place.telefone;
-                          const cnpjData: any = null;
+                          const cnpjData: any = prospectNotes[prospectNoteKey(place)]?.cnpjDetails || null;
                           const isSelected = selectedHuntPlaces.includes(placeId);
 
                           // Standardized introductory message for WhatsApp pitch (Raio-X do CNPJ + auditoria subsidiada via energia)
@@ -9443,6 +9505,46 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                     <a href={place.mapsUrl} target="_blank" rel="noreferrer" className="hover:underline text-blue-600 font-semibold">Ver no Google Maps</a>
                                   </p>
+                                )}
+                              </div>
+
+                              {/* 🔍 Consulta de CNPJ informado pelo lead */}
+                              <div className="pt-2.5 border-t border-slate-100">
+                                {cnpjData ? (
+                                  <div className="flex items-center justify-between gap-2 bg-emerald-50/70 border border-emerald-200 rounded-xl px-2.5 py-2">
+                                    <div className="min-w-0">
+                                      <span className="text-[10px] font-mono font-black text-[#0A3D2E] block">{cnpjData.cnpj}</span>
+                                      <span className="text-[10px] font-semibold text-slate-600 block line-clamp-1">{cnpjData.razaoSocial || cnpjData.nomeFantasia}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <button
+                                        onClick={() => abrirConsultaCnpjCard(place)}
+                                        className="px-2 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <FileText className="w-3 h-3" />
+                                        Ver Ficha
+                                      </button>
+                                      <button
+                                        onClick={() => abrirConsultaCnpjCard(place, true)}
+                                        className="px-2 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold text-[10px] rounded-lg transition-all cursor-pointer"
+                                        title="Consultar outro CNPJ para este lead"
+                                      >
+                                        Trocar
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => abrirConsultaCnpjCard(place)}
+                                    disabled={!!cnpjQueryLoading[placeId]}
+                                    className="w-full px-2.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl transition-all font-extrabold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                  >
+                                    {cnpjQueryLoading[placeId] ? (
+                                      <><RefreshCw className="w-3 h-3 animate-spin text-blue-600" />Consultando CNPJ...</>
+                                    ) : (
+                                      <><Search className="w-3 h-3 text-blue-600" />Consultar CNPJ</>
+                                    )}
+                                  </button>
                                 )}
                               </div>
 
@@ -11901,9 +12003,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               </button>
               <button
                 onClick={() => handleFetchCnpj(cnpjInputModal.place, cnpjInputModal.inputCnpj)}
-                className="flex-1 py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                disabled={!!cnpjQueryLoading[cnpjInputModal.place.id]}
+                className="flex-1 py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-60 text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <Search className="w-3.5 h-3.5" />
+                {cnpjQueryLoading[cnpjInputModal.place.id] ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
                 Buscar Ficha CNPJ
               </button>
             </div>
