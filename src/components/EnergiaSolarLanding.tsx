@@ -458,8 +458,8 @@ export default function EnergiaSolarLanding() {
                 Simular minha economia
               </PrimaryButton>
               <p className="max-w-[60ch] text-[14px] leading-relaxed text-energy-ink/60">
-                Selecione sua distribuidora para iniciar a análise. Em seguida, nossos consultores entram em contato para
-                apresentar a viabilidade técnica e a proposta para o seu telhado.
+                A simulação inicial mostra sua economia imediata por assinatura. Em seguida, nossos especialistas usam
+                esses dados para desenhar o projeto da sua usina própria sem custos adicionais.
               </p>
             </div>
           </div>
