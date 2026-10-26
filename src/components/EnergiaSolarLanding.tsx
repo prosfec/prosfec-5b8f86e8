@@ -89,6 +89,33 @@ const BENEFICIOS = [
   },
 ];
 
+const USINA_VANTAGENS = [
+  {
+    s: "Sem entrada e sem adesão",
+    t: "Zero desembolso inicial",
+    d: "Você não paga nada de entrada para iniciar o projeto, a fabricação e a instalação da usina.",
+    i: "M12 3v18M17 7.5c-.8-1.2-2.6-2-5-2-3 0-4.5 1.4-4.5 3.2 0 4.3 9.5 2.2 9.5 6.6 0 1.9-1.8 3.2-5 3.2-2.4 0-4.3-.8-5-2.2",
+  },
+  {
+    s: "Sem financiamento bancário",
+    t: "Não compromete seu crédito",
+    d: "Esqueça aprovação em banco, juros abusivos ou travar o limite do seu cartão de crédito.",
+    i: "M3 10h18M5 10v8m4-8v8m6-8v8m4-8v8M3 20h18M12 3l9 5H3l9-5Z",
+  },
+  {
+    s: "Direto no boleto mensal",
+    t: "Pagamento simples e previsível",
+    d: "A mensalidade vem direto no boleto, substituindo o custo pesado da conta de luz tradicional.",
+    i: "M7 3h10v18l-2.5-1.5L12 21l-2.5-1.5L7 21V3Zm3 5h4m-4 4h4",
+  },
+  {
+    s: "Manutenção e seguro inclusos",
+    t: "Garantia e tranquilidade total",
+    d: "Placas de alta eficiência com seguro completo, monitoramento e manutenção durante todo o contrato.",
+    i: "M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6l8-3Zm-3 9 2 2 4-4",
+  },
+];
+
 const ETAPAS = [
   {
     n: "01",
@@ -386,6 +413,55 @@ export default function EnergiaSolarLanding() {
                 distribuidora, dos créditos aplicados e dos componentes da fatura que permanecem devidos.
               </p>
             </figure>
+          </div>
+        </section>
+
+        {/* Usina própria no telhado */}
+        <section id="usina-propria" className="scroll-mt-20 border-b border-energy-line bg-white py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl px-5">
+            <div className="max-w-3xl">
+              <Eyebrow>Usina própria no seu telhado</Eyebrow>
+              <h2 className="mt-4 text-[clamp(28px,4vw,44px)] font-extrabold leading-[1.1] tracking-[-0.025em]">
+                Tenha seu próprio gerador solar sem entrada e sem financiamento bancário.
+              </h2>
+              <p className="mt-5 max-w-[62ch] text-[16px] leading-relaxed text-energy-ink/70">
+                Gere sua própria energia com placas solares no seu imóvel residencial ou comercial sem se endividar com
+                bancos. Pague parcelas simples direto no boleto mensal e, ao término do período, toda a usina é
+                transferida em definitivo para a sua propriedade.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-energy-line bg-energy-line sm:grid-cols-2 lg:grid-cols-4">
+              {USINA_VANTAGENS.map((v) => (
+                <article key={v.t} className="bg-white p-7">
+                  <Icon path={v.i} />
+                  <p className="mt-6 text-[12px] font-bold uppercase tracking-[0.12em] text-energy-deep">{v.s}</p>
+                  <h3 className="mt-1.5 text-[18px] font-bold tracking-tight">{v.t}</h3>
+                  <p className="mt-2.5 text-[15px] leading-relaxed text-energy-ink/70">{v.d}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="mt-6 flex gap-5 rounded-2xl border-l-4 border-energy-lime bg-energy-paper p-6 sm:p-8">
+              <Icon path="M15 7a3 3 0 1 1-2.8 4.1L4 19.3V21h3v-2h2v-2h2l1.6-1.6A3 3 0 0 1 15 7Z" />
+              <div>
+                <p className="text-[18px] font-bold tracking-tight">Ao final do contrato, o gerador solar é 100% seu.</p>
+                <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-energy-ink/70">
+                  Diferente do aluguel convencional, todo o equipamento e a infraestrutura instalados são transferidos
+                  para o seu nome, tornando-se patrimônio definitivo do seu imóvel.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-10 flex flex-col items-start gap-4">
+              <PrimaryButton onClick={abrirModal} className="min-h-[52px] px-7">
+                Simular minha economia
+              </PrimaryButton>
+              <p className="max-w-[60ch] text-[14px] leading-relaxed text-energy-ink/60">
+                Selecione sua distribuidora para iniciar a análise. Em seguida, nossos consultores entram em contato para
+                apresentar a viabilidade técnica e a proposta para o seu telhado.
+              </p>
+            </div>
           </div>
         </section>
 
