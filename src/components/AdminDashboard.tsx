@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import React, { useState, useEffect, useRef } from "react";
 import { 
   collection, 
@@ -18,7 +19,8 @@ import {
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
-import { db, auth, createNotification } from "../firebase";
+import { db, auth, createNotification, storage } from "../firebase";
+import { ref as storageRef, uploadBytes, getDownloadURL as storageGetUrl } from "firebase/storage";
 import { AdminAvaliacaoAssessorEnergia } from "./AdminAvaliacaoAssessorEnergia";
 import { etapaAssessorEnergia, ETAPA_ENERGIA_TONE } from "./AssessorEnergiaContratos";
 import { PendenciaItem, SolicitacaoComissao } from "../types";

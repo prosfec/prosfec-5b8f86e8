@@ -2459,6 +2459,7 @@ export default function PartnerPortal({
                                               return (
                                                 <div key={idx} className={`border rounded-lg p-1.5 ${daMesa ? "bg-sky-50 border-sky-100" : "bg-slate-50 border-slate-100"}`}>
                                                   <p className="text-[10px] text-slate-700 font-medium leading-snug whitespace-pre-wrap">{nota.texto}</p>
+                                                  {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
                                                   <p className="text-[9px] text-slate-400 font-semibold">
                                                     {daMesa ? "Mesa PROSFEC" : (nota.autor || "Parceiro")} • {nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}
                                                   </p>
