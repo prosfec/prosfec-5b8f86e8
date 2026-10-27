@@ -16,26 +16,60 @@ import { toast } from "sonner";
 const MAX_BYTES = 15 * 1024 * 1024;
 const TIPOS_ACEITOS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 
-export const FICHA_CAMPOS = [
-  { key: "nomeCompleto", label: "Nome completo", type: "text" },
-  { key: "cpf", label: "CPF", type: "text" },
+const CAMPOS_TITULAR = [
   { key: "email", label: "E-mail do titular", type: "email" },
   { key: "telefone", label: "Telefone", type: "tel" },
   { key: "estadoCivil", label: "Estado civil", type: "select" },
   { key: "profissao", label: "Profissão", type: "text" },
-] as const;
+];
 
-export const FICHA_DOCUMENTOS = [
+export const FICHA_CAMPOS_PF = [
+  { key: "nomeCompleto", label: "Nome completo", type: "text" },
+  { key: "cpf", label: "CPF", type: "text" },
+  ...CAMPOS_TITULAR,
+];
+
+export const FICHA_CAMPOS_PJ = [
+  { key: "razaoSocial", label: "Razão Social", type: "text" },
+  { key: "cnpj", label: "CNPJ", type: "text" },
+  { key: "nomeCompleto", label: "Nome do sócio/representante", type: "text" },
+  { key: "cpf", label: "CPF do titular", type: "text" },
+  ...CAMPOS_TITULAR,
+];
+
+const DOC_ADICIONAIS = { key: "adicionais", label: "Arquivos adicionais (Opcional)", opcional: true };
+
+export const FICHA_DOCUMENTOS_PF = [
   { key: "rgFrente", label: "RG/CNH (Frente)" },
   { key: "rgVerso", label: "RG/CNH (Verso)" },
   { key: "contaLuz", label: "Conta de Luz (Bem legível)" },
-] as const;
+  DOC_ADICIONAIS,
+];
 
-const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "União estável", "Divorciado(a)", "Viúvo(a)"];
+export const FICHA_DOCUMENTOS_PJ = [
+  { key: "cartaoCnpj", label: "Cartão CNPJ" },
+  { key: "contratoSocial", label: "Contrato Social ou CCMEI" },
+  { key: "contaLuz", label: "Conta de Luz (Bem legível)" },
+  { key: "rgFrente", label: "RG/CNH do Sócio/Titular (Frente)" },
+  { key: "rgVerso", label: "RG/CNH do Sócio/Titular (Verso)" },
+  DOC_ADICIONAIS,
+];
+
+export function fichaTipo(lead: any): "PF" | "PJ" {
+  const t = lead?.ficha?.tipo;
+  if (t === "PF" || t === "PJ") return t;
+  return lead?.cnpj || lead?.cnpjDetails ? "PJ" : "PF";
+}
+
+const docsDoTipo = (tipo: string) => (tipo === "PJ" ? FICHA_DOCUMENTOS_PJ : FICHA_DOCUMENTOS_PF);
+
+export function fichaDocumentosTotal(lead: any): number {
+  return docsDoTipo(fichaTipo(lead)).filter((d: any) => !d.opcional).length;
+}
 
 export function fichaDocumentosEnviados(lead: any): number {
   const docs = lead?.documentos || {};
-  return FICHA_DOCUMENTOS.filter((d) => docs[d.key]?.url).length;
+  return docsDoTipo(fichaTipo(lead)).filter((d: any) => !d.opcional && docs[d.key]?.url).length;
 }
 
 function usePaleta() {
@@ -62,7 +96,18 @@ interface Props {
 
 export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpdated }: Props) {
   const p = usePaleta();
-  const [ficha, setFicha] = useState<Record<string, string>>(() => ({ ...(lead?.ficha || {}) }));
+  const [ficha, setFicha] = useState<Record<string, string>>(() => {
+    const cd = lead?.cnpjDetails || {};
+    return {
+      ...(lead?.ficha || {}),
+      tipo: fichaTipo(lead),
+      razaoSocial: lead?.ficha?.razaoSocial || cd.razao_social || cd.razaoSocial || "",
+      cnpj: lead?.ficha?.cnpj || cd.cnpj || lead?.cnpj || "",
+    };
+  });
+  const tipo = ficha.tipo === "PJ" ? "PJ" : "PF";
+  const CAMPOS = tipo === "PJ" ? FICHA_CAMPOS_PJ : FICHA_CAMPOS_PF;
+  const DOCS = docsDoTipo(tipo);
   const [documentos, setDocumentos] = useState<Record<string, any>>(() => ({ ...(lead?.documentos || {}) }));
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState<{ slot: string; pct: number } | null>(null);
@@ -77,7 +122,8 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
   const salvarFicha = async () => {
     setSalvando(true);
     try {
-      const limpa = Object.fromEntries(FICHA_CAMPOS.map((c) => [c.key, String(ficha[c.key] || "").trim()]));
+      const limpa: Record<string, string> = { ...(lead?.ficha || {}), tipo };
+      CAMPOS.forEach((c) => { limpa[c.key] = String(ficha[c.key] || "").trim(); });
       const updates = { ficha: limpa, fichaAtualizadaEm: new Date().toISOString() };
       await updateDoc(doc(db, "leads_energia", lead.id), updates);
       onUpdated?.(updates);
@@ -179,10 +225,28 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
         </div>
 
         <div className="overflow-y-auto p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Categoria PF / PJ */}
+          <div className="md:col-span-2 space-y-1.5">
+            <span className="text-[11px] font-black uppercase tracking-wide" style={{ color: p.muted }}>Categoria do cliente</span>
+            <div className="grid grid-cols-2 gap-2">
+              {[{ v: "PF", l: "👤 Pessoa Física (PF)" }, { v: "PJ", l: "🏢 Pessoa Jurídica (PJ)" }].map((o) => {
+                const ativo = tipo === o.v;
+                return (
+                  <button key={o.v} type="button" disabled={!podeEditar} aria-pressed={ativo} onClick={() => setFicha({ ...ficha, tipo: o.v })}
+                    className="px-3 py-2.5 rounded-xl border text-xs font-extrabold cursor-pointer disabled:cursor-default"
+                    style={ativo ? { backgroundColor: "#047857", color: "#FFFFFF", borderColor: "#047857" } : { ...btnSec, opacity: podeEditar ? 1 : 0.6 }}>
+                    {o.l}
+                  </button>
+                );
+              })}
+            </div>
+            {podeEditar && <p className="text-[10px] font-medium" style={{ color: p.soft }}>Ao trocar a categoria, clique em "Salvar dados" para gravar.</p>}
+          </div>
+
           {/* Dados do titular */}
           <section className="space-y-3">
-            <h4 className="text-[11px] font-black uppercase tracking-wide" style={{ color: p.muted }}>Dados do titular</h4>
-            {FICHA_CAMPOS.map((c) => (
+            <h4 className="text-[11px] font-black uppercase tracking-wide" style={{ color: p.muted }}>{tipo === "PJ" ? "Dados da empresa e titular" : "Dados do titular"}</h4>
+            {CAMPOS.map((c) => (
               <label key={c.key} className="block space-y-1">
                 <span className="text-[11px] font-bold" style={{ color: p.muted }}>{c.label}</span>
                 {!podeEditar ? (
@@ -208,8 +272,8 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
 
           {/* Documentos */}
           <section className="space-y-3">
-            <h4 className="text-[11px] font-black uppercase tracking-wide" style={{ color: p.muted }}>Documentos ({fichaDocumentosEnviados({ documentos })}/3)</h4>
-            {FICHA_DOCUMENTOS.map((d) => {
+            <h4 className="text-[11px] font-black uppercase tracking-wide" style={{ color: p.muted }}>Documentos ({fichaDocumentosEnviados({ documentos, ficha: { tipo } })}/{fichaDocumentosTotal({ ficha: { tipo } })})</h4>
+            {DOCS.map((d: any) => {
               const arq = documentos[d.key];
               const ocupado = enviando?.slot === d.key;
               return (
