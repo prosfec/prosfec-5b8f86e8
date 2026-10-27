@@ -9387,7 +9387,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       )}
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {huntResults.map((place) => {
+                        {huntResults.filter((place) => !energiaLeads.some(
+                          (l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === energiaLeadKey(place)
+                        )).map((place) => {
                           const placeId = place.id;
                           const hasPhone = !!place.telefone;
                           const cnpjData: any = prospectNotes[prospectNoteKey(place)]?.cnpjDetails || null;
