@@ -2140,8 +2140,20 @@ export default function PartnerPortal({
                                 </div>
                               )
                             ) : (
-                              <div className="h-9 flex items-center justify-center rounded-lg bg-black/25 border border-emerald-900/60 text-emerald-100/70 text-[11px] font-medium">
-                                <Lock className="w-3 h-3 mr-1.5" /> {proximoPagamentoEnergiaLabel()}
+                              <div className="min-h-9 py-2 px-2 text-center flex items-center justify-center rounded-lg bg-black/25 border border-emerald-900/60 text-emerald-100/70 text-[11px] font-medium">
+                                <Lock className="w-3 h-3 mr-1.5 shrink-0" />
+                                {isJanelaSaqueMensal() && energiaComissaoAcumulada <= 0 && energiaComissaoFutura > 0
+                                  ? `Suas comissões estão acumuladas para o pagamento do dia 25 de ${energiaProximoMesLabel}.`
+                                  : proximoPagamentoEnergiaLabel()}
+                              </div>
+                            )}
+                            {energiaComissaoFutura > 0 && (
+                              <div className="flex items-center justify-between gap-2 rounded-lg bg-sky-500/10 border border-sky-400/30 px-3 py-2">
+                                <span className="text-[10px] text-sky-100/80 leading-tight">
+                                  Acumulado para {energiaProximoMesLabel}<br />
+                                  <span className="text-sky-200/60">vendas após o dia 10</span>
+                                </span>
+                                <span className="font-mono text-sm font-black tabular-nums text-sky-200">{formatCurrencyBRL(energiaComissaoFutura)}</span>
                               </div>
                             )}
                           </div>
