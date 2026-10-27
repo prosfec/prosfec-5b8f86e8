@@ -2268,6 +2268,13 @@ export default function PartnerPortal({
                                         <span>Porte: <strong>{energiaCnpjData.porte || "N/I"}</strong></span>
                                         <span>Abertura: <strong>{energiaCnpjData.dataAbertura || "N/I"}</strong></span>
                                       </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => setActiveCnpjModal({ place: energiaPlaceObj, details: energiaCnpjData })}
+                                        className="mt-1 w-full px-2 py-1.5 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
+                                      >
+                                        <Search className="w-3 h-3" /> Ver Ficha do CNPJ
+                                      </button>
                                     </div>
                                   )}
 
