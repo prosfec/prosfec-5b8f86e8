@@ -16,6 +16,8 @@ import { toast } from "sonner";
 const MAX_BYTES = 15 * 1024 * 1024;
 const TIPOS_ACEITOS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 
+const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)"];
+
 const CAMPOS_TITULAR = [
   { key: "email", label: "E-mail do titular", type: "email" },
   { key: "telefone", label: "Telefone", type: "tel" },
