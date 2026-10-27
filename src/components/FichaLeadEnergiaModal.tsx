@@ -16,26 +16,60 @@ import { toast } from "sonner";
 const MAX_BYTES = 15 * 1024 * 1024;
 const TIPOS_ACEITOS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 
-export const FICHA_CAMPOS = [
-  { key: "nomeCompleto", label: "Nome completo", type: "text" },
-  { key: "cpf", label: "CPF", type: "text" },
+const CAMPOS_TITULAR = [
   { key: "email", label: "E-mail do titular", type: "email" },
   { key: "telefone", label: "Telefone", type: "tel" },
   { key: "estadoCivil", label: "Estado civil", type: "select" },
   { key: "profissao", label: "Profissão", type: "text" },
-] as const;
+];
 
-export const FICHA_DOCUMENTOS = [
+export const FICHA_CAMPOS_PF = [
+  { key: "nomeCompleto", label: "Nome completo", type: "text" },
+  { key: "cpf", label: "CPF", type: "text" },
+  ...CAMPOS_TITULAR,
+];
+
+export const FICHA_CAMPOS_PJ = [
+  { key: "razaoSocial", label: "Razão Social", type: "text" },
+  { key: "cnpj", label: "CNPJ", type: "text" },
+  { key: "nomeCompleto", label: "Nome do sócio/representante", type: "text" },
+  { key: "cpf", label: "CPF do titular", type: "text" },
+  ...CAMPOS_TITULAR,
+];
+
+const DOC_ADICIONAIS = { key: "adicionais", label: "Arquivos adicionais (Opcional)", opcional: true };
+
+export const FICHA_DOCUMENTOS_PF = [
   { key: "rgFrente", label: "RG/CNH (Frente)" },
   { key: "rgVerso", label: "RG/CNH (Verso)" },
   { key: "contaLuz", label: "Conta de Luz (Bem legível)" },
-] as const;
+  DOC_ADICIONAIS,
+];
 
-const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "União estável", "Divorciado(a)", "Viúvo(a)"];
+export const FICHA_DOCUMENTOS_PJ = [
+  { key: "cartaoCnpj", label: "Cartão CNPJ" },
+  { key: "contratoSocial", label: "Contrato Social ou CCMEI" },
+  { key: "contaLuz", label: "Conta de Luz (Bem legível)" },
+  { key: "rgFrente", label: "RG/CNH do Sócio/Titular (Frente)" },
+  { key: "rgVerso", label: "RG/CNH do Sócio/Titular (Verso)" },
+  DOC_ADICIONAIS,
+];
+
+export function fichaTipo(lead: any): "PF" | "PJ" {
+  const t = lead?.ficha?.tipo;
+  if (t === "PF" || t === "PJ") return t;
+  return lead?.cnpj || lead?.cnpjDetails ? "PJ" : "PF";
+}
+
+const docsDoTipo = (tipo: string) => (tipo === "PJ" ? FICHA_DOCUMENTOS_PJ : FICHA_DOCUMENTOS_PF);
+
+export function fichaDocumentosTotal(lead: any): number {
+  return docsDoTipo(fichaTipo(lead)).filter((d: any) => !d.opcional).length;
+}
 
 export function fichaDocumentosEnviados(lead: any): number {
   const docs = lead?.documentos || {};
-  return FICHA_DOCUMENTOS.filter((d) => docs[d.key]?.url).length;
+  return docsDoTipo(fichaTipo(lead)).filter((d: any) => !d.opcional && docs[d.key]?.url).length;
 }
 
 function usePaleta() {
