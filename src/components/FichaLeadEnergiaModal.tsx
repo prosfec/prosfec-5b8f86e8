@@ -225,10 +225,28 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
         </div>
 
         <div className="overflow-y-auto p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Categoria PF / PJ */}
+          <div className="md:col-span-2 space-y-1.5">
+            <span className="text-[11px] font-black uppercase tracking-wide" style={{ color: p.muted }}>Categoria do cliente</span>
+            <div className="grid grid-cols-2 gap-2">
+              {[{ v: "PF", l: "👤 Pessoa Física (PF)" }, { v: "PJ", l: "🏢 Pessoa Jurídica (PJ)" }].map((o) => {
+                const ativo = tipo === o.v;
+                return (
+                  <button key={o.v} type="button" disabled={!podeEditar} aria-pressed={ativo} onClick={() => setFicha({ ...ficha, tipo: o.v })}
+                    className="px-3 py-2.5 rounded-xl border text-xs font-extrabold cursor-pointer disabled:cursor-default"
+                    style={ativo ? { backgroundColor: "#047857", color: "#FFFFFF", borderColor: "#047857" } : { ...btnSec, opacity: podeEditar ? 1 : 0.6 }}>
+                    {o.l}
+                  </button>
+                );
+              })}
+            </div>
+            {podeEditar && <p className="text-[10px] font-medium" style={{ color: p.soft }}>Ao trocar a categoria, clique em "Salvar dados" para gravar.</p>}
+          </div>
+
           {/* Dados do titular */}
           <section className="space-y-3">
-            <h4 className="text-[11px] font-black uppercase tracking-wide" style={{ color: p.muted }}>Dados do titular</h4>
-            {FICHA_CAMPOS.map((c) => (
+            <h4 className="text-[11px] font-black uppercase tracking-wide" style={{ color: p.muted }}>{tipo === "PJ" ? "Dados da empresa e titular" : "Dados do titular"}</h4>
+            {CAMPOS.map((c) => (
               <label key={c.key} className="block space-y-1">
                 <span className="text-[11px] font-bold" style={{ color: p.muted }}>{c.label}</span>
                 {!podeEditar ? (
@@ -254,8 +272,8 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
 
           {/* Documentos */}
           <section className="space-y-3">
-            <h4 className="text-[11px] font-black uppercase tracking-wide" style={{ color: p.muted }}>Documentos ({fichaDocumentosEnviados({ documentos })}/3)</h4>
-            {FICHA_DOCUMENTOS.map((d) => {
+            <h4 className="text-[11px] font-black uppercase tracking-wide" style={{ color: p.muted }}>Documentos ({fichaDocumentosEnviados({ documentos, ficha: { tipo } })}/{fichaDocumentosTotal({ ficha: { tipo } })})</h4>
+            {DOCS.map((d: any) => {
               const arq = documentos[d.key];
               const ocupado = enviando?.slot === d.key;
               return (

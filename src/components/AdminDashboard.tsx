@@ -113,7 +113,7 @@ import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
 import FunnelAnalyticsDashboard from "./FunnelAnalyticsDashboard";
 import AdminServicosContabilidadeTab from "./AdminServicosContabilidadeTab";
-import FichaLeadEnergiaModal, { fichaDocumentosEnviados } from "./FichaLeadEnergiaModal";
+import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 
 const getStatusLabel = (status: string) => {
   switch (status.toLowerCase()) {
@@ -5288,7 +5288,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 onClick={() => setFichaEnergiaLeadId(lead.id)}
                                 className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 rounded-lg font-extrabold text-[10px] cursor-pointer"
                               >
-                                📋 Ficha & Documentos ({fichaDocumentosEnviados(lead)}/3)
+                                📋 Ficha & Documentos ({fichaDocumentosEnviados(lead)}/{fichaDocumentosTotal(lead)})
                               </button>
                               <button
                                 onClick={() => handleDeleteEnergiaLead(lead.id, lead.nomeEmpresa)}
