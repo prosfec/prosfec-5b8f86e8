@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import React, { useState, useEffect, useRef } from "react";
 import { 
   collection, 
@@ -18,7 +19,8 @@ import {
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
-import { db, auth, createNotification } from "../firebase";
+import { db, auth, createNotification, storage } from "../firebase";
+import { ref as storageRef, uploadBytes, getDownloadURL as storageGetUrl } from "firebase/storage";
 import { AdminAvaliacaoAssessorEnergia } from "./AdminAvaliacaoAssessorEnergia";
 import { etapaAssessorEnergia, ETAPA_ENERGIA_TONE } from "./AssessorEnergiaContratos";
 import { PendenciaItem, SolicitacaoComissao } from "../types";
@@ -483,6 +485,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<"todos" | "novo" | "atendimento" | "concluido" | "arquivado">("todos");
   const [energiaSubTab, setEnergiaSubTab] = useState<"kanban" | "ciclo">("kanban");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<Record<string, string>>({});
+  const [energiaAnexoDraft, setEnergiaAnexoDraft] = useState<Record<string, File | null>>({});
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [energiaLimparConfirmId, setEnergiaLimparConfirmId] = useState<string | null>(null);
   const [energiaParceiroFilter, setEnergiaParceiroFilter] = useState<string>("todos");
@@ -3382,13 +3385,23 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   };
 
   const handleAddEnergiaNota = async (leadId: string) => {
-    const texto = (energiaNotaDraft[leadId] || "").trim();
+    const arquivo = energiaAnexoDraft[leadId] || null;
+    const texto = (energiaNotaDraft[leadId] || "").trim() || (arquivo ? "Documento anexado pela Mesa" : "");
     if (!texto) return;
     setEnergiaSavingId(leadId);
     try {
       const agora = new Date().toISOString();
       const alvo = leadsEnergia.find((l: any) => l.id === leadId);
-      const novaNota = { texto, autor: "Mesa PROSFEC", papel: "adm", data: agora };
+      const novaNota: any = { texto, autor: "Mesa PROSFEC", papel: "adm", data: agora };
+      if (arquivo) {
+        const ext = (arquivo.name.split(".").pop() || "").toLowerCase();
+        const path = `documentos_energia/${leadId}/chamado_${Date.now()}.${ext}`;
+        const r = storageRef(storage, path);
+        await uploadBytes(r, arquivo, { contentType: arquivo.type });
+        novaNota.anexoUrl = await storageGetUrl(r);
+        novaNota.anexoNome = arquivo.name;
+        novaNota.anexoTipo = arquivo.type === "application/pdf" ? "pdf" : "imagem";
+      }
       const novasNotas = [
         ...(Array.isArray(alvo?.anotacoes) ? alvo.anotacoes : []),
         novaNota
@@ -3404,6 +3417,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         l.id === leadId ? { ...l, anotacoes: novasNotas, atualizadoEm: agora, ultimaMovimentacaoMesaEm: agora, vistoPeloAdmEm: agora } : l
       ));
       setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: "" }));
+      setEnergiaAnexoDraft(prev => ({ ...prev, [leadId]: null }));
       toast.success("Anotação registrada e compartilhada com o parceiro.");
     } catch (error) {
       console.error("Erro ao registrar anotação de energia:", error);
@@ -5329,6 +5343,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   {notas.slice().reverse().map((nota: any, idx: number) => (
                                     <div key={idx} className="bg-slate-50 border border-slate-100 rounded-lg p-2">
                                       <p className="text-[11px] text-slate-700 font-medium leading-snug">{nota.texto}</p>
+                                      {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
                                       <p className="text-[9px] text-slate-400 font-semibold">
                                         {nota.autor || "Mesa PROSFEC"} • {nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}
                                       </p>
@@ -5345,14 +5360,34 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   placeholder="Escrever anotação visível ao parceiro..."
                                   className="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
                                 />
+                                <label title="Anexar PDF ou imagem" className="px-2 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[12px] cursor-pointer shrink-0">
+                                  📎
+                                  <input
+                                    type="file"
+                                    accept="application/pdf,image/jpeg,image/png,image/webp"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0] || null;
+                                      e.target.value = "";
+                                      if (f && f.size > 15 * 1024 * 1024) { toast.error("Arquivo acima de 15 MB."); return; }
+                                      setEnergiaAnexoDraft(prev => ({ ...prev, [lead.id]: f }));
+                                    }}
+                                  />
+                                </label>
                                 <button
                                   onClick={() => handleAddEnergiaNota(lead.id)}
-                                  disabled={energiaSavingId === lead.id || !(energiaNotaDraft[lead.id] || "").trim()}
+                                  disabled={energiaSavingId === lead.id || (!(energiaNotaDraft[lead.id] || "").trim() && !energiaAnexoDraft[lead.id])}
                                   className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer disabled:opacity-40"
                                 >
-                                  <Plus className="w-3 h-3" /> Registrar
+                                  {energiaSavingId === lead.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Registrar
                                 </button>
                               </div>
+                              {energiaAnexoDraft[lead.id] && (
+                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold max-w-full">
+                                  <span className="truncate">📎 {energiaAnexoDraft[lead.id]!.name}</span>
+                                  <button type="button" onClick={() => setEnergiaAnexoDraft(prev => ({ ...prev, [lead.id]: null }))} className="text-slate-400 hover:text-red-600 cursor-pointer">✕</button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         );
