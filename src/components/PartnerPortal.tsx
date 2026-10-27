@@ -26,7 +26,7 @@ import {
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
-import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildCampanhaCPWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel } from "../utils";
+import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildCampanhaCPWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel, cicloComissaoEnergia } from "../utils";
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA, etapaAssessorEnergia, MSG_RECUSA_ENERGIA } from "./AssessorEnergiaContratos";
@@ -1900,10 +1900,19 @@ export default function PartnerPortal({
     return new Date(lead.ultimaMovimentacaoMesaEm).getTime() > visto;
   };
 
-  // Comissões de energia acumuladas e aguardando o ciclo mensal (pagamento dia 25)
-  const energiaComissaoAcumulada = energiaLeads
-    .filter((l: any) => (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada")
+  // Comissões acumuladas: vigente = fechadas até dia 10 (pagas dia 25); futuro = a partir do dia 11 (mês seguinte)
+  const energiaComissoesAbertas = energiaLeads.filter((l: any) =>
+    (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada" && Number(l.comissaoParceiro) > 0
+  );
+  const energiaElegiveisCiclo = energiaComissoesAbertas.filter((l: any) => cicloComissaoEnergia(l) === "vigente");
+  const energiaComissaoAcumulada = energiaElegiveisCiclo.reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
+  const energiaComissaoFutura = energiaComissoesAbertas
+    .filter((l: any) => cicloComissaoEnergia(l) === "futuro")
     .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
+  const energiaProximoMesLabel = (() => {
+    const h = new Date();
+    return new Date(h.getFullYear(), h.getMonth() + 1, 1).toLocaleDateString("pt-BR", { month: "long" });
+  })();
 
   const handleSolicitarSaqueEnergia = async () => {
     if (!currentPartner || energiaComissaoAcumulada <= 0 || energiaSaqueSubmitting) return;
@@ -1915,9 +1924,7 @@ export default function PartnerPortal({
       toast.error("Informe a sua chave PIX.");
       return;
     }
-    const elegiveis = energiaLeads.filter((l: any) =>
-      (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada" && Number(l.comissaoParceiro) > 0
-    );
+    const elegiveis = energiaElegiveisCiclo;
     setEnergiaSaqueSubmitting(true);
     try {
       const agora = new Date().toISOString();
@@ -1926,7 +1933,7 @@ export default function PartnerPortal({
         const snaps = await Promise.all(elegiveis.map((l: any) => tx.get(doc(db, "leads_energia", l.id))));
         const centavos = snaps.reduce((sum, snap) => {
           const lead = snap.data();
-          if (!lead || lead.parceiroId !== currentPartner.id || lead.status !== "concluido" || (lead.comissaoStatus || "acumulada") !== "acumulada" || Number(lead.comissaoParceiro) <= 0) {
+          if (!lead || lead.parceiroId !== currentPartner.id || lead.status !== "concluido" || (lead.comissaoStatus || "acumulada") !== "acumulada" || Number(lead.comissaoParceiro) <= 0 || cicloComissaoEnergia(lead) !== "vigente") {
             throw new Error("Uma comissão mudou. Atualize o painel antes de solicitar novamente.");
           }
           return sum + Math.round(Number(lead.comissaoParceiro) * 100);
@@ -2133,8 +2140,20 @@ export default function PartnerPortal({
                                 </div>
                               )
                             ) : (
-                              <div className="h-9 flex items-center justify-center rounded-lg bg-black/25 border border-emerald-900/60 text-emerald-100/70 text-[11px] font-medium">
-                                <Lock className="w-3 h-3 mr-1.5" /> {proximoPagamentoEnergiaLabel()}
+                              <div className="min-h-9 py-2 px-2 text-center flex items-center justify-center rounded-lg bg-black/25 border border-emerald-900/60 text-emerald-100/70 text-[11px] font-medium">
+                                <Lock className="w-3 h-3 mr-1.5 shrink-0" />
+                                {isJanelaSaqueMensal() && energiaComissaoAcumulada <= 0 && energiaComissaoFutura > 0
+                                  ? `Suas comissões estão acumuladas para o pagamento do dia 25 de ${energiaProximoMesLabel}.`
+                                  : proximoPagamentoEnergiaLabel()}
+                              </div>
+                            )}
+                            {energiaComissaoFutura > 0 && (
+                              <div className="flex items-center justify-between gap-2 rounded-lg bg-sky-500/10 border border-sky-400/30 px-3 py-2">
+                                <span className="text-[10px] text-sky-100/80 leading-tight">
+                                  Acumulado para {energiaProximoMesLabel}<br />
+                                  <span className="text-sky-200/60">vendas após o dia 10</span>
+                                </span>
+                                <span className="font-mono text-sm font-black tabular-nums text-sky-200">{formatCurrencyBRL(energiaComissaoFutura)}</span>
                               </div>
                             )}
                           </div>
