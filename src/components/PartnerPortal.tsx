@@ -1900,10 +1900,19 @@ export default function PartnerPortal({
     return new Date(lead.ultimaMovimentacaoMesaEm).getTime() > visto;
   };
 
-  // Comissões de energia acumuladas e aguardando o ciclo mensal (pagamento dia 25)
-  const energiaComissaoAcumulada = energiaLeads
-    .filter((l: any) => (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada")
+  // Comissões acumuladas: vigente = fechadas até dia 10 (pagas dia 25); futuro = a partir do dia 11 (mês seguinte)
+  const energiaComissoesAbertas = energiaLeads.filter((l: any) =>
+    (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada" && Number(l.comissaoParceiro) > 0
+  );
+  const energiaElegiveisCiclo = energiaComissoesAbertas.filter((l: any) => cicloComissaoEnergia(l) === "vigente");
+  const energiaComissaoAcumulada = energiaElegiveisCiclo.reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
+  const energiaComissaoFutura = energiaComissoesAbertas
+    .filter((l: any) => cicloComissaoEnergia(l) === "futuro")
     .reduce((acc: number, l: any) => acc + (Number(l.comissaoParceiro) || 0), 0);
+  const energiaProximoMesLabel = (() => {
+    const h = new Date();
+    return new Date(h.getFullYear(), h.getMonth() + 1, 1).toLocaleDateString("pt-BR", { month: "long" });
+  })();
 
   const handleSolicitarSaqueEnergia = async () => {
     if (!currentPartner || energiaComissaoAcumulada <= 0 || energiaSaqueSubmitting) return;
@@ -1915,9 +1924,7 @@ export default function PartnerPortal({
       toast.error("Informe a sua chave PIX.");
       return;
     }
-    const elegiveis = energiaLeads.filter((l: any) =>
-      (l.status || "novo") === "concluido" && (l.comissaoStatus || "acumulada") === "acumulada" && Number(l.comissaoParceiro) > 0
-    );
+    const elegiveis = energiaElegiveisCiclo;
     setEnergiaSaqueSubmitting(true);
     try {
       const agora = new Date().toISOString();
