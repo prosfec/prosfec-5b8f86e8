@@ -1734,7 +1734,7 @@ export default function PartnerPortal({
     energiaEnvioLock.add(key);
     setEnergiaSavingId(place.id);
     try {
-      const cachedCnpj = cnpjDetailsMap[place.id];
+      const cachedCnpj = cnpjDetailsMap[place.id] || prospectNotes[prospectNoteKey(place)]?.cnpjDetails || null;
       const payload: any = {
         nomeEmpresa: place.nome || "",
         razaoSocial: cachedCnpj?.razaoSocial || place.nome || "",
