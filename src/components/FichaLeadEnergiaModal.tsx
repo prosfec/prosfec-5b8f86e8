@@ -96,7 +96,18 @@ interface Props {
 
 export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpdated }: Props) {
   const p = usePaleta();
-  const [ficha, setFicha] = useState<Record<string, string>>(() => ({ ...(lead?.ficha || {}) }));
+  const [ficha, setFicha] = useState<Record<string, string>>(() => {
+    const cd = lead?.cnpjDetails || {};
+    return {
+      ...(lead?.ficha || {}),
+      tipo: fichaTipo(lead),
+      razaoSocial: lead?.ficha?.razaoSocial || cd.razao_social || cd.razaoSocial || "",
+      cnpj: lead?.ficha?.cnpj || cd.cnpj || lead?.cnpj || "",
+    };
+  });
+  const tipo = ficha.tipo === "PJ" ? "PJ" : "PF";
+  const CAMPOS = tipo === "PJ" ? FICHA_CAMPOS_PJ : FICHA_CAMPOS_PF;
+  const DOCS = docsDoTipo(tipo);
   const [documentos, setDocumentos] = useState<Record<string, any>>(() => ({ ...(lead?.documentos || {}) }));
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState<{ slot: string; pct: number } | null>(null);
@@ -111,7 +122,8 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
   const salvarFicha = async () => {
     setSalvando(true);
     try {
-      const limpa = Object.fromEntries(FICHA_CAMPOS.map((c) => [c.key, String(ficha[c.key] || "").trim()]));
+      const limpa: Record<string, string> = { ...(lead?.ficha || {}), tipo };
+      CAMPOS.forEach((c) => { limpa[c.key] = String(ficha[c.key] || "").trim(); });
       const updates = { ficha: limpa, fichaAtualizadaEm: new Date().toISOString() };
       await updateDoc(doc(db, "leads_energia", lead.id), updates);
       onUpdated?.(updates);
