@@ -26,7 +26,7 @@ import {
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
 import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
-import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildCampanhaCPWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel } from "../utils";
+import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildCampanhaCPWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel, cicloComissaoEnergia } from "../utils";
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA, etapaAssessorEnergia, MSG_RECUSA_ENERGIA } from "./AssessorEnergiaContratos";
@@ -1933,7 +1933,7 @@ export default function PartnerPortal({
         const snaps = await Promise.all(elegiveis.map((l: any) => tx.get(doc(db, "leads_energia", l.id))));
         const centavos = snaps.reduce((sum, snap) => {
           const lead = snap.data();
-          if (!lead || lead.parceiroId !== currentPartner.id || lead.status !== "concluido" || (lead.comissaoStatus || "acumulada") !== "acumulada" || Number(lead.comissaoParceiro) <= 0) {
+          if (!lead || lead.parceiroId !== currentPartner.id || lead.status !== "concluido" || (lead.comissaoStatus || "acumulada") !== "acumulada" || Number(lead.comissaoParceiro) <= 0 || cicloComissaoEnergia(lead) !== "vigente") {
             throw new Error("Uma comissão mudou. Atualize o painel antes de solicitar novamente.");
           }
           return sum + Math.round(Number(lead.comissaoParceiro) * 100);
