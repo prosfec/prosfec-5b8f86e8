@@ -1734,7 +1734,7 @@ export default function PartnerPortal({
     energiaEnvioLock.add(key);
     setEnergiaSavingId(place.id);
     try {
-      const cachedCnpj = cnpjDetailsMap[place.id];
+      const cachedCnpj = cnpjDetailsMap[place.id] || prospectNotes[prospectNoteKey(place)]?.cnpjDetails || null;
       const payload: any = {
         nomeEmpresa: place.nome || "",
         razaoSocial: cachedCnpj?.razaoSocial || place.nome || "",
@@ -2268,6 +2268,13 @@ export default function PartnerPortal({
                                         <span>Porte: <strong>{energiaCnpjData.porte || "N/I"}</strong></span>
                                         <span>Abertura: <strong>{energiaCnpjData.dataAbertura || "N/I"}</strong></span>
                                       </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => setActiveCnpjModal({ place: energiaPlaceObj, details: energiaCnpjData })}
+                                        className="mt-1 w-full px-2 py-1.5 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
+                                      >
+                                        <Search className="w-3 h-3" /> Ver Ficha do CNPJ
+                                      </button>
                                     </div>
                                   )}
 
@@ -9387,7 +9394,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       )}
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {huntResults.map((place) => {
+                        {huntResults.filter((place) => !energiaLeads.some(
+                          (l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === energiaLeadKey(place)
+                        )).map((place) => {
                           const placeId = place.id;
                           const hasPhone = !!place.telefone;
                           const cnpjData: any = prospectNotes[prospectNoteKey(place)]?.cnpjDetails || null;
