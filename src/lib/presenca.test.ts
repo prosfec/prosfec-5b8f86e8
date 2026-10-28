@@ -26,6 +26,15 @@ describe("presença do assessor", () => {
     const agora = br("2026-10-28T10:00:00");
     expect(deveContar(agora, agora.getTime(), false)).toBe(false);
   });
+  it("não conta no sábado", () => {
+    expect(dentroHorarioComercial(br("2026-10-24T10:00:00"))).toBe(false);
+  });
+  it("não conta no domingo", () => {
+    expect(dentroHorarioComercial(br("2026-10-25T10:00:00"))).toBe(false);
+  });
+  it("conta na sexta", () => {
+    expect(dentroHorarioComercial(br("2026-10-30T10:00:00"))).toBe(true);
+  });
   it("dia usa horário de Brasília", () => {
     expect(diaPresenca(new Date("2026-10-29T01:00:00Z"))).toBe("2026-10-28");
   });

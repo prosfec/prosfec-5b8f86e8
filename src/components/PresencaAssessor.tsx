@@ -89,7 +89,7 @@ export function PresencaAssessorIndicador({ partnerId }: { partnerId: string }) 
     ? { dot: "bg-emerald-500", txt: `Em Operação • ${formatarDuracao(segHoje)} hoje` }
     : estado === "ausente"
       ? { dot: "bg-amber-400", txt: `Ausente • ${formatarDuracao(segHoje)} hoje` }
-      : { dot: "bg-slate-400", txt: `Fora do horário (${String(PRESENCA_INICIO_HORA).padStart(2, "0")}h às ${PRESENCA_FIM_HORA}h) • ${formatarDuracao(segHoje)} hoje` };
+      : { dot: "bg-slate-400", txt: `Fora do horário (Seg a Sex, ${String(PRESENCA_INICIO_HORA).padStart(2, "0")}h às ${PRESENCA_FIM_HORA}h) • ${formatarDuracao(segHoje)} hoje` };
 
   return (
     <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-bold text-slate-800">
@@ -144,7 +144,7 @@ export function AdminPresencaAssessor({ partner }: { partner: any }) {
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 text-slate-800">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">⏱️ Controle de Horas (08h às 18h)</h4>
+        <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">⏱️ Controle de Horas (Seg a Sex, 08h às 18h)</h4>
         <PresencaStatusBadge partner={partner} />
       </div>
       <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
