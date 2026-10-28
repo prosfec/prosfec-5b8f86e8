@@ -3836,6 +3836,12 @@ export default function PartnerPortal({
   const handleLoadNextPage = async () => {
     if (!huntNextPageToken || loadingNextPage) return;
 
+    const credits = currentPartner?.cacaLeadsCredits || 0;
+    if (credits <= 0) {
+      alert("Você não possui saldo de buscas no Painel de Oportunidade. Adquira um pacote de recargas para carregar mais resultados.");
+      return;
+    }
+
     setLoadingNextPage(true);
     try {
       const response = await fetch("/api/caca-leads", {
@@ -3863,6 +3869,19 @@ export default function PartnerPortal({
 
       setHuntResults(prev => [...prev, ...freshLeads]);
       setHuntNextPageToken(updatedToken);
+
+      // Desconta 1 crédito de busca por página adicional carregada
+      if (currentPartner) {
+        const newCredits = Math.max(0, credits - 1);
+        try {
+          await updateDoc(doc(db, "parceiros", currentPartner.id), { cacaLeadsCredits: newCredits });
+          const updatedPartner = { ...currentPartner, cacaLeadsCredits: newCredits };
+          setCurrentPartner(updatedPartner);
+          sessionStorage.setItem("partner_data", JSON.stringify(updatedPartner));
+        } catch (dbErr) {
+          console.error("Error updating credits in DB:", dbErr);
+        }
+      }
     } catch (err: any) {
       console.error("Error loading next page:", err);
       alert(err.message || "Erro ao carregar próxima página de resultados.");
