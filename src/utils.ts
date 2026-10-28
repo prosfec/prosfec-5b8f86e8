@@ -147,15 +147,15 @@ export function buildEnergiaSolarWhatsAppMessage(nomeEmpresa?: string): string {
 export function buildCampanhaCPWhatsAppMessage(nomeEmpresa?: string): string {
   const alvo = String(nomeEmpresa ?? "").trim();
   return [
-    `Oi${alvo ? `, ${alvo}` : ""}! Passo 1 concluído com sucesso: sua redução na conta de luz está validada! ✅⚡`,
+    `Oi${alvo ? `, ${alvo}` : ""}! Sua adesão à Energia Solar PROSFEC foi concluída com sucesso: sua redução na conta de luz está validada! ✅⚡`,
     "",
-    "Como combinamos, agora que você tem essa economia no radar, a gente destrava o acesso à nossa plataforma financeira.",
+    "Agora você faz parte do Clube de Benefícios PROSFEC Energy, uma área exclusiva para nossos clientes.",
     "",
-    "Acesse o link abaixo para visualizar as ofertas de crédito pessoal e soluções financeiras liberadas para o seu CPF/CNPJ hoje:",
+    "Acesse pelo link abaixo usando seu nome completo e o telefone do cadastro:",
     "",
-    "🔗 https://entr.ai/prosfec-creditopessoal",
+    "🔗 https://prosfec.com.br/clubedebeneficios",
     "",
-    "O acesso é gratuito. Dá uma olhada nas propostas que vão aparecer e me chama aqui se precisar de ajuda para escolher a melhor opção!"
+    "Lá você encontra o Sunne Mais, o app Sunne Pay, simulação de crédito e acesso ao BNDES. Qualquer dúvida, me chama aqui!"
   ].join("\n");
 }
 
