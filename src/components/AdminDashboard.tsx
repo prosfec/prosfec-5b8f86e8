@@ -5159,18 +5159,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                             {/* Dados cadastrais */}
                             <div className="grid grid-cols-1 gap-1.5 text-[11px] text-slate-600 font-medium break-words">
-                              {lead.cnpj && (
+                              {lead.cnpjDetails ? (
+                                <FichaCnpjBotao details={lead.cnpjDetails} nome={lead.nomeEmpresa || lead.nome} endereco={lead.endereco} />
+                              ) : lead.cnpj && (
                                 <p className="flex items-center gap-1">
                                   <FileText className="w-3.5 h-3.5 text-slate-400" /> {lead.cnpj}
-                                  {lead.cnpjDetails?.situacaoCadastral && (
-                                    <span className="ml-1 bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded text-[8px]">
-                                      {lead.cnpjDetails.situacaoCadastral}
-                                    </span>
-                                  )}
                                 </p>
-                              )}
-                              {lead.cnpjDetails?.porte && (
-                                <p className="flex items-center gap-1"><Briefcase className="w-3.5 h-3.5 text-slate-400" /> Porte: {lead.cnpjDetails.porte}</p>
                               )}
                               {lead.telefone && (
                                 <p className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-slate-400" /> {lead.telefone}</p>
@@ -5194,14 +5188,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               )}
                             </div>
 
-                            {socios.length > 0 && (
-                              <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide mb-1">Quadro Societário</p>
-                                <p className="text-[11px] text-slate-600 font-medium">
-                                  {socios.map((s: any) => s.nome || s).join(" • ")}
-                                </p>
-                              </div>
-                            )}
 
                             {/* Parceiro indicador */}
                             <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-2.5 text-[11px]">
