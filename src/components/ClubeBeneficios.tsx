@@ -7,7 +7,7 @@ const LINKS = {
   bndes: "https://portal.bndes.gov.br/prc/#/login-govbr",
   playStore: "https://play.google.com/store/apps/details?id=br.com.aptare.sunne",
   appStore: "https://apps.apple.com/br/app/sunne-pay/id6762489123",
-  suporte: "https://wa.me/?text=" + encodeURIComponent("Olá! Sou cliente PROSFEC Energy e tenho uma dúvida sobre o Clube de Benefícios."),
+  suporte: "https://wa.me/5598987353253?text=" + encodeURIComponent("Olá! Sou cliente PROSFEC Energy e tenho uma dúvida sobre o Clube de Benefícios."),
 };
 
 const SESSAO = "prosfec_clube_acesso";
@@ -191,7 +191,7 @@ function Vitrine({ onSair }: { onSair: () => void }) {
             <h2 className="text-lg font-extrabold text-white">Pós-venda PROSFEC</h2>
             <p className="text-sm text-white/75">Dúvidas sobre sua fatura de energia ou sobre os benefícios? Fale com a gente.</p>
           </div>
-          <Externo href={LINKS.suporte} variante="lima">Falar no WhatsApp</Externo>
+          <Externo href={LINKS.suporte} variante="lima">WhatsApp (98) 9 8735-3253</Externo>
         </section>
       </main>
 
