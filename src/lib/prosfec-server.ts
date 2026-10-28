@@ -693,9 +693,11 @@ export function createExpressApp() {
         return res.status(400).json({ ok: false, erro: "Informe nome completo e telefone com DDD." });
       }
       const fim = (t: string) => t.slice(-8);
-      const snap = await getDocs(query(collection(db, "leads_energia"), where("status", "==", "concluido")));
-      const encontrado = snap.docs.some((d) => {
-        const l: any = d.data();
+      const rows = await runQueryRest("leads_energia", {
+        fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "concluido" } },
+      });
+      const encontrado = rows.some((row: any) => {
+        const l: any = row.data || {};
         const tels = [l.telefone, l.ficha?.telefone].map(dig).filter((t) => t.length >= 8);
         if (!tels.some((t) => fim(t) === fim(tel))) return false;
         const nomes = [l.nomeEmpresa, l.ficha?.nomeCompleto, l.ficha?.razaoSocial].map(norm).filter(Boolean);
