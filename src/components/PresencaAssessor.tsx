@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { doc, setDoc, updateDoc, increment, getDoc, collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { doc, updateDoc, increment, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import {
   deveContar, diaPresenca, horaPresenca, dentroHorarioComercial, statusPresenca, formatarDuracao,
@@ -16,8 +16,23 @@ export function PresencaAssessorIndicador({ partnerId }: { partnerId: string }) 
 
   useEffect(() => {
     if (!partnerId) return;
-    getDoc(doc(db, "parceiros", partnerId, "presenca_diaria", dia.current))
-      .then(s => setSegHoje(Number(s.data()?.segundosAtivos || 0)))
+    const partnerRef = doc(db, "parceiros", partnerId);
+    // Dados de presença ficam no próprio cadastro do parceiro (campo presencaDias),
+    // pois o parceiro já tem permissão para atualizar o seu documento.
+    getDoc(partnerRef)
+      .then(async s => {
+        const reg = s.data()?.presencaDias?.[dia.current];
+        setSegHoje(Number(reg?.segundosAtivos || 0));
+        const agora = new Date();
+        if (!reg?.primeiroAcessoHora && dentroHorarioComercial(agora)) {
+          await updateDoc(partnerRef, {
+            [`presencaDias.${dia.current}.dia`]: dia.current,
+            [`presencaDias.${dia.current}.primeiroAcesso`]: agora.toISOString(),
+            [`presencaDias.${dia.current}.primeiroAcessoHora`]: horaPresenca(agora),
+            [`presencaDias.${dia.current}.ultimoRegistroHora`]: horaPresenca(agora),
+          }).catch(() => {});
+        }
+      })
       .catch(() => {});
 
     const marcar = () => { ultimaInteracao.current = Date.now(); };
@@ -28,21 +43,16 @@ export function PresencaAssessorIndicador({ partnerId }: { partnerId: string }) 
       const seg = pendente.current;
       pendente.current = 0;
       const agora = new Date();
-      const ref = doc(db, "parceiros", partnerId, "presenca_diaria", dia.current);
+      const k = `presencaDias.${dia.current}`;
+      const upd: any = { presencaUltimoSinal: agora.toISOString(), presencaAtivo: ativo };
+      if (seg > 0) {
+        upd[`${k}.dia`] = dia.current;
+        upd[`${k}.segundosAtivos`] = increment(seg);
+        upd[`${k}.ultimoRegistro`] = agora.toISOString();
+        upd[`${k}.ultimoRegistroHora`] = horaPresenca(agora);
+      }
       try {
-        if (seg > 0) {
-          const snap = await getDoc(ref);
-          const base: any = { segundosAtivos: increment(seg), ultimoRegistro: agora.toISOString(), ultimoRegistroHora: horaPresenca(agora), dia: dia.current };
-          if (!snap.exists() || !snap.data()?.primeiroAcesso) {
-            base.primeiroAcesso = agora.toISOString();
-            base.primeiroAcessoHora = horaPresenca(new Date(agora.getTime() - seg * 1000));
-          }
-          await setDoc(ref, base, { merge: true });
-        }
-        await updateDoc(doc(db, "parceiros", partnerId), {
-          presencaUltimoSinal: agora.toISOString(),
-          presencaAtivo: ativo,
-        });
+        await updateDoc(partnerRef, upd);
       } catch {
         pendente.current += seg;
       }
@@ -105,7 +115,7 @@ export function PresencaStatusBadge({ partner }: { partner: any }) {
   const map = {
     online: { dot: "bg-emerald-500", txt: "Online agora" },
     ausente: { dot: "bg-amber-400", txt: "Ausente" },
-    offline: { dot: "bg-slate-400", txt: partner?.presencaUltimoSinal ? `Offline • último sinal ${new Date(partner.presencaUltimoSinal).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}` : "Offline" },
+    offline: { dot: "bg-slate-400", txt: "Offline" },
   }[st];
   return (
     <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
@@ -122,8 +132,15 @@ export function AdminPresencaAssessor({ partner }: { partner: any }) {
   useEffect(() => {
     if (!partner?.id) return;
     setCarregando(true);
-    getDocs(query(collection(db, "parceiros", partner.id, "presenca_diaria"), orderBy("dia", "desc"), limit(31)))
-      .then(s => setDias(s.docs.map(d => ({ id: d.id, ...d.data() }))))
+    getDoc(doc(db, "parceiros", partner.id))
+      .then(s => {
+        const mapa = s.data()?.presencaDias || {};
+        const lista = Object.entries(mapa)
+          .map(([k, v]: [string, any]) => ({ id: k, dia: k, ...v }))
+          .sort((a, b) => (a.dia < b.dia ? 1 : -1))
+          .slice(0, 31);
+        setDias(lista);
+      })
       .catch(() => setDias([]))
       .finally(() => setCarregando(false));
   }, [partner?.id]);
