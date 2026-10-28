@@ -672,6 +672,42 @@ export function createExpressApp() {
   }
 
 
+  // API Route: Clube de Benefícios — confirma se nome + telefone pertencem a
+  // um cliente de Energia Solar com status "concluido". Nunca devolve dados do lead.
+  const clubeTentativas = new Map<string, { n: number; t: number }>();
+  app.post("/api/clube-beneficios/verificar", async (req, res) => {
+    try {
+      const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "x").split(",")[0].trim();
+      const agora = Date.now();
+      const reg = clubeTentativas.get(ip);
+      if (reg && agora - reg.t < 10 * 60 * 1000) {
+        if (reg.n >= 10) return res.status(429).json({ ok: false, erro: "Muitas tentativas. Aguarde alguns minutos." });
+        reg.n++;
+      } else clubeTentativas.set(ip, { n: 1, t: agora });
+
+      const norm = (s: any) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+      const dig = (s: any) => String(s || "").replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
+      const nome = norm(req.body?.nome);
+      const tel = dig(req.body?.telefone);
+      if (nome.split(" ").length < 2 || tel.length < 10) {
+        return res.status(400).json({ ok: false, erro: "Informe nome completo e telefone com DDD." });
+      }
+      const fim = (t: string) => t.slice(-8);
+      const snap = await getDocs(query(collection(db, "leads_energia"), where("status", "==", "concluido")));
+      const encontrado = snap.docs.some((d) => {
+        const l: any = d.data();
+        const tels = [l.telefone, l.ficha?.telefone].map(dig).filter((t) => t.length >= 8);
+        if (!tels.some((t) => fim(t) === fim(tel))) return false;
+        const nomes = [l.nomeEmpresa, l.ficha?.nomeCompleto, l.ficha?.razaoSocial].map(norm).filter(Boolean);
+        return nomes.includes(nome);
+      });
+      return res.json({ ok: encontrado });
+    } catch (err: any) {
+      console.error("[CLUBE] erro na verificação:", err?.message);
+      return res.status(500).json({ ok: false, erro: "Não foi possível verificar agora. Tente novamente." });
+    }
+  });
+
   // API Route: CNPJ Search & Enrichment (BrasilAPI + ReceitaWS + MinhaReceita)
   app.post("/api/consulta-cnpj", async (req, res) => {
     try {
