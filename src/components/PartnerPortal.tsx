@@ -2464,7 +2464,7 @@ export default function PartnerPortal({
                                     <button
                                       onClick={() => {
                                         setExpandedEnergiaLeadId(isOpen ? null : lead.id);
-                                        if (!isOpen) marcarEnergiaLeadVisto(lead);
+                                        
                                       }}
                                       className="text-[10px] font-extrabold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
                                     >
@@ -2492,13 +2492,13 @@ export default function PartnerPortal({
                                           <p className="text-[10px] text-slate-400 italic">Nenhuma anotação registrada ainda.</p>
                                         )}
                                         <div className="flex items-center gap-1.5">
-                                          <input
-                                            type="text"
-                                            placeholder="Escreva uma anotação..."
+                                          <textarea
+                                            rows={2}
+                                            placeholder="Escreva uma anotação... (Shift+Enter pula linha)"
                                             value={energiaNotaDraft[lead.id] || ""}
                                             onChange={(e) => setEnergiaNotaDraft(prev => ({ ...prev, [lead.id]: e.target.value }))}
-                                            onKeyDown={(e) => { if (e.key === "Enter") handleAddEnergiaNotaParceiro(lead.id); }}
-                                            className="flex-1 bg-white border border-slate-200 text-[10px] px-2.5 py-1.5 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400"
+                                            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddEnergiaNotaParceiro(lead.id); } }}
+                                            className="flex-1 resize-y min-h-[34px] bg-white border border-slate-200 text-[10px] px-2.5 py-1.5 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400"
                                           />
                                           <button
                                             disabled={!energiaNotaDraft[lead.id]?.trim() || energiaNotaSavingId === lead.id}

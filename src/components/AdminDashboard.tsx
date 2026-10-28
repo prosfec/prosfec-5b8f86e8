@@ -5317,7 +5317,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
 
                             {/* Histórico e anotações */}
-                            <div className="pt-2.5 border-t border-slate-100 space-y-2" onClick={() => marcarEnergiaVistoAdm(lead)} onFocusCapture={() => marcarEnergiaVistoAdm(lead)}>
+                            <div className="pt-2.5 border-t border-slate-100 space-y-2">
                               <div className="flex items-center justify-between gap-2">
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
                                   Histórico de Movimentações
@@ -5343,7 +5343,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <div className="space-y-1 max-h-[160px] overflow-y-auto">
                                   {notas.slice().reverse().map((nota: any, idx: number) => (
                                     <div key={idx} className="bg-slate-50 border border-slate-100 rounded-lg p-2">
-                                      <p className="text-[11px] text-slate-700 font-medium leading-snug">{nota.texto}</p>
+                                      <p className="text-[11px] text-slate-700 font-medium leading-snug whitespace-pre-wrap break-words">{nota.texto}</p>
                                       {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
                                       <p className="text-[9px] text-slate-400 font-semibold">
                                         {nota.autor || "Mesa PROSFEC"} • {nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}
@@ -5353,13 +5353,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </div>
                               )}
                               <div className="flex items-center gap-2">
-                                <input
-                                  type="text"
+                                <textarea
+                                  rows={2}
                                   value={energiaNotaDraft[lead.id] || ""}
                                   onChange={(e) => setEnergiaNotaDraft(prev => ({ ...prev, [lead.id]: e.target.value }))}
-                                  onKeyDown={(e) => { if (e.key === "Enter") handleAddEnergiaNota(lead.id); }}
-                                  placeholder="Escrever anotação visível ao parceiro..."
-                                  className="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddEnergiaNota(lead.id); } }}
+                                  placeholder="Escrever anotação visível ao parceiro... (Shift+Enter pula linha)"
+                                  className="flex-1 resize-y min-h-[34px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
                                 />
                                 <label title="Anexar PDF ou imagem" className="px-2 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[12px] cursor-pointer shrink-0">
                                   📎
