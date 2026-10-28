@@ -33,6 +33,7 @@ import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia,
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
+import { PresencaAssessorIndicador } from "./PresencaAssessor";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
 import { LeadData, SimulationResult, SolicitacaoComissao } from "../types";
@@ -6093,6 +6094,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 <div className="max-w-6xl mx-auto space-y-6">
+                {isEnergiaOnly && currentPartner?.id && (
+                  <div className="flex justify-end"><PresencaAssessorIndicador partnerId={currentPartner.id} /></div>
+                )}
                 {isEnergiaOnly && currentPartner && (() => {
                   const et = etapaAssessorEnergia(currentPartner);
                   const msg = (currentPartner as any).avaliacaoEnergiaMensagem;

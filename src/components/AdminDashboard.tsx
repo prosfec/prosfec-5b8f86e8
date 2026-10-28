@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
+import { AdminPresencaAssessor, PresencaStatusBadge } from "./PresencaAssessor";
 import React, { useState, useEffect, useRef } from "react";
 import { 
   collection, 
@@ -5501,10 +5502,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               {(partner.plano || "").toUpperCase().includes("ASSESSOR DE ENERGIA") && (() => {
                                 const et = etapaAssessorEnergia(partner);
                                 return (
-                                  <div className="pt-1">
+                                  <div className="pt-1 flex flex-wrap items-center gap-2">
                                     <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${ETAPA_ENERGIA_TONE[et.etapa]}`}>
                                       ⚡ {et.label}
                                     </span>
+                                    <PresencaStatusBadge partner={partner} />
                                   </div>
                                 );
                               })()}
@@ -7841,6 +7843,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   })()}
                 </div>
               </div>
+
+              {(selectedPartner.plano || "").toUpperCase().includes("ASSESSOR DE ENERGIA") && (
+                <AdminPresencaAssessor partner={selectedPartner} />
+              )}
 
               {(selectedPartner.plano || "").toUpperCase().includes("ASSESSOR DE ENERGIA") && (
                 <AdminAvaliacaoAssessorEnergia
