@@ -29,8 +29,12 @@ export function horaPresenca(d: Date): string {
   return `${p.hour}:${p.minute}`;
 }
 
-/** Está dentro do horário comercial (08:00 até 17:59:59)? */
+const fmtDia = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short" });
+
+/** Está dentro do horário comercial (segunda a sexta, 08:00 até 17:59:59)? */
 export function dentroHorarioComercial(d: Date = new Date()): boolean {
+  const wd = fmtDia.format(d);
+  if (wd === "Sat" || wd === "Sun") return false;
   const h = Number(partes(d).hour);
   return h >= PRESENCA_INICIO_HORA && h < PRESENCA_FIM_HORA;
 }
