@@ -2375,7 +2375,7 @@ export default function PartnerPortal({
                                         style={{ backgroundColor: "#2563EB", color: "#FFFFFF", borderColor: "#3B82F6" }}
                                         className="w-full px-3 py-2 border hover:brightness-110 rounded-lg transition-all font-semibold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[40px]"
                                       >
-                                        🚀 Campanha CP (Crédito Pessoal)
+                                        🎁 Clube de Benefícios
                                       </a>
                                     )}
                                     <button
