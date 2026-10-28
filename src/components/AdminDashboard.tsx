@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
+import { FichaCnpjBotao } from "./FichaCnpjBotao";
 import { AdminPresencaAssessor, PresencaStatusBadge } from "./PresencaAssessor";
 import React, { useState, useEffect, useRef } from "react";
 import { 

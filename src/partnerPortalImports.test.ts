@@ -66,8 +66,8 @@ function usedComponentTags(code: string): Set<string> {
   return tags;
 }
 
-describe("PartnerPortal imports every component it renders", () => {
-  const code = readFileSync(join(SRC, "PartnerPortal.tsx"), "utf8");
+for (const FILE of ["PartnerPortal.tsx", "AdminDashboard.tsx"]) describe(`${FILE} imports every component it renders`, () => {
+  const code = readFileSync(join(SRC, FILE), "utf8");
   const imported = identifiersInImports(code);
   const declared = locallyDeclared(code);
   const used = usedComponentTags(code);
