@@ -112,7 +112,6 @@ function ModalJurosBaixos({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between gap-3 border-b border-energy-line px-4 py-3">
           <p className="text-sm font-bold text-energy-deep">Simulação de crédito — Juros Baixos</p>
           <div className="flex items-center gap-2">
-            <a href={LINKS.jurosBaixos} target="_blank" rel="noopener noreferrer" className="hidden rounded-md px-3 py-1.5 text-xs font-semibold text-energy-deep hover:bg-energy-paper sm:inline">Abrir em tela externa ↗</a>
             <button onClick={onClose} aria-label="Fechar" className="rounded-md px-3 py-1.5 text-lg font-bold text-energy-ink hover:bg-energy-paper">✕</button>
           </div>
         </div>
