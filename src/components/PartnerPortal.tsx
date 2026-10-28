@@ -32,6 +32,7 @@ import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA, etapaAssessorEnergia, MSG_RECUSA_ENERGIA } from "./AssessorEnergiaContratos";
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
+import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
 import { LeadData, SimulationResult, SolicitacaoComissao } from "../types";
