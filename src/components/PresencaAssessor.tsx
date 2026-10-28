@@ -130,7 +130,8 @@ export function AdminPresencaAssessor({ partner }: { partner: any }) {
 
   const hoje = diaPresenca();
   const agora = new Date();
-  const dow = (Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short" }).format(agora) === "Sun" ? 7 : 0)) || ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].indexOf(new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short" }).format(agora)) + 1;
+  const wd = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short" }).format(agora);
+  const dow = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].indexOf(wd) + 1;
   const inicioSemana = new Date(agora.getTime() - (dow - 1) * 86400000);
   const chaveSemana = diaPresenca(inicioSemana);
   const mes = hoje.slice(0, 7);
