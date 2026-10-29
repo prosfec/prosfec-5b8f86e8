@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 const LINKS = {
   sunneMais: "https://sunnemais.sunne.com.br/",
   jurosBaixos:
-    "https://jurosbaixos.com.br/emprestimo-negativado?utm_source=credfacil&utm_medium=affiliates&utm_campaign=credfacil-emprestimo-cf-2864",
+    "https://jurosbaixos.com.br/simulador-de-emprestimo?utm_source=credfacil&utm_medium=affiliates&utm_campaign=credfacil-emprestimo-cf-2864",
   bndes: "https://portal.bndes.gov.br/prc/#/login-govbr",
   playStore: "https://play.google.com/store/apps/details?id=br.com.aptare.sunne",
   appStore: "https://apps.apple.com/br/app/sunne-pay/id6762489123",
