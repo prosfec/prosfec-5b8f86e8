@@ -3622,7 +3622,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               {theme === "dark" ? "Aparência: Tecnológica" : "Aparência: Clara"}
             </span>
           </button>
-          <button onClick={fetchData} className="sidebar-item" title="Sincronizar dados">
+          <button onClick={syncActiveTab} className="sidebar-item" title="Sincronizar dados">
             <RefreshCw className={`w-[18px] h-[18px] ${loading ? "animate-spin" : ""}`} strokeWidth={2} />
             <span className="flex-1 text-left">Sincronizar</span>
           </button>
@@ -3692,7 +3692,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             </div>
             <div className="ml-auto flex items-center gap-2">
               <button
-                onClick={fetchData}
+                onClick={syncActiveTab}
                 title="Sincronizar dados"
                 className="h-9 px-3 rounded-xl border border-line-soft bg-white hover:border-brand-accent/40 text-ink-muted hover:text-brand-primary text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
@@ -4117,7 +4117,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               <p className="font-bold mb-1">Falha na Conexão</p>
               <p className="text-sm text-slate-600 max-w-xl mx-auto">{error}</p>
               <button 
-                onClick={fetchData}
+                onClick={syncActiveTab}
                 className="mt-4 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all"
               >
                 Tentar novamente
@@ -6190,7 +6190,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </div>
 
                     <button
-                      onClick={fetchData}
+                      onClick={syncActiveTab}
                       className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
                     >
                       <RefreshCw className="w-4 h-4" />
