@@ -2,6 +2,7 @@
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import { FichaCnpjBotao } from "./FichaCnpjBotao";
 import { AdminPresencaAssessor, PresencaStatusBadge } from "./PresencaAssessor";
+import { RelatorioHorasAssessores } from "./RelatorioHorasAssessores";
 import React, { useState, useEffect, useRef } from "react";
 import { 
   collection, 
@@ -482,6 +483,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "leads_energia" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel">("leads");
 
+  const [showRelatorioHoras, setShowRelatorioHoras] = useState(false);
   // ⚡ Leads Energia Solar (coleção leads_energia — esteira isolada do crédito)
   const [leadsEnergia, setLeadsEnergia] = useState<any[]>([]);
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<"todos" | "novo" | "atendimento" | "concluido" | "arquivado">("todos");
@@ -3969,6 +3971,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </button>
                   )}
 
+                  {activeTab === "partners" && (
+                    <button
+                      type="button"
+                      onClick={() => setShowRelatorioHoras(true)}
+                      className="py-1.5 px-3 text-xs font-bold rounded-xl border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      ⏱️ Horas & Desempenho (Assessores)
+                    </button>
+                  )}
+                  {showRelatorioHoras && (
+                    <RelatorioHorasAssessores partners={partners} leadsEnergia={leadsEnergia} onClose={() => setShowRelatorioHoras(false)} />
+                  )}
+
                    {/* Hide Team Members Switch (Partners Only) */}
                   {activeTab === "partners" && (
                     <button
@@ -5456,17 +5471,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </div>
                               </div>
 
-                              {/* Status Dropdown */}
-                              <select
-                                value={partner.status || "novo"}
-                                onChange={(e) => handleUpdateStatus(partner.id, "parceiros", e.target.value)}
-                                className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold border cursor-pointer focus:outline-hidden ${getStatusBadgeClass(partner.status)}`}
-                              >
-                                <option value="novo">Novo</option>
-                                <option value="em atendimento">Atendimento</option>
-                                <option value="parceria ativa">Ativa</option>
-                                <option value="arquivado">Arquivado</option>
-                              </select>
                             </div>
 
                             {/* Contact & Info */}
@@ -5688,7 +5692,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           <th className="py-3.5 px-4">Plano</th>
                           <th className="py-3.5 px-4">Saldos da Conta</th>
                           <th className="py-3.5 px-4">Situação / Acesso</th>
-                          <th className="py-3.5 px-4">Status</th>
                           <th className="py-3.5 px-4 text-right">Ações</th>
                         </tr>
                       </thead>
@@ -5805,18 +5808,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   );
                                 }
                               })()}
-                            </td>
-                            <td className="py-3 px-4 whitespace-nowrap text-left">
-                              <select
-                                value={partner.status || "novo"}
-                                onChange={(e) => handleUpdateStatus(partner.id, "parceiros", e.target.value)}
-                                className={`text-xs px-2.5 py-1 rounded-full font-bold cursor-pointer focus:outline-hidden ${getStatusBadgeClass(partner.status)}`}
-                              >
-                                <option value="novo">Novo</option>
-                                <option value="em atendimento">Em Atendimento</option>
-                                <option value="parceria ativa">Parceria Ativa</option>
-                                <option value="arquivado">Arquivado</option>
-                              </select>
                             </td>
                             <td className="py-3 px-4 whitespace-nowrap text-right space-x-1.5">
                               <button
