@@ -1,7 +1,12 @@
 // @ts-nocheck
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, UploadCloud, Eye, Download, Trash2, RefreshCw, Loader2, FileText, Save } from "lucide-react";
+import { X, UploadCloud, Eye, Download, Trash2, RefreshCw, Loader2, FileText, Save, User, Building2, ShieldCheck, Image as ImageIcon, Mail, Phone, Heart, Briefcase, IdCard, Hash } from "lucide-react";
+
+const ICONES_CAMPO: Record<string, any> = {
+  nomeCompleto: User, cpf: IdCard, razaoSocial: Building2, cnpj: Hash,
+  email: Mail, telefone: Phone, estadoCivil: Heart, profissao: Briefcase,
+};
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import { doc, updateDoc } from "firebase/firestore";
 import { db, storage } from "../firebase";
