@@ -3760,7 +3760,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     {activeTab === "comissoes" && <><Receipt className="w-4 h-4 text-emerald-600" /> Painel Financeiro &amp; Solicitações de Saque de Comissões</>}
                     {activeTab === "precos" && <><DollarSign className="w-4 h-4 text-emerald-600" /> Preços de Consultas &amp; Catálogo de Serviços</>}
                     {activeTab === "servicos_contabilidade" && <><Calculator className="w-4 h-4 text-emerald-600" /> Catálogo de Serviços de Contabilidade</>}
-PLACEHOLDER
+                  </h3>
+                </div>
+     
+                {/* Export action */}
+                {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" && (
                   <button
                     onClick={exportToCSV}
                     disabled={loading || (activeTab === "leads" ? leads.length === 0 : partners.length === 0)}
