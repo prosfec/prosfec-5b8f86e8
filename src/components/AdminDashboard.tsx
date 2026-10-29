@@ -3760,12 +3760,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     {activeTab === "comissoes" && <><Receipt className="w-4 h-4 text-emerald-600" /> Painel Financeiro &amp; Solicitações de Saque de Comissões</>}
                     {activeTab === "precos" && <><DollarSign className="w-4 h-4 text-emerald-600" /> Preços de Consultas &amp; Catálogo de Serviços</>}
                     {activeTab === "servicos_contabilidade" && <><Calculator className="w-4 h-4 text-emerald-600" /> Catálogo de Serviços de Contabilidade</>}
-                    {activeTab === "funnel" && <><TrendingUp className="w-4 h-4 text-emerald-600" /> Funil de Conversão do Simulador</>}
-                  </h3>
-                </div>
-     
-                {/* Export action */}
-                {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" && activeTab !== "funnel" && (
+PLACEHOLDER
                   <button
                     onClick={exportToCSV}
                     disabled={loading || (activeTab === "leads" ? leads.length === 0 : partners.length === 0)}
@@ -6954,15 +6949,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 </div>
               )}
 
-              {/* Tab FUNIL & CONVERSÃO DO SIMULADOR */}
-              {activeTab === "funnel" && (
-                <div className="p-6 animate-fade-in">
-                  <FunnelAnalyticsDashboard
-                    leads={leads}
-                    onRefresh={fetchData}
-                  />
-                </div>
-              )}
 
               {/* Tab SERVIÇOS DE CONTABILIDADE */}
               {activeTab === "servicos_contabilidade" && (
@@ -6976,7 +6962,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           {/* Table Footer count info */}
           <div className="p-4 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 font-medium flex justify-between items-center">
             <div>
-              Exibindo {activeTab === "leads" ? filteredLeads.length : activeTab === "recargas" ? recargas.length : activeTab === "precos" ? CREDIT_PRODUCTS.length : activeTab === "servicos_contabilidade" ? 33 : activeTab === "funnel" ? leads.length : activeTab === "partners" ? filteredPartners.length : partners.length} registros
+              Exibindo {activeTab === "leads" ? filteredLeads.length : activeTab === "recargas" ? recargas.length : activeTab === "precos" ? CREDIT_PRODUCTS.length : activeTab === "servicos_contabilidade" ? 33 : activeTab === "leads_energia" ? leadsEnergia.length : activeTab === "partners" ? filteredPartners.length : partners.length} registros
             </div>
             <div>
               Desenvolvido de forma segura &bull; Firestore ativo
