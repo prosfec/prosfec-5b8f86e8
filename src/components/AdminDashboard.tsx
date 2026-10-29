@@ -2046,6 +2046,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       console.warn("Error signing out from Firebase Auth.");
     }
     setIsAuthenticated(false);
+    loadedRef.current.clear();
+    setLoadedCollections({});
+    setActiveTab("leads_energia");
     setUserRole("admin");
     setEmailInput("");
     setPasswordInput("");
