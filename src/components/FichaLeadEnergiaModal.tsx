@@ -85,8 +85,8 @@ function usePaleta() {
     return () => obs.disconnect();
   }, []);
   return dark
-    ? { bg: "#111827", surface: "#1F2937", border: "#374151", text: "#F9FAFB", muted: "#D1D5DB", soft: "#9CA3AF", input: "#0B1220", header: "#0A3D2E", ok: "#34D399", okBg: "rgba(16,185,129,0.15)", warn: "#FBBF24", warnBg: "rgba(251,191,36,0.12)", danger: "#F87171" }
-    : { bg: "#FFFFFF", surface: "#F8FAFC", border: "#CBD5E1", text: "#0F172A", muted: "#334155", soft: "#64748B", input: "#FFFFFF", header: "#0A3D2E", ok: "#047857", okBg: "#ECFDF5", warn: "#B45309", warnBg: "#FFFBEB", danger: "#DC2626" };
+    ? { dark: true, bg: "#0B111A", surface: "#131C2E", border: "#1E2E42", text: "#FFFFFF", value: "#F1F5F9", muted: "#94A3B8", soft: "#64748B", input: "#0A101D", inputBorder: "#1E2E42", btn: "#1E293B", btnBorder: "#334155", btnText: "#E2E8F0", ok: "#34D399", okBg: "rgba(16,185,129,0.12)", okBorder: "rgba(52,211,153,0.35)", warn: "#FBBF24", warnBg: "rgba(245,158,11,0.10)", warnBorder: "rgba(251,191,36,0.35)", danger: "#F87171", ring: "rgba(16,185,129,0.25)", seg: "#0A101D", shadow: "0 30px 80px -20px rgba(16,185,129,0.18), 0 20px 50px -20px rgba(0,0,0,0.8)" }
+    : { dark: false, bg: "#FFFFFF", surface: "#F8FAFC", border: "#E2E8F0", text: "#0F172A", value: "#1E293B", muted: "#475569", soft: "#64748B", input: "#FFFFFF", inputBorder: "#CBD5E1", btn: "#FFFFFF", btnBorder: "#CBD5E1", btnText: "#334155", ok: "#065F46", okBg: "#ECFDF5", okBorder: "#A7F3D0", warn: "#92400E", warnBg: "#FFFBEB", warnBorder: "#FDE68A", danger: "#DC2626", ring: "rgba(5,150,105,0.15)", seg: "#F1F5F9", shadow: "0 30px 80px -24px rgba(15,23,42,0.35), 0 8px 24px -12px rgba(15,23,42,0.15)" };
 }
 
 interface Props {
