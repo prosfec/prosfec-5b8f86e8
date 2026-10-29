@@ -3074,7 +3074,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       (p.whatsapp && p.whatsapp.includes(searchTerm)) ||
       (p.cidade && p.cidade.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesStatus = statusFilter === "todos" || p.status === statusFilter;
+    const matchesStatus = true;
     const matchesPlan = porteFilter === "todos" || 
       p.plano === porteFilter ||
       (porteFilter === "STARTER" && (!p.plano || p.plano.toUpperCase() === "SILVER" || p.plano.toUpperCase() === "STARTER")) ||
@@ -4005,7 +4005,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               {/* Collapsible Advanced Filters Drawer */}
               {showAdvancedFilters && (
                 <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/60 animate-in fade-in duration-200">
-                  {/* Status Filter */}
+                  {/* Status Filter (Leads Only) */}
+                  {activeTab !== "partners" && (
                   <div>
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Status</label>
                     <select
@@ -4020,6 +4021,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <option value="arquivado">Arquivado</option>
                     </select>
                   </div>
+                  )}
 
                   {/* Porte / Plano Filter */}
                   {activeTab === "leads" ? (
