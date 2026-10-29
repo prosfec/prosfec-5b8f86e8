@@ -10,6 +10,7 @@ import {
   doc, 
   updateDoc, 
   deleteDoc, 
+  writeBatch,
   query, 
   orderBy,
   addDoc,
@@ -6066,6 +6067,31 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         Aprove ou cancele as solicitações de recarga enviadas manualmente pelos parceiros.
                       </p>
                     </div>
+                    {userRole !== "contador" && (
+                      <button
+                        onClick={async () => {
+                          const processadas = recargas.filter((r) => r.status !== "pendente");
+                          if (processadas.length === 0) return;
+                          if (!window.confirm(`Deseja excluir definitivamente ${processadas.length} recarga(s) do histórico? As solicitações pendentes serão mantidas.`)) return;
+                          try {
+                            for (let i = 0; i < processadas.length; i += 400) {
+                              const batch = writeBatch(db);
+                              processadas.slice(i, i + 400).forEach((r) => batch.delete(doc(db, "recargas", r.id)));
+                              await batch.commit();
+                            }
+                            setRecargas((prev) => prev.filter((r) => r.status === "pendente"));
+                          } catch (err) {
+                            console.error("Erro ao limpar histórico de recargas:", err);
+                            alert("Não foi possível limpar o histórico. Tente novamente.");
+                          }
+                        }}
+                        disabled={!recargas.some((r) => r.status !== "pendente")}
+                        className="px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        Limpar Histórico ({recargas.filter((r) => r.status !== "pendente").length})
+                      </button>
+                    )}
                   </div>
 
                   {recargas.length === 0 ? (
