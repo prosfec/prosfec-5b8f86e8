@@ -18,7 +18,7 @@ import {
   arrayUnion,
   where,
   runTransaction,
-  onSnapshot
+  getCountFromServer
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
@@ -1546,17 +1546,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     }
   };
 
-  // Escuta em tempo real: uma consulta lançada pelo parceiro acende o aviso na hora
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const unsubscribe = onSnapshot(
-      collection(db, "consultas_realizadas"),
-      (snap) => setPendingReports(buildPendingReports(snap.docs)),
-      (err) => console.warn("Monitoramento de consultas pendentes indisponível:", err)
-    );
-    return () => unsubscribe();
-  }, [isAuthenticated]);
-
   const getPendingReports = (lead: any): number => {
     if (!lead) return 0;
     const porLead = pendingReports.byLead[lead.id] || 0;
@@ -1687,105 +1676,81 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   const totalMovimentacoesNovas = leads.filter(l => isMovimentacaoNova(l)).length;
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // 1. Fetch Leads
-      const leadsQuery = query(collection(db, "leads"), orderBy("dataCriacao", "desc"));
-      const leadsSnapshot = await getDocs(leadsQuery);
-      const leadsList = leadsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Lead[];
+  // ===== Carregamento sob demanda (economia de leituras do Firestore) =====
+  // Cada aba busca apenas as coleções de que precisa, uma única vez por sessão.
+  // "Sincronizar" e as ações administrativas recarregam somente o que já foi aberto.
+  type ColecaoAdmin = "leads" | "partners" | "announcements" | "recargas" | "energia" | "comissoes" | "pendentes";
+  const loadedRef = useRef<Set<ColecaoAdmin>>(new Set());
+  const [loadedCollections, setLoadedCollections] = useState<Partial<Record<ColecaoAdmin, boolean>>>({});
+  const [serverCounts, setServerCounts] = useState<{ leads: number; recargasPendentes: number; comissoesPendentes: number }>({ leads: 0, recargasPendentes: 0, comissoesPendentes: 0 });
 
-      // 2. Fetch Partners
-      const partnersQuery = query(collection(db, "parceiros"), orderBy("dataCriacao", "desc"));
-      const partnersSnapshot = await getDocs(partnersQuery);
+  const TAB_COLLECTIONS: Record<string, ColecaoAdmin[]> = {
+    leads_energia: ["energia", "partners"],
+    leads: ["leads", "partners", "pendentes"],
+    partners: ["partners", "leads", "energia"],
+    announcements: ["announcements"],
+    recargas: ["recargas", "partners"],
+    comissoes: ["comissoes", "partners"],
+    precos: [],
+    servicos_contabilidade: [],
+  };
 
+  const marcarCarregada = (c: ColecaoAdmin) => {
+    loadedRef.current.add(c);
+    setLoadedCollections(prev => (prev[c] ? prev : { ...prev, [c]: true }));
+  };
 
-      const partnersList = partnersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Partner[];
-
-      setLeads(leadsList);
-      setPartners(partnersList);
-
-      // 3. Fetch Announcements
+  const loadColecao = async (c: ColecaoAdmin) => {
+    if (c === "leads") {
+      const snap = await getDocs(query(collection(db, "leads"), orderBy("dataCriacao", "desc")));
+      setLeads(snap.docs.map(d => ({ id: d.id, ...d.data() })) as Lead[]);
+    } else if (c === "partners") {
+      const snap = await getDocs(query(collection(db, "parceiros"), orderBy("dataCriacao", "desc")));
+      setPartners(snap.docs.map(d => ({ id: d.id, ...d.data() })) as Partner[]);
+    } else if (c === "announcements") {
       try {
-        const announcementsQuery = query(collection(db, "comunicados"), orderBy("dataCriacao", "desc"));
-        const announcementsSnapshot = await getDocs(announcementsQuery);
-
-
-
-        const announcementsList = announcementsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Announcement[];
-        setAnnouncements(announcementsList);
+        const snap = await getDocs(query(collection(db, "comunicados"), orderBy("dataCriacao", "desc")));
+        setAnnouncements(snap.docs.map(d => ({ id: d.id, ...d.data() })) as Announcement[]);
       } catch (errAnn) {
         console.warn("Could not load announcements, might be empty:", errAnn);
         setAnnouncements([]);
       }
-
-      // 4. Calculate Stats
-      const totalLeads = leadsList.length;
-      const totalPartners = partnersList.length;
-      const totalCreditSimulated = leadsList.reduce((acc, lead) => acc + (lead.limiteEstimado || 0), 0);
-      const faturamentos = leadsList.filter(l => l.faturamentoAnual).map(l => l.faturamentoAnual || 0);
-      const avgFaturamento = faturamentos.length > 0 
-        ? faturamentos.reduce((acc, val) => acc + val, 0) / faturamentos.length 
-        : 0;
-
-      setStats({
-        totalLeads,
-        totalPartners,
-        totalCreditSimulated,
-        avgFaturamento
-      });
-
-      // 5. Fetch Recargas
+    } else if (c === "recargas") {
       try {
-        const recargasQuery = query(collection(db, "recargas"), orderBy("dataSolicitacao", "desc"));
-        const recargasSnapshot = await getDocs(recargasQuery);
-        const recargasList = recargasSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setRecargas(recargasList);
+        const snap = await getDocs(query(collection(db, "recargas"), orderBy("dataSolicitacao", "desc")));
+        setRecargas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (errRec) {
         console.warn("Could not load recargas:", errRec);
         setRecargas([]);
       }
-
-      // 5.0.1 Fetch Leads Energia Solar
+    } else if (c === "energia") {
       try {
-        const energiaSnapshot = await getDocs(collection(db, "leads_energia"));
-        const energiaList = energiaSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        energiaList.sort((a: any, b: any) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime());
-        setLeadsEnergia(energiaList);
+        const snap = await getDocs(collection(db, "leads_energia"));
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        list.sort((a: any, b: any) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime());
+        setLeadsEnergia(list);
       } catch (errEnergia) {
         console.warn("Could not load leads_energia:", errEnergia);
         setLeadsEnergia([]);
       }
-
-      // 5.1 Fetch Solicitações de Comissão (Saques de Parceiros)
+    } else if (c === "comissoes") {
       try {
-        const comissoesQuery = query(collection(db, "solicitacoes_comissao"), orderBy("dataSolicitacao", "desc"));
-        const comissoesSnapshot = await getDocs(comissoesQuery);
-        const comissoesList = comissoesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as SolicitacaoComissao[];
-        setComissoes(comissoesList);
+        const snap = await getDocs(query(collection(db, "solicitacoes_comissao"), orderBy("dataSolicitacao", "desc")));
+        setComissoes(snap.docs.map(d => ({ id: d.id, ...d.data() })) as SolicitacaoComissao[]);
       } catch (errCom) {
         console.warn("Could not load solicitacoes_comissao:", errCom);
         setComissoes([]);
       }
+    } else if (c === "pendentes") {
+      await loadPendingReports();
+    }
+    marcarCarregada(c);
+  };
 
+  // Configuração de preços/catálogo: um único documento (1 leitura)
+  const loadConfig = async () => {
+    try {
       // 6. Fetch Custom Base Prices & Services Catalog
-      try {
         const configSnap = await getDoc(doc(db, "configuracoes", "precos_consultas"));
         if (configSnap.exists()) {
           const data = configSnap.data();
@@ -1848,91 +1813,80 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           setCustomBasePrices({});
           setCustomServices(DEFAULT_SERVICES_CATALOG);
         }
-      } catch (errConfig) {
-        console.warn("Could not load custom base prices:", errConfig);
-      }
-
-      // Mantém o aviso "Aguardando PDF" sincronizado ao atualizar o painel
-      await loadPendingReports();
-
-
-
-    } catch (err: any) {
-      console.error("Error fetching admin dashboard data:", err);
-      const code = String(err?.code || "");
-      if (code.includes("permission-denied") || code.includes("unauthenticated")) {
-        setError(
-          "Acesso negado pelas regras do Firestore. Confirme que você entrou com uma conta autorizada (prosfec.tesouraria@gmail.com) e tente sair e entrar novamente."
-        );
-      } else {
-        setError("Erro ao se conectar ao banco de dados Firestore. Certifique-se de que os cadastros foram realizados e que as permissões de acesso estão corretas.");
-      }
-    } finally {
-      setLoading(false);
+    } catch (errConfig) {
+      console.warn("Could not load custom base prices:", errConfig);
     }
   };
 
-  // Sincronização por aba: recarrega apenas as coleções da aba aberta,
-  // evitando baixar o banco inteiro a cada clique em "Sincronizar".
-  const syncActiveTab = async () => {
-    if (activeTab === "precos" || activeTab === "servicos_contabilidade") {
-      await fetchData();
-      return;
+  // Contadores leves para os avisos do menu (agregação: ~1 leitura cada)
+  const loadServerCounts = async () => {
+    try {
+      const [leadsC, recC, comC] = await Promise.all([
+        getCountFromServer(collection(db, "leads")),
+        getCountFromServer(query(collection(db, "recargas"), where("status", "==", "pendente"))),
+        getCountFromServer(query(collection(db, "solicitacoes_comissao"), where("status", "==", "pendente"))),
+      ]);
+      setServerCounts({
+        leads: leadsC.data().count,
+        recargasPendentes: recC.data().count,
+        comissoesPendentes: comC.data().count,
+      });
+    } catch (err) {
+      console.warn("Não foi possível carregar os contadores do menu:", err);
     }
+  };
+
+  const tratarErroCarga = (err: any) => {
+    console.error("Error fetching admin dashboard data:", err);
+    const code = String(err?.code || "");
+    if (code.includes("permission-denied") || code.includes("unauthenticated")) {
+      setError(
+        "Acesso negado pelas regras do Firestore. Confirme que você entrou com uma conta autorizada (prosfec.tesouraria@gmail.com) e tente sair e entrar novamente."
+      );
+    } else {
+      setError("Erro ao se conectar ao banco de dados Firestore. Certifique-se de que os cadastros foram realizados e que as permissões de acesso estão corretas.");
+    }
+  };
+
+  const carregarColecoes = async (lista: ColecaoAdmin[]) => {
+    if (!lista.length) return;
     setLoading(true);
     setError(null);
     try {
-      const loadLeads = async () => {
-        const snap = await getDocs(query(collection(db, "leads"), orderBy("dataCriacao", "desc")));
-        return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Lead[];
-      };
-      const loadPartners = async () => {
-        const snap = await getDocs(query(collection(db, "parceiros"), orderBy("dataCriacao", "desc")));
-        return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Partner[];
-      };
-      const updateStats = (leadsList: Lead[], partnersList: Partner[]) => {
-        const faturamentos = leadsList.filter(l => l.faturamentoAnual).map(l => l.faturamentoAnual || 0);
-        setStats({
-          totalLeads: leadsList.length,
-          totalPartners: partnersList.length,
-          totalCreditSimulated: leadsList.reduce((acc, l) => acc + (l.limiteEstimado || 0), 0),
-          avgFaturamento: faturamentos.length > 0 ? faturamentos.reduce((a, v) => a + v, 0) / faturamentos.length : 0,
-        });
-      };
-
-      if (activeTab === "leads" || activeTab === "funnel") {
-        const leadsList = await loadLeads();
-        setLeads(leadsList);
-        updateStats(leadsList, partners);
-        await loadPendingReports();
-      } else if (activeTab === "partners") {
-        const partnersList = await loadPartners();
-        setPartners(partnersList);
-        updateStats(leads, partnersList);
-      } else if (activeTab === "leads_energia") {
-        const snap = await getDocs(collection(db, "leads_energia"));
-        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        list.sort((a: any, b: any) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime());
-        setLeadsEnergia(list);
-      } else if (activeTab === "announcements") {
-        const snap = await getDocs(query(collection(db, "comunicados"), orderBy("dataCriacao", "desc")));
-        setAnnouncements(snap.docs.map(d => ({ id: d.id, ...d.data() })) as Announcement[]);
-      } else if (activeTab === "recargas") {
-        const snap = await getDocs(query(collection(db, "recargas"), orderBy("dataSolicitacao", "desc")));
-        setRecargas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      } else if (activeTab === "comissoes") {
-        const snap = await getDocs(query(collection(db, "solicitacoes_comissao"), orderBy("dataSolicitacao", "desc")));
-        setComissoes(snap.docs.map(d => ({ id: d.id, ...d.data() })) as SolicitacaoComissao[]);
-      }
+      await Promise.all(lista.map(loadColecao));
     } catch (err: any) {
-      console.error("Error syncing active tab:", err);
-      setError("Erro ao sincronizar esta aba. Tente novamente.");
+      tratarErroCarga(err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Recarrega somente as coleções já abertas nesta sessão (usado após ações administrativas)
+  const fetchData = async () => {
+    await carregarColecoes(Array.from(loadedRef.current));
+  };
 
+  // Sincronização por aba: recarrega apenas as coleções da aba aberta
+  const syncActiveTab = async () => {
+    if (activeTab === "precos" || activeTab === "servicos_contabilidade") {
+      await loadConfig();
+      return;
+    }
+    await carregarColecoes(TAB_COLLECTIONS[activeTab] || []);
+  };
+
+  // Estatísticas derivadas da lista em memória (sem leituras extras)
+  useEffect(() => {
+    const faturamentos = leads.filter(l => l.faturamentoAnual).map(l => l.faturamentoAnual || 0);
+    setStats({
+      totalLeads: leads.length,
+      totalPartners: partners.length,
+      totalCreditSimulated: leads.reduce((acc, l) => acc + (l.limiteEstimado || 0), 0),
+      avgFaturamento: faturamentos.length > 0 ? faturamentos.reduce((a, v) => a + v, 0) / faturamentos.length : 0,
+    });
+  }, [leads, partners]);
+
+  // Login: apenas configuração + contadores leves
   useEffect(() => {
     if (!isAuthenticated) return;
     let cancelled = false;
@@ -1944,14 +1898,36 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         /* ignore */
       }
       if (!cancelled) {
-        fetchData();
-        loadPendingReports();
+        loadConfig();
+        loadServerCounts();
       }
     })();
     return () => {
       cancelled = true;
     };
   }, [isAuthenticated]);
+
+  // Ao abrir uma aba, busca só o que ainda não foi carregado
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const faltando = (TAB_COLLECTIONS[activeTab] || []).filter(c => !loadedRef.current.has(c));
+    if (!faltando.length) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        await auth.currentUser?.getIdToken();
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) await carregarColecoes(faltando);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, activeTab]);
 
 
   const ADMIN_UID = "Nso5FBoBVHXNY60RDw6NNKeaCC23";
@@ -3529,7 +3505,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   const adminNavItems = [
     { id: "funnel", label: "Funil & Conversão", icon: TrendingUp, badge: null as any },
-    { id: "leads", label: "Leads", icon: Users, badge: leads.length ? String(leads.length) : null, tone: "neutral" },
+    { id: "leads", label: "Leads", icon: Users, badge: (loadedCollections.leads ? leads.length : serverCounts.leads) ? String(loadedCollections.leads ? leads.length : serverCounts.leads) : null, tone: "neutral" },
     {
       id: "leads_energia",
       label: "Leads Energia",
@@ -3543,14 +3519,14 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       id: "recargas",
       label: "Recargas",
       icon: Coins,
-      badge: recargas.filter((r) => r.status === "pendente").length || null,
+      badge: (loadedCollections.recargas ? recargas.filter((r) => r.status === "pendente").length : serverCounts.recargasPendentes) || null,
       tone: "warning"
     },
     {
       id: "comissoes",
       label: "Comissões & Saques",
       icon: Receipt,
-      badge: comissoes.filter((c) => c.status === "pendente").length || null,
+      badge: (loadedCollections.comissoes ? comissoes.filter((c) => c.status === "pendente").length : serverCounts.comissoesPendentes) || null,
       tone: "accent"
     },
     { id: "precos", label: "Preços & Serviços", icon: DollarSign, badge: null },
