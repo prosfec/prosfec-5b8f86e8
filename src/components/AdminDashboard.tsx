@@ -116,7 +116,6 @@ import {
 } from "../utils";
 import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
-import FunnelAnalyticsDashboard from "./FunnelAnalyticsDashboard";
 import AdminServicosContabilidadeTab from "./AdminServicosContabilidadeTab";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 
@@ -481,7 +480,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [comissaoReceiptText, setComissaoReceiptText] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"leads" | "leads_energia" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade" | "funnel">("leads");
+  const [activeTab, setActiveTab] = useState<"leads" | "leads_energia" | "partners" | "announcements" | "recargas" | "comissoes" | "precos" | "servicos_contabilidade">("leads_energia");
 
   const [showRelatorioHoras, setShowRelatorioHoras] = useState(false);
   // ⚡ Leads Energia Solar (coleção leads_energia — esteira isolada do crédito)
@@ -3507,7 +3506,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
 
   const adminNavItems = [
-    { id: "funnel", label: "Funil & Conversão", icon: TrendingUp, badge: null as any },
     { id: "leads", label: "Leads", icon: Users, badge: (loadedCollections.leads ? leads.length : serverCounts.leads) ? String(loadedCollections.leads ? leads.length : serverCounts.leads) : null, tone: "neutral" },
     {
       id: "leads_energia",
@@ -3761,7 +3759,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </div>
 
               {/* Filtering controls bar */}
-          {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" && activeTab !== "funnel" ? (
+          {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" ? (
             <div className="p-4 bg-white border-b border-slate-100 space-y-3">
               {/* Primary Search & Quick Filter Row */}
               <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
