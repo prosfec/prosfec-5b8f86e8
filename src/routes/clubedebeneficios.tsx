@@ -3,7 +3,7 @@ import ClubeBeneficios from "@/components/ClubeBeneficios";
 import clubeSocial from "@/assets/clube-social.jpg.asset.json";
 
 const TITLE = "Clube de Benefícios | PROSFEC Energy";
-const DESCRIPTION = "Área exclusiva para clientes de Energia Solar PROSFEC: Sunne Mais, Sunne Pay, simulação de crédito e acesso ao BNDES Empresas.";
+const DESCRIPTION = "Área exclusiva para clientes de Energia Solar PROSFEC: Sunne Mais, Sunne Pay, simulação de crédito e diagnóstico financeiro PJ.";
 const IMG = `https://prosfec.com.br${clubeSocial.url}`;
 
 export const Route = createFileRoute("/clubedebeneficios")({

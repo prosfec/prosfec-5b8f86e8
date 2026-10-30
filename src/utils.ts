@@ -155,7 +155,7 @@ export function buildCampanhaCPWhatsAppMessage(nomeEmpresa?: string): string {
     "",
     "🔗 https://prosfec.com.br/clubedebeneficios",
     "",
-    "Lá você encontra o Sunne Mais, o app Sunne Pay, simulação de crédito e acesso ao BNDES. Qualquer dúvida, me chama aqui!"
+    "Lá você encontra o Sunne Mais, o app Sunne Pay, simulação de crédito e diagnóstico financeiro para sua empresa. Qualquer dúvida, me chama aqui!"
   ].join("\n");
 }
 

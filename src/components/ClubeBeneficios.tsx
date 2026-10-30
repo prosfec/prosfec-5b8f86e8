@@ -4,7 +4,7 @@ const LINKS = {
   sunneMais: "https://sunnemais.sunne.com.br/",
   jurosBaixos:
     "https://jurosbaixos.com.br/simulador-de-emprestimo?utm_source=credfacil&utm_medium=affiliates&utm_campaign=credfacil-emprestimo-cf-2864",
-  bndes: "https://portal.bndes.gov.br/prc/#/login-govbr",
+  assessoria: "/?origem=clube_beneficios",
   playStore: "https://play.google.com/store/apps/details?id=br.com.aptare.sunne",
   appStore: "https://apps.apple.com/br/app/sunne-pay/id6762489123",
   suporte: "https://wa.me/5598987353253?text=" + encodeURIComponent("Olá! Sou cliente PROSFEC Energy e tenho uma dúvida sobre o Clube de Benefícios."),
@@ -98,7 +98,7 @@ function Catraca({ onOk }: { onOk: () => void }) {
   );
 }
 
-function ModalJurosBaixos({ onClose }: { onClose: () => void }) {
+function ModalIncorporado({ titulo, src, onClose }: { titulo: string; src: string; onClose: () => void }) {
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", k);
@@ -107,15 +107,13 @@ function ModalJurosBaixos({ onClose }: { onClose: () => void }) {
     return () => { document.removeEventListener("keydown", k); document.body.style.overflow = o; };
   }, [onClose]);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-0 md:p-6" onClick={onClose} role="dialog" aria-modal="true" aria-label="Simulação de crédito Juros Baixos">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-0 md:p-6" onClick={onClose} role="dialog" aria-modal="true" aria-label={titulo}>
       <div className="flex h-full w-full flex-col overflow-hidden bg-white md:h-[88vh] md:max-w-5xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between gap-3 border-b border-energy-line px-4 py-3">
-          <p className="text-sm font-bold text-energy-deep">Simulação de crédito — Juros Baixos</p>
-          <div className="flex items-center gap-2">
-            <button onClick={onClose} aria-label="Fechar" className="rounded-md px-3 py-1.5 text-lg font-bold text-energy-ink hover:bg-energy-paper">✕</button>
-          </div>
+          <p className="text-sm font-bold text-energy-deep">{titulo}</p>
+          <button onClick={onClose} aria-label="Fechar" className="rounded-md px-3 py-1.5 text-lg font-bold text-energy-ink hover:bg-energy-paper">✕</button>
         </div>
-        <iframe src={LINKS.jurosBaixos} title="Juros Baixos" className="w-full flex-1 border-0" />
+        <iframe src={src} title={titulo} className="w-full flex-1 border-0" />
       </div>
     </div>
   );
@@ -133,7 +131,7 @@ function Card({ tag, titulo, texto, children }: { tag: string; titulo: string; t
 }
 
 function Vitrine({ onSair }: { onSair: () => void }) {
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState<null | "juros" | "assessoria">(null);
   return (
     <div className="min-h-screen bg-energy-paper">
       <header className="bg-energy-deeper">
@@ -161,13 +159,16 @@ function Vitrine({ onSair }: { onSair: () => void }) {
             <Externo href={LINKS.appStore}>Baixar na App Store</Externo>
           </Card>
           <Card tag="Crédito PF e MEI" titulo="Juros Baixos" texto="Compare e simule opções de crédito pessoal e para MEI. A análise e as condições são definidas pelas instituições parceiras.">
-            <button onClick={() => setModal(true)}
+            <button onClick={() => setModal("juros")}
               className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-energy-deep px-5 text-sm font-bold text-white hover:bg-energy-deeper ${FOCUS}`}>
               ⚡ Simular crédito sem sair da página
             </button>
           </Card>
-          <Card tag="Crédito empresarial (MPMEs)" titulo="BNDES Empresas" texto="Acesso ao canal oficial de financiamento para micro, pequenas e médias empresas.">
-            <Externo href={LINKS.bndes}>Acessar Portal BNDES</Externo>
+          <Card tag="Assessoria & Crédito PJ" titulo="Estruturação Financeira PROSFEC" texto="Diagnóstico e estruturação de crédito empresarial com condições exclusivas para clientes da carteira de energia solar.">
+            <button onClick={() => setModal("assessoria")}
+              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-energy-deep px-5 text-sm font-bold text-white hover:bg-energy-deeper ${FOCUS}`}>
+              🏛️ Solicitar Diagnóstico PJ
+            </button>
           </Card>
         </div>
 
@@ -198,7 +199,8 @@ function Vitrine({ onSair }: { onSair: () => void }) {
       <footer className="border-t border-energy-line bg-white py-6 text-center text-xs text-energy-ink/60">
         PROSFEC Energy · Os benefícios são oferecidos por empresas parceiras, sujeitos às regras e análises de cada uma. Seus dados são tratados conforme a LGPD.
       </footer>
-      {modal && <ModalJurosBaixos onClose={() => setModal(false)} />}
+      {modal === "juros" && <ModalIncorporado titulo="Simulação de crédito — Juros Baixos" src={LINKS.jurosBaixos} onClose={() => setModal(null)} />}
+      {modal === "assessoria" && <ModalIncorporado titulo="Estruturação Financeira PROSFEC" src={LINKS.assessoria} onClose={() => setModal(null)} />}
     </div>
   );
 }

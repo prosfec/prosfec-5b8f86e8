@@ -4418,6 +4418,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     {lead.razaoSocial || lead.nome || "Não informado"}
                                   </h4>
                                    <span className="text-[11px] text-slate-500 dark:text-zinc-500 font-mono block leading-tight">{lead.cnpj || "-"}</span>
+                                   {(lead as any).origemCampanha === "clube_beneficios" && (
+                                     <span className="inline-block mt-1 text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded uppercase">🎁 Clube de Benefícios</span>
+                                   )}
                                    {pdfPendentes > 0 && (
                                      <span
                                        className="mt-1.5 inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md"
@@ -4667,6 +4670,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     </span>
                                   )}
                                   <div className="font-bold text-slate-900">{lead.razaoSocial || lead.nome || "Não informado"}</div>
+                                  {(lead as any).origemCampanha === "clube_beneficios" && (
+                                    <span className="inline-block text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded uppercase">🎁 Clube de Benefícios</span>
+                                  )}
                                   {getPendingReports(lead) > 0 && (
                                     <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md shrink-0">
                                       PDF pendente ({getPendingReports(lead)})
