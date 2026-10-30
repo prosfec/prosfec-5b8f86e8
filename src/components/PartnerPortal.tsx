@@ -2297,7 +2297,7 @@ export default function PartnerPortal({
                                     </div>
                                   )}
 
-                                  <div className="space-y-1.5 text-[11px] text-slate-500 font-medium">
+                                  <div className="dossie-card space-y-2 text-[11px] text-slate-500 font-medium">
                                     {lead.endereco && (
                                       <p className="flex items-start gap-1">
                                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
@@ -2330,8 +2330,11 @@ export default function PartnerPortal({
                                       Enviado em {lead.criadoEm ? new Date(lead.criadoEm).toLocaleDateString("pt-BR") : "-"}
                                     </p>
                                   </div>
+                                  </div>
 
-                                  <div className="space-y-1.5">
+                                  <div className="space-y-3 min-w-0">
+                                  <p className="dossie-titulo">Central operacional</p>
+                                  <div className="dossie-card space-y-1.5">
                                     <div className={`grid gap-1.5 ${lead.telefone && (statusKey === "novo" || statusKey === "atendimento") ? "grid-cols-2" : "grid-cols-1"}`}>
                                       {(statusKey === "novo" || statusKey === "atendimento") && (
                                       <button
