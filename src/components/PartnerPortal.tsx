@@ -2445,57 +2445,50 @@ export default function PartnerPortal({
                                   </div>
 
 
-                                  <div className="pt-2 border-t border-slate-100 space-y-2">
-                                    <button
-                                      onClick={() => {
-                                        setExpandedEnergiaLeadId(isOpen ? lead.id : null);
-                                        
-                                      }}
-                                      className="text-[10px] font-extrabold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
-                                    >
-                                      <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-                                      Chat operacional ({notas.length})
-                                    </button>
-                                    {isOpen && (
-                                      <div className="space-y-2">
-                                        {notas.length > 0 ? (
-                                          <div className="space-y-1 max-h-[160px] overflow-y-auto pr-1">
-                                            {notas.map((nota: any, idx: number) => {
-                                              const daMesa = (nota.papel || "adm") !== "parceiro";
-                                              return (
-                                                <div key={idx} className={`border rounded-lg p-1.5 ${daMesa ? "bg-sky-50 border-sky-100" : "bg-slate-50 border-slate-100"}`}>
-                                                  <p className="text-[10px] text-slate-700 font-medium leading-snug whitespace-pre-wrap">{nota.texto}</p>
-                                                  {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
-                                                  <p className="text-[9px] text-slate-400 font-semibold">
-                                                    {daMesa ? "Mesa PROSFEC" : (nota.autor || "Parceiro")} • {nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}
-                                                  </p>
-                                                </div>
-                                              );
-                                            })}
+                                  <div className="chat-op">
+                                    <div className="chat-op-head">
+                                      <span className="flex items-center gap-2">
+                                        <MessageSquare className="w-4 h-4" />
+                                        Chat operacional
+                                      </span>
+                                      <span className="chat-op-count">{notas.length}</span>
+                                    </div>
+                                    <div className="chat-op-body">
+                                      {notas.length > 0 ? notas.map((nota: any, idx: number) => {
+                                        const daMesa = (nota.papel || "adm") !== "parceiro";
+                                        return (
+                                          <div key={idx} className={`flex ${daMesa ? "justify-start" : "justify-end"}`}>
+                                            <div className={`chat-bolha ${daMesa ? "chat-bolha-mesa" : "chat-bolha-eu"}`}>
+                                              <p className="chat-bolha-autor">{daMesa ? "Mesa PROSFEC" : (nota.autor || "Você")}</p>
+                                              <p className="whitespace-pre-wrap break-words">{nota.texto}</p>
+                                              {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
+                                              <p className="chat-bolha-hora">{nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}</p>
+                                            </div>
                                           </div>
-                                        ) : (
-                                          <p className="text-[10px] text-slate-400 italic">Nenhuma anotação registrada ainda.</p>
-                                        )}
-                                        <div className="flex items-center gap-1.5">
-                                          <textarea
-                                            rows={2}
-                                            placeholder="Escreva uma anotação... (Shift+Enter pula linha)"
-                                            value={energiaNotaDraft[lead.id] || ""}
-                                            onChange={(e) => setEnergiaNotaDraft(prev => ({ ...prev, [lead.id]: e.target.value }))}
-                                            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddEnergiaNotaParceiro(lead.id); } }}
-                                            className="flex-1 resize-y min-h-[34px] bg-white border border-slate-200 text-[10px] px-2.5 py-1.5 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400"
-                                          />
-                                          <button
-                                            disabled={!energiaNotaDraft[lead.id]?.trim() || energiaNotaSavingId === lead.id}
-                                            onClick={() => handleAddEnergiaNotaParceiro(lead.id)}
-                                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer"
-                                          >
-                                            {energiaNotaSavingId === lead.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-                                            Salvar
-                                          </button>
-                                        </div>
-                                      </div>
-                                    )}
+                                        );
+                                      }) : (
+                                        <p className="text-center text-xs text-slate-400 py-6">Nenhuma mensagem ainda. Inicie a conversa com a Mesa.</p>
+                                      )}
+                                    </div>
+                                    <div className="chat-op-input">
+                                      <textarea
+                                        rows={2}
+                                        placeholder="Escreva uma mensagem... (Shift+Enter pula linha)"
+                                        value={energiaNotaDraft[lead.id] || ""}
+                                        onChange={(e) => setEnergiaNotaDraft(prev => ({ ...prev, [lead.id]: e.target.value }))}
+                                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddEnergiaNotaParceiro(lead.id); } }}
+                                      />
+                                      <button
+                                        type="button"
+                                        aria-label="Enviar mensagem"
+                                        disabled={!energiaNotaDraft[lead.id]?.trim() || energiaNotaSavingId === lead.id}
+                                        onClick={() => handleAddEnergiaNotaParceiro(lead.id)}
+                                        className="chat-op-enviar"
+                                      >
+                                        {energiaNotaSavingId === lead.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                  </div>
                                   </div>
                                 </div>
                               );
