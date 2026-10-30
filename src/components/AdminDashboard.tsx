@@ -5300,7 +5300,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <p className="flex items-center gap-1.5">
                                   Chat operacional
                                   {energiaNovidadeParceiro(lead) && (
-                                    <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#DC2626" }} />
+                                    <button type="button" onClick={() => marcarEnergiaVistoAdm(lead)} title="Marcar como lida" className="chat-op-nova">Nova · marcar lida</button>
                                   )}
                                 </p>
                                 {notas.length > 0 && (
