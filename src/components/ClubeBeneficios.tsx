@@ -131,7 +131,7 @@ function Card({ tag, titulo, texto, children }: { tag: string; titulo: string; t
 }
 
 function Vitrine({ onSair }: { onSair: () => void }) {
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState<null | "juros" | "assessoria">(null);
   return (
     <div className="min-h-screen bg-energy-paper">
       <header className="bg-energy-deeper">
@@ -159,13 +159,16 @@ function Vitrine({ onSair }: { onSair: () => void }) {
             <Externo href={LINKS.appStore}>Baixar na App Store</Externo>
           </Card>
           <Card tag="Crédito PF e MEI" titulo="Juros Baixos" texto="Compare e simule opções de crédito pessoal e para MEI. A análise e as condições são definidas pelas instituições parceiras.">
-            <button onClick={() => setModal(true)}
+            <button onClick={() => setModal("juros")}
               className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-energy-deep px-5 text-sm font-bold text-white hover:bg-energy-deeper ${FOCUS}`}>
               ⚡ Simular crédito sem sair da página
             </button>
           </Card>
-          <Card tag="Crédito empresarial (MPMEs)" titulo="BNDES Empresas" texto="Acesso ao canal oficial de financiamento para micro, pequenas e médias empresas.">
-            <Externo href={LINKS.bndes}>Acessar Portal BNDES</Externo>
+          <Card tag="Assessoria & Crédito PJ" titulo="Estruturação Financeira PROSFEC" texto="Diagnóstico e estruturação de crédito empresarial com condições exclusivas para clientes da carteira de energia solar.">
+            <button onClick={() => setModal("assessoria")}
+              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-energy-deep px-5 text-sm font-bold text-white hover:bg-energy-deeper ${FOCUS}`}>
+              🏛️ Solicitar Diagnóstico PJ
+            </button>
           </Card>
         </div>
 
@@ -196,7 +199,8 @@ function Vitrine({ onSair }: { onSair: () => void }) {
       <footer className="border-t border-energy-line bg-white py-6 text-center text-xs text-energy-ink/60">
         PROSFEC Energy · Os benefícios são oferecidos por empresas parceiras, sujeitos às regras e análises de cada uma. Seus dados são tratados conforme a LGPD.
       </footer>
-      {modal && <ModalJurosBaixos onClose={() => setModal(false)} />}
+      {modal === "juros" && <ModalIncorporado titulo="Simulação de crédito — Juros Baixos" src={LINKS.jurosBaixos} onClose={() => setModal(null)} />}
+      {modal === "assessoria" && <ModalIncorporado titulo="Estruturação Financeira PROSFEC" src={LINKS.assessoria} onClose={() => setModal(null)} />}
     </div>
   );
 }
