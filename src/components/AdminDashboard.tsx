@@ -5245,16 +5245,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                             {/* Ações */}
                             <div className="dossie-card flex items-center gap-2 flex-wrap">
-                              {lead.telefone && (
-                                <a
-                                  href={buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa))}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer"
-                                >
-                                  <Send className="w-3 h-3" /> WhatsApp
-                                </a>
-                              )}
                               <select
                                 value={status}
                                 onChange={(e) => handleUpdateEnergiaStatus(lead.id, e.target.value)}
@@ -5283,6 +5273,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               >
                                 📋 Ficha & Documentos ({fichaDocumentosEnviados(lead)}/{fichaDocumentosTotal(lead)})
                               </button>
+                              {lead.telefone && (
+                                <a
+                                  href={buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa))}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Send className="w-3 h-3" /> WhatsApp
+                                </a>
+                              )}
                               <button
                                 onClick={() => handleDeleteEnergiaLead(lead.id, lead.nomeEmpresa)}
                                 disabled={energiaSavingId === lead.id}
