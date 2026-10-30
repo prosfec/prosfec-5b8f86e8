@@ -3760,7 +3760,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               </div>
 
               {/* Filtering controls bar */}
-          {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" ? (
+          {activeTab !== "announcements" && activeTab !== "recargas" && activeTab !== "comissoes" && activeTab !== "precos" && activeTab !== "servicos_contabilidade" && activeTab !== "leads_energia" ? (
             <div className="p-4 bg-white border-b border-slate-100 space-y-3">
               {/* Primary Search & Quick Filter Row */}
               <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
