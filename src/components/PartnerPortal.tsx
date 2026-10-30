@@ -2213,14 +2213,10 @@ export default function PartnerPortal({
                                 : "#";
                               const energiaFollowUp = precisaFollowUpEnergia(lead);
                               const cardCompleto = (
-                                <div key={lead.id} className="relative bg-white border border-slate-200 rounded-lg p-3 space-y-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 transition-colors">
-                                  {energiaTemNovidade(lead) && (
-                                    <span className="absolute -top-1 -right-1 z-10 flex w-3 h-3" title="Nova mensagem no chamado" aria-label="Nova mensagem no chamado">
-                                      <span className="absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping" style={{ backgroundColor: "#EF4444" }} />
-                                      <span className="relative inline-flex w-3 h-3 rounded-full border-2" style={{ backgroundColor: "#DC2626", borderColor: "#FFFFFF" }} />
-                                    </span>
-                                  )}
-                                  <div className="flex items-start justify-between gap-2">
+                                <div key={lead.id} className="lead-dossie grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+                                  <div className="space-y-3 min-w-0">
+                                  <p className="dossie-titulo">Dossiê do cliente</p>
+                                  <div className="dossie-card flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                       {lead.ramo && (
                                         <span className="text-[9px] bg-slate-100 text-slate-600 font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wider block self-start mb-1 truncate">
