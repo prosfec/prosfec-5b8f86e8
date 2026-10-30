@@ -4,7 +4,7 @@ const LINKS = {
   sunneMais: "https://sunnemais.sunne.com.br/",
   jurosBaixos:
     "https://jurosbaixos.com.br/simulador-de-emprestimo?utm_source=credfacil&utm_medium=affiliates&utm_campaign=credfacil-emprestimo-cf-2864",
-  bndes: "https://portal.bndes.gov.br/prc/#/login-govbr",
+  assessoria: "/?origem=clube_beneficios",
   playStore: "https://play.google.com/store/apps/details?id=br.com.aptare.sunne",
   appStore: "https://apps.apple.com/br/app/sunne-pay/id6762489123",
   suporte: "https://wa.me/5598987353253?text=" + encodeURIComponent("Olá! Sou cliente PROSFEC Energy e tenho uma dúvida sobre o Clube de Benefícios."),

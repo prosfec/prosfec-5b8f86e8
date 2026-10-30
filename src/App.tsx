@@ -410,7 +410,8 @@ export default function App() {
           fonte: "Heuristic Engine"
         },
         parceiroId: referredByPartnerId || "",
-        parceiroNome: referredByPartnerNome || ""
+        parceiroNome: referredByPartnerNome || "",
+        ...(lerOrigemCampanha() ? { origemCampanha: lerOrigemCampanha() } : {})
       };
 
       const response = await fetch("/api/public/leads/simulacao", {
