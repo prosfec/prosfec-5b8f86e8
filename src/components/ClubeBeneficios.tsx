@@ -98,7 +98,7 @@ function Catraca({ onOk }: { onOk: () => void }) {
   );
 }
 
-function ModalJurosBaixos({ onClose }: { onClose: () => void }) {
+function ModalIncorporado({ titulo, src, onClose }: { titulo: string; src: string; onClose: () => void }) {
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", k);
@@ -107,15 +107,13 @@ function ModalJurosBaixos({ onClose }: { onClose: () => void }) {
     return () => { document.removeEventListener("keydown", k); document.body.style.overflow = o; };
   }, [onClose]);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-0 md:p-6" onClick={onClose} role="dialog" aria-modal="true" aria-label="Simulação de crédito Juros Baixos">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-0 md:p-6" onClick={onClose} role="dialog" aria-modal="true" aria-label={titulo}>
       <div className="flex h-full w-full flex-col overflow-hidden bg-white md:h-[88vh] md:max-w-5xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between gap-3 border-b border-energy-line px-4 py-3">
-          <p className="text-sm font-bold text-energy-deep">Simulação de crédito — Juros Baixos</p>
-          <div className="flex items-center gap-2">
-            <button onClick={onClose} aria-label="Fechar" className="rounded-md px-3 py-1.5 text-lg font-bold text-energy-ink hover:bg-energy-paper">✕</button>
-          </div>
+          <p className="text-sm font-bold text-energy-deep">{titulo}</p>
+          <button onClick={onClose} aria-label="Fechar" className="rounded-md px-3 py-1.5 text-lg font-bold text-energy-ink hover:bg-energy-paper">✕</button>
         </div>
-        <iframe src={LINKS.jurosBaixos} title="Juros Baixos" className="w-full flex-1 border-0" />
+        <iframe src={src} title={titulo} className="w-full flex-1 border-0" />
       </div>
     </div>
   );

@@ -3190,6 +3190,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         for (const field of PROTECTED_FIELDS) delete update[field];
 
         // Indicação só é gravada quando o lead ainda não tem consultor vinculado
+        // Origem de campanha só é gravada uma vez (preserva a primeira atribuição)
+        if (existing.data?.origemCampanha) delete update.origemCampanha;
         const jaTemConsultor = !!(existing.data?.parceiroId || existing.data?.partnerId || existing.data?.parentPartnerId);
         if (jaTemConsultor || !payload.parceiroId) {
           delete update.parceiroId;

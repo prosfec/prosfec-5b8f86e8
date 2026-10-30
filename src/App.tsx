@@ -217,7 +217,24 @@ export function executarAnaliseRiscoPreliminar(
   };
 }
 
+// Campanha de origem do visitante (ex.: ?origem=clube_beneficios), guardada na sessão.
+const ORIGENS_CAMPANHA = ["clube_beneficios"];
+function lerOrigemCampanha(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const q = new URLSearchParams(window.location.search).get("origem");
+    if (q && ORIGENS_CAMPANHA.includes(q)) {
+      sessionStorage.setItem("prosfec_origem_campanha", q);
+      return q;
+    }
+    return sessionStorage.getItem("prosfec_origem_campanha");
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
+  useEffect(() => { lerOrigemCampanha(); }, []);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPartnerPortal, setShowPartnerPortal] = useState(false);
   const [showUserRegistration, setShowUserRegistration] = useState(false);
