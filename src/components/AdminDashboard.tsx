@@ -5118,21 +5118,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
                         const socios = lead.cnpjDetails?.socios || [];
                         const cardCompleto = (
-                          <div key={lead.id} className="relative bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 space-y-3">
-                            {energiaNovidadeParceiro(lead) && (
-                              <button
-                                type="button"
-                                onClick={() => marcarEnergiaVistoAdm(lead)}
-                                className="absolute -top-1 -right-1 z-10 flex w-3 h-3 cursor-pointer"
-                                title="Nova mensagem no chamado (clique para marcar como lida)"
-                                aria-label="Nova mensagem no chamado"
-                              >
-                                <span className="absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping" style={{ backgroundColor: "#EF4444" }} />
-                                <span className="relative inline-flex w-3 h-3 rounded-full border-2" style={{ backgroundColor: "#DC2626", borderColor: "#FFFFFF" }} />
-                              </button>
-                            )}
+                          <div key={lead.id} className="lead-dossie grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+                            <div className="space-y-3 min-w-0">
+                            <p className="dossie-titulo">Dossiê do cliente</p>
                             {/* Identificação */}
-                            <div className="flex items-start justify-between gap-2">
+                            <div className="dossie-card flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <p className="font-black text-sm text-slate-800 line-clamp-1">{lead.nomeEmpresa}</p>
                                 {lead.razaoSocial && lead.razaoSocial !== lead.nomeEmpresa && (
@@ -5155,7 +5145,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             </div>
 
                             {/* Dados cadastrais */}
-                            <div className="grid grid-cols-1 gap-1.5 text-[11px] text-slate-600 font-medium break-words">
+                            <div className="dossie-card grid grid-cols-1 gap-2 text-[11px] text-slate-600 font-medium break-words">
                               {lead.cnpjDetails ? (
                                 <FichaCnpjBotao details={lead.cnpjDetails} nome={lead.nomeEmpresa || lead.nome} endereco={lead.endereco} />
                               ) : lead.cnpj && (
@@ -5207,6 +5197,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 </span>
                               </div>
                             )}
+                            </div>
+
+                            <div className="space-y-3 min-w-0">
+                            <p className="dossie-titulo">Central operacional</p>
+
 
                             {/* Formulário de conclusão */}
                             {energiaFechamentoLeadId === lead.id && (
@@ -5249,7 +5244,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             )}
 
                             {/* Ações */}
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="dossie-card flex items-center gap-2 flex-wrap">
                               {lead.telefone && (
                                 <a
                                   href={buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa))}
@@ -5299,13 +5294,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             </div>
 
 
-                            {/* Histórico e anotações */}
-                            <div className="pt-2.5 border-t border-slate-100 space-y-2">
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
+                            {/* Chat operacional */}
+                            <div className="chat-op">
+                              <div className="chat-op-head">
+                                <p className="flex items-center gap-1.5">
                                   Chat operacional
                                   {energiaNovidadeParceiro(lead) && (
-                                    <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#DC2626" }} />
+                                    <button type="button" onClick={() => marcarEnergiaVistoAdm(lead)} title="Marcar como lida" className="chat-op-nova">Nova · marcar lida</button>
                                   )}
                                 </p>
                                 {notas.length > 0 && (
@@ -5321,28 +5316,31 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 )}
                               </div>
                               {notas.length === 0 ? (
-                                <p className="text-[11px] text-slate-400 font-medium">Sem movimentações registradas.</p>
+                                <p className="text-center text-xs text-slate-400 py-6">Sem movimentações registradas.</p>
                               ) : (
-                                <div className="space-y-1 max-h-[160px] overflow-y-auto">
-                                  {notas.slice().reverse().map((nota: any, idx: number) => (
-                                    <div key={idx} className="bg-slate-50 border border-slate-100 rounded-lg p-2">
-                                      <p className="text-[11px] text-slate-700 font-medium leading-snug whitespace-pre-wrap break-words">{nota.texto}</p>
-                                      {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
-                                      <p className="text-[9px] text-slate-400 font-semibold">
-                                        {nota.autor || "Mesa PROSFEC"} • {nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}
-                                      </p>
-                                    </div>
-                                  ))}
+                                <div className="chat-op-body">
+                                  {notas.slice().reverse().map((nota: any, idx: number) => {
+                                    const doParceiro = nota.papel === "parceiro";
+                                    return (
+                                      <div key={idx} className={`flex ${doParceiro ? "justify-start" : "justify-end"}`}>
+                                        <div className={`chat-bolha ${doParceiro ? "chat-bolha-mesa" : "chat-bolha-eu"}`}>
+                                          <p className="chat-bolha-autor">{nota.autor || (doParceiro ? "Assessor" : "Mesa PROSFEC")}</p>
+                                          <p className="whitespace-pre-wrap break-words">{nota.texto}</p>
+                                          {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
+                                          <p className="chat-bolha-hora">{nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}</p>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               )}
-                              <div className="flex items-center gap-2">
+                              <div className="chat-op-input">
                                 <textarea
                                   rows={2}
                                   value={energiaNotaDraft[lead.id] || ""}
                                   onChange={(e) => setEnergiaNotaDraft(prev => ({ ...prev, [lead.id]: e.target.value }))}
                                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddEnergiaNota(lead.id); } }}
-                                  placeholder="Escrever anotação visível ao parceiro... (Shift+Enter pula linha)"
-                                  className="flex-1 resize-y min-h-[34px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                  placeholder="Mensagem visível ao assessor... (Shift+Enter pula linha)"
                                 />
                                 <label title="Anexar PDF ou imagem" className="px-2 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[12px] cursor-pointer shrink-0">
                                   📎
@@ -5372,6 +5370,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                   <button type="button" onClick={() => setEnergiaAnexoDraft(prev => ({ ...prev, [lead.id]: null }))} className="text-slate-400 hover:text-red-600 cursor-pointer">✕</button>
                                 </div>
                               )}
+                            </div>
                             </div>
                           </div>
                         );

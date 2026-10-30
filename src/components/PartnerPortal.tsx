@@ -2192,7 +2192,6 @@ export default function PartnerPortal({
                                 : statusKey === "arquivado" ? "bg-slate-200 text-slate-600 border-slate-300"
                                 : "bg-amber-100 text-amber-800 border-amber-200";
                               const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
-                              const isOpen = expandedEnergiaLeadId !== lead.id;
                               const energiaPlaceObj = {
                                 id: lead.id,
                                 nome: lead.nomeEmpresa,
@@ -2213,14 +2212,10 @@ export default function PartnerPortal({
                                 : "#";
                               const energiaFollowUp = precisaFollowUpEnergia(lead);
                               const cardCompleto = (
-                                <div key={lead.id} className="relative bg-white border border-slate-200 rounded-lg p-3 space-y-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 transition-colors">
-                                  {energiaTemNovidade(lead) && (
-                                    <span className="absolute -top-1 -right-1 z-10 flex w-3 h-3" title="Nova mensagem no chamado" aria-label="Nova mensagem no chamado">
-                                      <span className="absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping" style={{ backgroundColor: "#EF4444" }} />
-                                      <span className="relative inline-flex w-3 h-3 rounded-full border-2" style={{ backgroundColor: "#DC2626", borderColor: "#FFFFFF" }} />
-                                    </span>
-                                  )}
-                                  <div className="flex items-start justify-between gap-2">
+                                <div key={lead.id} className="lead-dossie grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+                                  <div className="space-y-3 min-w-0">
+                                  <p className="dossie-titulo">Dossiê do cliente</p>
+                                  <div className="dossie-card flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                       {lead.ramo && (
                                         <span className="text-[9px] bg-slate-100 text-slate-600 font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wider block self-start mb-1 truncate">
@@ -2301,7 +2296,7 @@ export default function PartnerPortal({
                                     </div>
                                   )}
 
-                                  <div className="space-y-1.5 text-[11px] text-slate-500 font-medium">
+                                  <div className="dossie-card space-y-2 text-[11px] text-slate-500 font-medium">
                                     {lead.endereco && (
                                       <p className="flex items-start gap-1">
                                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
@@ -2334,8 +2329,11 @@ export default function PartnerPortal({
                                       Enviado em {lead.criadoEm ? new Date(lead.criadoEm).toLocaleDateString("pt-BR") : "-"}
                                     </p>
                                   </div>
+                                  </div>
 
-                                  <div className="space-y-1.5">
+                                  <div className="space-y-3 min-w-0">
+                                  <p className="dossie-titulo">Central operacional</p>
+                                  <div className="dossie-card space-y-1.5">
                                     <div className={`grid gap-1.5 ${lead.telefone && (statusKey === "novo" || statusKey === "atendimento") ? "grid-cols-2" : "grid-cols-1"}`}>
                                       {(statusKey === "novo" || statusKey === "atendimento") && (
                                       <button
@@ -2389,7 +2387,7 @@ export default function PartnerPortal({
                                     </button>
                                   </div>
 
-                                  <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 flex-wrap">
+                                  <div className="flex items-center gap-1.5 flex-wrap empty:hidden">
 
                                     {!isEnergiaOnly && (
                                     <button
@@ -2446,57 +2444,50 @@ export default function PartnerPortal({
                                   </div>
 
 
-                                  <div className="pt-2 border-t border-slate-100 space-y-2">
-                                    <button
-                                      onClick={() => {
-                                        setExpandedEnergiaLeadId(isOpen ? lead.id : null);
-                                        
-                                      }}
-                                      className="text-[10px] font-extrabold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
-                                    >
-                                      <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-                                      Chat operacional ({notas.length})
-                                    </button>
-                                    {isOpen && (
-                                      <div className="space-y-2">
-                                        {notas.length > 0 ? (
-                                          <div className="space-y-1 max-h-[160px] overflow-y-auto pr-1">
-                                            {notas.map((nota: any, idx: number) => {
-                                              const daMesa = (nota.papel || "adm") !== "parceiro";
-                                              return (
-                                                <div key={idx} className={`border rounded-lg p-1.5 ${daMesa ? "bg-sky-50 border-sky-100" : "bg-slate-50 border-slate-100"}`}>
-                                                  <p className="text-[10px] text-slate-700 font-medium leading-snug whitespace-pre-wrap">{nota.texto}</p>
-                                                  {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
-                                                  <p className="text-[9px] text-slate-400 font-semibold">
-                                                    {daMesa ? "Mesa PROSFEC" : (nota.autor || "Parceiro")} • {nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}
-                                                  </p>
-                                                </div>
-                                              );
-                                            })}
+                                  <div className="chat-op">
+                                    <div className="chat-op-head">
+                                      <span className="flex items-center gap-2">
+                                        <MessageSquare className="w-4 h-4" />
+                                        Chat operacional
+                                      </span>
+                                      <span className="chat-op-count">{notas.length}</span>
+                                    </div>
+                                    <div className="chat-op-body">
+                                      {notas.length > 0 ? notas.map((nota: any, idx: number) => {
+                                        const daMesa = (nota.papel || "adm") !== "parceiro";
+                                        return (
+                                          <div key={idx} className={`flex ${daMesa ? "justify-start" : "justify-end"}`}>
+                                            <div className={`chat-bolha ${daMesa ? "chat-bolha-mesa" : "chat-bolha-eu"}`}>
+                                              <p className="chat-bolha-autor">{daMesa ? "Mesa PROSFEC" : (nota.autor || "Você")}</p>
+                                              <p className="whitespace-pre-wrap break-words">{nota.texto}</p>
+                                              {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
+                                              <p className="chat-bolha-hora">{nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}</p>
+                                            </div>
                                           </div>
-                                        ) : (
-                                          <p className="text-[10px] text-slate-400 italic">Nenhuma anotação registrada ainda.</p>
-                                        )}
-                                        <div className="flex items-center gap-1.5">
-                                          <textarea
-                                            rows={2}
-                                            placeholder="Escreva uma anotação... (Shift+Enter pula linha)"
-                                            value={energiaNotaDraft[lead.id] || ""}
-                                            onChange={(e) => setEnergiaNotaDraft(prev => ({ ...prev, [lead.id]: e.target.value }))}
-                                            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddEnergiaNotaParceiro(lead.id); } }}
-                                            className="flex-1 resize-y min-h-[34px] bg-white border border-slate-200 text-[10px] px-2.5 py-1.5 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400"
-                                          />
-                                          <button
-                                            disabled={!energiaNotaDraft[lead.id]?.trim() || energiaNotaSavingId === lead.id}
-                                            onClick={() => handleAddEnergiaNotaParceiro(lead.id)}
-                                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer"
-                                          >
-                                            {energiaNotaSavingId === lead.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-                                            Salvar
-                                          </button>
-                                        </div>
-                                      </div>
-                                    )}
+                                        );
+                                      }) : (
+                                        <p className="text-center text-xs text-slate-400 py-6">Nenhuma mensagem ainda. Inicie a conversa com a Mesa.</p>
+                                      )}
+                                    </div>
+                                    <div className="chat-op-input">
+                                      <textarea
+                                        rows={2}
+                                        placeholder="Escreva uma mensagem... (Shift+Enter pula linha)"
+                                        value={energiaNotaDraft[lead.id] || ""}
+                                        onChange={(e) => setEnergiaNotaDraft(prev => ({ ...prev, [lead.id]: e.target.value }))}
+                                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddEnergiaNotaParceiro(lead.id); } }}
+                                      />
+                                      <button
+                                        type="button"
+                                        aria-label="Enviar mensagem"
+                                        disabled={!energiaNotaDraft[lead.id]?.trim() || energiaNotaSavingId === lead.id}
+                                        onClick={() => handleAddEnergiaNotaParceiro(lead.id)}
+                                        className="chat-op-enviar"
+                                      >
+                                        {energiaNotaSavingId === lead.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                  </div>
                                   </div>
                                 </div>
                               );

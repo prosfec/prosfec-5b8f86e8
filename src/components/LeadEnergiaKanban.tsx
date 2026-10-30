@@ -124,23 +124,28 @@ export function LeadEnergiaDetalheModal({ titulo, onClose, children }: { titulo:
       aria-label={titulo}
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="relative my-auto w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: "#F8FAFC" }}>
-        <div className="flex items-center justify-between gap-3 px-4 py-3" style={{ backgroundColor: "#0A3D2E" }}>
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: "#B7F34A" }}>PROSFEC Energy · Lead</p>
-            <p className="text-sm font-extrabold truncate" style={{ color: "#FFFFFF" }}>{titulo}</p>
+      <div className="relative my-auto w-full max-w-5xl rounded-3xl overflow-hidden shadow-2xl ring-1 ring-black/5" style={{ backgroundColor: "#F4F7F5" }}>
+        <div className="relative flex items-center justify-between gap-3 px-5 sm:px-6 py-4" style={{ background: "linear-gradient(120deg, #062B20 0%, #0A3D2E 55%, #0F5A42 100%)" }}>
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(183,243,74,0.14)", color: "#B7F34A" }}>
+              <Zap className="w-5 h-5 fill-current" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: "#B7F34A" }}>PROSFEC Energy · Lead solar</p>
+              <p className="text-lg font-extrabold truncate leading-tight" style={{ color: "#FFFFFF" }}>{titulo}</p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer"
-            style={{ color: "#FFFFFF", backgroundColor: "rgba(255,255,255,0.08)" }}
+            className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition hover:scale-105"
+            style={{ color: "#FFFFFF", backgroundColor: "rgba(255,255,255,0.1)" }}
           >
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-3 sm:p-4 max-h-[82vh] overflow-y-auto">{children}</div>
+        <div className="p-4 sm:p-6 max-h-[84vh] overflow-y-auto">{children}</div>
       </div>
     </div>,
     document.body
