@@ -33,6 +33,7 @@ import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia,
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
+import { LeadEnergiaCardCompacto, LeadEnergiaDetalheModal } from "./LeadEnergiaKanban";
 import { PresencaAssessorIndicador } from "./PresencaAssessor";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
@@ -1097,6 +1098,7 @@ export default function PartnerPortal({
   const [expandedEnergiaLeadId, setExpandedEnergiaLeadId] = useState<string | null>(null);
   const [propostaEnergiaLeadId, setPropostaEnergiaLeadId] = useState<string | null>(null);
   const [fichaEnergiaLeadId, setFichaEnergiaLeadId] = useState<string | null>(null);
+  const [detalheEnergiaLeadId, setDetalheEnergiaLeadId] = useState<string | null>(null);
   const [energiaPanelOpen, setEnergiaPanelOpen] = useState(true);
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<string>("todos");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<{ [leadId: string]: string }>({});
@@ -2190,7 +2192,7 @@ export default function PartnerPortal({
                                 : statusKey === "arquivado" ? "bg-slate-200 text-slate-600 border-slate-300"
                                 : "bg-amber-100 text-amber-800 border-amber-200";
                               const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
-                              const isOpen = expandedEnergiaLeadId === lead.id;
+                              const isOpen = expandedEnergiaLeadId !== lead.id;
                               const energiaPlaceObj = {
                                 id: lead.id,
                                 nome: lead.nomeEmpresa,
@@ -2210,7 +2212,7 @@ export default function PartnerPortal({
                                 ? buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa))
                                 : "#";
                               const energiaFollowUp = precisaFollowUpEnergia(lead);
-                              return (
+                              const cardCompleto = (
                                 <div key={lead.id} className="relative bg-white border border-slate-200 rounded-lg p-3 space-y-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 transition-colors">
                                   {energiaTemNovidade(lead) && (
                                     <span className="absolute -top-1 -right-1 z-10 flex w-3 h-3" title="Nova mensagem no chamado" aria-label="Nova mensagem no chamado">
@@ -2447,13 +2449,13 @@ export default function PartnerPortal({
                                   <div className="pt-2 border-t border-slate-100 space-y-2">
                                     <button
                                       onClick={() => {
-                                        setExpandedEnergiaLeadId(isOpen ? null : lead.id);
+                                        setExpandedEnergiaLeadId(isOpen ? lead.id : null);
                                         
                                       }}
                                       className="text-[10px] font-extrabold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
                                     >
                                       <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-                                      Anotações & Histórico ({notas.length})
+                                      Chat operacional ({notas.length})
                                     </button>
                                     {isOpen && (
                                       <div className="space-y-2">
@@ -2498,6 +2500,23 @@ export default function PartnerPortal({
                                   </div>
                                 </div>
                               );
+                              const podeProposta = statusKey === "novo" || statusKey === "atendimento";
+                              return (
+                                <React.Fragment key={lead.id}>
+                                  <LeadEnergiaCardCompacto
+                                    lead={lead}
+                                    novidade={energiaTemNovidade(lead)}
+                                    onOpen={() => setDetalheEnergiaLeadId(lead.id)}
+                                    whatsappUrl={lead.telefone ? energiaWa : null}
+                                    onProposta={podeProposta ? () => setPropostaEnergiaLeadId(lead.id) : null}
+                                  />
+                                  {detalheEnergiaLeadId === lead.id && !propostaEnergiaLeadId && !fichaEnergiaLeadId && !activeCnpjModal && (
+                                    <LeadEnergiaDetalheModal titulo={lead.nomeEmpresa || "Lead"} onClose={() => setDetalheEnergiaLeadId(null)}>
+                                      {cardCompleto}
+                                    </LeadEnergiaDetalheModal>
+                                  )}
+                                </React.Fragment>
+                              );
                             })}
                                   </div>
                                 </div>
@@ -2506,7 +2525,7 @@ export default function PartnerPortal({
                           </div>
                         )}
                         {propostaEnergiaLeadId && (
-                          <EnergiaContratacaoModal open ocultarVideo onClose={() => setPropostaEnergiaLeadId(null)} />
+                          <EnergiaContratacaoModal open ocultarVideo voltarLabel={detalheEnergiaLeadId ? "Voltar ao Lead" : undefined} onClose={() => setPropostaEnergiaLeadId(null)} />
                         )}
                         {fichaEnergiaLeadId && energiaLeads.find((l: any) => l.id === fichaEnergiaLeadId) && (
                           <FichaLeadEnergiaModal
