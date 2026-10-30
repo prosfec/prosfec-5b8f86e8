@@ -2388,7 +2388,7 @@ export default function PartnerPortal({
                                     </button>
                                   </div>
 
-                                  <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 flex-wrap">
+                                  <div className="flex items-center gap-1.5 flex-wrap empty:hidden">
 
                                     {!isEnergiaOnly && (
                                     <button
