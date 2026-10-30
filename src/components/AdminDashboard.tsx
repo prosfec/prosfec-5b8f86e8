@@ -5324,8 +5324,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               {notas.length === 0 ? (
                                 <p className="text-center text-xs text-slate-400 py-6">Sem movimentações registradas.</p>
                               ) : (
-                                <div className="chat-op-body">
-                                  {notas.slice().reverse().map((nota: any, idx: number) => {
+                                <div className="chat-op-body" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
+                                  {notas.map((nota: any, idx: number) => {
                                     const doParceiro = nota.papel === "parceiro";
                                     return (
                                       <div key={idx} className={`flex ${doParceiro ? "justify-start" : "justify-end"}`}>
