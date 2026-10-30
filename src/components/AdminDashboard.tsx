@@ -118,6 +118,7 @@ import {
 import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
 import AdminServicosContabilidadeTab from "./AdminServicosContabilidadeTab";
+import { LeadEnergiaCardCompacto, LeadEnergiaDetalheModal } from "./LeadEnergiaKanban";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 
 const getStatusLabel = (status: string) => {
@@ -497,6 +498,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [energiaBusca, setEnergiaBusca] = useState<string>("");
   const [energiaFechamentoLeadId, setEnergiaFechamentoLeadId] = useState<string | null>(null);
   const [fichaEnergiaLeadId, setFichaEnergiaLeadId] = useState<string | null>(null);
+  const [detalheEnergiaLeadId, setDetalheEnergiaLeadId] = useState<string | null>(null);
   const [energiaFechamentoFatura, setEnergiaFechamentoFatura] = useState<string>("");
   const [energiaFechamentoComissao, setEnergiaFechamentoComissao] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -5115,7 +5117,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         const status = lead.status || "novo";
                         const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
                         const socios = lead.cnpjDetails?.socios || [];
-                        return (
+                        const cardCompleto = (
                           <div key={lead.id} className="relative bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 space-y-3">
                             {energiaNovidadeParceiro(lead) && (
                               <button
@@ -5301,7 +5303,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             <div className="pt-2.5 border-t border-slate-100 space-y-2">
                               <div className="flex items-center justify-between gap-2">
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
-                                  Histórico de Movimentações
+                                  Chat operacional
                                   {energiaNovidadeParceiro(lead) && (
                                     <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#DC2626" }} />
                                   )}
@@ -5372,6 +5374,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               )}
                             </div>
                           </div>
+                        );
+                        return (
+                          <React.Fragment key={lead.id}>
+                            <LeadEnergiaCardCompacto
+                              lead={lead}
+                              novidade={energiaNovidadeParceiro(lead)}
+                              onOpen={() => setDetalheEnergiaLeadId(lead.id)}
+                              whatsappUrl={lead.telefone ? buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa)) : null}
+                            />
+                            {detalheEnergiaLeadId === lead.id && !fichaEnergiaLeadId && (
+                              <LeadEnergiaDetalheModal titulo={lead.nomeEmpresa || "Lead"} onClose={() => setDetalheEnergiaLeadId(null)}>
+                                {cardCompleto}
+                              </LeadEnergiaDetalheModal>
+                            )}
+                          </React.Fragment>
                         );
                       })}
                       </div>

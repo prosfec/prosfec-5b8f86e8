@@ -8,7 +8,7 @@ const ICONES_CAMPO: Record<string, any> = {
   email: Mail, telefone: Phone, estadoCivil: Heart, profissao: Briefcase,
 };
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db, storage } from "../firebase";
 import { toast } from "sonner";
 
@@ -119,6 +119,19 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState<{ slot: string; pct: number } | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const notasLocais = useRef<any[]>(Array.isArray(lead?.anotacoes) ? lead.anotacoes : []);
+
+  // Movimentação do assessor: registra no Chat operacional e acende a novidade para a Mesa
+  const movimento = (texto: string) => {
+    if (!podeEditar) return { updates: {}, local: {} };
+    const agora = new Date().toISOString();
+    const nota = { texto, autor: lead?.parceiroNome || "Assessor", papel: "parceiro", data: agora, automatica: true };
+    notasLocais.current = [...notasLocais.current, nota];
+    return {
+      updates: { anotacoes: arrayUnion(nota), ultimaMovimentacaoParceiroEm: agora, vistoPeloParceiroEm: agora, atualizadoEm: agora },
+      local: { anotacoes: notasLocais.current, ultimaMovimentacaoParceiroEm: agora, vistoPeloParceiroEm: agora, atualizadoEm: agora },
+    };
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -131,9 +144,10 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
     try {
       const limpa: Record<string, string> = { ...(lead?.ficha || {}), tipo };
       CAMPOS.forEach((c) => { limpa[c.key] = String(ficha[c.key] || "").trim(); });
+      const mov = movimento("📋 Ficha cadastral preenchida/atualizada pelo assessor.");
       const updates = { ficha: limpa, fichaAtualizadaEm: new Date().toISOString() };
-      await updateDoc(doc(db, "leads_energia", lead.id), updates);
-      onUpdated?.(updates);
+      await updateDoc(doc(db, "leads_energia", lead.id), { ...updates, ...mov.updates });
+      onUpdated?.({ ...updates, ...mov.local });
       toast.success("Ficha salva.");
     } catch (e) {
       console.error(e);
@@ -159,9 +173,11 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
       const url = await getDownloadURL(task.snapshot.ref);
       const registro = { url, path, nome: file.name, tipo: file.type, enviadoEm: new Date().toISOString() };
       const novos = { ...documentos, [slot]: registro };
-      await updateDoc(doc(db, "leads_energia", lead.id), { [`documentos.${slot}`]: registro });
+      const rotulo = (DOCS as any[]).find((d) => d.key === slot)?.label || "Arquivo adicional";
+      const mov = movimento(`📎 Novo documento anexado: ${rotulo}.`);
+      await updateDoc(doc(db, "leads_energia", lead.id), { [`documentos.${slot}`]: registro, ...mov.updates });
       setDocumentos(novos);
-      onUpdated?.({ documentos: novos });
+      onUpdated?.({ documentos: novos, ...mov.local });
       if (anterior?.path) deleteObject(ref(storage, anterior.path)).catch(() => {});
       toast.success("Documento anexado.");
     } catch (e) {

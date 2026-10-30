@@ -215,10 +215,12 @@ export default function EnergiaContratacaoModal({
   open,
   onClose,
   ocultarVideo = false,
+  voltarLabel,
 }: {
   open: boolean;
   onClose: () => void;
   ocultarVideo?: boolean;
+  voltarLabel?: string;
 }) {
   const [busca, setBusca] = useState("");
   const [regiao, setRegiao] = useState("Todas");
@@ -293,6 +295,15 @@ export default function EnergiaContratacaoModal({
         {/* Cabeçalho */}
         <div className="flex items-center justify-between gap-3 border-b border-[#0A3D2E] bg-[#0A3D2E] px-5 py-4">
           <div className="flex items-center gap-3">
+            {voltarLabel && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full border border-[#B7F34A]/40 bg-[#B7F34A]/10 px-3 py-1.5 text-[12px] font-extrabold text-[#B7F34A] transition hover:bg-[#B7F34A]/20"
+              >
+                ← {voltarLabel}
+              </button>
+            )}
             {selecionada && (
               <button
                 type="button"
