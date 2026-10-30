@@ -26,13 +26,25 @@ export const Route = createFileRoute("/")({
           "Entenda a posição financeira da sua empresa, identifique oportunidades de crédito e estruture o próximo passo com a PROSFEC.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://prosfec.lovable.app/" },
-      { property: "og:image", content: "https://prosfec.lovable.app/og-prosfec.jpg" },
+      { property: "og:url", content: "https://prosfec.com.br/" },
+      { property: "og:image", content: "https://prosfec.com.br/og-prosfec.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "https://prosfec.lovable.app/og-prosfec.jpg" },
+      { name: "twitter:image", content: "https://prosfec.com.br/og-prosfec.jpg" },
       { name: "theme-color", content: "#0A3D2E" },
     ],
-    links: [{ rel: "canonical", href: "https://prosfec.lovable.app/" }],
+    links: [{ rel: "canonical", href: "https://prosfec.com.br/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "PROSFEC",
+          alternateName: ["Prosfec", "PROSFEC Energy"],
+          url: "https://prosfec.com.br/",
+        }),
+      },
+    ],
   }),
 });
 
