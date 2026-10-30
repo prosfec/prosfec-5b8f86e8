@@ -2192,7 +2192,6 @@ export default function PartnerPortal({
                                 : statusKey === "arquivado" ? "bg-slate-200 text-slate-600 border-slate-300"
                                 : "bg-amber-100 text-amber-800 border-amber-200";
                               const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
-                              const isOpen = expandedEnergiaLeadId !== lead.id;
                               const energiaPlaceObj = {
                                 id: lead.id,
                                 nome: lead.nomeEmpresa,
