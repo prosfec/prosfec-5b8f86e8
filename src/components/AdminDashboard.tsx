@@ -5118,21 +5118,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         const notas = Array.isArray(lead.anotacoes) ? lead.anotacoes : [];
                         const socios = lead.cnpjDetails?.socios || [];
                         const cardCompleto = (
-                          <div key={lead.id} className="relative bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 space-y-3">
-                            {energiaNovidadeParceiro(lead) && (
-                              <button
-                                type="button"
-                                onClick={() => marcarEnergiaVistoAdm(lead)}
-                                className="absolute -top-1 -right-1 z-10 flex w-3 h-3 cursor-pointer"
-                                title="Nova mensagem no chamado (clique para marcar como lida)"
-                                aria-label="Nova mensagem no chamado"
-                              >
-                                <span className="absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping" style={{ backgroundColor: "#EF4444" }} />
-                                <span className="relative inline-flex w-3 h-3 rounded-full border-2" style={{ backgroundColor: "#DC2626", borderColor: "#FFFFFF" }} />
-                              </button>
-                            )}
+                          <div key={lead.id} className="lead-dossie grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+                            <div className="space-y-3 min-w-0">
+                            <p className="dossie-titulo">Dossiê do cliente</p>
                             {/* Identificação */}
-                            <div className="flex items-start justify-between gap-2">
+                            <div className="dossie-card flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <p className="font-black text-sm text-slate-800 line-clamp-1">{lead.nomeEmpresa}</p>
                                 {lead.razaoSocial && lead.razaoSocial !== lead.nomeEmpresa && (
