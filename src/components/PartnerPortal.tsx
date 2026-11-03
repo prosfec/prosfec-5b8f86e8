@@ -1,4 +1,6 @@
 // @ts-nocheck
+import RaioXEnergeticoCard from "./RaioXEnergeticoCard";
+import { resumirHorario } from "../lib/raioXEnergetico";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -507,7 +509,10 @@ const executeCacaLeadsClientSide = async (keyword: string, city: string, limit: 
     businessStatus: item.businessStatus || "",
     abertoAgora: typeof item.currentOpeningHours?.openNow === "boolean" ? item.currentOpeningHours.openNow : null,
     bairro: (item.addressComponents || []).find((c: any) => (c.types || []).includes("sublocality") || (c.types || []).includes("sublocality_level_1"))?.longText || "",
-    cep: (item.addressComponents || []).find((c: any) => (c.types || []).includes("postal_code"))?.longText || ""
+    cep: (item.addressComponents || []).find((c: any) => (c.types || []).includes("postal_code"))?.longText || "",
+    primaryType: item.primaryType || "",
+    types: item.types || [],
+    ...resumirHorario(item.regularOpeningHours?.periods)
   }));
 
   return {
@@ -9514,6 +9519,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   {place.bairro && <span className="px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200">{place.bairro}</span>}
                                 </div>
                               )}
+
+                              <RaioXEnergeticoCard place={place} />
 
                               {/* Details info */}
                               <div className="space-y-1.5 text-[11px] text-slate-500 font-medium">

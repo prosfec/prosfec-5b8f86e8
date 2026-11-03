@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { resumirHorario } from "./raioXEnergetico";
 import { timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
 import express from "./mini-express";
@@ -202,7 +203,7 @@ export function createExpressApp() {
           headers: {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": GOOGLE_MAPS_KEY,
-            "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,places.businessStatus,places.currentOpeningHours.openNow,places.shortFormattedAddress,places.addressComponents,nextPageToken"
+            "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,places.businessStatus,places.currentOpeningHours.openNow,places.regularOpeningHours.periods,places.primaryType,places.types,places.shortFormattedAddress,places.addressComponents,nextPageToken"
           },
           body: JSON.stringify(payload)
         });
@@ -237,6 +238,9 @@ export function createExpressApp() {
             abertoAgora: typeof item.currentOpeningHours?.openNow === "boolean" ? item.currentOpeningHours.openNow : null,
             bairro: (item.addressComponents || []).find((c: any) => (c.types || []).includes("sublocality") || (c.types || []).includes("sublocality_level_1"))?.longText || "",
             cep: (item.addressComponents || []).find((c: any) => (c.types || []).includes("postal_code"))?.longText || "",
+            primaryType: item.primaryType || "",
+            types: item.types || [],
+            ...resumirHorario(item.regularOpeningHours?.periods),
             cidade: city,
             estado: state || ""
           });
@@ -2198,7 +2202,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": key,
-          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,places.businessStatus,places.currentOpeningHours.openNow,places.shortFormattedAddress,places.addressComponents,nextPageToken"
+          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,places.businessStatus,places.currentOpeningHours.openNow,places.regularOpeningHours.periods,places.primaryType,places.types,places.shortFormattedAddress,places.addressComponents,nextPageToken"
         },
         body: JSON.stringify(payload)
       });
