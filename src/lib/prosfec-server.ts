@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { resumirHorario } from "./raioXEnergetico";
 import { timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
 import express from "./mini-express";

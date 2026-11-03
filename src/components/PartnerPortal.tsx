@@ -1,4 +1,6 @@
 // @ts-nocheck
+import RaioXEnergeticoCard from "./RaioXEnergeticoCard";
+import { resumirHorario } from "../lib/raioXEnergetico";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
