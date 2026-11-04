@@ -9478,45 +9478,67 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 </div>
 
                                 <div className="dossie-card">
-                                  {cnpjData ? (
-                                    <div className="flex items-center justify-between gap-2 bg-emerald-50/70 border border-emerald-200 rounded-xl px-2.5 py-2">
-                                      <div className="min-w-0">
-                                        <span className="text-[10px] font-mono font-black text-[#0A3D2E] block">{cnpjData.cnpj}</span>
-                                        <span className="text-[10px] font-semibold text-slate-600 block line-clamp-1">{cnpjData.razaoSocial || cnpjData.nomeFantasia}</span>
+                                  {(() => {
+                                    const inl = cnpjInline[placeId] || { input: "" };
+                                    const carregando = !!cnpjQueryLoading[placeId];
+                                    const buscar = () => handleFetchCnpj({ ...place, _origemCard: true, _inline: true }, inl.input);
+                                    if (cnpjData && !inl.editando) {
+                                      return (
+                                        <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl px-2.5 py-2 space-y-2">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0">
+                                              <span className="text-[10px] font-mono font-black text-[#0A3D2E] flex items-center gap-1">
+                                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />{cnpjData.cnpj}
+                                              </span>
+                                              <span className="text-[10px] font-semibold text-slate-600 block line-clamp-1">{cnpjData.razaoSocial || cnpjData.nomeFantasia}</span>
+                                            </div>
+                                            {cnpjData.situacaoCadastral && (
+                                              <span className="bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded text-[8px] shrink-0">{cnpjData.situacaoCadastral}</span>
+                                            )}
+                                          </div>
+                                          <div className="flex items-center gap-1.5">
+                                            <button type="button" onClick={() => setActiveCnpjModal({ place, details: cnpjData })} className="flex-1 px-2 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer">
+                                              <FileText className="w-3 h-3" />Ver Ficha Completa
+                                            </button>
+                                            <button type="button" onClick={() => setCnpjInline(prev => ({ ...prev, [placeId]: { input: "", editando: true } }))} className="px-2 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold text-[10px] rounded-lg transition-all flex items-center gap-1 cursor-pointer" title="Consultar outro CNPJ para este lead">
+                                              <RefreshCw className="w-3 h-3" />Trocar CNPJ
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                    return (
+                                      <div className="space-y-2">
+                                        <p className="text-[10px] font-black uppercase text-slate-500 flex items-center gap-1">
+                                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />Ficha CNPJ (Receita Federal)
+                                        </p>
+                                        <input
+                                          type="text"
+                                          inputMode="numeric"
+                                          placeholder="00.000.000/0001-00"
+                                          value={inl.input}
+                                          onChange={(e) => setCnpjInline(prev => ({ ...prev, [placeId]: { ...inl, input: e.target.value, error: undefined } }))}
+                                          onKeyDown={(e) => { if (e.key === "Enter" && !carregando) { e.preventDefault(); buscar(); } }}
+                                          className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-mono font-bold text-slate-800 outline-none focus:border-[#0A3D2E]"
+                                        />
+                                        {inl.error && (
+                                          <p className="text-[10px] font-bold text-rose-700 flex items-start gap-1">
+                                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />{inl.error}
+                                          </p>
+                                        )}
+                                        <div className="flex items-center gap-1.5">
+                                          <button type="button" onClick={buscar} disabled={carregando} className="flex-1 px-2.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50">
+                                            {carregando ? (<><RefreshCw className="w-3 h-3 animate-spin text-blue-600" />Consultando Receita Federal...</>) : (<><Search className="w-3 h-3 text-blue-600" />Buscar Cartão CNPJ</>)}
+                                          </button>
+                                          {cnpjData && (
+                                            <button type="button" onClick={() => setCnpjInline(prev => ({ ...prev, [placeId]: { input: "", editando: false } }))} className="px-2 py-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold text-[10px] rounded-lg cursor-pointer">
+                                              Cancelar
+                                            </button>
+                                          )}
+                                        </div>
                                       </div>
-                                      <div className="flex items-center gap-1 shrink-0">
-                                        <button
-                                          type="button"
-                                          onClick={() => abrirConsultaCnpjCard(place)}
-                                          className="px-2 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1 cursor-pointer"
-                                        >
-                                          <FileText className="w-3 h-3" />
-                                          Ver Ficha
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => abrirConsultaCnpjCard(place, true)}
-                                          className="px-2 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold text-[10px] rounded-lg transition-all cursor-pointer"
-                                          title="Consultar outro CNPJ para este lead"
-                                        >
-                                          Trocar
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => abrirConsultaCnpjCard(place)}
-                                      disabled={!!cnpjQueryLoading[placeId]}
-                                      className="w-full px-2.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl transition-all font-extrabold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                                    >
-                                      {cnpjQueryLoading[placeId] ? (
-                                        <><RefreshCw className="w-3 h-3 animate-spin text-blue-600" />Consultando CNPJ...</>
-                                      ) : (
-                                        <><Search className="w-3 h-3 text-blue-600" />Consultar CNPJ</>
-                                      )}
-                                    </button>
-                                  )}
+                                    );
+                                  })()}
                                 </div>
                               </div>
 
