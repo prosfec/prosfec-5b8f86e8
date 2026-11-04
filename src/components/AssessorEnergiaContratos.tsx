@@ -63,17 +63,6 @@ const dataBR = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString(
 const CONTRATANTE =
   "DCS SOLUCOES TECNOLOGICAS E SERVICOS FINANCEIROS LTDA, inscrita no CNPJ sob nº 65.668.670/0001-26, com sede em RUA DOS AZULÕES, nº 1, EDIF OFFICE TOWER, SETOR COLUNA 1, SALA 501, RENASCENÇA, São Luís - MA, CEP: 65075-060, doravante denominada CONTRATANTE.";
 
-function Qualificacao({ p }: { p: DadosPrestador }) {
-  return (
-    <>
-      <p><strong>CONTRATANTE:</strong> {CONTRATANTE}</p>
-      <p>
-        <strong>CONTRATADO(A):</strong> {v(p.nome, "[NOME]")}, inscrito(a) no CPF/CNPJ sob nº {v(p.cnpj || p.cpf, "[CPF/CNPJ]")}, com endereço em {v(p.cidade, "[CIDADE/UF]")}, e-mail {v(p.email, "[E-MAIL]")} e telefone {v(p.whatsapp, "[TELEFONE]")}, doravante denominado(a) PRESTADOR(A).
-      </p>
-    </>
-  );
-}
-
 const H = ({ children }: { children: React.ReactNode }) => (
   <h4 className="font-extrabold uppercase text-foreground pt-2">{children}</h4>
 );
