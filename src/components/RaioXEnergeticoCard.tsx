@@ -11,8 +11,8 @@ const COR: Record<FaixaEnergetica, string> = {
 
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 
-export default function RaioXEnergeticoCard({ place }: { place: PlaceEnergiaInput }) {
-  const [aberto, setAberto] = useState(false);
+export default function RaioXEnergeticoCard({ place, inicialAberto = false }: { place: PlaceEnergiaInput; inicialAberto?: boolean }) {
+  const [aberto, setAberto] = useState(inicialAberto);
   const r = useMemo(() => calcularRaioXEnergetico(place), [place]);
 
   const Item = ({ n, titulo, linhas }: { n: number; titulo: string; linhas: string[] }) => (

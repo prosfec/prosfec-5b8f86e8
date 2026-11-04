@@ -106,7 +106,7 @@ export function LeadEnergiaCardCompacto({ lead, novidade, onOpen, whatsappUrl, o
   );
 }
 
-export function LeadEnergiaDetalheModal({ titulo, onClose, children }: { titulo: string; onClose: () => void; children: ReactNode }) {
+export function LeadEnergiaDetalheModal({ titulo, subtitulo = "PROSFEC Energy · Lead solar", onClose, children }: { titulo: string; subtitulo?: string; onClose: () => void; children: ReactNode }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -131,7 +131,7 @@ export function LeadEnergiaDetalheModal({ titulo, onClose, children }: { titulo:
               <Zap className="w-5 h-5 fill-current" />
             </span>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: "#B7F34A" }}>PROSFEC Energy · Lead solar</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: "#B7F34A" }}>{subtitulo}</p>
               <p className="text-lg font-extrabold truncate leading-tight" style={{ color: "#FFFFFF" }}>{titulo}</p>
             </div>
           </div>

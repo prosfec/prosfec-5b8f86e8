@@ -1,5 +1,6 @@
 // @ts-nocheck
 import RaioXEnergeticoCard from "./RaioXEnergeticoCard";
+import { calcularRaioXEnergetico } from "../lib/raioXEnergetico";
 import { NIVEIS, classificarPorte, calibrarBusca, filtrarPorNivel, type FiltroNivel, type NivelEmpresa } from "../lib/porteEmpresa";
 import { resumirHorario } from "../lib/raioXEnergetico";
 /**
@@ -1107,6 +1108,7 @@ export default function PartnerPortal({
   const [propostaEnergiaLeadId, setPropostaEnergiaLeadId] = useState<string | null>(null);
   const [fichaEnergiaLeadId, setFichaEnergiaLeadId] = useState<string | null>(null);
   const [detalheEnergiaLeadId, setDetalheEnergiaLeadId] = useState<string | null>(null);
+  const [detalheHuntPlaceId, setDetalheHuntPlaceId] = useState<string | null>(null);
   const [energiaPanelOpen, setEnergiaPanelOpen] = useState(true);
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<string>("todos");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<{ [leadId: string]: string }>({});
