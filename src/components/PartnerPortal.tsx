@@ -1076,7 +1076,9 @@ export default function PartnerPortal({
   const [cnpjDetailsMap, setCnpjDetailsMap] = useState<{ [placeId: string]: any }>({});
   const [cnpjQueryLoading, setCnpjQueryLoading] = useState<{ [placeId: string]: boolean }>({});
   const [activeCnpjModal, setActiveCnpjModal] = useState<{ place: any; details?: any } | null>(null);
-  const [cnpjInputModal, setCnpjInputModal] = useState<{ place: any; inputCnpj: string; error?: string } | null>(null);
+  const [cnpjInputModal, setCnpjInputModalState] = useState<{ place: any; inputCnpj: string; error?: string } | null>(null);
+  // Consulta de CNPJ embutida na caixa da oportunidade (sem popup intermediário)
+  const [cnpjInline, setCnpjInline] = useState<Record<string, { input: string; error?: string; editando?: boolean }>>({});
 
   // Batch Lead Distribution states for Master
   const [selectedHuntPlaces, setSelectedHuntPlaces] = useState<string[]>([]);
@@ -3900,6 +3902,13 @@ export default function PartnerPortal({
   // Handle CNPJ lookup / Receita Federal enrichment with 1-click auto-discovery
   const handleFetchCnpj = async (place: any, cnpjInput?: string) => {
     const placeId = place.id || place.distributedLeadId || `place-${Date.now()}`;
+    const setCnpjInputModal = (v: any) => {
+      if (place._inline && v) {
+        setCnpjInline(prev => ({ ...prev, [placeId]: { input: v.inputCnpj ?? "", error: v.error, editando: true } }));
+        return;
+      }
+      setCnpjInputModalState(v);
+    };
 
     // If we already have the CNPJ details cached for this place, open modal directly
     if (!cnpjInput && cnpjDetailsMap[placeId]) {
@@ -3970,7 +3979,11 @@ export default function PartnerPortal({
 
       // Success - Save details and open Ficha Modal automatically!
       setCnpjDetailsMap(prev => ({ ...prev, [placeId]: data }));
-      setActiveCnpjModal({ place, details: data });
+      if (place._inline) {
+        setCnpjInline(prev => ({ ...prev, [placeId]: { input: "", editando: false } }));
+      } else {
+        setActiveCnpjModal({ place, details: data });
+      }
       setCnpjInputModal(null);
 
       if (place._origemCard) {
@@ -3992,8 +4005,10 @@ export default function PartnerPortal({
       }
     } catch (err: any) {
       console.error("Erro ao consultar CNPJ:", err);
-      if (cnpjInputModal) {
-        setCnpjInputModal(prev => prev ? { ...prev, error: err.message } : null);
+      if (place._inline) {
+        setCnpjInline(prev => ({ ...prev, [placeId]: { input: cnpjInput || "", error: err.message, editando: true } }));
+      } else if (cnpjInputModal) {
+        setCnpjInputModalState(prev => prev ? { ...prev, error: err.message } : null);
       } else {
         alert(err.message || "Erro ao consultar dados do CNPJ.");
       }
