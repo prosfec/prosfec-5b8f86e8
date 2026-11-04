@@ -78,24 +78,90 @@ const H = ({ children }: { children: React.ReactNode }) => (
   <h4 className="font-extrabold uppercase text-foreground pt-2">{children}</h4>
 );
 
+const EMPREGADORA =
+  "DCS SOLUÇÕES TECNOLÓGICAS E SERVIÇOS FINANCEIROS LTDA, inscrita no CNPJ sob nº 65.668.670/0001-26, com sede na RUA DOS AZULÕES, nº 1, EDIF OFFICE TOWER, SETOR COLUNA 1, SALA 501, RENASCENÇA, São Luís – MA, CEP 65075-060, doravante denominada EMPREGADORA.";
+
 export function TermoCapacitacaoEnergia({ prestador, aceitoEm }: { prestador: DadosPrestador; aceitoEm?: string | null }) {
+  const p = prestador;
   return (
     <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
-      <h3 className="font-black text-sm text-foreground">TERMO DE CAPACITAÇÃO INICIAL, PRÁTICA COMERCIAL, VALIDAÇÃO E REMUNERAÇÃO — PROSFEC ENERGY</h3>
-      <Qualificacao p={prestador} />
-      <p><strong>1. Período inicial.</strong> As partes estabelecem uma etapa inicial de capacitação e avaliação comercial, com duração total de 22 (vinte e dois) dias corridos, dividida em:</p>
-      <p>I — <strong>Capacitação:</strong> 7 (sete) dias corridos, destinados à apresentação dos serviços da PROSFEC Energy, dos procedimentos comerciais, das ferramentas disponibilizadas, dos critérios de qualificação de clientes, das regras de conduta e do modelo de remuneração;</p>
-      <p>II — <strong>Prática comercial:</strong> 15 (quinze) dias corridos, subsequentes à capacitação, destinados à aplicação prática dos conhecimentos, ao acompanhamento de oportunidades comerciais e à avaliação da qualidade da execução dos serviços.</p>
-      <p><strong>2. Finalidade da etapa inicial.</strong> O período inicial tem por finalidade verificar a adaptação técnica e comercial do PRESTADOR ao objeto contratado, considerando a compreensão dos serviços, a qualidade das informações transmitidas aos potenciais clientes, a utilização adequada dos sistemas disponibilizados, o acompanhamento das oportunidades comerciais e o cumprimento das obrigações contratuais.</p>
-      <p><strong>3. Remuneração fixa durante o período inicial.</strong> Durante os 22 (vinte e dois) dias iniciais, não será devido o pagamento fixo mensal de R$ 1.850,00 (mil oitocentos e cinquenta reais), ficando o início dessa remuneração condicionado à confirmação da continuidade da prestação dos serviços após a etapa inicial e à formalização correspondente, quando necessária.</p>
-      <p><strong>3.1.</strong> A disposição anterior não implica renúncia a valores legalmente devidos por serviços efetivamente prestados, nem afasta obrigações tributárias, trabalhistas ou civis eventualmente aplicáveis conforme a natureza real da relação entre as partes.</p>
-      <p><strong>4. Comissões durante o período inicial.</strong> As regras de comissionamento previstas neste contrato serão aplicáveis desde o início das atividades comerciais, inclusive durante a capacitação e a prática comercial, observados os critérios contratuais de apuração, validação e ativação dos contratos, bem como os percentuais, a base de cálculo e os prazos de pagamento estabelecidos neste instrumento e em seu anexo de remuneração.</p>
-      <p><strong>4.1.</strong> As comissões efetivamente adquiridas pelo PRESTADOR serão apuradas e pagas conforme as condições contratuais aplicáveis, inclusive se a relação contratual for encerrada ao término do período inicial, respeitados os direitos legalmente assegurados.</p>
-      <p><strong>5. Critérios de validação.</strong> Ao final do período inicial, a CONTRATANTE poderá avaliar a continuidade da parceria com base nos critérios descritos nesta cláusula e comunicar ao PRESTADOR a decisão de prosseguir com a contratação ou encerrá-la, observadas as disposições de rescisão deste instrumento e a quitação dos valores devidos.</p>
-      <p><strong>6. Autonomia civil.</strong> A capacitação e a avaliação comercial não estabelecem, por si só, vínculo empregatício, controle de jornada ou obrigação de disponibilidade em horários fixos. O PRESTADOR mantém autonomia na organização de seus horários, métodos e meios de execução, respeitados os resultados contratados, os padrões comerciais acordados e as obrigações de confidencialidade, proteção de dados e conduta profissional.</p>
-      <p><strong>7. Continuidade contratual.</strong> A continuidade da prestação de serviços após o período inicial ficará sujeita à confirmação entre as partes, passando a remuneração fixa mensal de R$ 1.850,00 (mil oitocentos e cinquenta reais) a ser aplicável a partir da data de início da etapa regular, observadas as demais condições financeiras e contratuais.</p>
-      <p><strong>8. Encerramento da etapa inicial.</strong> Caso a contratação não tenha continuidade, permanecerão exigíveis as comissões adquiridas e os demais valores eventualmente devidos nos termos deste contrato e da legislação aplicável, sem prejuízo das obrigações que, por sua natureza, sobrevivam ao encerramento da relação contratual.</p>
-      <p className="pt-2">São Luís - MA, {dataBR(aceitoEm)}.</p>
+      <h3 className="font-black text-sm text-foreground">TERMO DE CAPACITAÇÃO INICIAL, PRÁTICA COMERCIAL, VALIDAÇÃO, BÔNUS DE CONTRATAÇÃO E CONDIÇÕES DE ADMISSÃO — PROSFEC ENERGY</h3>
+      <p><strong>CONTRATANTE / EMPREGADORA:</strong> {EMPREGADORA}</p>
+      <p>
+        <strong>CANDIDATO(A) / FUTURO(A) EMPREGADO(A):</strong> {v(p.nome, "[NOME]")}, inscrito(a) no CPF/CNPJ sob nº {v(p.cnpj || p.cpf, "[CPF/CNPJ]")}, com endereço em {v(p.cidade, "[CIDADE/UF]")}, e-mail {v(p.email, "[E-MAIL]")} e telefone {v(p.whatsapp, "[TELEFONE]")}, doravante denominado(a) CANDIDATO(A).
+      </p>
+
+      <H>1. Período inicial de capacitação e validação</H>
+      <p>As partes estabelecem uma etapa inicial de integração, capacitação e avaliação comercial, com duração de 22 (vinte e dois) dias corridos, dividida em:</p>
+      <p><strong>I — Capacitação inicial:</strong> 7 (sete) dias corridos, destinados à apresentação institucional da PROSFEC e da PROSFEC Energy, conhecimento das soluções comerciais, incluindo Energia Solar por Assinatura, Locação de Painéis Solares e Clube de Benefícios, utilização das ferramentas disponibilizadas, CRM, Painel de Oportunidades, técnicas de prospecção, atendimento e procedimentos comerciais.</p>
+      <p><strong>II — Prática comercial e validação:</strong> 15 (quinze) dias corridos, subsequentes à capacitação, destinados à aplicação prática dos conhecimentos, desenvolvimento das atividades comerciais, acompanhamento de oportunidades, prospecção de potenciais clientes e avaliação do desempenho individual.</p>
+      <p>Parágrafo único. A etapa inicial tem como finalidade identificar a capacidade de adaptação do(a) candidato(a) à operação comercial da PROSFEC Energy e sua aptidão para integrar a equipe em caráter regular.</p>
+
+      <H>2. Critérios de avaliação e aprovação</H>
+      <p>Durante os 15 (quinze) dias de prática comercial, serão avaliados os seguintes aspectos:</p>
+      <p>I — Comprometimento com as atividades e responsabilidades assumidas;</p>
+      <p>II — Assiduidade, pontualidade e cumprimento das orientações operacionais;</p>
+      <p>III — Capacidade de prospecção, abordagem e comunicação comercial;</p>
+      <p>IV — Utilização adequada do CRM, sistemas e ferramentas disponibilizadas;</p>
+      <p>V — Evolução técnica e comercial ao longo do período;</p>
+      <p>VI — Produtividade, geração e acompanhamento de oportunidades;</p>
+      <p>VII — Capacidade de aprendizado, adaptação e aplicação dos procedimentos comerciais;</p>
+      <p>VIII — Postura profissional, responsabilidade e alinhamento com os padrões da PROSFEC.</p>
+      <p>Parágrafo primeiro. A aprovação será definida pela avaliação conjunta desses critérios, considerando a evolução individual e os resultados alcançados.</p>
+      <p>Parágrafo segundo. A EMPREGADORA comunicará ao(à) candidato(a) o resultado da avaliação e, em caso de aprovação, dará prosseguimento aos procedimentos de admissão.</p>
+
+      <H>3. Bônus de contratação por aprovação</H>
+      <p>O(A) candidato(a) que concluir satisfatoriamente o período de validação de 22 (vinte e dois) dias e for aprovado(a) para integrar a equipe da PROSFEC Energy terá direito a um <strong>bônus de contratação no valor de R$ 1.900,00 (mil e novecentos reais)</strong>.</p>
+      <p><strong>3.1.</strong> O bônus será concedido como incentivo financeiro pela conclusão satisfatória do processo inicial de capacitação e validação, condicionado à aprovação formal pela EMPREGADORA.</p>
+      <p><strong>3.2.</strong> O pagamento será realizado após a comunicação da aprovação e a formalização da admissão, em até 5 (cinco) dias úteis, observados os enquadramentos legais e tributários aplicáveis.</p>
+      <p><strong>3.3.</strong> O bônus de contratação não substitui o salário mensal, as comissões ou quaisquer direitos trabalhistas legalmente assegurados.</p>
+      <p><strong>3.4.</strong> A reprovação no processo de validação não gera direito ao bônus de contratação, permanecendo assegurado o pagamento de todos os valores devidos pelo período efetivamente trabalhado.</p>
+
+      <H>4. Modelo de contratação — Regime CLT</H>
+      <p>Após a aprovação no processo de validação, a continuidade na operação comercial ocorrerá mediante admissão pelo regime da Consolidação das Leis do Trabalho (CLT), observadas as formalidades legais.</p>
+      <p><strong>4.1. Remuneração fixa:</strong> O salário-base mensal será de R$ 1.850,00 (mil oitocentos e cinquenta reais), sujeito aos descontos legais e demais condições previstas na legislação trabalhista.</p>
+      <p><strong>4.2. Regime de trabalho:</strong> A atividade será desenvolvida predominantemente em modalidade Home Office, conforme as condições estabelecidas no contrato de trabalho e na legislação aplicável.</p>
+      <p><strong>4.3. Comissionamento:</strong> O(A) empregado(a) poderá receber remuneração variável conforme desempenho comercial, metas e critérios de apuração e validação das operações, de acordo com a política de remuneração e instrumento complementar aplicável.</p>
+      <p><strong>4.4. Benefícios e estrutura operacional:</strong> A PROSFEC Energy disponibilizará estrutura de apoio comercial, incluindo leads para prospecção, CRM, Painel de Oportunidades, treinamento, suporte comercial e ferramentas necessárias ao desenvolvimento das atividades.</p>
+      <p><strong>4.5. Formalização:</strong> A admissão será acompanhada dos procedimentos legais de registro, assinatura dos documentos admissionais e demais providências trabalhistas pertinentes.</p>
+
+      <H>5. Remuneração e direitos durante a etapa inicial</H>
+      <p>A capacitação e a prática comercial deverão observar a natureza efetiva da relação estabelecida entre as partes.</p>
+      <p>Parágrafo primeiro. Caso as atividades sejam desenvolvidas sob regime de emprego desde o início da etapa, a admissão, o registro e a remuneração correspondentes deverão observar a legislação trabalhista desde a data efetiva de início da relação de emprego, inclusive quanto aos 22 dias de capacitação e validação.</p>
+      <p>Parágrafo segundo. O bônus de contratação de R$ 1.900,00 constitui incentivo adicional condicionado à aprovação, não podendo ser utilizado para substituir salários, comissões ou demais parcelas legalmente devidas.</p>
+
+      <H>6. Jornada e modalidade de trabalho</H>
+      <p>A jornada, os horários, os intervalos e as condições de prestação de serviços serão definidos no contrato de trabalho e nos documentos admissionais, observadas as disposições legais aplicáveis ao regime de trabalho contratado.</p>
+      <p>A modalidade Home Office será adotada conforme as condições formalizadas entre as partes, respeitando as regras relativas à jornada, aos equipamentos, às ferramentas e às responsabilidades operacionais.</p>
+
+      <H>7. Continuidade e formalização da contratação</H>
+      <p>A aprovação no período de validação permitirá o prosseguimento do processo de admissão CLT, mediante formalização dos documentos necessários.</p>
+      <p>Parágrafo primeiro. A continuidade dependerá da aprovação nos critérios estabelecidos neste instrumento e da conclusão dos procedimentos admissionais.</p>
+      <p>Parágrafo segundo. A remuneração fixa mensal de R$ 1.850,00 será aplicável conforme a data de admissão e as condições estabelecidas no contrato de trabalho.</p>
+      <p>Parágrafo terceiro. A contratação poderá contemplar contrato de experiência, respeitando os limites e requisitos previstos na legislação trabalhista.</p>
+
+      <H>8. Encerramento do processo de validação</H>
+      <p>Caso o(a) candidato(a) não seja aprovado(a), a EMPREGADORA poderá encerrar o processo de seleção e validação, observando a natureza jurídica efetiva da relação mantida durante o período e realizando a quitação de todos os valores eventualmente devidos.</p>
+      <p>Em caso de aprovação, serão providenciados os documentos necessários à continuidade da relação profissional pelo regime CLT.</p>
+
+      <H>9. Disposições gerais</H>
+      <p>O presente instrumento tem por finalidade estabelecer as condições do processo inicial de capacitação, avaliação comercial, concessão do bônus de contratação e critérios para continuidade profissional na PROSFEC Energy.</p>
+      <p>As disposições deste termo deverão ser interpretadas em conformidade com a legislação brasileira, especialmente a legislação trabalhista, prevalecendo as normas legais obrigatórias sobre eventuais disposições em sentido contrário.</p>
+
+      <p className="pt-2">São Luís – MA, {dataBR(aceitoEm)}.</p>
+      <div className="grid sm:grid-cols-2 gap-3 pt-2">
+        <div>
+          <p className="font-bold text-foreground">EMPREGADORA</p>
+          <p>DCS SOLUÇÕES TECNOLÓGICAS E SERVIÇOS FINANCEIROS LTDA</p>
+          <p>CNPJ: 65.668.670/0001-26</p>
+        </div>
+        <div>
+          <p className="font-bold text-foreground">CANDIDATO(A) / EMPREGADO(A)</p>
+          <p>Nome: {v(p.nome, "[NOME]")}</p>
+          <p>CPF/CNPJ: {v(p.cpf || p.cnpj, "[CPF/CNPJ]")}</p>
+          <p>Assinatura: {aceitoEm ? `aceite eletrônico em ${new Date(aceitoEm).toLocaleString("pt-BR")}` : "pendente de aceite eletrônico"}</p>
+        </div>
+      </div>
     </div>
   );
 }
