@@ -2697,7 +2697,7 @@ export default function PartnerPortal({
       setActiveCnpjModal({ place, details: salvo });
       return;
     }
-    setCnpjInputModal({ place: { ...place, _origemCard: true }, inputCnpj: "" });
+    setCnpjInputModalState({ place: { ...place, _origemCard: true }, inputCnpj: "" });
   };
 
   // Fetch leads distributed to me (for Team Member/Consultant view)
@@ -9688,7 +9688,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   )}
                                 </div>
                               </div>
-                              {detalheHuntPlaceId === placeId && !activeCnpjModal && (
+                              {detalheHuntPlaceId === placeId && (
                                 <LeadEnergiaDetalheModal
                                   titulo={place.nome || "Oportunidade"}
                                   subtitulo="PROSFEC Energy · Oportunidade de prospecção"
@@ -11875,7 +11875,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* CNPJ INPUT PROMPT MODAL */}
       {cnpjInputModal && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-[130]">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -11891,7 +11891,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 </h3>
               </div>
               <button aria-label="Fechar"
-                onClick={() => setCnpjInputModal(null)}
+                onClick={() => setCnpjInputModalState(null)}
                 className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
               >
 <X className="w-5 h-5" />
@@ -11919,7 +11919,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                 type="text"
                 placeholder="00.000.000/0001-00"
                 value={cnpjInputModal.inputCnpj}
-                onChange={(e) => setCnpjInputModal({ ...cnpjInputModal, inputCnpj: e.target.value })}
+                onChange={(e) => setCnpjInputModalState({ ...cnpjInputModal, inputCnpj: e.target.value })}
                 className="w-full bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl p-3 text-xs font-mono font-bold outline-none focus:border-[#0A3D2E]"
               />
               <span className="text-[10px] text-slate-400 block">Digitação rápida ou cole o CNPJ para buscar os sócios e regime tributário.</span>
@@ -11927,7 +11927,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
             <div className="flex gap-2 pt-2">
               <button
-                onClick={() => setCnpjInputModal(null)}
+                onClick={() => setCnpjInputModalState(null)}
                 className="flex-1 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-bold text-xs hover:bg-slate-50 transition-all cursor-pointer"
               >
                 Cancelar
@@ -11947,7 +11947,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* ACTIVE CNPJ DETAILS CARD MODAL */}
       {activeCnpjModal && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-[130] overflow-y-auto">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
