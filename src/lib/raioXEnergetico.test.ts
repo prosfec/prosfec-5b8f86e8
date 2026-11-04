@@ -25,3 +25,16 @@ describe("Raio-X Energético", () => {
     expect(resumirHorario([{ open: { day: 0, hour: 0 } }]).aberto24h).toBe(true);
   });
 });
+
+describe("Raio-X com porte", () => {
+  it("frigorífico grande com poucas avaliações fica entre 25.000 e 70.000 kWh", () => {
+    const r = calcularRaioXEnergetico({ nome: "Frigorífico São José", categoria: "store", avaliacoes: 12 });
+    expect(r.faixa).toBe("critico");
+    expect(r.kwhMin).toBeGreaterThanOrEqual(25000);
+    expect(r.kwhMax).toBeLessThanOrEqual(70000);
+  });
+  it("açougue de bairro continua na escala comercial (até 15.000)", () => {
+    const r = calcularRaioXEnergetico({ nome: "Açougue do Zé", avaliacoes: 40 });
+    expect(r.kwhMax).toBeLessThanOrEqual(15000);
+  });
+});
