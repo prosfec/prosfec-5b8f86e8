@@ -9373,100 +9373,13 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         </span>
                       </div>
 
-                      {/* Batch Actions Bar for Master / Franqueado */}
-                      {isFranquiaDigital(currentPartner?.plano) && teamMembers.length > 0 && (
-                        <div className="bg-indigo-900 text-white p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (selectedHuntPlaces.length === huntResults.length) {
-                                  setSelectedHuntPlaces([]);
-                                } else {
-                                  setSelectedHuntPlaces(huntResults.map(p => p.id));
-                                }
-                              }}
-                              className="px-3 py-1.5 bg-indigo-800 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <CheckSquare className="w-3.5 h-3.5" />
-                              {selectedHuntPlaces.length === huntResults.length ? "Desmarcar Todos" : "Selecionar Todos"}
-                            </button>
-                            <span className="text-xs font-extrabold text-indigo-200">
-                              {selectedHuntPlaces.length} de {huntResults.length} selecionados
-                            </span>
-                          </div>
-
-                          {selectedHuntPlaces.length > 0 && (
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {/* Direct to a specific consultant */}
-                              <div className="flex items-center gap-1.5">
-                                <select
-                                  value={batchConsultantId}
-                                  onChange={(e) => setBatchConsultantId(e.target.value)}
-                                  className="bg-indigo-950 border border-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                                >
-                                  <option value="">Selecione o Consultor...</option>
-                                  {teamMembers.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                      {m.nome}
-                                    </option>
-                                  ))}
-                                </select>
-                                <button
-                                  type="button"
-                                  disabled={!batchConsultantId || batchDistributing || distributeEquallyLoading}
-                                  onClick={handleBatchDistributeLeads}
-                                  className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 text-slate-950 text-xs font-black rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                                >
-                                  {batchDistributing ? (
-                                    <>
-                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                      Direcionando...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Send className="w-3.5 h-3.5" />
-                                      Enviar ({selectedHuntPlaces.length})
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-
-                              {/* OR Distribute EQUALLY among all consultants */}
-                              {teamMembers.length > 1 && (
-                                <button
-                                  type="button"
-                                  disabled={batchDistributing || distributeEquallyLoading}
-                                  onClick={handleDistributeLeadsEqually}
-                                  className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 disabled:bg-slate-700 text-slate-950 text-xs font-black rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
-                                  title={`Dividir estes ${selectedHuntPlaces.length} leads em partes iguais entre os ${teamMembers.length} consultores da equipe`}
-                                >
-                                  {distributeEquallyLoading ? (
-                                    <>
-                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                      Dividindo...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Users className="w-3.5 h-3.5" />
-                                      Dividir por Igual ({Math.round(selectedHuntPlaces.length / teamMembers.length)}/consultor)
-                                    </>
-                                  )}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 items-start">
                         {huntResults.filter((place) => !energiaLeads.some(
                           (l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === energiaLeadKey(place)
                         )).map((place) => {
                           const placeId = place.id;
                           const hasPhone = !!place.telefone;
                           const cnpjData: any = prospectNotes[prospectNoteKey(place)]?.cnpjDetails || null;
-                          const isSelected = selectedHuntPlaces.includes(placeId);
 
                           // Standardized introductory message for WhatsApp pitch (Raio-X do CNPJ + auditoria subsidiada via energia)
                           const partnerRefLink = `${typeof window !== "undefined" && window.location.hostname.includes("prosfec.com.br") ? window.location.origin : "https://prosfec.com.br"}?ref=${currentPartner?.id || ""}`;
@@ -9475,218 +9388,178 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             ? buildWhatsAppUrl(place.telefone, messageText)
                             : "#";
 
-                          return (
-                            <div
-                              key={placeId}
-                              className={`bg-white border rounded-2xl p-4 flex flex-col justify-between transition-all hover:shadow-xs space-y-3 relative overflow-hidden group ${
-                                isSelected ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10" : "border-slate-200/80 hover:border-emerald-500/30"
-                              }`}
-                            >
-                              {/* Batch Selection Checkbox header for Master */}
-                              {isFranquiaDigital(currentPartner?.plano) && teamMembers.length > 0 && (
-                                <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2 rounded-xl mb-1">
-                                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 select-none">
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setSelectedHuntPlaces(prev => [...prev, placeId]);
-                                        } else {
-                                          setSelectedHuntPlaces(prev => prev.filter(id => id !== placeId));
-                                        }
-                                      }}
-                                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
-                                    />
-                                    <span>Selecionar para Direcionar em Lote</span>
-                                  </label>
-                                </div>
-                              )}
-                              {isFranquiaDigital(currentPartner?.plano) && distributedLeadsMap[`${place.nome}_${place.telefone || ""}`] && (
-                                <div className="bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl text-[10px] font-extrabold text-indigo-700 flex items-center gap-1.5 mb-1">
-                                  <Users className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                                  <span>Direcionado para {distributedLeadsMap[`${place.nome}_${place.telefone || ""}`].teamMemberName} em {distributedLeadsMap[`${place.nome}_${place.telefone || ""}`].date}</span>
-                                </div>
-                              )}
+                          const raioX = calcularRaioXEnergetico(place);
+                          const fecharStatus = place.businessStatus === "CLOSED_PERMANENTLY" ? "Fechado permanentemente"
+                            : place.businessStatus === "CLOSED_TEMPORARILY" ? "Fechado temporariamente" : null;
+                          const localCard = [place.bairro, place.cidade].filter(Boolean).join(" / ");
 
-                              {/* Rating badge if exists */}
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0">
-                                  <span className="text-[9px] bg-slate-100 text-slate-600 font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wider block self-start mb-1 truncate">
-                                    {place.categoria || huntKeyword}
-                                  </span>
-                                  <h4 className="font-extrabold text-sm text-slate-800 line-clamp-1 group-hover:text-[#0A3D2E] transition-colors">
-                                    {place.nome}
-                                  </h4>
-                                </div>
-                                {place.nota !== null && (
-                                  <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-amber-700 shrink-0">
-                                    ★ {place.nota.toFixed(1)}
-                                    <span className="text-[8px] text-amber-500 font-medium">({place.avaliacoes})</span>
+                          const detalheCompleto = (
+                            <div className="lead-dossie grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+                              <div className="space-y-3 min-w-0">
+                                <p className="dossie-titulo">Dossiê da empresa</p>
+                                <div className="dossie-card flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <span className="text-[9px] bg-slate-100 text-slate-600 font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wider inline-block mb-1 truncate max-w-full">
+                                      {place.categoria || huntKeyword}
+                                    </span>
+                                    <p className="font-extrabold text-sm text-slate-800 line-clamp-2">{place.nome}</p>
+                                    <div className="flex items-center gap-1.5 flex-wrap mt-1.5 text-[10px] font-extrabold">
+                                      <span className="px-2 py-0.5 rounded-full border border-sky-200 bg-sky-50 text-sky-700">{NIVEIS[classificarPorte(place)].badge}</span>
+                                      {fecharStatus ? (
+                                        <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">{fecharStatus}</span>
+                                      ) : place.abertoAgora === true ? (
+                                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Aberto agora</span>
+                                      ) : place.abertoAgora === false ? (
+                                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">Fechado agora</span>
+                                      ) : null}
+                                    </div>
                                   </div>
-                                )}
+                                  {place.nota !== null && place.nota !== undefined && (
+                                    <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-amber-700 shrink-0">
+                                      ★ {Number(place.nota).toFixed(1)}
+                                      <span className="text-[8px] text-amber-500 font-medium">({place.avaliacoes})</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="dossie-card space-y-2 text-[11px] text-slate-500 font-medium">
+                                  {place.endereco && (
+                                    <p className="flex items-start gap-1">
+                                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                                      <span>{place.endereco}</span>
+                                    </p>
+                                  )}
+                                  {hasPhone ? (
+                                    <p className="flex items-center gap-1 text-slate-700 font-bold">
+                                      <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                      <span>{place.telefone}</span>
+                                    </p>
+                                  ) : (
+                                    <p className="flex items-center gap-1 text-rose-500/80 font-semibold">
+                                      <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                                      <span>Telefone indisponível</span>
+                                    </p>
+                                  )}
+                                  {place.website && (
+                                    <p className="flex items-center gap-1 truncate">
+                                      <Link className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                      <a href={place.website} target="_blank" rel="noreferrer" className="hover:underline text-blue-600 font-semibold truncate">
+                                        {place.website.replace(/https?:\/\/(www\.)?/, "")}
+                                      </a>
+                                    </p>
+                                  )}
+                                  {place.mapsUrl && (
+                                    <p className="flex items-center gap-1">
+                                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                      <a href={place.mapsUrl} target="_blank" rel="noreferrer" className="hover:underline text-blue-600 font-semibold">Ver no Google Maps</a>
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="dossie-card">
+                                  <RaioXEnergeticoCard place={place} inicialAberto />
+                                </div>
+
+                                <div className="dossie-card">
+                                  {cnpjData ? (
+                                    <div className="flex items-center justify-between gap-2 bg-emerald-50/70 border border-emerald-200 rounded-xl px-2.5 py-2">
+                                      <div className="min-w-0">
+                                        <span className="text-[10px] font-mono font-black text-[#0A3D2E] block">{cnpjData.cnpj}</span>
+                                        <span className="text-[10px] font-semibold text-slate-600 block line-clamp-1">{cnpjData.razaoSocial || cnpjData.nomeFantasia}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => abrirConsultaCnpjCard(place)}
+                                          className="px-2 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                                        >
+                                          <FileText className="w-3 h-3" />
+                                          Ver Ficha
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => abrirConsultaCnpjCard(place, true)}
+                                          className="px-2 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold text-[10px] rounded-lg transition-all cursor-pointer"
+                                          title="Consultar outro CNPJ para este lead"
+                                        >
+                                          Trocar
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => abrirConsultaCnpjCard(place)}
+                                      disabled={!!cnpjQueryLoading[placeId]}
+                                      className="w-full px-2.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl transition-all font-extrabold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                    >
+                                      {cnpjQueryLoading[placeId] ? (
+                                        <><RefreshCw className="w-3 h-3 animate-spin text-blue-600" />Consultando CNPJ...</>
+                                      ) : (
+                                        <><Search className="w-3 h-3 text-blue-600" />Consultar CNPJ</>
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
                               </div>
 
-                              {/* Status de funcionamento (Google Places) */}
-                              {(place.businessStatus === "CLOSED_PERMANENTLY" || place.businessStatus === "CLOSED_TEMPORARILY" || place.abertoAgora !== null && place.abertoAgora !== undefined) && (
-                                <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold">
-                                  {place.businessStatus === "CLOSED_PERMANENTLY" ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">Fechado permanentemente</span>
-                                  ) : place.businessStatus === "CLOSED_TEMPORARILY" ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Fechado temporariamente</span>
-                                  ) : place.abertoAgora ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Aberto agora</span>
-                                  ) : (
-                                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">Fechado agora</span>
-                                  )}
-                                  {place.bairro && <span className="px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200">{place.bairro}</span>}
-                                </div>
-                              )}
-
-                              <span className="inline-block px-2 py-0.5 rounded-full border border-sky-200 bg-sky-50 text-sky-700 text-[10px] font-extrabold">
-                                {NIVEIS[classificarPorte(place)].badge}
-                              </span>
-                              <RaioXEnergeticoCard place={place} />
-
-                              {/* Details info */}
-                              <div className="space-y-1.5 text-[11px] text-slate-500 font-medium">
-                                {place.endereco && (
-                                  <p className="flex items-start gap-1">
-                                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                                    <span className="line-clamp-2">{place.endereco}</span>
-                                  </p>
-                                )}
-                                {hasPhone ? (
-                                  <p className="flex items-center gap-1 text-slate-700 font-bold">
-                                    <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                    <span>{place.telefone}</span>
-                                  </p>
-                                ) : (
-                                  <p className="flex items-center gap-1 text-rose-500/80 font-semibold">
-                                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                                    <span>Telefone indisponível</span>
-                                  </p>
-                                )}
-                                {place.website && (
-                                  <p className="flex items-center gap-1 text-slate-500 truncate">
-                                    <Link className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <div className="space-y-3 min-w-0">
+                                <p className="dossie-titulo">Central operacional</p>
+                                <div className="dossie-card space-y-1.5">
+                                  {hasPhone ? (
                                     <a
-                                      href={place.website}
+                                      href={waUrl}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="hover:underline text-blue-600 font-semibold"
+                                      className="w-full px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg transition-all font-semibold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[32px]"
                                     >
-                                      {place.website.replace(/https?:\/\/(www\.)?/, "")}
+                                      <Send className="w-3 h-3 text-white fill-current" />
+                                      Chamar no WhatsApp
                                     </a>
-                                  </p>
-                                )}
-                                {place.mapsUrl && (
-                                  <p className="flex items-center gap-1">
-                                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                    <a href={place.mapsUrl} target="_blank" rel="noreferrer" className="hover:underline text-blue-600 font-semibold">Ver no Google Maps</a>
-                                  </p>
-                                )}
-                              </div>
-
-                              {/* 🔍 Consulta de CNPJ informado pelo lead */}
-                              <div className="pt-2.5 border-t border-slate-100">
-                                {cnpjData ? (
-                                  <div className="flex items-center justify-between gap-2 bg-emerald-50/70 border border-emerald-200 rounded-xl px-2.5 py-2">
-                                    <div className="min-w-0">
-                                      <span className="text-[10px] font-mono font-black text-[#0A3D2E] block">{cnpjData.cnpj}</span>
-                                      <span className="text-[10px] font-semibold text-slate-600 block line-clamp-1">{cnpjData.razaoSocial || cnpjData.nomeFantasia}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      <button
-                                        onClick={() => abrirConsultaCnpjCard(place)}
-                                        className="px-2 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white font-extrabold text-[10px] rounded-lg transition-all flex items-center gap-1 cursor-pointer"
-                                      >
-                                        <FileText className="w-3 h-3" />
-                                        Ver Ficha
-                                      </button>
-                                      <button
-                                        onClick={() => abrirConsultaCnpjCard(place, true)}
-                                        className="px-2 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold text-[10px] rounded-lg transition-all cursor-pointer"
-                                        title="Consultar outro CNPJ para este lead"
-                                      >
-                                        Trocar
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
+                                  ) : (
+                                    <span className="w-full block text-center text-[10px] text-slate-400 font-bold bg-slate-50 border border-slate-100 py-1.5 rounded-lg select-none">
+                                      Telefone indisponível no cadastro
+                                    </span>
+                                  )}
                                   <button
-                                    onClick={() => abrirConsultaCnpjCard(place)}
-                                    disabled={!!cnpjQueryLoading[placeId]}
-                                    className="w-full px-2.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl transition-all font-extrabold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                    type="button"
+                                    onClick={() => handleMarcarEnergiaSolar(place)}
+                                    disabled={energiaSavingId === place.id}
+                                    className="w-full px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-all font-semibold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[32px] disabled:opacity-50"
                                   >
-                                    {cnpjQueryLoading[placeId] ? (
-                                      <><RefreshCw className="w-3 h-3 animate-spin text-blue-600" />Consultando CNPJ...</>
+                                    {energiaSavingId === place.id ? (
+                                      <RefreshCw className="w-3 h-3 animate-spin" />
                                     ) : (
-                                      <><Search className="w-3 h-3 text-blue-600" />Consultar CNPJ</>
+                                      <Zap className="w-3 h-3 text-amber-300 fill-current" />
                                     )}
+                                    Enviar para Energia Solar
                                   </button>
-                                )}
-                              </div>
-
-                              {/* Actions Bar */}
-                              <div className="pt-2.5 border-t border-slate-100 space-y-2">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-{/* Cadastrar Lead PROSFEC Direct Button */}
-{!isEnergiaOnly && (
+                                  {!isEnergiaOnly && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedLeadForRegistration({
+                                          nomeEmpresa: place.nome,
+                                          telefone: place.telefone,
+                                          categoria: place.categoria,
+                                          endereco: place.endereco,
+                                          website: place.website,
+                                          cnpj: cnpjData?.cnpj || "",
+                                          razaoSocial: cnpjData?.razaoSocial || place.nome,
+                                          porte: cnpjData?.porte || "ME"
+                                        });
+                                      }}
+                                      className="w-full px-3 py-1.5 bg-white hover:bg-emerald-50 text-[#0A3D2E] border border-emerald-200 rounded-lg transition-all font-semibold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer min-h-[32px]"
+                                    >
+                                      <Plus className="w-3 h-3 text-emerald-600" />
+                                      Cadastrar Lead
+                                    </button>
+                                  )}
                                   <button
-                                    onClick={() => {
-                                      setSelectedLeadForRegistration({
-                                        nomeEmpresa: place.nome,
-                                        telefone: place.telefone,
-                                        categoria: place.categoria,
-                                        endereco: place.endereco,
-                                        website: place.website,
-                                        cnpj: cnpjData?.cnpj || "",
-                                        razaoSocial: cnpjData?.razaoSocial || place.nome,
-                                        porte: cnpjData?.porte || "ME"
-                                      });
-                                    }}
-                                    className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#0A3D2E] border border-emerald-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
-                                  >
-                                    <Plus className="w-3 h-3 text-emerald-600" />
-                                    Cadastrar Lead
-                                  </button>
-)}
-
-                                  {/* ⚡ Enviar para a esteira de Energia Solar */}
-                                  {(() => {
-                                    const jaEnviado = energiaLeads.some(
-                                      (l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === energiaLeadKey(place)
-                                    );
-                                    if (jaEnviado) {
-                                      return (
-                                        <span className="px-2.5 py-1.5 bg-amber-100 text-amber-800 border border-amber-200 rounded-lg font-extrabold text-[10px] flex items-center justify-center gap-1 select-none">
-                                          <Check className="w-3 h-3 text-amber-700" />
-                                          Enviado para Energia Solar
-                                        </span>
-                                      );
-                                    }
-                                    return (
-                                      <button
-                                        onClick={() => handleMarcarEnergiaSolar(place)}
-                                        disabled={energiaSavingId === place.id}
-                                        className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                                      >
-                                        {energiaSavingId === place.id ? (
-                                          <RefreshCw className="w-3 h-3 animate-spin text-amber-600" />
-                                        ) : (
-                                          <Zap className="w-3 h-3 text-amber-500 fill-current" />
-                                        )}
-                                        Energia Solar
-                                      </button>
-                                    );
-                                  })()}
-
-                                  {/* 🗑️ Descartar o lead do painel (e apagar anotações do banco) */}
-                                  <button
+                                    type="button"
                                     onClick={() => handleDiscardHuntPlace(place)}
                                     disabled={discardingHuntPlaceId === placeId}
-                                    className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                                    className="w-full px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 rounded-lg transition-all font-semibold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer min-h-[32px] disabled:opacity-50"
                                     title="Remover este lead do painel e apagar suas anotações"
                                   >
                                     {discardingHuntPlaceId === placeId ? (
@@ -9694,159 +9567,120 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     ) : (
                                       <Trash2 className="w-3 h-3 text-rose-600" />
                                     )}
-                                    Descartar
+                                    Descartar Lead
                                   </button>
-
-                                  {/* Copy business details */}
-                                  <button
-                                    onClick={() => {
-                                      const textToCopy = `Empresa: ${place.nome}\nCategoria: ${place.categoria || ""}\nTelefone: ${place.telefone || "N/A"}\nCNPJ: ${cnpjData?.cnpj || "N/A"}\nEndereço: ${place.endereco || "N/A"}\nWebsite: ${place.website || "N/A"}`;
-                                      navigator.clipboard.writeText(textToCopy);
-                                      setCopiedHuntContactId(place.id);
-                                      setTimeout(() => setCopiedHuntContactId(null), 2000);
-                                    }}
-                                    className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition-all font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
-                                  >
-                                    {copiedHuntContactId === place.id ? (
-                                      <>
-                                        <Check className="w-3 h-3 text-emerald-600" />
-                                        Copiado
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Copy className="w-3 h-3" />
-                                        Copiar
-                                      </>
-                                    )}
-                                  </button>
-
-                                  {/* Direct to Consultant dropdown */}
-                                  {isFranquiaDigital(currentPartner?.plano) && teamMembers.length > 0 && (
-                                    <div className="relative inline-block text-left">
-                                      <button
-                                        onClick={() => setAssigningHuntLeadId(assigningHuntLeadId === place.id ? null : place.id)}
-                                        className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg transition-all font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
-                                      >
-                                        <Users className="w-3 h-3" />
-                                        {distributedLeadsMap[`${place.nome}_${place.telefone || ""}`] ? "Re-direcionar" : "Direcionar"}
-                                      </button>
-                                      
-                                      {assigningHuntLeadId === place.id && (
-                                        <div className="absolute left-0 bottom-full mb-1 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl shadow-lg p-2 z-40 min-w-[180px] text-left">
-                                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-wide mb-1.5 px-1.5 pt-1">Escolha o Consultor:</p>
-                                          <div className="space-y-1 max-h-[140px] overflow-y-auto">
-                                            {teamMembers.map(member => (
-                                              <button
-                                                key={member.id}
-                                                onClick={() => {
-                                                  handleDistributeLead(place, member);
-                                                  setAssigningHuntLeadId(null);
-                                                }}
-                                                className="w-full text-left p-1.5 hover:bg-slate-50 rounded-lg text-[10px] font-bold text-slate-700 flex flex-col transition-colors cursor-pointer"
-                                              >
-                                                <span>{member.nome}</span>
-                                                <span className="text-[8px] text-slate-400 font-medium">Consultor</span>
-                                              </button>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
                                 </div>
 
-                                {/* Active WhatsApp outbound call link */}
-                                {hasPhone ? (
-                                  <a
-                                    href={waUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="w-full px-3 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl transition-all font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[44px]"
-                                  >
-                                    <Send className="w-3.5 h-3.5 text-white fill-current" />
-                                    Iniciar Prospecção no WhatsApp
-                                    <Zap className="w-3.5 h-3.5 text-amber-300 fill-current" />
-                                  </a>
-                                ) : (
-                                  <span className="w-full block text-center text-[10px] text-slate-400 font-bold bg-slate-50 border border-slate-100 py-1.5 rounded-xl select-none">
-                                    Telefone indisponível no cadastro
-                                  </span>
-                                 )}
-
-                                {/* 📝 Anotações privadas do parceiro (não aparecem para a Mesa/ADM) */}
                                 {(() => {
                                   const notaKey = prospectNoteKey(place);
                                   const entry = prospectNotes[notaKey];
                                   const notas: any[] = Array.isArray(entry?.notas) ? entry.notas : [];
-                                  const aberto = expandedProspectNoteKey === notaKey;
                                   return (
-                                    <div className="mt-2 border-t border-slate-100 pt-2">
-                                      <button
-                                        onClick={() => setExpandedProspectNoteKey(aberto ? null : notaKey)}
-                                        className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all cursor-pointer"
-                                      >
-                                        <span className="flex items-center gap-1.5 text-[10px] font-extrabold text-slate-700">
-                                          <MessageSquare className="w-3 h-3 text-slate-500" />
-                                          Minhas Anotações
-                                          {notas.length > 0 && (
-                                            <span className="px-1.5 py-0.5 bg-[#0A3D2E] text-white rounded-full text-[8px] font-black">
-                                              {notas.length}
-                                            </span>
-                                          )}
+                                    <div className="chat-op">
+                                      <div className="chat-op-head">
+                                        <span className="flex items-center gap-2">
+                                          <MessageSquare className="w-4 h-4" />
+                                          Anotações de prospecção
                                         </span>
-                                        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${aberto ? "rotate-180" : ""}`} />
-                                      </button>
-
-                                      {aberto && (
-                                        <div className="mt-2 space-y-2">
-                                          <p className="text-[9px] text-slate-400 font-bold leading-snug">
-                                            Bloco de notas privado — só você enxerga estas anotações.
-                                          </p>
-
-                                          {notas.length > 0 ? (
-                                            <div className="space-y-1.5 max-h-[150px] overflow-y-auto pr-1">
-                                              {[...notas].reverse().map((n: any, idx: number) => (
-                                                <div key={idx} className="bg-white border border-slate-200 rounded-lg p-2">
-                                                  <p className="text-[10px] text-slate-700 font-medium whitespace-pre-wrap leading-snug">{n.texto}</p>
-                                                  <p className="text-[8px] text-slate-400 font-bold mt-1">
-                                                    {n.data ? new Date(n.data).toLocaleString("pt-BR") : ""}
-                                                  </p>
-                                                </div>
-                                              ))}
+                                        <span className="chat-op-count">{notas.length}</span>
+                                      </div>
+                                      <div className="chat-op-body">
+                                        {notas.length > 0 ? [...notas].reverse().map((n: any, idx: number) => (
+                                          <div key={idx} className="flex justify-end">
+                                            <div className="chat-bolha chat-bolha-eu">
+                                              <p className="whitespace-pre-wrap break-words">{n.texto}</p>
+                                              <p className="chat-bolha-hora">{n.data ? new Date(n.data).toLocaleString("pt-BR") : ""}</p>
                                             </div>
-                                          ) : (
-                                            <p className="text-[10px] text-slate-400 font-medium">Nenhuma anotação registrada ainda.</p>
-                                          )}
-
-                                          <div className="flex items-center gap-1.5">
-                                            <input
-                                              type="text"
-                                              value={prospectNoteDraft[notaKey] || ""}
-                                              onChange={(e) => setProspectNoteDraft(prev => ({ ...prev, [notaKey]: e.target.value }))}
-                                              onKeyDown={(e) => {
-                                                if (e.key === "Enter") {
-                                                  e.preventDefault();
-                                                  handleAddProspectNote(place);
-                                                }
-                                              }}
-                                              placeholder="Ex: liguei, retorno na terça-feira..."
-                                              className="flex-1 px-2.5 py-1.5 border border-slate-200 rounded-lg text-[10px] font-medium text-slate-700 focus:outline-none focus:border-[#00A86B]"
-                                            />
-                                            <button
-                                              onClick={() => handleAddProspectNote(place)}
-                                              disabled={savingProspectNoteKey === notaKey || !(prospectNoteDraft[notaKey] || "").trim()}
-                                              className="px-2.5 py-1.5 bg-[#0A3D2E] hover:bg-[#00A86B] text-white rounded-lg font-extrabold text-[10px] transition-all cursor-pointer disabled:opacity-40"
-                                            >
-                                              {savingProspectNoteKey === notaKey ? "..." : "Salvar"}
-                                            </button>
                                           </div>
-                                        </div>
-                                      )}
+                                        )) : (
+                                          <p className="text-center text-xs text-slate-400 py-6">Bloco de notas privado — só você enxerga estas anotações.</p>
+                                        )}
+                                      </div>
+                                      <div className="chat-op-input">
+                                        <textarea
+                                          rows={2}
+                                          placeholder="Ex: liguei, retorno na terça-feira... (Shift+Enter pula linha)"
+                                          value={prospectNoteDraft[notaKey] || ""}
+                                          onChange={(e) => setProspectNoteDraft(prev => ({ ...prev, [notaKey]: e.target.value }))}
+                                          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddProspectNote(place); } }}
+                                        />
+                                        <button
+                                          type="button"
+                                          aria-label="Salvar anotação"
+                                          onClick={() => handleAddProspectNote(place)}
+                                          disabled={savingProspectNoteKey === notaKey || !(prospectNoteDraft[notaKey] || "").trim()}
+                                          className="chat-op-enviar"
+                                        >
+                                          {savingProspectNoteKey === notaKey ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                        </button>
+                                      </div>
                                     </div>
                                   );
                                 })()}
                               </div>
                             </div>
+                          );
+
+                          return (
+                            <React.Fragment key={placeId}>
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => setDetalheHuntPlaceId(placeId)}
+                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDetalheHuntPlaceId(placeId); } }}
+                                className="relative bg-white border border-slate-200 rounded-xl p-3 space-y-2 cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="font-extrabold text-sm text-slate-800 line-clamp-1 min-w-0">{place.nome}</p>
+                                  <span className="shrink-0 border border-sky-200 bg-sky-50 text-sky-700 font-extrabold px-1.5 py-0.5 rounded-full text-[9px] uppercase">
+                                    {NIVEIS[classificarPorte(place)].badge}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-semibold text-slate-500">
+                                  {(place.categoria || huntKeyword) && <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded uppercase font-extrabold text-[9px] truncate max-w-[140px]">{place.categoria || huntKeyword}</span>}
+                                  {localCard && <span className="flex items-center gap-0.5 truncate"><MapPin className="w-3 h-3 text-slate-400" />{localCard}</span>}
+                                  {place.nota !== null && place.nota !== undefined && <span className="text-amber-700 font-bold">★ {Number(place.nota).toFixed(1)}</span>}
+                                </div>
+                                {(fecharStatus || place.abertoAgora === true || place.abertoAgora === false) && (
+                                  <div className="text-[10px] font-extrabold">
+                                    {fecharStatus ? (
+                                      <span className="text-rose-700">{fecharStatus}</span>
+                                    ) : place.abertoAgora ? (
+                                      <span className="text-emerald-700 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />Aberto agora</span>
+                                    ) : (
+                                      <span className="text-slate-500">Fechado agora</span>
+                                    )}
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 truncate">
+                                    ⚡ {raioX.kwhMin.toLocaleString("pt-BR")} - {raioX.kwhMax.toLocaleString("pt-BR")} kWh/mês
+                                  </span>
+                                  {hasPhone && (
+                                    <a
+                                      href={waUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      title="WhatsApp"
+                                      aria-label="Abrir WhatsApp"
+                                      className="w-7 h-7 shrink-0 rounded-lg bg-[#25D366] hover:bg-[#128C7E] text-white flex items-center justify-center"
+                                    >
+                                      <Send className="w-3.5 h-3.5 fill-current" />
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                              {detalheHuntPlaceId === placeId && !activeCnpjModal && (
+                                <LeadEnergiaDetalheModal
+                                  titulo={place.nome || "Oportunidade"}
+                                  subtitulo="PROSFEC Energy · Oportunidade de prospecção"
+                                  onClose={() => setDetalheHuntPlaceId(null)}
+                                >
+                                  {detalheCompleto}
+                                </LeadEnergiaDetalheModal>
+                              )}
+                            </React.Fragment>
                           );
                         })}
                       </div>
