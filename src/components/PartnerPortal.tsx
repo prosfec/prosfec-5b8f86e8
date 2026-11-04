@@ -1,5 +1,6 @@
 // @ts-nocheck
 import RaioXEnergeticoCard from "./RaioXEnergeticoCard";
+import { NIVEIS, classificarPorte, calibrarBusca, filtrarPorNivel, type FiltroNivel, type NivelEmpresa } from "../lib/porteEmpresa";
 import { resumirHorario } from "../lib/raioXEnergetico";
 /**
  * @license
@@ -512,6 +513,7 @@ const executeCacaLeadsClientSide = async (keyword: string, city: string, limit: 
     cep: (item.addressComponents || []).find((c: any) => (c.types || []).includes("postal_code"))?.longText || "",
     primaryType: item.primaryType || "",
     types: item.types || [],
+    priceLevel: item.priceLevel || "",
     ...resumirHorario(item.regularOpeningHours?.periods)
   }));
 
@@ -1054,6 +1056,7 @@ export default function PartnerPortal({
   const [isCustomCity, setIsCustomCity] = useState(false);
   const [huntCity, setHuntCity] = useState("");
   const [huntLimit, setHuntLimit] = useState(20);
+  const [huntNivel, setHuntNivel] = useState<FiltroNivel>("todos");
   const [huntResults, setHuntResults] = useState<any[]>([]);
   const [huntLoading, setHuntLoading] = useState(false);
   const [huntError, setHuntError] = useState<string | null>(null);
@@ -3676,7 +3679,7 @@ export default function PartnerPortal({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            keyword: huntKeyword.trim(),
+            keyword: calibrarBusca(huntKeyword, huntNivel),
             city: huntCity.trim(),
             state: huntState,
             limit: huntLimit
@@ -3692,10 +3695,13 @@ export default function PartnerPortal({
         nextPageTokenVal = data.nextPageToken || null;
       } catch (apiErr) {
         console.warn("Express API failed, running client-side Google Places search...", apiErr);
-        const csData = await executeCacaLeadsClientSide(huntKeyword.trim(), huntCity.trim(), huntLimit);
+        const csData = await executeCacaLeadsClientSide(calibrarBusca(huntKeyword, huntNivel), huntCity.trim(), huntLimit);
         finalResults = csData.results || [];
         nextPageTokenVal = csData.nextPageToken || null;
       }
+
+      // Triagem determinística pelo nível/porte escolhido
+      finalResults = filtrarPorNivel(finalResults, huntNivel);
 
       // Filter out seen leads for this partner to prevent duplicates
       let seenKeys = new Set<string>();
@@ -3847,7 +3853,7 @@ export default function PartnerPortal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          keyword: huntKeyword.trim(),
+          keyword: calibrarBusca(huntKeyword, huntNivel),
           city: huntCity.trim(),
           state: huntState,
           limit: 20,
@@ -3860,7 +3866,7 @@ export default function PartnerPortal({
         throw new Error(data.error || "Erro ao carregar a próxima página de resultados.");
       }
 
-      const newPlaces = data.results || [];
+      const newPlaces = filtrarPorNivel(data.results || [], huntNivel);
       const updatedToken = data.nextPageToken || null;
 
       let existingKeys = new Set(huntResults.map(p => `${p.nome}_${p.telefone || ""}`));
@@ -9078,6 +9084,23 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
                   {/* Filter / Hunt Inputs Form */}
                   <form onSubmit={handleHuntLeads} className="bg-slate-50/70 border border-slate-200/50 p-4 rounded-2xl space-y-4">
+                    <div className="mb-3 space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block">Nível da Empresa</label>
+                      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Nível da Empresa">
+                        {(["todos", "prestador", "pequeno", "medio", "grande"] as FiltroNivel[]).map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            role="radio"
+                            aria-checked={huntNivel === n}
+                            onClick={() => setHuntNivel(n)}
+                            className={`px-3 py-1.5 rounded-full border text-[10.5px] font-extrabold transition-all ${huntNivel === n ? "bg-[#0A3D2E] text-white border-[#0A3D2E]" : "bg-white/75 text-slate-600 border-slate-200 hover:border-[#0A3D2E]"}`}
+                          >
+                            {n === "todos" ? "🌐 Todos os Níveis" : NIVEIS[n as NivelEmpresa].opcao}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                       {/* Segment / Category Select or custom */}
                       <div className="md:col-span-3 space-y-1">
@@ -9520,6 +9543,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 </div>
                               )}
 
+                              <span className="inline-block px-2 py-0.5 rounded-full border border-sky-200 bg-sky-50 text-sky-700 text-[10px] font-extrabold">
+                                {NIVEIS[classificarPorte(place)].badge}
+                              </span>
                               <RaioXEnergeticoCard place={place} />
 
                               {/* Details info */}
