@@ -515,6 +515,11 @@ const executeCacaLeadsClientSide = async (keyword: string, city: string, limit: 
     primaryType: item.primaryType || "",
     types: item.types || [],
     priceLevel: item.priceLevel || "",
+    lat: item.location?.latitude ?? null,
+    lng: item.location?.longitude ?? null,
+    estacionamento: !!(item.parkingOptions?.freeParkingLot || item.parkingOptions?.paidParkingLot || item.parkingOptions?.freeGarageParking || item.parkingOptions?.paidGarageParking),
+    resumo: item.editorialSummary?.text || "",
+    fotoRef: item.photos?.[0]?.name || "",
     ...resumirHorario(item.regularOpeningHours?.periods)
   }));
 
@@ -9414,6 +9419,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <div className="lead-dossie grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
                               <div className="space-y-3 min-w-0">
                                 <p className="dossie-titulo">Dossiê da empresa</p>
+                                {place.fotoRef && <FotoFachada fotoRef={place.fotoRef} nome={place.nome} />}
                                 <div className="dossie-card flex items-start justify-between gap-2">
                                   <div className="min-w-0">
                                     <span className="text-[9px] bg-slate-100 text-slate-600 font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wider inline-block mb-1 truncate max-w-full">
@@ -9438,6 +9444,35 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     </div>
                                   )}
                                 </div>
+
+                                {place.resumo && (
+                                  <p className="bg-slate-50/80 border-l-2 border-emerald-500 rounded-r-lg px-2.5 py-1.5 text-xs text-slate-600 italic">
+                                    {place.resumo}
+                                  </p>
+                                )}
+                                {place.estacionamento && (
+                                  <div className="flex">
+                                    <span className="px-2 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px] font-extrabold">🚗 Estacionamento próprio · Potencial Carport</span>
+                                  </div>
+                                )}
+                                {typeof place.lat === "number" && typeof place.lng === "number" && (
+                                  <div className="dossie-card space-y-2">
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">🛰️ Análise aérea do telhado</p>
+                                    <div className="rounded-xl overflow-hidden border border-slate-200 aspect-[16/10] bg-slate-100">
+                                      <iframe
+                                        title={`Satélite — ${place.nome}`}
+                                        src={`https://maps.google.com/maps?q=${place.lat},${place.lng}&t=k&z=19&output=embed`}
+                                        className="w-full h-full border-0"
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                      />
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2 text-[10px] font-bold">
+                                      <span className="text-slate-500">🔍 Foco no telhado</span>
+                                      <a href={`https://earth.google.com/web/@${place.lat},${place.lng},60a,120d,35y,0h,0t,0r`} target="_blank" rel="noreferrer" className="text-emerald-700 hover:underline">↗ Ver no Google Earth 3D</a>
+                                    </div>
+                                  </div>
+                                )}
 
                                 <div className="dossie-card space-y-2 text-[11px] text-slate-500 font-medium">
                                   {place.endereco && (
@@ -13898,6 +13933,32 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         </div>
       )}
 
+    </div>
+  );
+}
+
+// Foto da fachada carregada sob demanda (apenas ao abrir a oportunidade).
+function FotoFachada({ fotoRef, nome }: { fotoRef: string; nome: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [falhou, setFalhou] = useState(false);
+  useEffect(() => {
+    let ativo = true;
+    fetch(`/api/proxy/place-photo?name=${encodeURIComponent(fotoRef)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => { if (ativo && d?.photoUri) setUrl(d.photoUri); else if (ativo) setFalhou(true); })
+      .catch(() => { if (ativo) setFalhou(true); });
+    return () => { ativo = false; };
+  }, [fotoRef]);
+  if (falhou) return null;
+  return (
+    <div className="relative h-[120px] rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+      {url ? (
+        <img src={url} alt={`Fachada — ${nome}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+      ) : (
+        <div className="w-full h-full animate-pulse bg-slate-200" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+      <span className="absolute bottom-1.5 left-2 text-[9px] font-black uppercase tracking-wider text-white">📸 Fachada · Google</span>
     </div>
   );
 }
