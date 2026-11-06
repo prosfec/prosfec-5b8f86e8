@@ -203,7 +203,7 @@ export function createExpressApp() {
           headers: {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": GOOGLE_MAPS_KEY,
-            "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,places.businessStatus,places.currentOpeningHours.openNow,places.regularOpeningHours.periods,places.primaryType,places.types,places.priceLevel,places.shortFormattedAddress,places.addressComponents,nextPageToken"
+            "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,places.businessStatus,places.currentOpeningHours.openNow,places.regularOpeningHours.periods,places.primaryType,places.types,places.priceLevel,places.shortFormattedAddress,places.addressComponents,places.location,places.parkingOptions,places.editorialSummary,places.photos,nextPageToken"
           },
           body: JSON.stringify(payload)
         });
@@ -241,6 +241,11 @@ export function createExpressApp() {
             primaryType: item.primaryType || "",
             types: item.types || [],
             priceLevel: item.priceLevel || "",
+            lat: item.location?.latitude ?? null,
+            lng: item.location?.longitude ?? null,
+            estacionamento: !!(item.parkingOptions?.freeParkingLot || item.parkingOptions?.paidParkingLot || item.parkingOptions?.freeGarageParking || item.parkingOptions?.paidGarageParking),
+            resumo: item.editorialSummary?.text || "",
+            fotoRef: item.photos?.[0]?.name || "",
             ...resumirHorario(item.regularOpeningHours?.periods),
             cidade: city,
             estado: state || ""
@@ -2191,6 +2196,26 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   });
 
+  // Foto da fachada sob demanda: resolve a URL pública da foto sem expor a chave.
+  app.get("/api/proxy/place-photo", async (req, res) => {
+    try {
+      const key = firstEnv("GOOGLE_MAPS_API_KEY", "PLACES_API_KEY");
+      if (!key) return res.status(500).json({ error: "GOOGLE_MAPS_API_KEY não configurada." });
+      const name = String(req.query?.name || "");
+      if (!/^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/.test(name)) {
+        return res.status(400).json({ error: "Referência de foto inválida." });
+      }
+      const r = await fetch(`https://places.googleapis.com/v1/${name}/media?maxWidthPx=800&skipHttpRedirect=true`, {
+        headers: { "X-Goog-Api-Key": key }
+      });
+      const data: any = await r.json().catch(() => null);
+      if (!r.ok || !data?.photoUri) return res.status(r.ok ? 404 : r.status).json({ error: "Foto indisponível." });
+      return res.json({ photoUri: data.photoUri });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Erro ao carregar foto." });
+    }
+  });
+
   app.post("/api/proxy/places-search", async (req, res) => {
     try {
       const key = firstEnv("GOOGLE_MAPS_API_KEY", "PLACES_API_KEY");
@@ -2203,7 +2228,7 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": key,
-          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,places.businessStatus,places.currentOpeningHours.openNow,places.regularOpeningHours.periods,places.primaryType,places.types,places.priceLevel,places.shortFormattedAddress,places.addressComponents,nextPageToken"
+          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,places.businessStatus,places.currentOpeningHours.openNow,places.regularOpeningHours.periods,places.primaryType,places.types,places.priceLevel,places.shortFormattedAddress,places.addressComponents,places.location,places.parkingOptions,places.editorialSummary,places.photos,nextPageToken"
         },
         body: JSON.stringify(payload)
       });
