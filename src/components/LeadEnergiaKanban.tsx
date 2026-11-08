@@ -1,4 +1,12 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
+import { resumoIntelOportunidade } from "./DossieOportunidadeEnergia";
+
+const COR_FAIXA: Record<string, string> = {
+  critico: "bg-rose-50 text-rose-700 border-rose-200",
+  alto: "bg-amber-50 text-amber-700 border-amber-200",
+  medio: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  leve: "bg-slate-100 text-slate-600 border-slate-200",
+};
 import { createPortal } from "react-dom";
 import { MapPin, Send, X, Zap } from "lucide-react";
 import { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
@@ -46,6 +54,7 @@ export function LeadEnergiaCardCompacto({ lead, novidade, onOpen, whatsappUrl, o
   const total = fichaDocumentosTotal(lead);
   const completo = total > 0 && enviados >= total;
   const local = [lead?.cidade, lead?.estado].filter(Boolean).join(" / ");
+  const intel = useMemo(() => resumoIntelOportunidade(lead?.intelOportunidade), [lead?.intelOportunidade]);
   return (
     <div
       role="button"
@@ -69,7 +78,14 @@ export function LeadEnergiaCardCompacto({ lead, novidade, onOpen, whatsappUrl, o
       <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-semibold text-slate-500">
         {lead?.ramo && <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded uppercase font-extrabold text-[9px] truncate max-w-[140px]">{lead.ramo}</span>}
         {local && <span className="flex items-center gap-0.5 truncate"><MapPin className="w-3 h-3 text-slate-400" />{local}</span>}
+        {intel && <span className="bg-sky-50 text-sky-700 border border-sky-200 px-1.5 py-0.5 rounded font-extrabold text-[9px]">{intel.porte}</span>}
       </div>
+      {intel && (
+        <div className="flex items-center gap-1.5 flex-wrap text-[9px] font-extrabold">
+          <span className={`px-1.5 py-0.5 rounded border ${COR_FAIXA[intel.faixa] || COR_FAIXA.leve}`}>⚡ {intel.kwhMin.toLocaleString("pt-BR")}–{intel.kwhMax.toLocaleString("pt-BR")} kWh/mês</span>
+          {lead.intelOportunidade?.estacionamento && <span className="px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200">🚗 Carport</span>}
+        </div>
+      )}
       <div className="flex items-center justify-between gap-2">
         <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded border ${completo ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
           📋 {enviados}/{total}

@@ -119,6 +119,7 @@ import LeadWorkspaceModal, { ETAPAS_LABELS } from "./LeadWorkspaceModal";
 import { STEPS_CONFIG } from "./LeadStepTimeline";
 import AdminServicosContabilidadeTab from "./AdminServicosContabilidadeTab";
 import { LeadEnergiaCardCompacto, LeadEnergiaDetalheModal } from "./LeadEnergiaKanban";
+import DossieOportunidadeEnergia from "./DossieOportunidadeEnergia";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 
 const getStatusLabel = (status: string) => {
@@ -5127,6 +5128,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           <div key={lead.id} className="lead-dossie grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
                             <div className="space-y-3 min-w-0">
                             <p className="dossie-titulo">Dossiê do cliente</p>
+                            <DossieOportunidadeEnergia lead={lead} />
                             {/* Identificação */}
                             <div className="dossie-card flex items-start justify-between gap-2">
                               <div className="min-w-0">
