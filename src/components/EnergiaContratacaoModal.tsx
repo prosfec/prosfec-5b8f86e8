@@ -216,11 +216,14 @@ export default function EnergiaContratacaoModal({
   onClose,
   ocultarVideo = false,
   voltarLabel,
+  ufInicial,
 }: {
   open: boolean;
   onClose: () => void;
   ocultarVideo?: boolean;
   voltarLabel?: string;
+  /** Leads do Painel de Oportunidades: abre direto na concessionária da UF (ou filtra pela UF). */
+  ufInicial?: string;
 }) {
   const [busca, setBusca] = useState("");
   const [regiao, setRegiao] = useState("Todas");
@@ -251,8 +254,14 @@ export default function EnergiaContratacaoModal({
       setRegiao("Todas");
       setDicasAbertas(false);
       setOrdem("desconto");
+      return;
     }
-  }, [open]);
+    const uf = String(ufInicial || "").trim().toUpperCase();
+    if (!uf) return;
+    const daUF = CONCESSIONARIAS.filter((c) => c.uf === uf);
+    if (daUF.length === 1) setSelecionada(daUF[0]);
+    else if (daUF.length > 1) setBusca(uf);
+  }, [open, ufInicial]);
 
 
   const filtradas = useMemo(() => {
