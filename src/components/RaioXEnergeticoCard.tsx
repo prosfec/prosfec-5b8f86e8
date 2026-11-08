@@ -32,8 +32,13 @@ export default function RaioXEnergeticoCard({ place, inicialAberto = false }: { 
           type="button"
           onClick={() => setAberto((v) => !v)}
           aria-expanded={aberto}
-          className="text-[10px] font-extrabold text-[#0A3D2E] hover:underline flex items-center gap-0.5"
+          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full border text-[11px] font-extrabold shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+            aberto
+              ? "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
+              : "bg-emerald-50 border-emerald-300 text-[#0A3D2E] hover:bg-emerald-100 hover:border-emerald-400"
+          }`}
         >
+          {!aberto && <Zap className="w-3 h-3" />}
           {aberto ? "Ocultar" : "Ver"} Raio-X Energético
           <ChevronDown className={`w-3 h-3 transition-transform ${aberto ? "rotate-180" : ""}`} />
         </button>
