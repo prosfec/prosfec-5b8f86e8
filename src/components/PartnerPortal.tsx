@@ -2235,6 +2235,9 @@ export default function PartnerPortal({
                                 ? buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa))
                                 : "#";
                               const energiaFollowUp = precisaFollowUpEnergia(lead);
+                              // Região sem link direto de concessionária: proposta sob demanda via Ficha & Documentos.
+                              const regiaoSobDemanda = !!String(lead.estado || "").trim() && !resumoConcessionariaUF(lead.estado);
+                              const mostraGerarProposta = (statusKey === "novo" || statusKey === "atendimento") && !regiaoSobDemanda;
                               const cardCompleto = (
                                 <div key={lead.id} className="lead-dossie grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
                                   <div className="space-y-3 min-w-0">
@@ -2359,8 +2362,13 @@ export default function PartnerPortal({
                                   <div className="space-y-3 min-w-0">
                                   <p className="dossie-titulo">Central operacional</p>
                                   <div className="dossie-card space-y-1.5">
-                                    <div className={`grid gap-1.5 ${lead.telefone && (statusKey === "novo" || statusKey === "atendimento") ? "grid-cols-2" : "grid-cols-1"}`}>
-                                      {(statusKey === "novo" || statusKey === "atendimento") && (
+                                    {regiaoSobDemanda && statusKey !== "concluido" && statusKey !== "arquivado" && (
+                                      <p className="text-[10px] leading-snug text-slate-600 bg-slate-50 border-l-2 border-emerald-500 rounded-r-md px-2 py-1.5">
+                                        ℹ️ Região sob demanda (AlugSol, Mercado Livre ou usinas parceiras). Colete a fatura e os documentos na Ficha para cotação direta.
+                                      </p>
+                                    )}
+                                    <div className={`grid gap-1.5 ${lead.telefone && mostraGerarProposta ? "grid-cols-2" : "grid-cols-1"}`}>
+                                      {mostraGerarProposta && (
                                       <button
                                         type="button"
                                         onClick={() => setPropostaEnergiaLeadId(lead.id)}
@@ -2516,7 +2524,7 @@ export default function PartnerPortal({
                                   </div>
                                 </div>
                               );
-                              const podeProposta = statusKey === "novo" || statusKey === "atendimento";
+                              const podeProposta = mostraGerarProposta;
                               return (
                                 <React.Fragment key={lead.id}>
                                   <LeadEnergiaCardCompacto
