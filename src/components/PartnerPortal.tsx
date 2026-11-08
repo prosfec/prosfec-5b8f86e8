@@ -9552,7 +9552,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                 </div>
 
                                 <div className="dossie-card">
-                                  <RaioXEnergeticoCard place={place} inicialAberto />
+                                  <RaioXEnergeticoCard place={place} inicialAberto uf={place.estado || huntState} />
                                 </div>
 
                                 <div className="dossie-card">

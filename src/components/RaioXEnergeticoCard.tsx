@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Zap, ChevronDown } from "lucide-react";
+import { calcularEconomia } from "../lib/economiaEnergia";
 import { calcularRaioXEnergetico, type PlaceEnergiaInput, type FaixaEnergetica } from "../lib/raioXEnergetico";
 
 const COR: Record<FaixaEnergetica, string> = {
@@ -10,10 +11,14 @@ const COR: Record<FaixaEnergetica, string> = {
 };
 
 const fmt = (n: number) => n.toLocaleString("pt-BR");
+const reais = (n: number) => `R$ ${fmt(n)}`;
+const faixaR = (f: { min: number; max: number }) => (f.min === f.max ? reais(f.min) : `${reais(f.min)} a ${reais(f.max)}`);
+const pct = (f: { min: number; max: number }) => (f.min === f.max ? `${f.min}%` : `${f.min}% a ${f.max}%`);
 
-export default function RaioXEnergeticoCard({ place, inicialAberto = false }: { place: PlaceEnergiaInput; inicialAberto?: boolean }) {
+export default function RaioXEnergeticoCard({ place, inicialAberto = false, uf }: { place: PlaceEnergiaInput; inicialAberto?: boolean; uf?: string | null }) {
   const [aberto, setAberto] = useState(inicialAberto);
   const r = useMemo(() => calcularRaioXEnergetico(place), [place]);
+  const e = useMemo(() => calcularEconomia(r.kwhMin, r.kwhMax, uf ?? (place as any)?.estado), [r.kwhMin, r.kwhMax, uf, place]);
 
   const Item = ({ n, titulo, linhas }: { n: number; titulo: string; linhas: string[] }) => (
     <div>
@@ -57,19 +62,26 @@ export default function RaioXEnergeticoCard({ place, inicialAberto = false }: { 
             <p className="text-[9.5px] text-slate-500">Baseado no segmento, porte e horário de funcionamento.</p>
           </div>
 
-          <div className="border-t border-emerald-200/70 pt-2 space-y-1.5">
+          <div className="border-t border-emerald-200/70 pt-2 space-y-2">
             <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">Potencial de economia com nossas soluções</p>
+            <div className="rounded-lg bg-white/70 border border-emerald-100 px-2.5 py-1.5">
+              <p className="text-[10.5px] text-slate-600">Fatura estimada na distribuidora</p>
+              <p className="text-sm font-extrabold text-[#0A3D2E]">~{faixaR(e.fatura)} / mês</p>
+              <p className="text-[9.5px] text-slate-500">Tarifa base {e.regiao} · R$ {e.tarifa.toFixed(2).replace(".", ",")}/kWh{e.grupoA ? " (alta tensão)" : ""}</p>
+            </div>
             <div>
               <p className="text-[10.5px] font-extrabold text-slate-800">🌱 Geração de Energia (Assinatura / GD)</p>
-              <p className="text-[10.5px] text-slate-700">• Economia de 15% a 25% na tarifa, sem investimento</p>
-              <p className="text-[10.5px] text-slate-700">• Sem obras e sem placas no telhado</p>
+              <p className="text-[10.5px] text-slate-700">• Desconto de {pct(e.descontoGD)}{e.descontoOficial ? "" : " (média de mercado)"}, sem obras e sem placas</p>
+              <p className="text-[10.5px] text-slate-700">• Economia mensal: <b>~{faixaR(e.gdMensal)}</b></p>
+              <p className="text-[10.5px] text-slate-700">• Economia anual: <b>~{faixaR(e.gdAnual)}</b></p>
             </div>
             <div>
               <p className="text-[10.5px] font-extrabold text-slate-800">☀️ AlugSol (Locação de Usina Solar)</p>
-              <p className="text-[10.5px] text-slate-700">• Durante a locação: 10% a 30% de economia mensal</p>
-              <p className="text-[10.5px] text-slate-700">• Após o término do contrato: até 95% de economia</p>
+              <p className="text-[10.5px] text-slate-700">• Durante a locação (10% a 30%): <b>~{faixaR(e.alugLocacaoMensal)} / mês</b></p>
+              <p className="text-[10.5px] text-slate-700">• Após o término do contrato (até 95%): <b>até {reais(e.alugPosMensal)} / mês</b> (até {reais(e.alugPosAnual)} / ano)</p>
               <p className="text-[10.5px] text-slate-700">• Valorização do imóvel em até 15%</p>
             </div>
+            <p className="text-[9px] text-slate-400">Valores aproximados; variam conforme consumo real, bandeira tarifária e tributos.</p>
           </div>
         </div>
       )}

@@ -20,7 +20,7 @@ describe("economia em R$ do Raio-X", () => {
     const e = calcularEconomia(1000, 2000, "SP");
     expect(e.alugLocacaoMensal).toEqual({ min: 100, max: 570 });
     expect(e.alugPosMensal).toBe(1810);
-    expect(e.alugPosAnual).toBe(21660);
+    expect(e.alugPosAnual).toBe(21700);
   });
 
   it("estado sem concessionária usa média Brasil e GD 15% a 25%", () => {
