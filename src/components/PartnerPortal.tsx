@@ -9437,6 +9437,24 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                               <div className="space-y-3 min-w-0">
                                 <p className="dossie-titulo">Dossiê da empresa</p>
                                 {place.fotoRef && <FotoFachada fotoRef={place.fotoRef} nome={place.nome} />}
+                                {typeof place.lat === "number" && typeof place.lng === "number" && (
+                                  <div className="dossie-card space-y-2">
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">🛰️ Análise aérea do telhado</p>
+                                    <div className="rounded-xl overflow-hidden border border-slate-200 aspect-[16/10] bg-slate-100">
+                                      <iframe
+                                        title={`Satélite — ${place.nome}`}
+                                        src={`https://maps.google.com/maps?q=${place.lat},${place.lng}&t=k&z=19&output=embed`}
+                                        className="w-full h-full border-0"
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                      />
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2 text-[10px] font-bold">
+                                      <span className="text-slate-500">🔍 Foco no telhado</span>
+                                      <a href={`https://earth.google.com/web/@${place.lat},${place.lng},60a,120d,35y,0h,0t,0r`} target="_blank" rel="noreferrer" className="text-emerald-700 hover:underline">↗ Ver no Google Earth 3D</a>
+                                    </div>
+                                  </div>
+                                )}
                                 <div className="dossie-card flex items-start justify-between gap-2">
                                   <div className="min-w-0">
                                     <span className="text-[9px] bg-slate-100 text-slate-600 font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wider inline-block mb-1 truncate max-w-full">
@@ -9490,24 +9508,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     </div>
                                   );
                                 })()}
-                                {typeof place.lat === "number" && typeof place.lng === "number" && (
-                                  <div className="dossie-card space-y-2">
-                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">🛰️ Análise aérea do telhado</p>
-                                    <div className="rounded-xl overflow-hidden border border-slate-200 aspect-[16/10] bg-slate-100">
-                                      <iframe
-                                        title={`Satélite — ${place.nome}`}
-                                        src={`https://maps.google.com/maps?q=${place.lat},${place.lng}&t=k&z=19&output=embed`}
-                                        className="w-full h-full border-0"
-                                        loading="lazy"
-                                        referrerPolicy="no-referrer-when-downgrade"
-                                      />
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2 text-[10px] font-bold">
-                                      <span className="text-slate-500">🔍 Foco no telhado</span>
-                                      <a href={`https://earth.google.com/web/@${place.lat},${place.lng},60a,120d,35y,0h,0t,0r`} target="_blank" rel="noreferrer" className="text-emerald-700 hover:underline">↗ Ver no Google Earth 3D</a>
-                                    </div>
-                                  </div>
-                                )}
 
                                 <div className="dossie-card space-y-2 text-[11px] text-slate-500 font-medium">
                                   {place.endereco && (
