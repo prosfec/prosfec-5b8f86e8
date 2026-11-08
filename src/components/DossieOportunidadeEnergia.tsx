@@ -95,7 +95,7 @@ export default function DossieOportunidadeEnergia({ lead }: { lead: any }) {
         <p className="bg-slate-50/80 border-l-2 border-emerald-500 rounded-r-lg px-2.5 py-1.5 text-xs text-slate-600 italic">{intel.resumo}</p>
       )}
       <div className="dossie-card">
-        <RaioXEnergeticoCard place={intel} />
+        <RaioXEnergeticoCard place={intel} uf={lead.estado || intel.estado} />
       </div>
     </div>
   );
