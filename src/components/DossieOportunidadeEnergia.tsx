@@ -64,21 +64,6 @@ export default function DossieOportunidadeEnergia({ lead }: { lead: any }) {
   return (
     <div className="space-y-3">
       {intel.fotoRef && <FotoFachadaLead fotoRef={intel.fotoRef} nome={nome} />}
-      <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold">
-        <span className="px-2 py-0.5 rounded-full border border-sky-200 bg-sky-50 text-sky-700">{NIVEIS[classificarPorte(intel)].badge}</span>
-        {intel.nota !== null && intel.nota !== undefined && (
-          <span className="px-2 py-0.5 rounded-full border border-amber-100 bg-amber-50 text-amber-700">★ {Number(intel.nota).toFixed(1)} ({intel.avaliacoes})</span>
-        )}
-        {intel.estacionamento && (
-          <span className="px-2 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">🚗 Estacionamento próprio · Potencial Carport</span>
-        )}
-      </div>
-      {intel.resumo && (
-        <p className="bg-slate-50/80 border-l-2 border-emerald-500 rounded-r-lg px-2.5 py-1.5 text-xs text-slate-600 italic">{intel.resumo}</p>
-      )}
-      <div className="dossie-card">
-        <RaioXEnergeticoCard place={intel} />
-      </div>
       {temCoord && (
         <div className="dossie-card space-y-2">
           <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">🛰️ Análise aérea do telhado</p>
@@ -97,6 +82,21 @@ export default function DossieOportunidadeEnergia({ lead }: { lead: any }) {
           </div>
         </div>
       )}
+      <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold">
+        <span className="px-2 py-0.5 rounded-full border border-sky-200 bg-sky-50 text-sky-700">{NIVEIS[classificarPorte(intel)].badge}</span>
+        {intel.nota !== null && intel.nota !== undefined && (
+          <span className="px-2 py-0.5 rounded-full border border-amber-100 bg-amber-50 text-amber-700">★ {Number(intel.nota).toFixed(1)} ({intel.avaliacoes})</span>
+        )}
+        {intel.estacionamento && (
+          <span className="px-2 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">🚗 Estacionamento próprio · Potencial Carport</span>
+        )}
+      </div>
+      {intel.resumo && (
+        <p className="bg-slate-50/80 border-l-2 border-emerald-500 rounded-r-lg px-2.5 py-1.5 text-xs text-slate-600 italic">{intel.resumo}</p>
+      )}
+      <div className="dossie-card">
+        <RaioXEnergeticoCard place={intel} />
+      </div>
     </div>
   );
 }
