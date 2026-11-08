@@ -225,9 +225,13 @@ export default function EnergiaContratacaoModal({
   /** Leads do Painel de Oportunidades: abre direto na concessionária da UF (ou filtra pela UF). */
   ufInicial?: string;
 }) {
-  const [busca, setBusca] = useState("");
+  const ufIni = String(ufInicial || "").trim().toUpperCase();
+  const daUFIni = ufIni ? CONCESSIONARIAS.filter((c) => c.uf === ufIni) : [];
+  const [busca, setBusca] = useState(() => (open && daUFIni.length > 1 ? ufIni : ""));
   const [regiao, setRegiao] = useState("Todas");
-  const [selecionada, setSelecionada] = useState<Concessionaria | null>(null);
+  const [selecionada, setSelecionada] = useState<Concessionaria | null>(() =>
+    open && daUFIni.length === 1 ? daUFIni[0] : null,
+  );
   const [dicasAbertas, setDicasAbertas] = useState(false);
   const [ordem, setOrdem] = useState<"desconto" | "az">("desconto");
 
