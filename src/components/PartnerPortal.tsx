@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA, etapaAssessorEnergia, MSG_RECUSA_ENERGIA } from "./AssessorEnergiaContratos";
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
+import { resumoConcessionariaUF } from "../lib/concessionariaRegiao";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import { LeadEnergiaCardCompacto, LeadEnergiaDetalheModal } from "./LeadEnergiaKanban";
@@ -1774,6 +1775,10 @@ export default function PartnerPortal({
         masterPartnerId: (currentPartner as any).parentPartnerId || "",
         origem: "painel_oportunidades",
         intelOportunidade: montarIntelOportunidade(place),
+        ...(() => {
+          const conc = resumoConcessionariaUF(place.estado || huntState);
+          return conc ? { concessionaria: conc.unica ? conc.nome : "", descontoConcessionaria: conc.desconto } : {};
+        })(),
         status: "novo",
         anotacoes: [],
         criadoEm: new Date().toISOString(),
@@ -2536,7 +2541,16 @@ export default function PartnerPortal({
                           </div>
                         )}
                         {propostaEnergiaLeadId && (
-                          <EnergiaContratacaoModal open ocultarVideo voltarLabel={detalheEnergiaLeadId ? "Voltar ao Lead" : undefined} onClose={() => setPropostaEnergiaLeadId(null)} />
+                          <EnergiaContratacaoModal
+                            open
+                            ocultarVideo
+                            voltarLabel={detalheEnergiaLeadId ? "Voltar ao Lead" : undefined}
+                            ufInicial={(() => {
+                              const l: any = energiaLeads.find((x: any) => x.id === propostaEnergiaLeadId);
+                              return l?.origem === "painel_oportunidades" ? l?.estado : undefined;
+                            })()}
+                            onClose={() => setPropostaEnergiaLeadId(null)}
+                          />
                         )}
                         {fichaEnergiaLeadId && energiaLeads.find((l: any) => l.id === fichaEnergiaLeadId) && (
                           <FichaLeadEnergiaModal
@@ -9458,6 +9472,24 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                     <span className="px-2 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px] font-extrabold">🚗 Estacionamento próprio · Potencial Carport</span>
                                   </div>
                                 )}
+                                {(() => {
+                                  const ufConc = String(place.estado || huntState || "").toUpperCase();
+                                  const conc = resumoConcessionariaUF(ufConc);
+                                  return (
+                                    <div className="dossie-card space-y-1">
+                                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">🔌 Concessionária da região {ufConc && `(${ufConc})`}</p>
+                                      {conc ? (
+                                        <>
+                                          <p className="text-xs font-extrabold text-slate-800">{conc.unica ? conc.nome : conc.lista.map((c) => c.nome).join(" · ")}</p>
+                                          <p className="text-xs text-emerald-700 font-bold">{conc.desconto}% de economia na fatura com a Sunne, sem investimento</p>
+                                          <p className="text-[10px] text-slate-500">Ao enviar para Energia Solar, o "Gerar Proposta" abre direto no formulário desta concessionária.</p>
+                                        </>
+                                      ) : (
+                                        <p className="text-xs text-slate-600">Sem atendimento Sunne nesta UF. Avalie AlugSol ou geração local.</p>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                                 {typeof place.lat === "number" && typeof place.lng === "number" && (
                                   <div className="dossie-card space-y-2">
                                     <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">🛰️ Análise aérea do telhado</p>
@@ -9730,9 +9762,19 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                   </div>
                                 )}
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 truncate">
-                                    ⚡ {raioX.kwhMin.toLocaleString("pt-BR")} - {raioX.kwhMax.toLocaleString("pt-BR")} kWh/mês
-                                  </span>
+                                  <div className="flex flex-wrap items-center gap-1 min-w-0">
+                                    <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 truncate">
+                                      ⚡ {raioX.kwhMin.toLocaleString("pt-BR")} - {raioX.kwhMax.toLocaleString("pt-BR")} kWh/mês
+                                    </span>
+                                    {(() => {
+                                      const conc = resumoConcessionariaUF(place.estado || huntState);
+                                      return conc ? (
+                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded border bg-lime-50 text-lime-800 border-lime-300 truncate" title="Economia Sunne na concessionária da região">
+                                          🔌 {conc.unica ? conc.nome : (place.estado || huntState).toUpperCase()} · {conc.desconto}% economia
+                                        </span>
+                                      ) : null;
+                                    })()}
+                                  </div>
                                   {hasPhone && (
                                     <a
                                       href={waUrl}
