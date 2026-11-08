@@ -38,6 +38,7 @@ import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import { LeadEnergiaCardCompacto, LeadEnergiaDetalheModal } from "./LeadEnergiaKanban";
+import DossieOportunidadeEnergia, { montarIntelOportunidade } from "./DossieOportunidadeEnergia";
 import { PresencaAssessorIndicador } from "./PresencaAssessor";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
@@ -1772,6 +1773,7 @@ export default function PartnerPortal({
         parceiroEmail: currentPartner.email || "",
         masterPartnerId: (currentPartner as any).parentPartnerId || "",
         origem: "painel_oportunidades",
+        intelOportunidade: montarIntelOportunidade(place),
         status: "novo",
         anotacoes: [],
         criadoEm: new Date().toISOString(),
@@ -2232,6 +2234,7 @@ export default function PartnerPortal({
                                 <div key={lead.id} className="lead-dossie grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
                                   <div className="space-y-3 min-w-0">
                                   <p className="dossie-titulo">Dossiê do cliente</p>
+                                  <DossieOportunidadeEnergia lead={lead} />
                                   <div className="dossie-card flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                       {lead.ramo && (
