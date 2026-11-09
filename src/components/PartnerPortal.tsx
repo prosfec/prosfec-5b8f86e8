@@ -1116,6 +1116,7 @@ export default function PartnerPortal({
   const [energiaLeads, setEnergiaLeads] = useState<any[]>([]);
   const [energiaLoading, setEnergiaLoading] = useState(false);
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
+  const [qualificacaoPlace, setQualificacaoPlace] = useState<any | null>(null);
   const [expandedEnergiaLeadId, setExpandedEnergiaLeadId] = useState<string | null>(null);
   const [propostaEnergiaLeadId, setPropostaEnergiaLeadId] = useState<string | null>(null);
   const [fichaEnergiaLeadId, setFichaEnergiaLeadId] = useState<string | null>(null);
@@ -12104,6 +12105,15 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
       )}
 
       {/* ACTIVE CNPJ DETAILS CARD MODAL */}
+      {qualificacaoPlace && (
+        <ModalQualificacaoAtendimento
+          place={qualificacaoPlace}
+          salvando={energiaSavingId === qualificacaoPlace.id}
+          onCancel={() => setQualificacaoPlace(null)}
+          onConfirm={(dados, fatura) => executarMigracaoEnergia(qualificacaoPlace, dados, fatura)}
+        />
+      )}
+
       {activeCnpjModal && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-[130] overflow-y-auto">
           <motion.div
