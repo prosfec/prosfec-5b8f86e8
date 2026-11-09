@@ -32,6 +32,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassw
 import { db, auth, storage, handleFirestoreError, OperationType, createNotification } from "../firebase";
 import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildCampanhaCPWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel, cicloComissaoEnergia } from "../utils";
 import { toast } from "sonner";
+import { FichaCnpjErrorBoundary } from "./FichaCnpjErrorBoundary";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA, etapaAssessorEnergia, MSG_RECUSA_ENERGIA } from "./AssessorEnergiaContratos";
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
@@ -12376,6 +12377,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             </div>
           </motion.div>
         </div>
+        </FichaCnpjErrorBoundary>
       )}
 
       {/* DIRECT LEAD REGISTER MODAL FORM (SIMULADOR COMPLETO DA HOME) */}
