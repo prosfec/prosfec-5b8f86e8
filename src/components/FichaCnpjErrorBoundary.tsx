@@ -5,14 +5,14 @@ export class FichaCnpjErrorBoundary extends React.Component<
   { children: React.ReactNode; onClose: () => void },
   { erro: boolean }
 > {
-  state = { erro: false };
+  override state = { erro: false };
   static getDerivedStateFromError() {
     return { erro: true };
   }
-  componentDidCatch(error: unknown) {
+  override componentDidCatch(error: unknown) {
     console.error("Falha ao exibir Ficha CNPJ:", error);
   }
-  render() {
+  override render() {
     if (!this.state.erro) return this.props.children;
     return (
       <div className="fixed inset-0 bg-slate-900/70 flex items-center justify-center p-4 z-[130]">
