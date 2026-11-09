@@ -119,13 +119,15 @@ export function PresencaAssessorIndicador({ partnerId }: { partnerId: string }) 
         && dentroHorarioComercial();
       flush(ativo);
     }, PRESENCA_HEARTBEAT_MS);
+    // Primeiro sinal de "online" logo após a eleição da aba líder.
+    const sinalInicial = setTimeout(() => { if (lider) flush(dentroHorarioComercial()); }, 2500);
 
     const aoOcultar = () => { if (document.visibilityState === "hidden") flush(false); };
     document.addEventListener("visibilitychange", aoOcultar);
     window.addEventListener("pagehide", aoOcultar);
 
     return () => {
-      clearInterval(tick); clearInterval(beat);
+      clearInterval(tick); clearInterval(beat); clearTimeout(sinalInicial);
       evs.forEach(e => window.removeEventListener(e, marcar));
       document.removeEventListener("visibilitychange", aoOcultar);
       window.removeEventListener("pagehide", aoOcultar);

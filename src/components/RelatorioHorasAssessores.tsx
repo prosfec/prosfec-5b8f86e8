@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { diaPresenca, formatarDuracao } from "../lib/presenca";
+import { diaPresenca, formatarDuracao, segundosValidos } from "../lib/presenca";
 import { PresencaStatusBadge } from "./PresencaAssessor";
 import { etapaAssessorEnergia, ETAPA_ENERGIA_TONE } from "./AssessorEnergiaContratos";
 
