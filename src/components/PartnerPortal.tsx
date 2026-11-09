@@ -12126,11 +12126,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               </button>
               <button
                 onClick={() => handleFetchCnpj(cnpjInputModal.place, cnpjInputModal.inputCnpj)}
-                disabled={!!cnpjQueryLoading[cnpjInputModal.place.id]}
+                disabled={!!cnpjQueryLoading[cnpjInputModal.place.id] || cnpjEsperaSeg > 0}
                 className="flex-1 py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-60 text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                {cnpjQueryLoading[cnpjInputModal.place.id] ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                Buscar Ficha CNPJ
+                {cnpjQueryLoading[cnpjInputModal.place.id] ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : cnpjEsperaSeg > 0 ? null : <Search className="w-3.5 h-3.5" />}
+                {cnpjEsperaSeg > 0 ? `⏳ Aguarde ${cnpjEsperaTxt}` : "Buscar Ficha CNPJ"}
               </button>
             </div>
           </motion.div>
@@ -12147,7 +12147,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         />
       )}
 
-      {activeCnpjModal && (
+      {activeCnpjModal && activeCnpjModal.details && typeof activeCnpjModal.details === "object" && (
+        <FichaCnpjErrorBoundary onClose={() => setActiveCnpjModal(null)}>
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-[130] overflow-y-auto">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
