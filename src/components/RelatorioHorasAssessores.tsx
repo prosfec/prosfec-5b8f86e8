@@ -32,7 +32,7 @@ export function RelatorioHorasAssessores({ partners, leadsEnergia, onClose }: { 
       .filter(p => (p.plano || "").toUpperCase().includes("ASSESSOR DE ENERGIA"))
       .map(p => {
         const dias = Object.entries(p.presencaDias || {}).map(([k, v]: [string, any]) => ({ dia: k, ...v }));
-        const soma = (f: (d: any) => boolean) => dias.filter(f).reduce((a, d) => a + Number(d.segundosAtivos || 0), 0);
+        const soma = (f: (d: any) => boolean) => dias.filter(f).reduce((a, d) => a + segundosValidos(d), 0);
         const segHoje = soma(d => d.dia === hoje);
         const segSemana = soma(d => d.dia >= semana);
         const segMes = soma(d => String(d.dia).startsWith(hoje.slice(0, 7)));

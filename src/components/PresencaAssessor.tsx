@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { doc, updateDoc, increment, getDoc } from "firebase/firestore";
+import { doc, getDoc, runTransaction, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import {
   deveContar, diaPresenca, horaPresenca, dentroHorarioComercial, statusPresenca, formatarDuracao,
+  segundosValidos, somarComTeto, deveLiderar, type LiderAba,
   PRESENCA_HEARTBEAT_MS, PRESENCA_INATIVIDADE_MS, PRESENCA_INICIO_HORA, PRESENCA_FIM_HORA,
 } from "../lib/presenca";
+
+function lerJSON<T>(k: string): T | null {
+  try { const v = localStorage.getItem(k); return v ? (JSON.parse(v) as T) : null; } catch { return null; }
+}
 
 /** Indicador + registro automático no portal do assessor. */
 export function PresencaAssessorIndicador({ partnerId }: { partnerId: string }) {
@@ -17,44 +22,69 @@ export function PresencaAssessorIndicador({ partnerId }: { partnerId: string }) 
   useEffect(() => {
     if (!partnerId) return;
     const partnerRef = doc(db, "parceiros", partnerId);
-    // Dados de presença ficam no próprio cadastro do parceiro (campo presencaDias),
-    // pois o parceiro já tem permissão para atualizar o seu documento.
+    const abaId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const kLider = `prosfec_presenca_lider_${partnerId}`;
+    const kInter = `prosfec_presenca_interacao_${partnerId}`;
+    let lider = false;
+    let ultimaGravInter = 0;
+    let enviando = false;
+
     getDoc(partnerRef)
-      .then(async s => {
-        const reg = s.data()?.presencaDias?.[dia.current];
-        setSegHoje(Number(reg?.segundosAtivos || 0));
-        const agora = new Date();
-        if (!reg?.primeiroAcessoHora && dentroHorarioComercial(agora)) {
-          await updateDoc(partnerRef, {
-            [`presencaDias.${dia.current}.dia`]: dia.current,
-            [`presencaDias.${dia.current}.primeiroAcesso`]: agora.toISOString(),
-            [`presencaDias.${dia.current}.primeiroAcessoHora`]: horaPresenca(agora),
-            [`presencaDias.${dia.current}.ultimoRegistroHora`]: horaPresenca(agora),
-          }).catch(() => {});
-        }
-      })
+      .then(s => setSegHoje(segundosValidos(s.data()?.presencaDias?.[dia.current])))
       .catch(() => {});
 
-    const marcar = () => { ultimaInteracao.current = Date.now(); };
+    // Interação em qualquer aba conta para a aba líder (compartilhada via localStorage).
+    const marcar = () => {
+      const t = Date.now();
+      ultimaInteracao.current = t;
+      if (t - ultimaGravInter > 1000) {
+        ultimaGravInter = t;
+        try { localStorage.setItem(kInter, String(t)); } catch { /* ignore */ }
+      }
+    };
     const evs = ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "wheel"];
     evs.forEach(e => window.addEventListener(e, marcar, { passive: true }));
+    const interacaoGlobal = () => Math.max(ultimaInteracao.current, Number(localStorage.getItem(kInter) || 0));
 
+    // Grava em transação: primeiro acesso e teto físico garantidos no próprio registro.
     const flush = async (ativo: boolean) => {
+      if (enviando) return;
       const seg = pendente.current;
+      if (!lider && seg === 0) return; // abas seguidoras não escrevem nada
       pendente.current = 0;
+      enviando = true;
       const agora = new Date();
-      const k = `presencaDias.${dia.current}`;
-      const upd: any = { presencaUltimoSinal: agora.toISOString(), presencaAtivo: ativo };
-      if (seg > 0) {
-        upd[`${k}.dia`] = dia.current;
-        upd[`${k}.segundosAtivos`] = increment(seg);
-        upd[`${k}.ultimoRegistro`] = agora.toISOString();
-        upd[`${k}.ultimoRegistroHora`] = horaPresenca(agora);
-      }
+      const agoraIso = agora.toISOString();
+      const diaK = dia.current;
       try {
-        await updateDoc(partnerRef, upd);
+        const total = await runTransaction(db, async tx => {
+          const snap = await tx.get(partnerRef);
+          const reg = snap.data()?.presencaDias?.[diaK] || {};
+          const upd: Record<string, unknown> = { presencaUltimoSinal: agoraIso, presencaAtivo: ativo };
+          let atual = segundosValidos(reg);
+          if (seg > 0) {
+            const k = `presencaDias.${diaK}`;
+            let primeiro = reg.primeiroAcesso as string | undefined;
+            if (!primeiro) {
+              const ini = new Date(agora.getTime() - seg * 1000);
+              primeiro = ini.toISOString();
+              upd[`${k}.primeiroAcesso`] = primeiro;
+              upd[`${k}.primeiroAcessoHora`] = horaPresenca(ini);
+            }
+            atual = somarComTeto(atual, seg, primeiro, agoraIso);
+            upd[`${k}.dia`] = diaK;
+            upd[`${k}.segundosAtivos`] = atual;
+            upd[`${k}.ultimoRegistro`] = agoraIso;
+            upd[`${k}.ultimoRegistroHora`] = horaPresenca(agora);
+          }
+          tx.update(partnerRef, upd);
+          return atual;
+        });
+        if (diaK === dia.current) setSegHoje(total + pendente.current);
       } catch {
         pendente.current += seg;
+      } finally {
+        enviando = false;
       }
     };
 
@@ -63,24 +93,32 @@ export function PresencaAssessorIndicador({ partnerId }: { partnerId: string }) 
       const hoje = diaPresenca(agora);
       if (hoje !== dia.current) { flush(false); dia.current = hoje; setSegHoje(0); }
       const visivel = document.visibilityState === "visible";
-      if (deveContar(agora, ultimaInteracao.current, visivel)) {
+      const eraLider = lider;
+      lider = deveLiderar(lerJSON<LiderAba>(kLider), abaId, visivel, agora.getTime());
+      if (lider) {
+        try { localStorage.setItem(kLider, JSON.stringify({ id: abaId, ts: agora.getTime(), visivel })); } catch { /* ignore */ }
+      } else if (eraLider) {
+        flush(false);
+      }
+      const ativoGlobal = agora.getTime() - interacaoGlobal() < PRESENCA_INATIVIDADE_MS;
+      if (lider && deveContar(agora, interacaoGlobal(), visivel)) {
         pendente.current += 1;
         setSegHoje(s => s + 1);
         setEstado("ativo");
       } else if (!dentroHorarioComercial(agora)) {
         setEstado("fora");
       } else {
-        setEstado("ausente");
+        setEstado(ativoGlobal && (visivel || !lider) ? "ativo" : "ausente");
       }
     }, 1000);
 
     const beat = setInterval(() => {
+      if (!lider) return;
       const ativo = document.visibilityState === "visible"
-        && Date.now() - ultimaInteracao.current < PRESENCA_INATIVIDADE_MS
+        && Date.now() - interacaoGlobal() < PRESENCA_INATIVIDADE_MS
         && dentroHorarioComercial();
       flush(ativo);
     }, PRESENCA_HEARTBEAT_MS);
-    flush(dentroHorarioComercial());
 
     const aoOcultar = () => { if (document.visibilityState === "hidden") flush(false); };
     document.addEventListener("visibilitychange", aoOcultar);
@@ -92,6 +130,7 @@ export function PresencaAssessorIndicador({ partnerId }: { partnerId: string }) 
       document.removeEventListener("visibilitychange", aoOcultar);
       window.removeEventListener("pagehide", aoOcultar);
       flush(false);
+      try { if (lerJSON<LiderAba>(kLider)?.id === abaId) localStorage.removeItem(kLider); } catch { /* ignore */ }
     };
   }, [partnerId]);
 
@@ -152,7 +191,7 @@ export function AdminPresencaAssessor({ partner }: { partner: any }) {
   const inicioSemana = new Date(agora.getTime() - (dow - 1) * 86400000);
   const chaveSemana = diaPresenca(inicioSemana);
   const mes = hoje.slice(0, 7);
-  const soma = (f: (d: any) => boolean) => dias.filter(f).reduce((a, d) => a + Number(d.segundosAtivos || 0), 0);
+  const soma = (f: (d: any) => boolean) => dias.filter(f).reduce((a, d) => a + segundosValidos(d), 0);
   const segHoje = soma(d => d.dia === hoje);
   const segSemana = soma(d => d.dia >= chaveSemana);
   const segMes = soma(d => String(d.dia).startsWith(mes));
