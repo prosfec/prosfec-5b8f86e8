@@ -1736,6 +1736,33 @@ export default function PartnerPortal({
   const addEnergiaLeadUnico = (novo: any) =>
     setEnergiaLeads(prev => (prev.some((l: any) => l.id === novo.id) ? prev : [novo, ...prev]));
 
+  const handleCancelarEnergiaLead = async (lead: any) => {
+    if (!currentPartner || !lead?.id) return;
+    const motivo = prompt(`Cancelar a proposta de "${lead.nomeEmpresa || "este lead"}"?\n\nInforme o motivo do cancelamento:`);
+    if (motivo === null) return;
+    if (!motivo.trim()) { toast.error("Informe o motivo para cancelar."); return; }
+    setEnergiaSavingId(lead.id);
+    try {
+      const agora = new Date().toISOString();
+      const nota = { texto: `✖ Proposta cancelada pelo assessor. Motivo: ${motivo.trim()}`, autor: currentPartner.nome || "Assessor", papel: "parceiro", data: agora, automatica: true };
+      await updateDoc(doc(db, "leads_energia", lead.id), {
+        status: "arquivado",
+        anotacoes: arrayUnion(nota),
+        atualizadoEm: agora,
+        ultimaMovimentacaoParceiroEm: agora,
+        vistoPeloParceiroEm: agora
+      });
+      setEnergiaLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: "arquivado", anotacoes: [...(l.anotacoes || []), nota] } : l));
+      setDetalheEnergiaLeadId(null);
+      toast.success("Proposta cancelada.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível cancelar. Tente novamente.");
+    } finally {
+      setEnergiaSavingId(null);
+    }
+  };
+
   const fetchEnergiaLeads = async (partnerId: string) => {
     if (!partnerId) return;
     setEnergiaLoading(true);
@@ -2486,6 +2513,16 @@ export default function PartnerPortal({
                                     >
                                       📋 Ficha & Documentos ({fichaDocumentosEnviados(lead)}/{fichaDocumentosTotal(lead)})
                                     </button>
+                                    {(statusKey === "novo" || statusKey === "atendimento") && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCancelarEnergiaLead(lead)}
+                                        disabled={energiaSavingId === lead.id}
+                                        className="w-full px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg transition-all font-semibold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[32px] disabled:opacity-50"
+                                      >
+                                        ✖ Cancelar Proposta
+                                      </button>
+                                    )}
                                   </div>
 
                                   <div className="flex items-center gap-1.5 flex-wrap empty:hidden">

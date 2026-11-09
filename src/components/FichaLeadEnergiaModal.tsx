@@ -144,11 +144,18 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
     try {
       const limpa: Record<string, string> = { ...(lead?.ficha || {}), tipo };
       CAMPOS.forEach((c) => { limpa[c.key] = String(ficha[c.key] || "").trim(); });
-      const mov = movimento("📋 Ficha cadastral preenchida/atualizada pelo assessor.");
-      const updates = { ficha: limpa, fichaAtualizadaEm: new Date().toISOString() };
+      const completa = CAMPOS.every((c) => limpa[c.key]);
+      const avanca = podeEditar && completa && (lead?.status || "novo") === "novo";
+      const mov = movimento(avanca
+        ? "📋 Ficha cadastral 100% preenchida pelo assessor. Lead avançou automaticamente para Em Atendimento."
+        : "📋 Ficha cadastral preenchida/atualizada pelo assessor.");
+      const updates: Record<string, any> = { ficha: limpa, fichaAtualizadaEm: new Date().toISOString() };
+      if (avanca) updates.status = "atendimento";
       await updateDoc(doc(db, "leads_energia", lead.id), { ...updates, ...mov.updates });
       onUpdated?.({ ...updates, ...mov.local });
-      toast.success("Ficha salva.");
+      if (avanca) toast.success("Ficha completa! Lead avançou para Em Atendimento.");
+      else if (podeEditar && !completa && (lead?.status || "novo") === "novo") toast.success("Ficha salva. Preencha todos os campos cadastrais para o lead avançar para Em Atendimento.");
+      else toast.success("Ficha salva.");
     } catch (e) {
       console.error(e);
       toast.error("Não foi possível salvar a ficha. Tente novamente.");
