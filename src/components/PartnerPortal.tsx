@@ -32,6 +32,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassw
 import { db, auth, storage, handleFirestoreError, OperationType, createNotification } from "../firebase";
 import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildCampanhaCPWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel, cicloComissaoEnergia } from "../utils";
 import { toast } from "sonner";
+import { FichaCnpjErrorBoundary } from "./FichaCnpjErrorBoundary";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA, etapaAssessorEnergia, MSG_RECUSA_ENERGIA } from "./AssessorEnergiaContratos";
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
@@ -1089,6 +1090,24 @@ export default function PartnerPortal({
   const [cnpjInputModal, setCnpjInputModalState] = useState<{ place: any; inputCnpj: string; error?: string } | null>(null);
   // Consulta de CNPJ embutida na caixa da oportunidade (sem popup intermediário)
   const [cnpjInline, setCnpjInline] = useState<Record<string, { input: string; error?: string; editando?: boolean }>>({});
+  // Limite de 1 consulta externa de CNPJ por minuto (persistido na sessão para não burlar com recarga)
+  const [cnpjBloqueioAte, setCnpjBloqueioAte] = useState<number>(0);
+  const [cnpjAgora, setCnpjAgora] = useState<number>(() => Date.now());
+  useEffect(() => {
+    try { const v = Number(sessionStorage.getItem("pf_cnpj_bloqueio_ate") || 0); if (v > Date.now()) setCnpjBloqueioAte(v); } catch {}
+  }, []);
+  useEffect(() => {
+    if (cnpjBloqueioAte <= Date.now()) return;
+    const t = setInterval(() => setCnpjAgora(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [cnpjBloqueioAte]);
+  const cnpjEsperaSeg = Math.max(0, Math.ceil((cnpjBloqueioAte - cnpjAgora) / 1000));
+  const cnpjEsperaTxt = `${String(Math.floor(cnpjEsperaSeg / 60)).padStart(2, "0")}:${String(cnpjEsperaSeg % 60).padStart(2, "0")}`;
+  const iniciarBloqueioCnpj = (seg: number) => {
+    const ate = Date.now() + Math.max(1, seg) * 1000;
+    setCnpjBloqueioAte(ate); setCnpjAgora(Date.now());
+    try { sessionStorage.setItem("pf_cnpj_bloqueio_ate", String(ate)); } catch {}
+  };
 
   // Batch Lead Distribution states for Master
   const [selectedHuntPlaces, setSelectedHuntPlaces] = useState<string[]>([]);
@@ -4019,6 +4038,14 @@ export default function PartnerPortal({
       return;
     }
 
+    const restanteSeg = Math.ceil((cnpjBloqueioAte - Date.now()) / 1000);
+    if (restanteSeg > 0) {
+      const msg = `Para garantir a estabilidade das consultas na Receita Federal, aguarde ${restanteSeg}s para uma nova consulta de CNPJ.`;
+      if (place._inline) setCnpjInline(prev => ({ ...prev, [placeId]: { input: cnpjInput || "", error: msg, editando: true } }));
+      else setCnpjInputModal({ place, inputCnpj: cnpjInput || "", error: msg });
+      return;
+    }
+
     setCnpjQueryLoading(prev => ({ ...prev, [placeId]: true }));
 
     try {
@@ -4027,6 +4054,7 @@ export default function PartnerPortal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cnpj: cleanCnpj.length === 14 ? cleanCnpj : undefined,
+          partnerId: currentPartner?.id || undefined,
           nomeEmpresa: place.nome || place.nomeEmpresa,
           cidade: place.cidade || huntCity,
           estado: place.estado || huntState,
@@ -4044,6 +4072,12 @@ export default function PartnerPortal({
         throw new Error("Não foi possível conectar ao serviço de consulta do CNPJ. Tente novamente em instantes.");
       }
 
+      if (!data || typeof data !== "object") data = {};
+      if (data.rateLimited || response.status === 429) {
+        iniciarBloqueioCnpj(Number(data.retryAfter) || 60);
+        throw new Error(data.error || "Aguarde 1 minuto para uma nova consulta de CNPJ.");
+      }
+      if (data.success && !data.cached) iniciarBloqueioCnpj(60);
       if (!response.ok || !data.success) {
         if (data.needManualInput) {
           setCnpjInputModal({
@@ -4089,7 +4123,7 @@ export default function PartnerPortal({
       } else if (cnpjInputModal) {
         setCnpjInputModalState(prev => prev ? { ...prev, error: err.message } : null);
       } else {
-        alert(err.message || "Erro ao consultar dados do CNPJ.");
+        toast.error(err?.message || "Erro ao consultar dados do CNPJ.");
       }
     } finally {
       setCnpjQueryLoading(prev => ({ ...prev, [placeId]: false }));
@@ -9654,8 +9688,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                           </p>
                                         )}
                                         <div className="flex items-center gap-1.5">
-                                          <button type="button" onClick={buscar} disabled={carregando} className="flex-1 px-2.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50">
-                                            {carregando ? (<><RefreshCw className="w-3 h-3 animate-spin text-blue-600" />Consultando Receita Federal...</>) : (<><Search className="w-3 h-3 text-blue-600" />Buscar Cartão CNPJ</>)}
+                                          <button type="button" onClick={buscar} disabled={carregando || cnpjEsperaSeg > 0} className="flex-1 px-2.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50">
+                                            {carregando ? (<><RefreshCw className="w-3 h-3 animate-spin text-blue-600" />Consultando Receita Federal...</>) : cnpjEsperaSeg > 0 ? (<>⏳ Aguarde {cnpjEsperaTxt} para nova consulta</>) : (<><Search className="w-3 h-3 text-blue-600" />Buscar Cartão CNPJ</>)}
                                           </button>
                                           {cnpjData && (
                                             <button type="button" onClick={() => setCnpjInline(prev => ({ ...prev, [placeId]: { input: "", editando: false } }))} className="px-2 py-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold text-[10px] rounded-lg cursor-pointer">
@@ -12093,11 +12127,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               </button>
               <button
                 onClick={() => handleFetchCnpj(cnpjInputModal.place, cnpjInputModal.inputCnpj)}
-                disabled={!!cnpjQueryLoading[cnpjInputModal.place.id]}
+                disabled={!!cnpjQueryLoading[cnpjInputModal.place.id] || cnpjEsperaSeg > 0}
                 className="flex-1 py-2.5 bg-[#0A3D2E] hover:bg-[#00A86B] disabled:opacity-60 text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                {cnpjQueryLoading[cnpjInputModal.place.id] ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                Buscar Ficha CNPJ
+                {cnpjQueryLoading[cnpjInputModal.place.id] ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : cnpjEsperaSeg > 0 ? null : <Search className="w-3.5 h-3.5" />}
+                {cnpjEsperaSeg > 0 ? `⏳ Aguarde ${cnpjEsperaTxt}` : "Buscar Ficha CNPJ"}
               </button>
             </div>
           </motion.div>
@@ -12114,7 +12148,8 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
         />
       )}
 
-      {activeCnpjModal && (
+      {activeCnpjModal && activeCnpjModal.details && typeof activeCnpjModal.details === "object" && (
+        <FichaCnpjErrorBoundary onClose={() => setActiveCnpjModal(null)}>
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 z-[130] overflow-y-auto">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
@@ -12342,6 +12377,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
             </div>
           </motion.div>
         </div>
+        </FichaCnpjErrorBoundary>
       )}
 
       {/* DIRECT LEAD REGISTER MODAL FORM (SIMULADOR COMPLETO DA HOME) */}
