@@ -59,13 +59,13 @@ export default function ModalQualificacaoAtendimento({ place, salvando, onCancel
 
   const cnpj = place?.cnpjDetails?.cnpj || place?.cnpj || "";
   const local = [place?.cidade, place?.estado].filter(Boolean).join("/");
-  const campo = "w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500";
+  const campo = "w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-[#ffffff] dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 [color-scheme:light] dark:[color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500";
   const rotulo = "block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1";
   const Erro = ({ k }: { k: string }) => (erros[k] ? <p className="mt-1 text-[11px] font-semibold text-red-600 dark:text-red-400">{erros[k]}</p> : null);
 
   return createPortal(
     <div className="fixed inset-0 z-[140] flex items-end sm:items-center justify-center bg-slate-950/60 backdrop-blur-sm p-0 sm:p-4" onClick={() => !salvando && onCancel()}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-lg max-h-[92vh] flex flex-col bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-lg max-h-[92vh] flex flex-col bg-[#ffffff] dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="bg-gradient-to-r from-[#0A3D2E] via-[#0D5C43] to-[#00A86B] px-5 py-4 text-white flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0"><Zap className="w-4 h-4 text-amber-300 fill-current" /></div>
           <div className="min-w-0 flex-1">
@@ -84,22 +84,22 @@ export default function ModalQualificacaoAtendimento({ place, salvando, onCancel
 
           <div>
             <label className={rotulo}>1. Nome do sócio / representante *</label>
-            <div className="relative"><User className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+            <div className="relative"><User className="w-4 h-4 absolute left-3 top-3 text-slate-400 dark:text-slate-300" />
               <input className={campo} value={nome} maxLength={100} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Marcos Vinícius da Silva" /></div>
             <Erro k="nomeDecisor" />
           </div>
 
           <div>
             <label className={rotulo}>2. Telefone / WhatsApp direto do decisor *</label>
-            <div className="relative"><Phone className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+            <div className="relative"><Phone className="w-4 h-4 absolute left-3 top-3 text-slate-400 dark:text-slate-300" />
               <input className={campo} inputMode="tel" value={fone} onChange={(e) => setFone(formatarCelular(e.target.value))} placeholder="(98) 99123-4567" /></div>
             <Erro k="whatsapp" />
           </div>
 
           <div>
             <label className={rotulo}>3. Média da conta de energia (R$) *</label>
-            <div className="relative"><Lightbulb className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <span className="absolute left-9 top-2.5 text-sm text-slate-500">R$</span>
+            <div className="relative"><Lightbulb className="w-4 h-4 absolute left-3 top-3 text-slate-400 dark:text-slate-300" />
+              <span className="absolute left-9 top-2.5 text-sm font-semibold text-slate-500 dark:text-slate-300">R$</span>
               <input className={`${campo} pl-16`} inputMode="numeric" value={conta} onChange={(e) => setConta(mascaraReais(e.target.value))} placeholder="3.850,00" /></div>
             <Erro k="mediaConta" />
           </div>
@@ -107,7 +107,7 @@ export default function ModalQualificacaoAtendimento({ place, salvando, onCancel
           <div>
             <label className={rotulo}>4. Data e horário do atendimento realizado *</label>
             <div className="flex gap-2">
-              <div className="relative flex-1"><CalendarClock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+              <div className="relative flex-1"><CalendarClock className="w-4 h-4 absolute left-3 top-3 text-slate-400 dark:text-slate-300" />
                 <input type="datetime-local" className={campo} value={data} max={agoraLocal()} onChange={(e) => setData(e.target.value)} /></div>
               <button type="button" onClick={() => setData(agoraLocal())} className="px-3 rounded-xl border border-slate-300 dark:border-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap">Agora</button>
             </div>
