@@ -29,7 +29,7 @@ import {
   runTransaction
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from "firebase/auth";
-import { db, auth, handleFirestoreError, OperationType, createNotification } from "../firebase";
+import { db, auth, storage, handleFirestoreError, OperationType, createNotification } from "../firebase";
 import { formatCurrencyBRL, triggerWebhookSimulation, validateCNPJ, validateCPF, validatePhone, getAppDomain, buildWhatsAppUrl, buildEnergiaSolarWhatsAppMessage, buildCampanhaCPWhatsAppMessage, buildEnergiaFollowUpWhatsAppMessage, precisaFollowUpEnergia, isJanelaSaqueMensal, proximoPagamentoEnergiaLabel, cicloComissaoEnergia } from "../utils";
 import { toast } from "sonner";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
@@ -37,6 +37,9 @@ import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia,
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 import { resumoConcessionariaUF } from "../lib/concessionariaRegiao";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
+import ModalQualificacaoAtendimento from "./ModalQualificacaoAtendimento";
+import { formatarCelular, notaPrimeiroAtendimento, type QualificacaoValida } from "../lib/qualificacaoAtendimento";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import { LeadEnergiaCardCompacto, LeadEnergiaDetalheModal } from "./LeadEnergiaKanban";
 import DossieOportunidadeEnergia, { montarIntelOportunidade } from "./DossieOportunidadeEnergia";
@@ -1742,16 +1745,28 @@ export default function PartnerPortal({
     }, error => console.warn("Erro ao atualizar comissões de energia:", error));
   }, [isAuthenticated, currentPartner?.id]);
 
-  const handleMarcarEnergiaSolar = async (place: any) => {
+  // Trava de qualificação: o botão abre a ficha de primeiro atendimento; a migração só ocorre ao confirmar.
+  const handleMarcarEnergiaSolar = (place: any) => {
     if (!currentPartner) return;
     if (isEnergiaOnly && (currentPartner as any).avaliacaoEnergiaStatus === "recusado") {
       toast.error("Parceria encerrada: o cadastro de novos leads não está mais disponível.");
       return;
     }
     const key = energiaLeadKey(place);
+    if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
+      toast.info("Esta empresa já está na sua lista de Energia Solar.");
+      return;
+    }
+    setQualificacaoPlace(place);
+  };
+
+  const executarMigracaoEnergia = async (place: any, qual: QualificacaoValida, fatura: File | null) => {
+    if (!currentPartner) return;
+    const key = energiaLeadKey(place);
     if (energiaEnvioLock.has(key)) return;
     if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
       toast.info("Esta empresa já está na sua lista de Energia Solar.");
+      setQualificacaoPlace(null);
       return;
     }
     energiaEnvioLock.add(key);
@@ -1762,7 +1777,18 @@ export default function PartnerPortal({
         nomeEmpresa: place.nome || "",
         razaoSocial: cachedCnpj?.razaoSocial || place.nome || "",
         ramo: place.categoria || huntKeyword || "",
-        telefone: place.telefone || "",
+        telefone: qual.whatsapp,
+        telefoneEmpresa: place.telefone || "",
+        contatoNome: qual.nomeDecisor,
+        mediaContaReais: qual.mediaContaReais,
+        primeiroAtendimentoEm: qual.atendimentoEm,
+        ficha: {
+          tipo: (cachedCnpj?.cnpj || place.cnpj) ? "PJ" : "PF",
+          nomeCompleto: qual.nomeDecisor,
+          telefone: formatarCelular(qual.whatsapp),
+          razaoSocial: cachedCnpj?.razaoSocial || place.nome || "",
+          cnpj: cachedCnpj?.cnpj || place.cnpj || "",
+        },
         endereco: place.endereco || "",
         website: place.website || "",
         cidade: place.cidade || huntCity || "",
@@ -1780,14 +1806,36 @@ export default function PartnerPortal({
           return conc ? { concessionaria: conc.unica ? conc.nome : "", descontoConcessionaria: conc.desconto } : {};
         })(),
         status: "novo",
-        anotacoes: [],
+        anotacoes: [{
+          texto: notaPrimeiroAtendimento(qual),
+          autor: currentPartner.nome || "Assessor",
+          papel: "parceiro",
+          data: new Date().toISOString(),
+          automatica: true
+        }],
         criadoEm: new Date().toISOString(),
         atualizadoEm: new Date().toISOString()
       };
       const docRef = await addDoc(collection(db, "leads_energia"), payload);
-      addEnergiaLeadUnico({ id: docRef.id, ...payload });
+      let documentos: any = undefined;
+      if (fatura) {
+        try {
+          const ext = (fatura.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const path = `documentos_energia/${docRef.id}/contaLuz_${Date.now()}.${ext}`;
+          const snap = await uploadBytes(storageRef(storage, path), fatura, { contentType: fatura.type });
+          const url = await getDownloadURL(snap.ref);
+          const registro = { url, path, nome: fatura.name, tipo: fatura.type, enviadoEm: new Date().toISOString() };
+          await updateDoc(doc(db, "leads_energia", docRef.id), { "documentos.contaLuz": registro });
+          documentos = { contaLuz: registro };
+        } catch (err) {
+          console.error("Falha ao anexar fatura:", err);
+          toast.warning("Lead migrado, mas a fatura não foi anexada. Envie pela Ficha e Documentos.");
+        }
+      }
+      addEnergiaLeadUnico({ id: docRef.id, ...payload, ...(documentos ? { documentos } : {}) });
+      setQualificacaoPlace(null);
       setEnergiaPanelOpen(true);
-      toast.success("Lead enviado para a esteira de Energia Solar.");
+      toast.success("Lead qualificado e enviado para a esteira de Energia Solar.");
     } catch (error) {
       console.error("Erro ao enviar lead para Energia Solar:", error);
       toast.error("Não foi possível enviar o lead para Energia Solar.");
