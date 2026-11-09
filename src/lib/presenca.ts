@@ -62,3 +62,39 @@ export function formatarDuracao(seg: number): string {
   const m = Math.floor((s % 3600) / 60);
   return `${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m`;
 }
+
+/** Teto absoluto de um dia: janela comercial inteira (10h). */
+export const PRESENCA_TETO_DIA_SEG = (PRESENCA_FIM_HORA - PRESENCA_INICIO_HORA) * 3600;
+
+/**
+ * Teto físico: o tempo ativo nunca pode passar do tempo real decorrido
+ * entre o primeiro acesso e o último registro (nem da janela comercial).
+ */
+export function tetoFisicoSegundos(primeiroAcessoIso?: string | null, fimIso?: string | null): number {
+  if (!primeiroAcessoIso || !fimIso) return PRESENCA_TETO_DIA_SEG;
+  const ini = new Date(primeiroAcessoIso).getTime();
+  const fim = new Date(fimIso).getTime();
+  if (!Number.isFinite(ini) || !Number.isFinite(fim)) return PRESENCA_TETO_DIA_SEG;
+  return Math.max(0, Math.min(PRESENCA_TETO_DIA_SEG, Math.ceil((fim - ini) / 1000)));
+}
+
+/** Segundos ativos válidos de um registro diário (corrige dados antigos inflados). */
+export function segundosValidos(reg: any): number {
+  const seg = Math.max(0, Number(reg?.segundosAtivos || 0));
+  return Math.min(seg, tetoFisicoSegundos(reg?.primeiroAcesso, reg?.ultimoRegistro));
+}
+
+/** Novo total ao somar segundos pendentes, respeitando o teto físico. */
+export function somarComTeto(atual: number, novos: number, primeiroAcessoIso: string, agoraIso: string): number {
+  return Math.min(Math.max(0, atual) + Math.max(0, novos), tetoFisicoSegundos(primeiroAcessoIso, agoraIso));
+}
+
+export const PRESENCA_LIDER_TTL_MS = 5000;
+export type LiderAba = { id: string; ts: number; visivel: boolean };
+
+/** Esta aba deve assumir/manter a liderança da contagem? */
+export function deveLiderar(atual: LiderAba | null, meuId: string, visivel: boolean, agora: number): boolean {
+  if (!atual || agora - atual.ts > PRESENCA_LIDER_TTL_MS) return true;
+  if (atual.id === meuId) return true;
+  return visivel && !atual.visivel;
+}
