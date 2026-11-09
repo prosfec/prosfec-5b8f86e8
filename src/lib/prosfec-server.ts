@@ -721,9 +721,31 @@ export function createExpressApp() {
   });
 
   // API Route: CNPJ Search & Enrichment (BrasilAPI + ReceitaWS + MinhaReceita)
+  // Limite: 1 consulta EXTERNA de CNPJ por minuto por assessor (cache não conta)
+  const CNPJ_COOLDOWN_MS = 60_000;
+  const cnpjUltimaConsulta = new Map<string, number>();
   app.post("/api/consulta-cnpj", async (req, res) => {
     try {
-      let { cnpj, nomeEmpresa, cidade, estado, endereco, website } = req.body;
+      let { cnpj, nomeEmpresa, cidade, estado, endereco, website } = req.body || {};
+      const ipCnpj = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "x").split(",")[0].trim();
+      const chaveLimite = String(req.body?.partnerId || "").slice(0, 80) || `ip:${ipCnpj}`;
+      const reservarConsultaExterna = (): number => {
+        const agora = Date.now();
+        const ultima = cnpjUltimaConsulta.get(chaveLimite) || 0;
+        const restante = CNPJ_COOLDOWN_MS - (agora - ultima);
+        if (restante > 0) return Math.ceil(restante / 1000);
+        cnpjUltimaConsulta.set(chaveLimite, agora);
+        if (cnpjUltimaConsulta.size > 5000) {
+          for (const [k, t] of cnpjUltimaConsulta) if (agora - t > CNPJ_COOLDOWN_MS) cnpjUltimaConsulta.delete(k);
+        }
+        return 0;
+      };
+      const respostaLimite = (seg: number) => res.status(429).json({
+        success: false,
+        rateLimited: true,
+        retryAfter: seg,
+        error: `Para garantir a estabilidade das consultas na Receita Federal, aguarde ${seg}s para uma nova consulta de CNPJ.`,
+      });
 
       if (cnpj) {
         cnpj = cnpj.replace(/\D/g, "");
@@ -746,6 +768,8 @@ export function createExpressApp() {
             error: "O CNPJ informado é inválido (dígitos verificadores não conferem). Confira o número e tente novamente.",
           });
         }
+        const esperaDireta = reservarConsultaExterna();
+        if (esperaDireta > 0) return respostaLimite(esperaDireta);
         const result = await fetchCnpjFromPublicApis(cnpj);
         if (result) {
           cnpjCache.set(cnpj, { timestamp: Date.now(), data: result });
@@ -770,6 +794,8 @@ export function createExpressApp() {
           });
         }
 
+        const esperaBusca = reservarConsultaExterna();
+        if (esperaBusca > 0) return respostaLimite(esperaBusca);
         console.log(`[CNPJ Discovery] Iniciando busca para "${nomeEmpresa}" em "${cidade || "BR"}"...`);
         const candidateCnpjs = await discoverCnpjForBusiness(nomeEmpresa, cidade, estado, endereco, website);
         let sugestao: { cnpj: string; razaoSocial: string } | null = null;
