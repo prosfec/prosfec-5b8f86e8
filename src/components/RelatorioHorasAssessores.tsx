@@ -12,16 +12,8 @@ function inicioSemanaChave() {
   return diaPresenca(new Date(agora.getTime() - (dow - 1) * 86400000));
 }
 
-function noPeriodo(iso: string | undefined, p: Periodo, hoje: string, semana: string) {
-  if (!iso) return false;
-  const d = diaPresenca(new Date(iso));
-  if (p === "hoje") return d === hoje;
-  if (p === "semana") return d >= semana;
-  return d.startsWith(hoje.slice(0, 7));
-}
-
-/** Relatório geral de horas e desempenho dos Assessores de Energia (aba Parceiros). */
-export function RelatorioHorasAssessores({ partners, leadsEnergia, onClose }: { partners: any[]; leadsEnergia: any[]; onClose: () => void }) {
+/** Relatório geral de controle de horas dos Assessores de Energia (aba Parceiros). */
+export function RelatorioHorasAssessores({ partners, onClose }: { partners: any[]; onClose: () => void }) {
   const [busca, setBusca] = useState("");
   const [periodo, setPeriodo] = useState<Periodo>("mes");
   const hoje = diaPresenca();
@@ -36,16 +28,10 @@ export function RelatorioHorasAssessores({ partners, leadsEnergia, onClose }: { 
         const segHoje = soma(d => d.dia === hoje);
         const segSemana = soma(d => d.dia >= semana);
         const segMes = soma(d => String(d.dia).startsWith(hoje.slice(0, 7)));
-        const leads = leadsEnergia.filter(l => l.parceiroId === p.id && noPeriodo(l.dataCriacao || l.criadoEm, periodo, hoje, semana));
-        const todos = leadsEnergia.filter(l => l.parceiroId === p.id);
-        const concl = todos.filter(l => l.status === "concluido" && noPeriodo(l.dataConclusao || l.dataAtualizacao || l.dataCriacao, periodo, hoje, semana)).length;
-        const atend = todos.filter(l => l.status === "atendimento" || l.status === "em atendimento").length;
         const segPeriodo = periodo === "hoje" ? segHoje : periodo === "semana" ? segSemana : segMes;
         return {
           p, segHoje, segSemana, segMes, segPeriodo,
           primeiro: p.presencaDias?.[hoje]?.primeiroAcessoHora || "—",
-          leads: leads.length, atend, concl,
-          conv: leads.length ? Math.round((concl / leads.length) * 100) : 0,
         };
       })
       .filter(r => {
@@ -54,32 +40,28 @@ export function RelatorioHorasAssessores({ partners, leadsEnergia, onClose }: { 
         return (r.p.nome || "").toLowerCase().includes(q) || String(r.p.whatsapp || "").replace(/\D/g, "").includes(q.replace(/\D/g, "") || "§");
       })
       .sort((a, b) => b.segPeriodo - a.segPeriodo);
-  }, [partners, leadsEnergia, busca, periodo, hoje, semana]);
+  }, [partners, busca, periodo, hoje, semana]);
 
   const totalSeg = linhas.reduce((a, r) => a + r.segPeriodo, 0);
   const online = linhas.filter(r => r.p.presencaAtivo && r.p.presencaUltimoSinal && Date.now() - new Date(r.p.presencaUltimoSinal).getTime() < 270000).length;
-  const totalConcl = linhas.reduce((a, r) => a + r.concl, 0);
-  const totalLeads = linhas.reduce((a, r) => a + r.leads, 0);
   const rotulo = periodo === "hoje" ? "hoje" : periodo === "semana" ? "na semana" : "no mês";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white text-slate-800 shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white text-slate-800 shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
           <div>
-            <h3 className="text-base font-black text-slate-900">⏱️ Horas & Desempenho — Assessores de Energia</h3>
+            <h3 className="text-base font-black text-slate-900">⏱️ Controle de Horas — Assessores de Energia</h3>
             <p className="text-[11px] text-slate-500">Horas contadas de segunda a sexta, 08h às 18h (Brasília), com pausa após 5 min sem atividade.</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg px-2 py-1 text-lg font-bold text-slate-500 hover:bg-slate-100 cursor-pointer" aria-label="Fechar">✕</button>
         </div>
 
         <div className="space-y-3 overflow-auto p-4">
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-2">
             {[
               ["Assessores", `${online} online / ${linhas.length}`],
               [`Horas da equipe ${rotulo}`, formatarDuracao(totalSeg)],
-              [`Leads cadastrados ${rotulo}`, String(totalLeads)],
-              [`Contratos concluídos ${rotulo}`, String(totalConcl)],
             ].map(([l, v]) => (
               <div key={l} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <p className="text-[10px] font-bold uppercase text-slate-500">{l}</p>
@@ -105,15 +87,11 @@ export function RelatorioHorasAssessores({ partners, leadsEnergia, onClose }: { 
                   <th className="p-2">Hoje</th>
                   <th className="p-2">Semana</th>
                   <th className="p-2">Mês</th>
-                  <th className="p-2">Leads ({rotulo})</th>
-                  <th className="p-2">Em atendimento</th>
-                  <th className="p-2">Concluídos ({rotulo})</th>
-                  <th className="p-2">Conversão</th>
                   <th className="p-2">Etapa</th>
                 </tr>
               </thead>
               <tbody>
-                {linhas.length === 0 && <tr><td colSpan={11} className="p-4 text-center text-slate-500">Nenhum assessor encontrado.</td></tr>}
+                {linhas.length === 0 && <tr><td colSpan={7} className="p-4 text-center text-slate-500">Nenhum assessor encontrado.</td></tr>}
                 {linhas.map(r => {
                   const et = etapaAssessorEnergia(r.p);
                   return (
@@ -127,10 +105,6 @@ export function RelatorioHorasAssessores({ partners, leadsEnergia, onClose }: { 
                       <td className="p-2 text-center font-bold">{formatarDuracao(r.segHoje)}</td>
                       <td className="p-2 text-center font-bold">{formatarDuracao(r.segSemana)}</td>
                       <td className="p-2 text-center font-bold">{formatarDuracao(r.segMes)}</td>
-                      <td className="p-2 text-center">{r.leads}</td>
-                      <td className="p-2 text-center">{r.atend}</td>
-                      <td className="p-2 text-center font-bold text-emerald-700">{r.concl}</td>
-                      <td className="p-2 text-center">{r.conv}%</td>
                       <td className="p-2 text-center">
                         <span className={`inline-flex rounded-md border px-2 py-0.5 text-[10px] font-extrabold ${ETAPA_ENERGIA_TONE[et.etapa]}`}>{et.label}</span>
                       </td>

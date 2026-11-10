@@ -3957,11 +3957,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       onClick={() => setShowRelatorioHoras(true)}
                       className="py-1.5 px-3 text-xs font-bold rounded-xl border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 transition-all flex items-center gap-1.5 cursor-pointer"
                     >
-                      ⏱️ Horas & Desempenho (Assessores)
+                      ⏱️ Controle de Horas (Assessores)
                     </button>
                   )}
                   {showRelatorioHoras && (
-                    <RelatorioHorasAssessores partners={partners} leadsEnergia={leadsEnergia} onClose={() => setShowRelatorioHoras(false)} />
+                    <RelatorioHorasAssessores partners={partners} onClose={() => setShowRelatorioHoras(false)} />
                   )}
 
                    {/* Hide Team Members Switch (Partners Only) */}
