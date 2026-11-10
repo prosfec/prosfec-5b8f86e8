@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { resumirHorario } from "./raioXEnergetico";
+import { criarControleConsultaCnpj } from "./cnpjConsultaLimite";
 import { timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
 import express from "./mini-express";
@@ -721,25 +722,16 @@ export function createExpressApp() {
   });
 
   // API Route: CNPJ Search & Enrichment (BrasilAPI + ReceitaWS + MinhaReceita)
-  // Limite: 1 consulta EXTERNA de CNPJ por minuto por assessor (cache não conta)
-  const CNPJ_COOLDOWN_MS = 60_000;
-  const cnpjUltimaConsulta = new Map<string, number>();
+  // Limite: 1 consulta EXTERNA de CNPJ por minuto por assessor (cache não conta).
+  // Se a descoberta automática falhar, libera uma única consulta digitada imediata.
+  const controleConsultaCnpj = criarControleConsultaCnpj();
   app.post("/api/consulta-cnpj", async (req, res) => {
     try {
       let { cnpj, nomeEmpresa, cidade, estado, endereco, website } = req.body || {};
       const ipCnpj = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "x").split(",")[0].trim();
       const chaveLimite = String(req.body?.partnerId || "").slice(0, 80) || `ip:${ipCnpj}`;
-      const reservarConsultaExterna = (): number => {
-        const agora = Date.now();
-        const ultima = cnpjUltimaConsulta.get(chaveLimite) || 0;
-        const restante = CNPJ_COOLDOWN_MS - (agora - ultima);
-        if (restante > 0) return Math.ceil(restante / 1000);
-        cnpjUltimaConsulta.set(chaveLimite, agora);
-        if (cnpjUltimaConsulta.size > 5000) {
-          for (const [k, t] of cnpjUltimaConsulta) if (agora - t > CNPJ_COOLDOWN_MS) cnpjUltimaConsulta.delete(k);
-        }
-        return 0;
-      };
+      const reservarConsultaExterna = (ignorarCooldown = false): number =>
+        controleConsultaCnpj.reservar(chaveLimite, Date.now(), ignorarCooldown);
       const respostaLimite = (seg: number) => res.status(429).json({
         success: false,
         rateLimited: true,
@@ -768,7 +760,8 @@ export function createExpressApp() {
             error: "O CNPJ informado é inválido (dígitos verificadores não conferem). Confira o número e tente novamente.",
           });
         }
-        const esperaDireta = reservarConsultaExterna();
+        const consultaManualLiberada = controleConsultaCnpj.consumirLiberacaoManual(chaveLimite);
+        const esperaDireta = reservarConsultaExterna(consultaManualLiberada);
         if (esperaDireta > 0) return respostaLimite(esperaDireta);
         const result = await fetchCnpjFromPublicApis(cnpj);
         if (result) {
@@ -838,6 +831,7 @@ export function createExpressApp() {
         }
 
         cnpjCache.set(negativeKey, { timestamp: Date.now(), data: null });
+        controleConsultaCnpj.liberarConsultaManual(chaveLimite);
         return res.json({
           success: false,
           needManualInput: true,
