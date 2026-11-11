@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { DesempenhoAssessorEnergia } from "./DesempenhoAssessorEnergia";
 import RaioXEnergeticoCard from "./RaioXEnergeticoCard";
 import { calcularRaioXEnergetico } from "../lib/raioXEnergetico";
 import { NIVEIS, classificarPorte, calibrarBusca, filtrarPorNivel, type FiltroNivel, type NivelEmpresa } from "../lib/porteEmpresa";
@@ -2189,6 +2190,8 @@ export default function PartnerPortal({
                             </div>
                           </div>
                         )}
+
+                        {currentPartner && <DesempenhoAssessorEnergia partner={currentPartner} leads={energiaLeads as any[]} />}
 
                         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-3">
                           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

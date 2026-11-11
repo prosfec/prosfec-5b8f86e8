@@ -1,4 +1,6 @@
 // @ts-nocheck
+import { RankingEquipeEnergia } from "./RankingEquipeEnergia";
+import { Trophy } from "lucide-react";
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import { FichaCnpjBotao } from "./FichaCnpjBotao";
 import { AdminPresencaAssessor, PresencaStatusBadge } from "./PresencaAssessor";
@@ -489,7 +491,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   // ⚡ Leads Energia Solar (coleção leads_energia — esteira isolada do crédito)
   const [leadsEnergia, setLeadsEnergia] = useState<any[]>([]);
   const [energiaStatusFilter, setEnergiaStatusFilter] = useState<"todos" | "novo" | "atendimento" | "concluido" | "arquivado">("todos");
-  const [energiaSubTab, setEnergiaSubTab] = useState<"kanban" | "ciclo">("kanban");
+  const [energiaSubTab, setEnergiaSubTab] = useState<"kanban" | "ciclo" | "ranking">("kanban");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<Record<string, string>>({});
   const [energiaAnexoDraft, setEnergiaAnexoDraft] = useState<Record<string, File | null>>({});
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
@@ -4913,11 +4915,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   <div className="inline-flex p-1 bg-slate-100 border border-slate-200 rounded-xl gap-1">
                     {[
                       { key: "kanban", label: "Funil Kanban de Leads", icon: <Zap className="w-3.5 h-3.5" /> },
-                      { key: "ciclo", label: "Ciclo & Comissões", icon: <DollarSign className="w-3.5 h-3.5" /> }
+                      { key: "ciclo", label: "Ciclo & Comissões", icon: <DollarSign className="w-3.5 h-3.5" /> },
+                      { key: "ranking", label: "Ranking & Desempenho", icon: <Trophy className="w-3.5 h-3.5" /> }
                     ].map(t => (
                       <button
                         key={t.key}
-                        onClick={() => setEnergiaSubTab(t.key as "kanban" | "ciclo")}
+                        onClick={() => setEnergiaSubTab(t.key as "kanban" | "ciclo" | "ranking")}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer ${
                           energiaSubTab === t.key ? "bg-white text-slate-900 shadow-sm border border-slate-200" : "text-slate-500 hover:text-slate-800"
                         }`}
@@ -4929,6 +4932,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       </button>
                     ))}
                   </div>
+
+                  {energiaSubTab === "ranking" && <RankingEquipeEnergia partners={partners} leads={leadsEnergia} />}
 
                   {energiaSubTab === "ciclo" && (
                   <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-3 space-y-2.5">
