@@ -68,6 +68,19 @@ export function fichaTipo(lead: any): "PF" | "PJ" {
   return lead?.cnpj || lead?.cnpjDetails ? "PJ" : "PF";
 }
 
+/** Nome seguro para exibição/download (remove caracteres que quebram links). */
+export function nomeArquivoSeguro(nome: unknown): string {
+  const limpo = String(nome ?? "").normalize("NFC").replace(/[\u0000-\u001f\u007f\\/:*?"<>|#%{}^~`\[\]]+/g, "_").replace(/\.{2,}/g, ".").replace(/\s+/g, " ").trim().slice(0, 120);
+  return limpo || "documento";
+}
+
+function dataSegura(v: unknown): string {
+  const d = new Date(String(v ?? ""));
+  return v && !isNaN(d.getTime()) ? d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "";
+}
+
+const EXT_MIME: Record<string, string> = { pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+
 const docsDoTipo = (tipo: string) => (tipo === "PJ" ? FICHA_DOCUMENTOS_PJ : FICHA_DOCUMENTOS_PF);
 
 export function fichaDocumentosTotal(lead: any): number {
@@ -115,7 +128,9 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
   const tipo = ficha.tipo === "PJ" ? "PJ" : "PF";
   const CAMPOS = tipo === "PJ" ? FICHA_CAMPOS_PJ : FICHA_CAMPOS_PF;
   const DOCS = docsDoTipo(tipo);
-  const [documentos, setDocumentos] = useState<Record<string, any>>(() => ({ ...(lead?.documentos || {}) }));
+  const [documentos, setDocumentos] = useState<Record<string, any>>(() => (lead?.documentos && typeof lead.documentos === "object" ? { ...lead.documentos } : {}));
+  const montado = useRef(true);
+  useEffect(() => () => { montado.current = false; }, []);
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState<{ slot: string; pct: number } | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -166,32 +181,42 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
 
   const enviarArquivo = async (slot: string, file?: File) => {
     if (!file) return;
-    if (!TIPOS_ACEITOS.includes(file.type)) return toast.error("Envie PDF ou foto (JPG, PNG ou WEBP).");
+    const extOrig = (String(file.name || "").split(".").pop() || "").toLowerCase();
+    const tipoArq = TIPOS_ACEITOS.includes(file.type) ? file.type : EXT_MIME[extOrig] || "";
+    if (!tipoArq) return toast.error("Envie PDF ou foto (JPG, PNG ou WEBP). Fotos de iPhone (HEIC) precisam ser convertidas para JPG.");
     if (file.size > MAX_BYTES) return toast.error("O arquivo excede o limite de 15 MB.");
     const anterior = documentos[slot];
-    const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const ext = (extOrig.replace(/[^a-z0-9]/g, "") || Object.keys(EXT_MIME).find((k) => EXT_MIME[k] === tipoArq) || "bin").slice(0, 5);
     const path = `documentos_energia/${lead.id}/${slot}_${Date.now()}.${ext}`;
     setEnviando({ slot, pct: 0 });
+    let ultimoPct = -1;
     try {
-      const task = uploadBytesResumable(ref(storage, path), file, { contentType: file.type });
+      const task = uploadBytesResumable(ref(storage, path), file, { contentType: tipoArq });
       await new Promise<void>((resolve, reject) =>
-        task.on("state_changed", (s) => setEnviando({ slot, pct: Math.round((s.bytesTransferred / s.totalBytes) * 100) }), reject, () => resolve())
+        task.on("state_changed", (s) => {
+          const pct = s.totalBytes ? Math.min(100, Math.round((s.bytesTransferred / s.totalBytes) * 100)) : 0;
+          if (pct !== ultimoPct && montado.current) { ultimoPct = pct; setEnviando({ slot, pct }); }
+        }, reject, () => resolve())
       );
       const url = await getDownloadURL(task.snapshot.ref);
-      const registro = { url, path, nome: file.name, tipo: file.type, enviadoEm: new Date().toISOString() };
-      const novos = { ...documentos, [slot]: registro };
+      const registro = { url, path, nome: nomeArquivoSeguro(file.name), tipo: tipoArq, enviadoEm: new Date().toISOString() };
       const rotulo = (DOCS as any[]).find((d) => d.key === slot)?.label || "Arquivo adicional";
       const mov = movimento(`📎 Novo documento anexado: ${rotulo}.`);
       await updateDoc(doc(db, "leads_energia", lead.id), { [`documentos.${slot}`]: registro, ...mov.updates });
-      setDocumentos(novos);
-      onUpdated?.({ documentos: novos, ...mov.local });
       if (anterior?.path) deleteObject(ref(storage, anterior.path)).catch(() => {});
+      if (!montado.current) return;
+      let novos: Record<string, any> = {};
+      setDocumentos((prev) => (novos = { ...prev, [slot]: registro }));
+      setEnviando(null);
+      queueMicrotask(() => {
+        try { onUpdated?.({ documentos: { ...documentos, ...novos, [slot]: registro }, ...mov.local }); } catch (err) { console.error(err); }
+      });
       toast.success("Documento anexado.");
     } catch (e) {
       console.error(e);
-      toast.error("Falha ao enviar o arquivo. Tente novamente.");
+      toast.error(typeof navigator !== "undefined" && navigator.onLine === false ? "Sem conexão. Verifique a internet e tente novamente." : "Falha ao enviar o arquivo. Tente novamente.");
     } finally {
-      setEnviando(null);
+      if (montado.current) setEnviando(null);
     }
   };
 
@@ -217,7 +242,7 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
       const blob = await (await fetch(d.url)).blob();
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = d.nome || "documento";
+      a.download = nomeArquivoSeguro(d?.nome);
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     } catch {
@@ -237,7 +262,8 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
 
   const conteudo = (
     <div
-      className="fixed inset-0 z-[130] flex items-end md:items-center justify-center p-0 md:p-6 backdrop-blur-md"
+      translate="no"
+      className="notranslate fixed inset-0 z-[130] flex items-end md:items-center justify-center p-0 md:p-6 backdrop-blur-md"
       style={{ backgroundColor: "rgba(2,6,23,0.7)" }}
       role="dialog"
       aria-modal="true"
@@ -356,7 +382,8 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
               </div>
               <div className="space-y-2.5">
                 {DOCS.map((d: any) => {
-                  const arq = documentos[d.key];
+                  const bruto = documentos[d.key];
+                  const arq = bruto && typeof bruto === "object" && typeof bruto.url === "string" && bruto.url ? bruto : null;
                   const ocupado = enviando?.slot === d.key;
                   const isPdf = arq?.tipo === "application/pdf" || /\.pdf$/i.test(arq?.nome || "");
                   const TipoIc = arq ? (isPdf ? FileText : ImageIcon) : UploadCloud;
@@ -378,8 +405,8 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
                           </div>
                           {arq && (
                             <p className="text-[11px] flex items-center gap-1 min-w-0 mt-0.5" style={{ color: p.muted }}>
-                              <span className="truncate">{arq.nome}</span>
-                              {arq.enviadoEm && <span className="shrink-0" style={{ color: p.soft }}>• {new Date(arq.enviadoEm).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</span>}
+                              <span className="truncate">{nomeArquivoSeguro(arq.nome || "Documento anexado")}</span>
+                              {dataSegura(arq.enviadoEm) && <span className="shrink-0" style={{ color: p.soft }}>• {dataSegura(arq.enviadoEm)}</span>}
                             </p>
                           )}
                         </div>

@@ -38,6 +38,7 @@ import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA, etapaAssessorEnergia, MSG_RECUSA_ENERGIA } from "./AssessorEnergiaContratos";
 import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 import { resumoConcessionariaUF } from "../lib/concessionariaRegiao";
+import { FichaLeadErrorBoundary } from "./FichaLeadErrorBoundary";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 import ModalQualificacaoAtendimento from "./ModalQualificacaoAtendimento";
 import { formatarCelular, notaPrimeiroAtendimento, type QualificacaoValida } from "../lib/qualificacaoAtendimento";
@@ -2669,12 +2670,14 @@ export default function PartnerPortal({
                           />
                         )}
                         {fichaEnergiaLeadId && energiaLeads.find((l: any) => l.id === fichaEnergiaLeadId) && (
+                          <FichaLeadErrorBoundary key={fichaEnergiaLeadId} onClose={() => setFichaEnergiaLeadId(null)}>
                           <FichaLeadEnergiaModal
                             lead={energiaLeads.find((l: any) => l.id === fichaEnergiaLeadId)}
                             podeEditar
                             onClose={() => setFichaEnergiaLeadId(null)}
                             onUpdated={(u) => setEnergiaLeads(prev => prev.map((l: any) => l.id === fichaEnergiaLeadId ? { ...l, ...u } : l))}
                           />
+                          </FichaLeadErrorBoundary>
                         )}
                       </div>
                         );

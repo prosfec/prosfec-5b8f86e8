@@ -122,6 +122,7 @@ import { STEPS_CONFIG } from "./LeadStepTimeline";
 import AdminServicosContabilidadeTab from "./AdminServicosContabilidadeTab";
 import { LeadEnergiaCardCompacto, LeadEnergiaDetalheModal } from "./LeadEnergiaKanban";
 import DossieOportunidadeEnergia from "./DossieOportunidadeEnergia";
+import { FichaLeadErrorBoundary } from "./FichaLeadErrorBoundary";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 
 const getStatusLabel = (status: string) => {
@@ -5046,11 +5047,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   )}
 
                   {fichaEnergiaLeadId && leadsEnergia.find((l: any) => l.id === fichaEnergiaLeadId) && (
+                    <FichaLeadErrorBoundary key={fichaEnergiaLeadId} onClose={() => setFichaEnergiaLeadId(null)}>
                     <FichaLeadEnergiaModal
                       lead={leadsEnergia.find((l: any) => l.id === fichaEnergiaLeadId)}
                       podeEditar={false}
                       onClose={() => setFichaEnergiaLeadId(null)}
                     />
+                    </FichaLeadErrorBoundary>
                   )}
                   {energiaSubTab === "kanban" && (
                   <>
