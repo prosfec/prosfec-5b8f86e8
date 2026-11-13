@@ -952,6 +952,16 @@ export default function PartnerPortal({
     }
   }, [currentPartner]);
 
+  const travaCadastral = {
+    nome: !!currentPartner?.nome?.trim(),
+    email: !!currentPartner?.email?.trim(),
+    cpf: !!(currentPartner?.cpf || currentPartner?.cnpj || "").trim(),
+    nascimento: !!currentPartner?.dataNascimento?.trim(),
+    cidade: !!currentPartner?.cidade?.trim(),
+    pix: !!currentPartner?.chavePix?.trim(),
+  };
+  const algumCampoTravado = Object.values(travaCadastral).some(Boolean);
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPartner?.id) return;
@@ -966,6 +976,14 @@ export default function PartnerPortal({
     if (!profileCPF.trim() || profileCPF.trim().length < 11) {
       setProfileErrorMsg("Por favor, informe um CPF ou CNPJ completo.");
       return;
+    }
+    if (!travaCadastral.cpf) {
+      const docLimpo = profileCPF.replace(/\D/g, "");
+      const docValido = docLimpo.length === 14 ? validateCNPJ(docLimpo) : validateCPF(docLimpo);
+      if (!docValido) {
+        setProfileErrorMsg("CPF/CNPJ inválido. Por favor, verifique os dígitos informados.");
+        return;
+      }
     }
     if (!profilePhone.trim() || profilePhone.trim().length < 8) {
       setProfileErrorMsg("Por favor, informe seu WhatsApp com DDD.");
@@ -994,15 +1012,14 @@ export default function PartnerPortal({
     setSavingProfile(true);
 
     try {
-      const updatedFields: any = {
-        nome: profileNome.trim(),
-        email: profileEmail.trim().toLowerCase(),
-        cpf: profileCPF.trim(),
-        dataNascimento: profileBirth.trim(),
-        whatsapp: profilePhone.trim(),
-        cidade: profileCity.trim(),
-        chavePix: profilePix.trim(),
-      };
+      // Dados cadastrais já gravados ficam travados: só preenche o que ainda está vazio.
+      const updatedFields: any = { whatsapp: profilePhone.trim() };
+      if (!travaCadastral.nome) updatedFields.nome = profileNome.trim();
+      if (!travaCadastral.email) updatedFields.email = profileEmail.trim().toLowerCase();
+      if (!travaCadastral.cpf) updatedFields.cpf = profileCPF.trim();
+      if (!travaCadastral.nascimento && profileBirth.trim()) updatedFields.dataNascimento = profileBirth.trim();
+      if (!travaCadastral.cidade) updatedFields.cidade = profileCity.trim();
+      if (!travaCadastral.pix) updatedFields.chavePix = profilePix.trim();
 
       if (profileNewPassword) {
         // Etapa B-2: a senha vive apenas no Firebase Auth, nunca no Firestore.
@@ -10120,6 +10137,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   )}
 
                   <form onSubmit={handleSaveProfile} className="space-y-6">
+                    {algumCampoTravado && (
+                      <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold">
+                        <span aria-hidden>🔒</span>
+                        <span>Dados cadastrais e fiscais vinculados ao seu termo de credenciamento. Somente WhatsApp e senha podem ser alterados. Para solicitar outra alteração, contate a Mesa Operacional.</span>
+                      </div>
+                    )}
                     {/* Seção 1: Dados Pessoais / Principais */}
                     <div className="space-y-4">
                       <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">
@@ -10133,9 +10156,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             type="text"
                             required
                             value={profileNome}
+                            disabled={travaCadastral.nome}
                             onChange={(e) => setProfileNome(e.target.value)}
                             placeholder="Seu nome completo ou Razão Social"
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800 font-semibold"
+                            className={travaCadastral.nome ? "w-full px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl text-xs font-semibold cursor-not-allowed outline-none" : "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800 font-semibold"}
                           />
                         </div>
 
@@ -10145,9 +10169,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             type="email"
                             required
                             value={profileEmail}
+                            disabled={travaCadastral.email}
                             onChange={(e) => setProfileEmail(e.target.value)}
                             placeholder="seu.email@exemplo.com"
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800"
+                            className={travaCadastral.email ? "w-full px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl text-xs font-semibold cursor-not-allowed outline-none" : "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800"}
                           />
                         </div>
 
@@ -10167,9 +10192,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             type="text"
                             required
                             value={profileCPF}
+                            disabled={travaCadastral.cpf}
                             onChange={(e) => setProfileCPF(e.target.value)}
                             placeholder="000.000.000-00"
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800 font-semibold"
+                            className={travaCadastral.cpf ? "w-full px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl text-xs font-semibold cursor-not-allowed outline-none" : "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800 font-semibold"}
                           />
                         </div>
 
@@ -10178,8 +10204,9 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           <input
                             type="date"
                             value={profileBirth}
+                            disabled={travaCadastral.nascimento}
                             onChange={(e) => setProfileBirth(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800"
+                            className={travaCadastral.nascimento ? "w-full px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl text-xs font-semibold cursor-not-allowed outline-none" : "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800"}
                           />
                         </div>
 
@@ -10201,9 +10228,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             type="text"
                             required
                             value={profileCity}
+                            disabled={travaCadastral.cidade}
                             onChange={(e) => setProfileCity(e.target.value)}
                             placeholder="Ex: São Paulo - SP"
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800 font-semibold"
+                            className={travaCadastral.cidade ? "w-full px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl text-xs font-semibold cursor-not-allowed outline-none" : "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800 font-semibold"}
                           />
                         </div>
                       </div>
@@ -10221,9 +10249,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                           type="text"
                           required
                           value={profilePix}
+                          disabled={travaCadastral.pix}
                           onChange={(e) => setProfilePix(e.target.value)}
                           placeholder="Chave Pix (E-mail, CPF/CNPJ, Telefone ou Aleatória)"
-                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800 font-semibold"
+                          className={travaCadastral.pix ? "w-full px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl text-xs font-semibold cursor-not-allowed outline-none" : "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#00A86B] rounded-xl text-xs outline-none text-slate-800 font-semibold"}
                         />
                         <p className="text-[10px] text-slate-400 mt-1">
                           Os repasses de comissão das operações concluídas e recorrentes serão efetuados diretamente para esta chave.

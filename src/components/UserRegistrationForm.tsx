@@ -155,6 +155,18 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
       return;
     }
 
+    if (cpf.trim()) {
+      const cpfLimpo = cpf.replace(/\D/g, "");
+      if (cpfLimpo.length === 11 && !validateCPF(cpfLimpo)) {
+        setErrorMsg("CPF inválido. Por favor, verifique os dígitos informados.");
+        return;
+      }
+      if (cpfLimpo.length !== 11 && cpfLimpo.length !== 14) {
+        setErrorMsg("CPF inválido. Por favor, verifique os dígitos informados.");
+        return;
+      }
+    }
+
     if (senha !== confirmSenha) {
       setErrorMsg("As senhas informadas não coincidem.");
       return;

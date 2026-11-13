@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { validateCPF } from "../utils";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -82,6 +83,11 @@ export default function Parceiros({ onSelectPlan }: ParceirosProps) {
     if (!partnerEmail || !partnerName) return;
     if (!partnerAcceptedTerms) {
       alert("Você precisa aceitar os Termos de Uso do sistema.");
+      return;
+    }
+
+    if (partnerCPF.trim() && !validateCPF(partnerCPF)) {
+      setSubmitError("CPF inválido. Por favor, verifique os dígitos informados.");
       return;
     }
 
