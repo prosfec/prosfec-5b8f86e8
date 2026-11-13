@@ -6014,7 +6014,6 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                             <option value="STARTER">STARTER (0,5% repasse)</option>
                             <option value="Executive Partner PROSFEC">Executive Partner PROSFEC (1,5% repasse)</option>
                             <option value="MASTER PARTNER">MASTER PARTNER (3,0% repasse)</option>
-                            <option value="Assessor de Energia">⚡ Assessor de Energia (Plano Gratuito — Exclusivo Energia Solar)</option>
 
                           </select>
                         </div>

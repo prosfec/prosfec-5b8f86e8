@@ -27,6 +27,8 @@ import { TermosDeUsoContent } from "./TermosDeUsoContent";
 interface UserRegistrationFormProps {
   onBackToHome: () => void;
   onGoToLogin?: () => void;
+  /** Link exclusivo /corretor-energia: plano travado em Assessor de Energia. */
+  modoEnergia?: boolean;
 }
 
 // CPF Validator
@@ -60,7 +62,7 @@ function validatePhone(phone: string): boolean {
   return clean.length >= 10 && clean.length <= 11;
 }
 
-export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: UserRegistrationFormProps) {
+export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEnergia = false }: UserRegistrationFormProps) {
   // Form fields
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -70,7 +72,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
   const [chavePix, setChavePix] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmSenha, setConfirmSenha] = useState("");
-  const [plano, setPlano] = useState<"Consultor Starter" | "Consultor Executive" | "Assessor de Energia">("Consultor Starter");
+  const [plano, setPlano] = useState<"Consultor Starter" | "Consultor Executive" | "Assessor de Energia">(modoEnergia ? "Assessor de Energia" : "Consultor Starter");
   const [aceitouTermos, setAceitouTermos] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
@@ -232,7 +234,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
         duracaoDias: plano === "Assessor de Energia" ? 36500 : 3,                              // Teste grátis de 3 dias a partir da criação
         dataCriacao: new Date().toISOString(),
         dataUltimoAcesso: new Date().toISOString(),
-        interesse: "cadastro_usuario_direto"
+        interesse: modoEnergia ? "corretor_energia" : "cadastro_usuario_direto"
       };
 
       // Aguarda a gravação concluir de verdade antes de liberar o acesso ao painel
@@ -382,7 +384,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
                 </div>
 
                 <h1 className="text-xl sm:text-2xl font-display font-black text-white leading-tight">
-                  Criar Conta de Usuário
+                  {modoEnergia ? "Credenciamento de Corretor de Energia" : "Criar Conta de Usuário"}
                 </h1>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   Preencha os dados abaixo para se cadastrar na plataforma PROSFEC. Acesso gratuito, direto e sem vínculo de assinatura obrigatória.
@@ -449,6 +451,12 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
                 </div>
 
                 {/* Plano de Repasse */}
+                {modoEnergia ? (
+                  <div className="bg-emerald-950/40 border border-emerald-800/50 p-3.5 rounded-2xl text-xs text-emerald-200">
+                    <strong className="text-emerald-300 block">⚡ Corretor de Energia Solar — acesso gratuito</strong>
+                    <span>Sem mensalidade ou taxa de adesão. Foco exclusivo em Energia Solar por assinatura.</span>
+                  </div>
+                ) : (
                 <div className="space-y-2 pt-1">
                   <label className="text-[10px] font-black text-slate-300 uppercase tracking-wider block">
                     Plano de Repasse *
@@ -500,30 +508,9 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin }: User
                       </p>
                     </div>
 
-                    {/* Assessor de Energia (plano gratuito) */}
-                    <div
-                      onClick={() => setPlano("Assessor de Energia")}
-                      className={`sm:col-span-2 p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between space-y-2 ${
-                        plano === "Assessor de Energia"
-                          ? "bg-emerald-950/60 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-950/50"
-                          : "bg-slate-900/60 border-slate-700 hover:border-slate-600"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-white flex items-center gap-1.5">
-                          <span className={`w-2 h-2 rounded-full ${plano === "Assessor de Energia" ? "bg-emerald-400 animate-ping" : "bg-slate-500"}`} />
-                          ⚡ Assessor de Energia (Plano Gratuito)
-                        </span>
-                        {plano === "Assessor de Energia" && (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        )}
-                      </div>
-                      <p className="text-[10px] text-slate-300 leading-snug">
-                        Sem mensalidade. Foco exclusivo em <strong className="text-emerald-300">Energia Solar por assinatura</strong>.
-                      </p>
-                    </div>
                   </div>
                 </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">

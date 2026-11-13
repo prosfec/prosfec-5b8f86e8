@@ -4906,6 +4906,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               {/* ⚡ LEADS ENERGIA SOLAR */}
               {activeTab === "leads_energia" && (
                 <div className="p-4 md:p-6 space-y-4">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText("https://prosfec.com.br/corretor-energia");
+                        toast.success("Link de corretor copiado!");
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5" /> Copiar Link de Corretor
+                    </button>
+                  </div>
                   {/* Totais executivos */}
                   <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                     {[
