@@ -707,14 +707,20 @@ export function createExpressApp() {
       const rows = await runQueryRest("leads_energia", {
         fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "concluido" } },
       });
-      const encontrado = rows.some((row: any) => {
+      const casados = rows.filter((row: any) => {
         const l: any = row.data || {};
         const tels = [l.telefone, l.ficha?.telefone].map(dig).filter((t) => t.length >= 8);
         if (!tels.some((t) => fim(t) === fim(tel))) return false;
         const nomes = [l.nomeEmpresa, l.ficha?.nomeCompleto, l.ficha?.razaoSocial].map(norm).filter(Boolean);
         return nomes.includes(nome);
       });
-      return res.json({ ok: encontrado });
+      if (casados.length === 0) return res.json({ ok: false });
+      // Benefícios Sunne só para quem fechou com a Sunne; leads antigos sem marcação mantêm acesso.
+      const temSunne = casados.some((row: any) => {
+        const emps = row.data?.empresasFechamento;
+        return !Array.isArray(emps) || emps.length === 0 || emps.includes("Sunne");
+      });
+      return res.json({ ok: true, temSunne });
     } catch (err: any) {
       console.error("[CLUBE] erro na verificação:", err?.message);
       return res.status(500).json({ ok: false, erro: "Não foi possível verificar agora. Tente novamente." });

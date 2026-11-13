@@ -505,6 +505,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [detalheEnergiaLeadId, setDetalheEnergiaLeadId] = useState<string | null>(null);
   const [energiaFechamentoFatura, setEnergiaFechamentoFatura] = useState<string>("");
   const [energiaFechamentoComissao, setEnergiaFechamentoComissao] = useState<string>("");
+  const [energiaFechamentoEmpresas, setEnergiaFechamentoEmpresas] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [showLeadPortalSenha, setShowLeadPortalSenha] = useState<Record<string, boolean>>({});
@@ -3175,6 +3176,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   }
 
   // ⚡ Energia Solar — helpers da esteira comercial
+  const EMPRESAS_FECHAMENTO_ENERGIA = ["Sunne", "Serena", "AlugSol"];
   const ENERGIA_STATUS_OPTIONS = [
     { value: "novo", label: "Novo" },
     { value: "atendimento", label: "Atendimento" },
@@ -3210,6 +3212,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setEnergiaFechamentoLeadId(leadId);
       setEnergiaFechamentoFatura(alvoAtual?.consumoKwhMes ? String(alvoAtual.consumoKwhMes) : "");
       setEnergiaFechamentoComissao(alvoAtual?.comissaoParceiro ? String(alvoAtual.comissaoParceiro) : "");
+      setEnergiaFechamentoEmpresas(Array.isArray(alvoAtual?.empresasFechamento) ? alvoAtual.empresasFechamento : []);
       return;
     }
     setEnergiaSavingId(leadId);
@@ -3219,7 +3222,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const alvo = leadsEnergia.find((l: any) => l.id === leadId);
       const notaAutomatica = {
         texto: extras
-          ? `Contrato concluído. Consumo: ${Number(extras.consumoKwhMes || 0).toLocaleString("pt-BR")} kWh/mês • Comissão do parceiro: ${formatCurrencyBRL(extras.comissaoParceiro || 0)}.`
+          ? `Contrato concluído${Array.isArray(extras.empresasFechamento) && extras.empresasFechamento.length ? ` via ${extras.empresasFechamento.join(" + ")}` : ""}. Consumo: ${Number(extras.consumoKwhMes || 0).toLocaleString("pt-BR")} kWh/mês • Comissão do parceiro: ${formatCurrencyBRL(extras.comissaoParceiro || 0)}.`
           : `Status atualizado para ${statusLabel}.`,
         autor: "Mesa PROSFEC",
         papel: "adm",
@@ -3257,10 +3260,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       toast.error("Informe o consumo (kWh/mês) e a comissão do parceiro.");
       return;
     }
+    const empresasFechamento = EMPRESAS_FECHAMENTO_ENERGIA.filter(e => energiaFechamentoEmpresas.includes(e));
+    if (empresasFechamento.length === 0) {
+      toast.error("Marque ao menos uma empresa onde o contrato foi fechado.");
+      return;
+    }
     const leadId = energiaFechamentoLeadId;
     await handleUpdateEnergiaStatus(leadId, "concluido", {
       consumoKwhMes,
       comissaoParceiro,
+      empresasFechamento,
       comissaoStatus: "acumulada",
       fechadoEm: new Date().toISOString(),
       fechadoPor: "Mesa PROSFEC"
@@ -3268,6 +3277,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     setEnergiaFechamentoLeadId(null);
     setEnergiaFechamentoFatura("");
     setEnergiaFechamentoComissao("");
+    setEnergiaFechamentoEmpresas([]);
   };
 
   const handleDeleteEnergiaLead = async (leadId: string, nomeEmpresa?: string) => {
@@ -5208,6 +5218,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <span className="font-extrabold text-emerald-800">
                                   {lead.consumoKwhMes ? `Consumo: ${Number(lead.consumoKwhMes).toLocaleString("pt-BR")} kWh/mês` : `Fatura: ${formatCurrencyBRL(Number(lead.valorFatura) || 0)}`} • Repasse: {formatCurrencyBRL(Number(lead.comissaoParceiro) || 0)}
                                 </span>
+                                {Array.isArray(lead.empresasFechamento) && lead.empresasFechamento.length > 0 && (
+                                  <span className="flex flex-wrap gap-1 w-full">
+                                    {lead.empresasFechamento.map((emp: string) => (
+                                      <span key={emp} className="bg-white border border-emerald-300 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase">{emp}</span>
+                                    ))}
+                                  </span>
+                                )}
                                 <span className="bg-emerald-600 text-white font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase">
                                   {lead.comissaoStatus === "paga" ? "Paga" : lead.comissaoStatus === "solicitada" ? "Saque solicitado" : "Acumulada"}
                                 </span>
@@ -5241,6 +5258,25 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     className="px-2.5 py-1.5 bg-white border border-amber-200 rounded-lg text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
                                   />
                                 </div>
+                                <div>
+                                  <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide mb-1">Fechado com (marque uma ou mais)</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {EMPRESAS_FECHAMENTO_ENERGIA.map(emp => {
+                                      const marcado = energiaFechamentoEmpresas.includes(emp);
+                                      return (
+                                        <label key={emp} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold cursor-pointer select-none ${marcado ? "bg-emerald-600 border-emerald-600 text-white" : "bg-white border-amber-200 text-slate-700"}`}>
+                                          <input
+                                            type="checkbox"
+                                            checked={marcado}
+                                            onChange={() => setEnergiaFechamentoEmpresas(prev => prev.includes(emp) ? prev.filter(x => x !== emp) : [...prev, emp])}
+                                            className="w-3.5 h-3.5 accent-emerald-600 cursor-pointer"
+                                          />
+                                          {emp}
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
                                 <div className="flex items-center gap-2">
                                   <button
                                     onClick={handleConfirmarFechamentoEnergia}
@@ -5250,7 +5286,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     Confirmar Conclusão
                                   </button>
                                   <button
-                                    onClick={() => { setEnergiaFechamentoLeadId(null); setEnergiaFechamentoFatura(""); setEnergiaFechamentoComissao(""); }}
+                                    onClick={() => { setEnergiaFechamentoLeadId(null); setEnergiaFechamentoFatura(""); setEnergiaFechamentoComissao(""); setEnergiaFechamentoEmpresas([]); }}
                                     className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg font-extrabold text-[10px] cursor-pointer"
                                   >
                                     Cancelar
@@ -5277,6 +5313,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     setEnergiaFechamentoLeadId(lead.id);
                                     setEnergiaFechamentoFatura(lead.consumoKwhMes ? String(lead.consumoKwhMes) : "");
                                     setEnergiaFechamentoComissao(lead.comissaoParceiro ? String(lead.comissaoParceiro) : "");
+                                    setEnergiaFechamentoEmpresas(Array.isArray(lead.empresasFechamento) ? lead.empresasFechamento : []);
                                   }}
                                   className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-lg font-extrabold text-[10px] cursor-pointer"
                                 >

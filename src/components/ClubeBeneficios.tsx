@@ -54,7 +54,7 @@ function Catraca({ onOk }: { onOk: () => void }) {
       });
       const j = await r.json().catch(() => ({}));
       if (j?.ok) {
-        sessionStorage.setItem(SESSAO, "1");
+        sessionStorage.setItem(SESSAO, j.temSunne === false ? "2" : "1");
         onOk();
       } else {
         setErro(j?.erro || "Não localizamos uma adesão concluída com esses dados. Confira o nome e o telefone usados no cadastro ou fale com nosso suporte.");
@@ -131,6 +131,8 @@ function Card({ tag, titulo, texto, children }: { tag: string; titulo: string; t
 }
 
 function Vitrine({ onSair }: { onSair: () => void }) {
+  const [temSunne, setTemSunne] = useState(false);
+  useEffect(() => { setTemSunne(sessionStorage.getItem(SESSAO) === "1"); }, []);
   const [modal, setModal] = useState<null | "juros" | "assessoria">(null);
   return (
     <div className="min-h-screen bg-energy-paper">
@@ -151,6 +153,7 @@ function Vitrine({ onSair }: { onSair: () => void }) {
 
       <main className="mx-auto -mt-8 max-w-6xl px-4 pb-16">
         <div className="grid gap-5 md:grid-cols-2">
+          {temSunne && <>
           <Card tag="Compras, lazer e serviços" titulo="Clube Sunne Mais" texto="Parcerias com redes, farmácias, mercados e serviços do dia a dia.">
             <Externo href={LINKS.sunneMais} variante="lima">Acessar Clube Sunne Mais</Externo>
           </Card>
@@ -158,6 +161,7 @@ function Vitrine({ onSair }: { onSair: () => void }) {
             <Externo href={LINKS.playStore}>Baixar na Google Play</Externo>
             <Externo href={LINKS.appStore}>Baixar na App Store</Externo>
           </Card>
+          </>}
           <Card tag="Crédito PF e MEI" titulo="Juros Baixos" texto="Compare e simule opções de crédito pessoal e para MEI. A análise e as condições são definidas pelas instituições parceiras.">
             <button onClick={() => setModal("juros")}
               className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-energy-deep px-5 text-sm font-bold text-white hover:bg-energy-deeper ${FOCUS}`}>
@@ -207,7 +211,7 @@ function Vitrine({ onSair }: { onSair: () => void }) {
 
 export default function ClubeBeneficios() {
   const [liberado, setLiberado] = useState(false);
-  useEffect(() => { setLiberado(sessionStorage.getItem(SESSAO) === "1"); }, []);
+  useEffect(() => { setLiberado(!!sessionStorage.getItem(SESSAO)); }, []);
   if (!liberado) return <Catraca onOk={() => setLiberado(true)} />;
   return <Vitrine onSair={() => { sessionStorage.removeItem(SESSAO); setLiberado(false); }} />;
 }
