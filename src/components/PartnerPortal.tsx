@@ -13506,7 +13506,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       </strong>{" "}
                       foi registrada com sucesso. Nosso financeiro analisará o Pix recebido na chave{" "}
                       <strong className="text-emerald-800 font-mono font-bold">
-                        prosfec.tesouraria@gmail.com
+                        69.499.389/0001-68
                       </strong>{" "}
                       e liberará seu Saldo Geral em instantes!
                     </p>
@@ -13684,16 +13684,16 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                   {/* Pix Key Card */}
                   <div className="space-y-2">
                     <label className="text-[11px] font-black text-slate-700 uppercase tracking-wide block">
-                      Chave Pix da Tesouraria (E-mail)
+                      Chave Pix Oficial — CNPJ (Setor Financeiro PROSFEC)
                     </label>
                     <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex items-center justify-between gap-2.5">
                       <span className="font-mono text-xs sm:text-sm text-slate-800 font-bold select-all truncate">
-                        prosfec.tesouraria@gmail.com
+                        69.499.389/0001-68
                       </span>
                       <button
                         type="button"
                         onClick={() => {
-                          navigator.clipboard.writeText("prosfec.tesouraria@gmail.com");
+                          navigator.clipboard.writeText("69499389000168");
                           setRechargeCopiedPix(true);
                           setTimeout(() => setRechargeCopiedPix(false), 3000);
                         }}
@@ -13717,6 +13717,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         )}
                       </button>
                     </div>
+                  </div>
+
+                  {/* Aviso CNPJ financeiro */}
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-[11px] text-amber-900 leading-relaxed">
+                    <strong>Conta oficial da empresa:</strong> esta chave CNPJ (69.499.389/0001-68) pertence ao <strong>setor financeiro da PROSFEC</strong>, responsável pela conferência e liberação das recargas.
                   </div>
 
                   {/* Instruction text */}
@@ -13841,7 +13846,7 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                       </strong>{" "}
                       foi registrada com sucesso. Nosso financeiro analisará o Pix recebido na chave{" "}
                       <strong className="text-emerald-800 font-mono font-bold">
-                        prosfec.tesouraria@gmail.com
+                        69.499.389/0001-68
                       </strong>{" "}
                       e liberará seu saldo de buscas em instantes!
                     </p>
@@ -14062,19 +14067,19 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-black text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
                         <Key className="w-3.5 h-3.5 text-emerald-600" />
-                        Chave Pix da Tesouraria (E-mail)
+                        Chave Pix Oficial — CNPJ (Setor Financeiro PROSFEC)
                       </span>
                       <span className="text-[10px] font-bold text-slate-400">Banco do Brasil</span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-white/75 backdrop-blur-xl border border-slate-200 rounded-xl px-3.5 py-2.5 font-mono font-bold text-xs text-slate-800 select-all truncate">
-                        prosfec.tesouraria@gmail.com
+                        69.499.389/0001-68
                       </div>
                       <button
                         type="button"
                         onClick={() => {
-                          navigator.clipboard.writeText("prosfec.tesouraria@gmail.com");
+                          navigator.clipboard.writeText("69499389000168");
                           setRefillCopiedPix(true);
                           setTimeout(() => setRefillCopiedPix(false), 2500);
                         }}
@@ -14097,6 +14102,11 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                         )}
                       </button>
                     </div>
+                  </div>
+
+                  {/* Aviso CNPJ financeiro */}
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-[11px] text-amber-900 leading-relaxed">
+                    <strong>Conta oficial da empresa:</strong> esta chave CNPJ (69.499.389/0001-68) pertence ao <strong>setor financeiro da PROSFEC</strong>, responsável pela conferência e liberação das recargas.
                   </div>
 
                   {/* Instructions Box */}
