@@ -375,7 +375,11 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
                 </div>
               )}
 
+              {modoEnergia && (
+                <p className="text-xs text-slate-300">Em breve você receberá o link oficial de acesso ao portal.</p>
+              )}
               <div className="pt-2 space-y-3">
+                {!modoEnergia && (
                 <button
                   onClick={() => {
                     if (modoEnergia) {
@@ -393,6 +397,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
                   <User className="w-4 h-4" />
                   {modoEnergia ? "Acessar Meu Painel" : "Acessar Minha Conta / Login"}
                 </button>
+                )}
 
                 <button
                   onClick={onBackToHome}
@@ -667,6 +672,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
               </form>
 
               {/* Login Helper Footer Link */}
+              {!modoEnergia && (
               <div className="pt-4 border-t border-slate-700/60 text-center">
                 <p className="text-xs text-slate-400">
                   Já possui um cadastro ativo?{" "}
@@ -686,6 +692,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
                   </button>
                 </p>
               </div>
+              )}
             </motion.div>
           )}
         </div>
