@@ -145,6 +145,19 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
   }, []);
 
 
+  const mascaraDoc = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 14);
+    if (d.length <= 11) return d.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    return d.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+  };
+  const mascaraFone = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 2) return d;
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -153,6 +166,15 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
     if (!nome.trim() || !email.trim() || !senha.trim() || !confirmSenha.trim()) {
       setErrorMsg("Por favor, preencha todos os campos obrigatórios (*).");
       return;
+    }
+
+    if (modoEnergia) {
+      const docLimpo = cpf.replace(/\D/g, "");
+      if (nome.trim().split(/\s+/).length < 2) { setErrorMsg("Informe seu nome completo ou razão social."); return; }
+      if (docLimpo.length !== 11 && docLimpo.length !== 14) { setErrorMsg("Informe um CPF ou CNPJ válido."); return; }
+      if (!validatePhone(whatsapp)) { setErrorMsg("Informe seu WhatsApp com DDD."); return; }
+      if (cidade.trim().length < 2) { setErrorMsg("Informe sua Cidade e UF (ex: São Luís - MA)."); return; }
+      if (chavePix.trim().length < 3) { setErrorMsg("Informe sua Chave Pix para recebimento de comissões."); return; }
     }
 
     if (cpf.trim()) {
@@ -263,6 +285,12 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
         }
       }
 
+      // Sessão do painel já iniciada: a conta Firebase Auth acabou de ser criada e está logada.
+      try {
+        sessionStorage.setItem("partner_authenticated", "true");
+        sessionStorage.setItem("partner_data", JSON.stringify({ id: createdRef.id, ...newUserDoc }));
+      } catch {}
+
       setSuccess(true);
 
     } catch (err) {
@@ -350,7 +378,9 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
               <div className="pt-2 space-y-3">
                 <button
                   onClick={() => {
-                    if (onGoToLogin) {
+                    if (modoEnergia) {
+                      window.location.href = "/?portal-parceiro=true";
+                    } else if (onGoToLogin) {
                       onGoToLogin();
                     } else {
                       const url = new URL(window.location.href);
@@ -361,7 +391,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
                   className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold rounded-2xl text-sm transition-all shadow-lg shadow-emerald-900/40 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <User className="w-4 h-4" />
-                  Acessar Minha Conta / Login
+                  {modoEnergia ? "Acessar Meu Painel" : "Acessar Minha Conta / Login"}
                 </button>
 
                 <button
@@ -461,6 +491,39 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
                     />
                   </div>
                 </div>
+
+                {modoEnergia && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">CPF / CNPJ *</label>
+                    <div className="relative">
+                      <FileText className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                      <input type="text" required placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(mascaraDoc(e.target.value))} inputMode="numeric" className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl text-xs text-white !text-white placeholder-slate-500 outline-none font-medium transition-all" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">WhatsApp com DDD *</label>
+                    <div className="relative">
+                      <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                      <input type="tel" required placeholder="(98) 99999-9999" value={whatsapp} onChange={(e) => setWhatsapp(mascaraFone(e.target.value))} className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl text-xs text-white !text-white placeholder-slate-500 outline-none font-medium transition-all" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Cidade / UF *</label>
+                    <div className="relative">
+                      <MapPin className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                      <input type="text" required placeholder="São Luís - MA" value={cidade} onChange={(e) => setCidade(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl text-xs text-white !text-white placeholder-slate-500 outline-none font-medium transition-all" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Chave Pix *</label>
+                    <div className="relative">
+                      <CreditCard className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                      <input type="text" required placeholder="CPF, e-mail, celular ou aleatória" value={chavePix} onChange={(e) => setChavePix(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl text-xs text-white !text-white placeholder-slate-500 outline-none font-medium transition-all" />
+                    </div>
+                  </div>
+                </div>
+                )}
 
                 {/* Plano de Repasse */}
                 {modoEnergia ? (
