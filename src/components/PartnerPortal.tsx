@@ -41,6 +41,7 @@ import { resumoConcessionariaUF } from "../lib/concessionariaRegiao";
 import { FichaLeadErrorBoundary } from "./FichaLeadErrorBoundary";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 import ModalQualificacaoAtendimento from "./ModalQualificacaoAtendimento";
+import { abrirBuscaCnpjGoogle } from "../lib/janelaLateralGoogle";
 import { formatarCelular, notaPrimeiroAtendimento, type QualificacaoValida } from "../lib/qualificacaoAtendimento";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
@@ -9732,6 +9733,14 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                                         <p className="text-[10px] font-black uppercase text-slate-500 flex items-center gap-1">
                                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />Ficha CNPJ (Receita Federal)
                                         </p>
+                                        <button
+                                          type="button"
+                                          onClick={() => abrirBuscaCnpjGoogle(place.nome || place.nomeEmpresa, place.cidade || huntCity, place.estado || huntState)}
+                                          className="w-full px-2.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg transition-all font-extrabold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer"
+                                          title="Abre a pesquisa do Google em uma janela ao lado. Copie o CNPJ e cole abaixo."
+                                        >
+                                          <Search className="w-3 h-3" />Pesquisar CNPJ no Google
+                                        </button>
                                         <input
                                           type="text"
                                           inputMode="numeric"
