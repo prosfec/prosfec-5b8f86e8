@@ -286,12 +286,14 @@ export function createExpressApp() {
     });
   });
   // Limitador de taxa: no máximo 2 consultas externas de CNPJ por segundo
-  let cnpjThrottleChain: Promise<void> = Promise.resolve();
-  function cnpjThrottle(): Promise<void> {
-    const next = cnpjThrottleChain.then(() => new Promise<void>((r) => setTimeout(r, 500)));
-    const turn = cnpjThrottleChain;
-    cnpjThrottleChain = next;
-    return turn;
+  // Usa apenas timestamps (sem promessas compartilhadas entre requisições, proibidas no Workers)
+  let cnpjNextSlotAt = 0;
+  async function cnpjThrottle(): Promise<void> {
+    const now = Date.now();
+    const slot = Math.max(now, cnpjNextSlotAt);
+    cnpjNextSlotAt = slot + 500;
+    const wait = slot - now;
+    if (wait > 0) await new Promise<void>((r) => setTimeout(r, wait));
   }
   async function throttledFetch(url: string, init: RequestInit): Promise<Response> {
     await cnpjThrottle();
