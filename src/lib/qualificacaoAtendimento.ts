@@ -71,3 +71,41 @@ export function notaPrimeiroAtendimento(q: QualificacaoValida): string {
   const hora = d.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
   return `⚡ Primeiro atendimento realizado em ${data} às ${hora} com ${q.nomeDecisor} (WhatsApp ${formatarCelular(q.whatsapp)}). Média informada: ${formatarReais(q.mediaContaReais)}/mês.`;
 }
+
+// Fatura de energia: obrigatória para qualquer lead entrar no CRM solar.
+export const FATURA_MAX_BYTES = 15 * 1024 * 1024;
+const FATURA_TIPOS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+const FATURA_EXT: Record<string, string> = { pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+
+/** Valida a fatura e devolve o tipo final aceito pelo Storage, ou a mensagem de erro. */
+export function validarFatura(arquivo: { name?: string; type?: string; size?: number } | null | undefined):
+  { ok: true; tipo: string; ext: string } | { ok: false; erro: string } {
+  if (!arquivo) return { ok: false, erro: "Anexe a fatura de energia do cliente (PDF ou foto)." };
+  const ext = String(arquivo.name || "").split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "";
+  if (ext === "heic" || ext === "heif" || /heic|heif/i.test(arquivo.type || "")) {
+    return { ok: false, erro: "Foto do iPhone (HEIC) não é aceita. Envie em PDF, JPG ou PNG (tire um print da foto ou exporte como JPG)." };
+  }
+  const tipo = FATURA_TIPOS.includes(arquivo.type || "") ? (arquivo.type as string) : FATURA_EXT[ext];
+  if (!tipo) return { ok: false, erro: "Envie a fatura em PDF ou foto (JPG, PNG ou WEBP)." };
+  const size = Number(arquivo.size || 0);
+  if (size <= 0) return { ok: false, erro: "O arquivo está vazio. Selecione a fatura novamente." };
+  if (size > FATURA_MAX_BYTES) return { ok: false, erro: "O arquivo excede o limite de 15 MB." };
+  const extFinal = Object.keys(FATURA_EXT).find((k) => FATURA_EXT[k] === tipo) || "bin";
+  return { ok: true, tipo, ext: FATURA_EXT[ext] === tipo ? ext : extFinal };
+}
+
+export interface DadosEmpresaManual { nomeEmpresa: string; cidade: string; estado: string }
+
+export function validarEmpresaManual(input: { nomeEmpresa: string; cidade: string; estado: string }):
+  { ok: true; dados: DadosEmpresaManual } | { ok: false; erros: Partial<Record<"nomeEmpresa" | "cidade" | "estado", string>> } {
+  const erros: Partial<Record<"nomeEmpresa" | "cidade" | "estado", string>> = {};
+  const nomeEmpresa = String(input.nomeEmpresa || "").trim().replace(/\s+/g, " ");
+  const cidade = String(input.cidade || "").trim().replace(/\s+/g, " ");
+  const estado = String(input.estado || "").trim().toUpperCase();
+  if (nomeEmpresa.length < 3) erros.nomeEmpresa = "Informe o nome da empresa ou do cliente.";
+  else if (nomeEmpresa.length > 120) erros.nomeEmpresa = "Nome muito longo.";
+  if (cidade.length < 2) erros.cidade = "Informe a cidade.";
+  if (!/^[A-Z]{2}$/.test(estado)) erros.estado = "UF inválida.";
+  if (Object.keys(erros).length) return { ok: false, erros };
+  return { ok: true, dados: { nomeEmpresa, cidade, estado } };
+}

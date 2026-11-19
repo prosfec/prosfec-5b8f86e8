@@ -1827,7 +1827,27 @@ export default function PartnerPortal({
     setQualificacaoPlace(place);
   };
 
-  const executarMigracaoEnergia = async (place: any, qual: QualificacaoValida, fatura: File | null) => {
+  // Grava o lead só depois que a fatura (obrigatória) foi enviada com sucesso: nunca fica lead sem conta de energia.
+  const gravarLeadEnergiaComFatura = async (payload: any, fatura: File) => {
+    const fv = validarFatura(fatura);
+    if (!fv.ok) throw Object.assign(new Error(fv.erro), { amigavel: fv.erro });
+    const ref = doc(collection(db, "leads_energia"));
+    const path = `documentos_energia/${ref.id}/contaLuz_${Date.now()}.${fv.ext}`;
+    let registro: any;
+    try {
+      const snap = await uploadBytes(storageRef(storage, path), fatura, { contentType: fv.tipo });
+      const url = await getDownloadURL(snap.ref);
+      registro = { url, path, nome: String(fatura.name || "fatura").slice(0, 150), tipo: fv.tipo, enviadoEm: new Date().toISOString() };
+    } catch (err) {
+      console.error("Falha ao enviar fatura:", err);
+      throw Object.assign(new Error("upload"), { amigavel: "Não foi possível enviar a fatura. Verifique sua internet e tente novamente." });
+    }
+    const completo = { ...payload, documentos: { contaLuz: registro } };
+    await setDoc(ref, completo);
+    return { id: ref.id, ...completo };
+  };
+
+  const executarMigracaoEnergia = async (place: any, qual: QualificacaoValida, fatura: File) => {
     if (!currentPartner) return;
     const key = energiaLeadKey(place);
     if (energiaEnvioLock.has(key)) return;
@@ -1883,29 +1903,14 @@ export default function PartnerPortal({
         criadoEm: new Date().toISOString(),
         atualizadoEm: new Date().toISOString()
       };
-      const docRef = await addDoc(collection(db, "leads_energia"), payload);
-      let documentos: any = undefined;
-      if (fatura) {
-        try {
-          const ext = (fatura.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
-          const path = `documentos_energia/${docRef.id}/contaLuz_${Date.now()}.${ext}`;
-          const snap = await uploadBytes(storageRef(storage, path), fatura, { contentType: fatura.type });
-          const url = await getDownloadURL(snap.ref);
-          const registro = { url, path, nome: fatura.name, tipo: fatura.type, enviadoEm: new Date().toISOString() };
-          await updateDoc(doc(db, "leads_energia", docRef.id), { "documentos.contaLuz": registro });
-          documentos = { contaLuz: registro };
-        } catch (err) {
-          console.error("Falha ao anexar fatura:", err);
-          toast.warning("Lead migrado, mas a fatura não foi anexada. Envie pela Ficha e Documentos.");
-        }
-      }
-      addEnergiaLeadUnico({ id: docRef.id, ...payload, ...(documentos ? { documentos } : {}) });
+      const criado = await gravarLeadEnergiaComFatura(payload, fatura);
+      addEnergiaLeadUnico(criado);
       setQualificacaoPlace(null);
       setEnergiaPanelOpen(true);
       toast.success("Lead qualificado e enviado para a esteira de Energia Solar.");
     } catch (error) {
       console.error("Erro ao enviar lead para Energia Solar:", error);
-      toast.error("Não foi possível enviar o lead para Energia Solar.");
+      toast.error((error as any)?.amigavel || "Não foi possível enviar o lead para Energia Solar.");
     } finally {
       energiaEnvioLock.delete(key);
       setEnergiaSavingId(null);
@@ -1922,75 +1927,64 @@ export default function PartnerPortal({
   };
 
   // ⚡ Cadastro manual de lead de energia solar (mesma esteira do Painel de Oportunidades)
-  const handleCadastrarEnergiaManual = async () => {
-    if (!currentPartner) return;
+  const handleCadastrarEnergiaManual = async (qual: QualificacaoValida, fatura: File, empresa: DadosEmpresaManual | null) => {
+    if (!currentPartner || !empresa) return;
     if (isEnergiaOnly && (currentPartner as any).avaliacaoEnergiaStatus === "recusado") {
       toast.error("Parceria encerrada: o cadastro de novos leads não está mais disponível.");
       return;
     }
-    const nome = energiaManualForm.nome.trim();
-    const telefoneDigits = energiaManualForm.telefone.replace(/\D/g, "");
-    const email = energiaManualForm.email.trim();
-    if (nome.length < 3) {
-      toast.error("Informe o nome completo do cliente.");
-      return;
-    }
-    if (telefoneDigits.length < 10) {
-      toast.error("Informe um telefone/WhatsApp válido com DDD.");
-      return;
-    }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error("Informe um e-mail válido ou deixe o campo vazio.");
-      return;
-    }
-    const key = energiaLeadKey({ nome, telefone: energiaManualForm.telefone });
+    const key = energiaLeadKey({ nome: empresa.nomeEmpresa, telefone: qual.whatsapp });
     if (energiaEnvioLock.has(key)) return;
     if (energiaLeads.some((l: any) => energiaLeadKey({ nome: l.nomeEmpresa, telefone: l.telefone }) === key)) {
       toast.info("Este cliente já está na sua lista de Energia Solar.");
       return;
     }
     energiaEnvioLock.add(key);
-    setTimeout(() => energiaEnvioLock.delete(key), 3000);
     setEnergiaManualSaving(true);
     try {
+      const agora = new Date().toISOString();
+      const conc = resumoConcessionariaUF(empresa.estado);
       const payload: any = {
-        nomeEmpresa: nome,
-        razaoSocial: nome,
-        nomeContato: nome,
+        nomeEmpresa: empresa.nomeEmpresa,
+        razaoSocial: empresa.nomeEmpresa,
+        nomeContato: qual.nomeDecisor,
+        contatoNome: qual.nomeDecisor,
         ramo: "",
-        telefone: energiaManualForm.telefone.trim(),
-        email,
+        telefone: qual.whatsapp,
+        email: "",
         endereco: "",
         website: "",
-        cidade: "",
-        estado: "",
+        cidade: empresa.cidade,
+        estado: empresa.estado,
         cnpj: "",
         cnpjDetails: null,
+        mediaContaReais: qual.mediaContaReais,
+        primeiroAtendimentoEm: qual.atendimentoEm,
+        ficha: { tipo: "PF", nomeCompleto: qual.nomeDecisor, telefone: formatarCelular(qual.whatsapp) },
+        ...(conc ? { concessionaria: conc.unica ? conc.nome : "", descontoConcessionaria: conc.desconto } : {}),
         parceiroId: currentPartner.id,
         parceiroNome: currentPartner.nome || "",
         parceiroEmail: currentPartner.email || "",
         masterPartnerId: (currentPartner as any).parentPartnerId || "",
         origem: "cadastro_manual",
         status: "novo",
-        anotacoes: [],
-        criadoEm: new Date().toISOString(),
-        atualizadoEm: new Date().toISOString()
+        anotacoes: [{ texto: notaPrimeiroAtendimento(qual), autor: currentPartner.nome || "Assessor", papel: "parceiro", data: agora, automatica: true }],
+        criadoEm: agora,
+        atualizadoEm: agora
       };
-      const docRef = await addDoc(collection(db, "leads_energia"), payload);
-      addEnergiaLeadUnico({ id: docRef.id, ...payload });
-      setEnergiaManualForm({ nome: "", telefone: "", email: "" });
+      const criado = await gravarLeadEnergiaComFatura(payload, fatura);
+      addEnergiaLeadUnico(criado);
       setEnergiaManualOpen(false);
       setEnergiaPanelOpen(true);
       toast.success("Lead cadastrado na esteira de Energia Solar.");
     } catch (error) {
       console.error("Erro ao cadastrar lead manual de energia:", error);
-      toast.error("Não foi possível cadastrar o lead.");
+      toast.error((error as any)?.amigavel || "Não foi possível cadastrar o lead.");
     } finally {
+      energiaEnvioLock.delete(key);
       setEnergiaManualSaving(false);
     }
   };
-
-
 
   // Anotação do parceiro no lead de energia (compartilhada com a Mesa/ADM)
   const handleAddEnergiaNotaParceiro = async (leadId: string) => {
@@ -2156,7 +2150,7 @@ export default function PartnerPortal({
                               Atualizar
                             </button>
                             <button
-                              onClick={() => setEnergiaManualOpen(o => !o)}
+                              onClick={() => setEnergiaManualOpen(true)}
                               className="h-9 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                             >
                               <Plus className="w-3.5 h-3.5" />
@@ -2164,51 +2158,6 @@ export default function PartnerPortal({
                             </button>
                           </div>
                         </div>
-
-                        {energiaManualOpen && (
-                          <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-sm">
-                            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                              Cadastro manual de cliente
-                            </p>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                              <input
-                                value={energiaManualForm.nome}
-                                onChange={e => setEnergiaManualForm(f => ({ ...f, nome: e.target.value }))}
-                                placeholder="Nome completo"
-                                className="h-10 px-3 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-                              />
-                              <input
-                                value={energiaManualForm.telefone}
-                                onChange={e => setEnergiaManualForm(f => ({ ...f, telefone: maskTelefoneBR(e.target.value) }))}
-                                placeholder="(00) 00000-0000"
-                                inputMode="numeric"
-                                className="h-10 px-3 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-                              />
-                              <input
-                                value={energiaManualForm.email}
-                                onChange={e => setEnergiaManualForm(f => ({ ...f, email: e.target.value }))}
-                                placeholder="E-mail (opcional)"
-                                type="email"
-                                className="h-10 px-3 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={handleCadastrarEnergiaManual}
-                                disabled={energiaManualSaving}
-                                className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs cursor-pointer disabled:opacity-50"
-                              >
-                                {energiaManualSaving ? "Salvando..." : "Salvar Lead"}
-                              </button>
-                              <button
-                                onClick={() => { setEnergiaManualOpen(false); setEnergiaManualForm({ nome: "", telefone: "", email: "" }); }}
-                                className="h-9 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg font-semibold text-xs cursor-pointer"
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          </div>
-                        )}
 
                         {currentPartner && <DesempenhoAssessorEnergia partner={currentPartner} leads={energiaLeads as any[]} />}
 
@@ -12220,12 +12169,26 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
 
       {/* ACTIVE CNPJ DETAILS CARD MODAL */}
       {qualificacaoPlace && (
-        <ModalQualificacaoAtendimento
-          place={qualificacaoPlace}
-          salvando={energiaSavingId === qualificacaoPlace.id}
-          onCancel={() => setQualificacaoPlace(null)}
-          onConfirm={(dados, fatura) => executarMigracaoEnergia(qualificacaoPlace, dados, fatura)}
-        />
+        <FichaLeadErrorBoundary key={`qual-${qualificacaoPlace.id}`} onClose={() => setQualificacaoPlace(null)}>
+          <ModalQualificacaoAtendimento
+            place={qualificacaoPlace}
+            salvando={energiaSavingId === qualificacaoPlace.id}
+            onCancel={() => setQualificacaoPlace(null)}
+            onConfirm={(dados, fatura) => executarMigracaoEnergia(qualificacaoPlace, dados, fatura)}
+          />
+        </FichaLeadErrorBoundary>
+      )}
+
+      {energiaManualOpen && (
+        <FichaLeadErrorBoundary key="qual-manual" onClose={() => setEnergiaManualOpen(false)}>
+          <ModalQualificacaoAtendimento
+            modo="manual"
+            place={null}
+            salvando={energiaManualSaving}
+            onCancel={() => !energiaManualSaving && setEnergiaManualOpen(false)}
+            onConfirm={(dados, fatura, empresa) => handleCadastrarEnergiaManual(dados, fatura, empresa)}
+          />
+        </FichaLeadErrorBoundary>
       )}
 
       {activeCnpjModal && activeCnpjModal.details && typeof activeCnpjModal.details === "object" && (

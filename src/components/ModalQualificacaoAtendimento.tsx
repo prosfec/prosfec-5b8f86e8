@@ -2,10 +2,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Zap, User, Phone, Lightbulb, CalendarClock, UploadCloud, FileText, Loader2, ShieldCheck, Trash2 } from "lucide-react";
-import { validarQualificacao, formatarCelular, type QualificacaoValida } from "../lib/qualificacaoAtendimento";
+import { validarQualificacao, validarFatura, validarEmpresaManual, formatarCelular, type QualificacaoValida, type DadosEmpresaManual } from "../lib/qualificacaoAtendimento";
 
-const TIPOS_ACEITOS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
-const MAX_BYTES = 15 * 1024 * 1024;
+const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+
 
 function agoraLocal(): string {
   const d = new Date();
@@ -23,10 +23,15 @@ interface Props {
   place: any;
   salvando: boolean;
   onCancel: () => void;
-  onConfirm: (dados: QualificacaoValida, fatura: File | null) => void;
+  modo?: "oportunidade" | "manual";
+  onConfirm: (dados: QualificacaoValida, fatura: File, empresa: DadosEmpresaManual | null) => void;
 }
 
-export default function ModalQualificacaoAtendimento({ place, salvando, onCancel, onConfirm }: Props) {
+export default function ModalQualificacaoAtendimento({ place, salvando, onCancel, onConfirm, modo = "oportunidade" }: Props) {
+  const manual = modo === "manual";
+  const [empresa, setEmpresa] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [uf, setUf] = useState("");
   const [nome, setNome] = useState("");
   const [fone, setFone] = useState("");
   const [conta, setConta] = useState("");
@@ -43,8 +48,8 @@ export default function ModalQualificacaoAtendimento({ place, salvando, onCancel
 
   const escolherArquivo = (f?: File) => {
     if (!f) return;
-    if (!TIPOS_ACEITOS.includes(f.type)) return setErros((e) => ({ ...e, fatura: "Envie PDF ou foto (JPG, PNG ou WEBP)." }));
-    if (f.size > MAX_BYTES) return setErros((e) => ({ ...e, fatura: "O arquivo excede o limite de 15 MB." }));
+    const v = validarFatura(f);
+    if (!v.ok) { setFatura(null); return setErros((e) => ({ ...e, fatura: v.erro })); }
     setErros((e) => ({ ...e, fatura: "" }));
     setFatura(f);
   };
@@ -52,9 +57,15 @@ export default function ModalQualificacaoAtendimento({ place, salvando, onCancel
   const confirmar = () => {
     if (salvando) return;
     const r = validarQualificacao({ nomeDecisor: nome, whatsapp: fone, mediaConta: conta, dataAtendimento: data });
-    if (!r.ok) return setErros(r.erros as any);
+    const em = manual ? validarEmpresaManual({ nomeEmpresa: empresa, cidade, estado: uf }) : null;
+    const fv = validarFatura(fatura);
+    const novos: Record<string, string> = {};
+    if (!r.ok) Object.assign(novos, r.erros);
+    if (em && !em.ok) Object.assign(novos, em.erros);
+    if (!fv.ok) novos.fatura = fv.erro;
+    if (Object.keys(novos).length || !r.ok || !fatura) return setErros(novos);
     setErros({});
-    onConfirm(r.dados, fatura);
+    onConfirm(r.dados, fatura, em && em.ok ? em.dados : null);
   };
 
   const cnpj = place?.cnpjDetails?.cnpj || place?.cnpj || "";
@@ -69,9 +80,9 @@ export default function ModalQualificacaoAtendimento({ place, salvando, onCancel
         <div className="bg-gradient-to-r from-[#0A3D2E] via-[#0D5C43] to-[#00A86B] px-5 py-4 text-white flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0"><Zap className="w-4 h-4 text-amber-300 fill-current" /></div>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-100">Qualificação de primeiro atendimento</p>
-            <h3 className="font-extrabold text-base leading-tight truncate">{place?.nome || "Empresa"}</h3>
-            <p className="text-[11px] text-emerald-100/90 truncate">{[cnpj && `CNPJ ${cnpj}`, local].filter(Boolean).join(" · ")}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-100">{manual ? "Cadastro manual · primeiro atendimento" : "Qualificação de primeiro atendimento"}</p>
+            <h3 className="font-extrabold text-base leading-tight truncate">{manual ? (empresa.trim() || "Novo lead") : (place?.nome || "Empresa")}</h3>
+            {!manual && <p className="text-[11px] text-emerald-100/90 truncate">{[cnpj && `CNPJ ${cnpj}`, local].filter(Boolean).join(" · ")}</p>}
           </div>
           <button type="button" onClick={onCancel} disabled={salvando} aria-label="Fechar" className="p-1.5 rounded-lg hover:bg-white/15 disabled:opacity-50"><X className="w-4 h-4" /></button>
         </div>
@@ -81,6 +92,32 @@ export default function ModalQualificacaoAtendimento({ place, salvando, onCancel
             <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
             <span>Este lead só entra na sua esteira comercial após o registro do primeiro contato com o tomador de decisão.</span>
           </div>
+
+          {manual && (
+            <div className="space-y-3">
+              <div>
+                <label className={rotulo}>Nome da empresa / cliente *</label>
+                <div className="relative"><Zap className="w-4 h-4 absolute left-3 top-3 text-slate-400 dark:text-slate-300" />
+                  <input className={campo} value={empresa} maxLength={120} onChange={(e) => setEmpresa(e.target.value)} placeholder="Ex.: Mercadinho Bom Preço" /></div>
+                <Erro k="nomeEmpresa" />
+              </div>
+              <div className="grid grid-cols-[1fr_96px] gap-2">
+                <div>
+                  <label className={rotulo}>Cidade *</label>
+                  <input className={`${campo} pl-3`} value={cidade} maxLength={60} onChange={(e) => setCidade(e.target.value)} placeholder="Ex.: São Luís" />
+                  <Erro k="cidade" />
+                </div>
+                <div>
+                  <label className={rotulo}>UF *</label>
+                  <select className={`${campo} pl-3`} value={uf} onChange={(e) => setUf(e.target.value)}>
+                    <option value="">--</option>
+                    {UFS.map((u) => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                  <Erro k="estado" />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className={rotulo}>1. Nome do sócio / representante *</label>
@@ -115,12 +152,12 @@ export default function ModalQualificacaoAtendimento({ place, salvando, onCancel
           </div>
 
           <div>
-            <label className={rotulo}>5. Conta de energia recente (opcional · PDF ou foto)</label>
-            <input ref={inputArquivo} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { escolherArquivo(e.target.files?.[0]); e.target.value = ""; }} />
+            <label className={rotulo}>5. Fatura de energia recente * (PDF ou foto · até 15 MB)</label>
+            <input ref={inputArquivo} type="file" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp" className="hidden" onChange={(e) => { escolherArquivo(e.target.files?.[0]); e.target.value = ""; }} />
             {fatura ? (
               <div className="flex items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2.5">
                 <FileText className="w-4 h-4 text-emerald-700 dark:text-emerald-300 shrink-0" />
-                <span className="text-xs font-semibold text-emerald-900 dark:text-emerald-100 truncate flex-1">{fatura.name}</span>
+                <span className="text-xs font-semibold text-emerald-900 dark:text-emerald-100 truncate flex-1">{String(fatura.name || "fatura")}</span>
                 <button type="button" onClick={() => setFatura(null)} aria-label="Remover arquivo" className="p-1 rounded-md text-slate-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             ) : (
@@ -128,7 +165,7 @@ export default function ModalQualificacaoAtendimento({ place, salvando, onCancel
                 onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); escolherArquivo(e.dataTransfer.files?.[0]); }}
                 className="w-full flex flex-col items-center gap-1 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 px-3 py-4 text-slate-500 dark:text-slate-400 hover:border-emerald-400 hover:text-emerald-700">
                 <UploadCloud className="w-5 h-5" />
-                <span className="text-xs font-semibold">Clique ou arraste a fatura, se o cliente já enviou</span>
+                <span className="text-xs font-semibold">Clique ou arraste a fatura de energia do cliente (obrigatório)</span>
               </button>
             )}
             <Erro k="fatura" />
@@ -138,7 +175,7 @@ export default function ModalQualificacaoAtendimento({ place, salvando, onCancel
         <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row justify-end gap-2 px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
           <button type="button" onClick={onCancel} disabled={salvando} className="py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50">Cancelar</button>
           <button type="button" onClick={confirmar} disabled={salvando} className="py-2.5 px-5 rounded-xl bg-[#0A3D2E] hover:bg-[#00A86B] text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-md disabled:opacity-60">
-            {salvando ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Salvando qualificação...</> : <><Zap className="w-3.5 h-3.5 text-amber-300 fill-current" /> Confirmar e migrar lead</>}
+            {salvando ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enviando fatura...</> : <><Zap className="w-3.5 h-3.5 text-amber-300 fill-current" /> {manual ? "Cadastrar lead" : "Confirmar e migrar lead"}</>}
           </button>
         </div>
       </div>
