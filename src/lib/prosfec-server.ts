@@ -121,28 +121,24 @@ export function createExpressApp() {
   // Identidade de serviço no SDK do servidor: garante que leituras/escritas
   // do backend passem pelas regras do Firestore como usuário autenticado.
   const serverAuth = getAuth(firebaseApp);
-  let serviceSignInPromise: Promise<any> | null = null;
+  // Sem promessa compartilhada entre requisições (o Workers rejeita aguardar
+  // promessas criadas por outra requisição já encerrada).
   const ensureServiceSession = async () => {
     if (serverAuth.currentUser) return;
-    if (!serviceSignInPromise) {
-      const email = optionalEnv("PROSFEC_SERVICE_EMAIL");
-      const password = optionalEnv("PROSFEC_SERVICE_PASSWORD");
-      if (!email || !password) return;
-      serviceSignInPromise = (async () => {
-        try {
-          // Garante que a conta exista (cria via REST se necessário).
-          await getServiceIdTokenRef.fn();
-          await signInService(serverAuth, email, password);
-        } catch (err: any) {
-          console.warn(
-            "[SERVICO] Não foi possível autenticar a identidade de serviço:",
-            err?.code || err?.message || "erro",
-          );
-          serviceSignInPromise = null;
-        }
-      })();
+    const email = optionalEnv("PROSFEC_SERVICE_EMAIL");
+    const password = optionalEnv("PROSFEC_SERVICE_PASSWORD");
+    if (!email || !password) return;
+    try {
+      // Garante que a conta exista (cria via REST se necessário).
+      await getServiceIdTokenRef.fn();
+      if (serverAuth.currentUser) return;
+      await signInService(serverAuth, email, password);
+    } catch (err: any) {
+      console.warn(
+        "[SERVICO] Não foi possível autenticar a identidade de serviço:",
+        err?.code || err?.message || "erro",
+      );
     }
-    await serviceSignInPromise;
   };
   // Referência tardia (a função é definida mais abaixo no arquivo)
   const getServiceIdTokenRef: { fn: () => Promise<string> } = {
