@@ -25,3 +25,12 @@ describe("qualificação do primeiro atendimento", () => {
     expect(validarQualificacao({ ...base, dataAtendimento: "2026-11-01T10:00" }, agora).ok).toBe(false);
   });
 });
+
+import { validarFatura as vf, validarEmpresaManual as vem } from "./qualificacaoAtendimento";
+describe("fatura obrigatória", () => {
+  it("recusa ausência de fatura", () => expect(vf(null).ok).toBe(false));
+  it("recusa HEIC do iPhone", () => expect(vf({ name: "a.heic", type: "image/heic", size: 100 }).ok).toBe(false));
+  it("recusa acima de 15 MB", () => expect(vf({ name: "a.pdf", type: "application/pdf", size: 15 * 1024 * 1024 + 1 }).ok).toBe(false));
+  it("aceita PDF sem tipo informado pelo navegador", () => expect(vf({ name: "Conta Mês!.PDF", type: "", size: 500 })).toEqual({ ok: true, tipo: "application/pdf", ext: "pdf" }));
+  it("cadastro manual exige empresa, cidade e UF", () => expect(vem({ nomeEmpresa: "", cidade: "", estado: "" }).ok).toBe(false));
+});

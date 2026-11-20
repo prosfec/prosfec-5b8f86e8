@@ -42,7 +42,7 @@ import { FichaLeadErrorBoundary } from "./FichaLeadErrorBoundary";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
 import ModalQualificacaoAtendimento from "./ModalQualificacaoAtendimento";
 import { abrirBuscaCnpjGoogle } from "../lib/janelaLateralGoogle";
-import { formatarCelular, notaPrimeiroAtendimento, type QualificacaoValida } from "../lib/qualificacaoAtendimento";
+import { formatarCelular, notaPrimeiroAtendimento, validarFatura, type QualificacaoValida, type DadosEmpresaManual } from "../lib/qualificacaoAtendimento";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import { LeadEnergiaCardCompacto, LeadEnergiaDetalheModal } from "./LeadEnergiaKanban";
