@@ -9,7 +9,7 @@ import { resumirHorario } from "../lib/raioXEnergetico";
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   collection, 
@@ -1987,10 +1987,14 @@ export default function PartnerPortal({
   };
 
   // Anotação do parceiro no lead de energia (compartilhada com a Mesa/ADM)
+  const energiaNotaEnvioLock = useRef<Set<string>>(new Set());
   const handleAddEnergiaNotaParceiro = async (leadId: string) => {
     const texto = (energiaNotaDraft[leadId] || "").trim();
     if (!texto || !currentPartner) return;
+    if (energiaNotaEnvioLock.current.has(leadId)) return;
+    energiaNotaEnvioLock.current.add(leadId);
     setEnergiaNotaSavingId(leadId);
+    setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: "" }));
     try {
       const nota = {
         texto,
@@ -2005,14 +2009,19 @@ export default function PartnerPortal({
         vistoPeloParceiroEm: nota.data
       });
       setEnergiaLeads(prev => prev.map(l => l.id === leadId
-        ? { ...l, anotacoes: [...(Array.isArray(l.anotacoes) ? l.anotacoes : []), nota], ultimaMovimentacaoParceiroEm: nota.data, vistoPeloParceiroEm: nota.data }
+        ? (() => {
+            const atuais = Array.isArray(l.anotacoes) ? l.anotacoes : [];
+            const jaExiste = atuais.some((n: any) => n?.data === nota.data && n?.texto === nota.texto && n?.papel === nota.papel);
+            return { ...l, anotacoes: jaExiste ? atuais : [...atuais, nota], ultimaMovimentacaoParceiroEm: nota.data, vistoPeloParceiroEm: nota.data };
+          })()
         : l));
-      setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: "" }));
       toast.success("Anotação registrada e compartilhada com a Mesa PROSFEC.");
     } catch (error) {
       console.error("Erro ao salvar anotação do lead de energia:", error);
+      setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: prev[leadId] || texto }));
       toast.error("Não foi possível salvar a anotação.");
     } finally {
+      energiaNotaEnvioLock.current.delete(leadId);
       setEnergiaNotaSavingId(null);
     }
   };
