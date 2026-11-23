@@ -5,7 +5,9 @@
 - [x] Diagnóstico sem disparo RedeBE (mantém débito e upload do laudo pela Mesa)
 - [x] Contratos: remover Assessoria mensal e Avulso genérico; manter Preços e Serviços + Aditivo; anexo do contrato da terceirizada
 - [x] Publicar storage.rules no Console do Firebase (ação do usuário)
-- [ ] Simulações GD múltiplas e AlugSol pela Mesa, com PDFs e regras manuais no chat
-- [ ] Solicitação e seleção pelo assessor com validação de ficha/documentos e cards Fintech Premium
-- [ ] Remover proposta Sunne incorporada somente do portal do assessor
-- [ ] Testar fluxo e proteger propostas nas regras Firebase
+- [x] Simulações GD múltiplas e AlugSol pela Mesa, com PDFs e regras manuais no chat
+- [x] Solicitação e seleção pelo assessor com validação de ficha/documentos e cards Fintech Premium
+- [x] Remover proposta Sunne incorporada somente do portal do assessor
+- [x] Testes unitários e validação visual claro/escuro, computador/celular
+- [ ] Publicar firestore.rules e storage.rules atualizadas — sem credencial de publicação disponível
+- [ ] Verificar envio de PDF e seleção com contas reais ADM/assessor — sem sessão autenticada disponível

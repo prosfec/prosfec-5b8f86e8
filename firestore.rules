@@ -273,11 +273,59 @@ service cloud.firestore {
     // leads_energia — esteira comercial de Energia Solar (isolada do crédito)
     // Parceiro autenticado cria/consulta; ADM atualiza status e anotações.
     // ---------------------------------------------------------------------
+    function energiaFichaCompleta() {
+      let f = resource.data.get('ficha', {});
+      let d = resource.data.get('documentos', {});
+      let pj = f.get('tipo', '') == 'PJ' || (f.get('tipo', '') != 'PF'
+        && (resource.data.get('cnpj', '') != '' || resource.data.get('cnpjDetails', null) != null));
+      return f.get('nomeCompleto', '') is string && f.get('nomeCompleto', '').size() > 0
+        && f.get('cpf', '') is string && f.get('cpf', '').size() > 0
+        && f.get('email', '') is string && f.get('email', '').size() > 0
+        && f.get('telefone', '') is string && f.get('telefone', '').size() > 0
+        && f.get('estadoCivil', '') is string && f.get('estadoCivil', '').size() > 0
+        && f.get('profissao', '') is string && f.get('profissao', '').size() > 0
+        && d.get('contaLuz', {}).get('url', '').matches('https://.+')
+        && d.get('rgFrente', {}).get('url', '').matches('https://.+')
+        && d.get('rgVerso', {}).get('url', '').matches('https://.+')
+        && (!pj || (f.get('razaoSocial', '').size() > 0 && f.get('cnpj', '').size() > 0
+          && d.get('cartaoCnpj', {}).get('url', '').matches('https://.+')
+          && d.get('contratoSocial', {}).get('url', '').matches('https://.+')));
+    }
+
+    function energiaEscolhaValida() {
+      let escolha = request.resource.data.get('propostaEnergiaEscolhida', {});
+      let anterior = resource.data.get('propostaEnergiaEscolhida', {});
+      let ofertas = resource.data.get('ofertasEnergia', {});
+      let id = escolha.get('ofertaId', '');
+      return anterior.size() == 0
+        && !(resource.data.get('status', 'novo') in ['concluido', 'arquivado', 'cancelado'])
+        && id in ofertas
+        && escolha.keys().hasOnly(['ofertaId', 'empresa', 'tipo', 'selecionadaEm', 'selecionadaPor'])
+        && escolha.get('empresa', '') == ofertas[id].empresa
+        && escolha.get('tipo', '') == ofertas[id].tipo
+        && escolha.get('selecionadaPor', '') == request.auth.uid
+        && escolha.get('selecionadaEm', '') is string
+        && energiaFichaCompleta();
+    }
+
+    function energiaParceiroUpdate() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return !changed.hasAny(['ofertasEnergia'])
+        && (!changed.hasAny(['propostaEnergiaEscolhida']) || energiaEscolhaValida())
+        && (!changed.hasAny(['cotacaoEnergiaStatus']) || (
+          request.resource.data.cotacaoEnergiaStatus == 'solicitada'
+          && !(resource.data.get('status', 'novo') in ['concluido', 'arquivado', 'cancelado'])
+          && resource.data.get('documentos', {}).get('contaLuz', {}).get('url', '').matches('https://.+')
+        ));
+    }
+
     match /leads_energia/{energiaId} {
       allow read:   if isSignedIn();
-      allow create: if isSignedIn();
+      allow create: if isStaff() || (isSignedIn()
+        && !request.resource.data.keys().hasAny(['ofertasEnergia', 'propostaEnergiaEscolhida']));
       allow update: if isStaff()
-                    || (isSignedIn() && resource != null && partnerDocBelongsToMe(resource.data.parceiroId));
+                    || (isSignedIn() && resource != null && partnerDocBelongsToMe(resource.data.parceiroId)
+                        && energiaParceiroUpdate());
       allow delete: if isStaff();
     }
 

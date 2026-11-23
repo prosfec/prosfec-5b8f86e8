@@ -1,5 +1,9 @@
 // @ts-nocheck
 import { RankingEquipeEnergia } from "./RankingEquipeEnergia";
+import ModalCriarSimulacaoEnergia from "./ModalCriarSimulacaoEnergia";
+import { CardPropostasChatEnergia } from "./CardPropostasChatEnergia";
+import { Button } from "./ui/button";
+import { empresasFechamentoSimulacao } from "../lib/validacaoFichaSolar";
 import { Trophy } from "lucide-react";
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import { FichaCnpjBotao } from "./FichaCnpjBotao";
@@ -501,6 +505,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [energiaEstadoFilter, setEnergiaEstadoFilter] = useState<string>("todos");
   const [energiaBusca, setEnergiaBusca] = useState<string>("");
   const [energiaFechamentoLeadId, setEnergiaFechamentoLeadId] = useState<string | null>(null);
+  const [simulacaoEnergiaLeadId, setSimulacaoEnergiaLeadId] = useState<string | null>(null);
   const [fichaEnergiaLeadId, setFichaEnergiaLeadId] = useState<string | null>(null);
   const [detalheEnergiaLeadId, setDetalheEnergiaLeadId] = useState<string | null>(null);
   const [energiaFechamentoFatura, setEnergiaFechamentoFatura] = useState<string>("");
@@ -3212,7 +3217,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setEnergiaFechamentoLeadId(leadId);
       setEnergiaFechamentoFatura(alvoAtual?.consumoKwhMes ? String(alvoAtual.consumoKwhMes) : "");
       setEnergiaFechamentoComissao(alvoAtual?.comissaoParceiro ? String(alvoAtual.comissaoParceiro) : "");
-      setEnergiaFechamentoEmpresas(Array.isArray(alvoAtual?.empresasFechamento) ? alvoAtual.empresasFechamento : []);
+      setEnergiaFechamentoEmpresas(Array.isArray(alvoAtual?.empresasFechamento) && alvoAtual.empresasFechamento.length ? alvoAtual.empresasFechamento : (alvoAtual?.propostaEnergiaEscolhida?.empresa ? [alvoAtual.propostaEnergiaEscolhida.empresa] : []));
       return;
     }
     setEnergiaSavingId(leadId);
@@ -3260,7 +3265,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       toast.error("Informe o consumo (kWh/mês) e a comissão do parceiro.");
       return;
     }
-    const empresasFechamento = EMPRESAS_FECHAMENTO_ENERGIA.filter(e => energiaFechamentoEmpresas.includes(e));
+    const alvoFechamento = leadsEnergia.find(l => l.id === energiaFechamentoLeadId) || {};
+    const empresasFechamento = empresasFechamentoSimulacao(alvoFechamento, EMPRESAS_FECHAMENTO_ENERGIA).filter(e => energiaFechamentoEmpresas.includes(e));
     if (empresasFechamento.length === 0) {
       toast.error("Marque ao menos uma empresa onde o contrato foi fechado.");
       return;
@@ -3437,13 +3443,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     setEnergiaSavingId(leadId);
     try {
       const agora = new Date().toISOString();
-      await updateDoc(doc(db, "leads_energia", leadId), {
-        anotacoes: [],
-        ultimaMovimentacaoParceiroEm: null,
-        vistoPeloAdmEm: agora
+      const preservadas = await runTransaction(db, async tx => {
+        const r = doc(db, "leads_energia", leadId);
+        const snap = await tx.get(r);
+        if (!snap.exists()) throw new Error("Lead não encontrado.");
+        const notas = snap.data().anotacoes;
+        const simulacoes = Array.isArray(notas) ? notas.filter(n => n?.tipo === "simulacao") : [];
+        tx.update(r, { anotacoes: simulacoes, ultimaMovimentacaoParceiroEm: null, vistoPeloAdmEm: agora });
+        return simulacoes;
       });
       setLeadsEnergia(prev => prev.map((l: any) => l.id === leadId
-        ? { ...l, anotacoes: [], ultimaMovimentacaoParceiroEm: null, vistoPeloAdmEm: agora }
+        ? { ...l, anotacoes: preservadas, ultimaMovimentacaoParceiroEm: null, vistoPeloAdmEm: agora }
         : l));
     } catch (error) {
       console.error("Erro ao limpar histórico:", error);
@@ -5273,7 +5283,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 <div>
                                   <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide mb-1">Fechado com (marque uma ou mais)</p>
                                   <div className="flex flex-wrap gap-2">
-                                    {EMPRESAS_FECHAMENTO_ENERGIA.map(emp => {
+                                    {empresasFechamentoSimulacao(lead, EMPRESAS_FECHAMENTO_ENERGIA).map(emp => {
                                       const marcado = energiaFechamentoEmpresas.includes(emp);
                                       return (
                                         <label key={emp} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold cursor-pointer select-none ${marcado ? "bg-emerald-600 border-emerald-600 text-white" : "bg-white border-amber-200 text-slate-700"}`}>
@@ -5361,6 +5371,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                             {/* Chat operacional */}
                             <div className="chat-op">
+                              <div className="simulacao-solicitar">
+                                {lead.cotacaoEnergiaStatus === "solicitada" && <p className="simulacao-muted mb-2">Cotação solicitada pelo assessor</p>}
+                                {lead.propostaEnergiaEscolhida && <p className="simulacao-muted mb-2">Proposta escolhida: {lead.propostaEnergiaEscolhida.empresa}</p>}
+                                <Button size="sm" className="simulacao-primary w-full whitespace-normal" disabled={["concluido", "arquivado", "cancelado"].includes(status) || !!lead.propostaEnergiaEscolhida} onClick={() => setSimulacaoEnergiaLeadId(lead.id)}><Zap /> Montar pacote de simulações</Button>
+                              </div>
                               <div className="chat-op-head">
                                 <p className="flex items-center gap-1.5">
                                   Chat operacional
@@ -5385,6 +5400,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               ) : (
                                 <div className="chat-op-body" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
                                   {notas.map((nota: any, idx: number) => {
+                                    if (nota?.tipo === "simulacao") return <CardPropostasChatEnergia key={nota.id || idx} lead={lead} ofertaIds={nota.ofertaIds} onUpdated={u => setLeadsEnergia(prev => prev.map(l => l.id === lead.id ? { ...l, ...u } : l))} />;
                                     const doParceiro = nota.papel === "parceiro";
                                     return (
                                       <div key={idx} className={`flex ${doParceiro ? "justify-start" : "justify-end"}`}>
@@ -5452,6 +5468,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                 {cardCompleto}
                               </LeadEnergiaDetalheModal>
                             )}
+                            {simulacaoEnergiaLeadId === lead.id && <ModalCriarSimulacaoEnergia lead={lead} onClose={() => setSimulacaoEnergiaLeadId(null)} onUpdated={u => { setLeadsEnergia(prev => prev.map(l => l.id === lead.id ? { ...l, ...u } : l)); toast.success("Simulações enviadas ao assessor."); }} />}
                           </React.Fragment>
                         );
                       })}

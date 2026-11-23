@@ -1,21 +1,31 @@
-import { doc, runTransaction, arrayUnion } from "firebase/firestore";
+import { doc, runTransaction, arrayUnion, type Transaction } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { auth, db, storage } from "../firebase";
 import { pendenciasFichaSolar, pendenciasSolicitacaoSolar, validarOfertasEnergia, validarPdfSimulacao, type OfertaEnergia, type LeadSolar } from "./validacaoFichaSolar";
 
-async function verificarSessao(lead: LeadSolar, adm: boolean) {
+async function verificarSessao(adm: boolean) {
   await auth.authStateReady();
   const user = auth.currentUser;
   if (!user) throw new Error("Entre novamente para continuar.");
   const token = await user.getIdTokenResult();
   const staff = user.uid === "Nso5FBoBVHXNY60RDw6NNKeaCC23" || user.email?.toLowerCase() === "prosfec.tesouraria@gmail.com" || token.claims['admin'] === true;
   if (adm && !staff) throw new Error("Somente a Mesa pode enviar simulações.");
-  if (!adm && !staff && !lead['parceiroId']) throw new Error("Lead sem assessor responsável.");
+  return { uid: user.uid, email: user.email?.toLowerCase() || "", staff };
+}
+
+async function verificarDono(tx: Transaction, lead: LeadSolar, sessao: Awaited<ReturnType<typeof verificarSessao>>) {
+  if (sessao.staff) return;
+  const parceiroId = lead['parceiroId'];
+  if (typeof parceiroId !== "string" || !parceiroId) throw new Error("Lead sem assessor responsável.");
+  if (parceiroId === sessao.uid) return;
+  const snap = await tx.get(doc(db, "parceiros", parceiroId));
+  const parceiro = snap.exists() ? snap.data() : {};
+  if (parceiro['authUid'] !== sessao.uid && (!sessao.email || parceiro['email']?.toLowerCase() !== sessao.email)) throw new Error("Você não tem acesso a este lead.");
 }
 
 export interface OfertaDraft { id: string; tipo: "gd" | "alugsol"; empresa: string; desconto: string; economia: string; locacao: string; regras: string; arquivo: File | null }
 export async function publicarSimulacoes(leadId: string, pacoteId: string, drafts: OfertaDraft[]) {
-  await verificarSessao({}, true);
+  await verificarSessao(true);
   if (!drafts.length) throw new Error("Adicione pelo menos uma oferta.");
   for (const d of drafts) {
     if (!d.empresa.trim() || !d.regras.trim() || !d.arquivo) throw new Error("Preencha empresa, regras e PDF de todas as ofertas.");
@@ -30,7 +40,7 @@ export async function publicarSimulacoes(leadId: string, pacoteId: string, draft
     for (const d of drafts) {
       const arquivo = d.arquivo;
       if (!arquivo) throw new Error("PDF não informado.");
-      const r = ref(storage, `documentos_energia/${leadId}/simulacao_${pacoteId}_${d.id}.pdf`);
+      const r = ref(storage, `documentos_energia/${leadId}/simulacao_${pacoteId}_${d.id}_${crypto.randomUUID()}.pdf`);
       await uploadBytes(r, arquivo, { contentType: "application/pdf" });
       uploads.push(r);
       ofertas.push({ id: d.id, pacoteId, tipo: d.tipo, empresa: d.empresa.trim(), desconto: d.desconto.trim(), economia: d.economia.trim(), locacao: d.locacao.trim(), regras: d.regras.trim(), pdfUrl: await getDownloadURL(r), pdfNome: arquivo.name, criadaEm: agora });
@@ -63,12 +73,13 @@ export async function publicarSimulacoes(leadId: string, pacoteId: string, draft
 }
 
 export async function solicitarCotacaoEnergia(leadId: string, autor: string) {
-  await verificarSessao({}, false);
+  const sessao = await verificarSessao(false);
   return runTransaction(db, async tx => {
     const r = doc(db, "leads_energia", leadId);
     const snap = await tx.get(r);
     if (!snap.exists()) throw new Error("Lead não encontrado.");
     const lead = snap.data();
+    await verificarDono(tx, lead, sessao);
     const pendencias = pendenciasSolicitacaoSolar(lead);
     if (pendencias.length) throw new Error(`Pendente: ${pendencias.join(", ")}.`);
     if (["concluido", "arquivado", "cancelado"].includes(lead['status'])) throw new Error("Este lead não está aberto para cotação.");
@@ -82,12 +93,13 @@ export async function solicitarCotacaoEnergia(leadId: string, autor: string) {
 }
 
 export async function escolherPropostaEnergia(leadId: string, ofertaId: string, autor: string) {
-  await verificarSessao({}, false);
+  const sessao = await verificarSessao(false);
   return runTransaction(db, async tx => {
     const r = doc(db, "leads_energia", leadId);
     const snap = await tx.get(r);
     if (!snap.exists()) throw new Error("Lead não encontrado.");
     const lead = snap.data();
+    await verificarDono(tx, lead, sessao);
     if (lead['propostaEnergiaEscolhida']?.ofertaId === ofertaId) return lead;
     if (lead['propostaEnergiaEscolhida']) throw new Error("Outra proposta já foi selecionada. Confirme com a Mesa.");
     if (["concluido", "arquivado", "cancelado"].includes(lead['status'])) throw new Error("Este lead não está aberto para seleção.");

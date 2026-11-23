@@ -25,7 +25,7 @@
   --color-simulation-danger: #ff9ea9;
 }
 .simulacao-overlay { position: fixed; inset: 0; z-index: 150; background: var(--color-simulation-scrim); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.simulacao-modal { width: min(740px, 100%); max-height: 92dvh; overflow-y: auto; background: var(--color-simulation-surface); color: var(--color-simulation-ink); border: 1px solid var(--color-simulation-border); border-radius: 8px; box-shadow: var(--shadow-raised); }
+.simulacao-modal { position: fixed; z-index: 151; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(740px, calc(100% - 32px)); max-height: 92dvh; overflow-y: auto; background: var(--color-simulation-surface); color: var(--color-simulation-ink); border: 1px solid var(--color-simulation-border); border-radius: 8px; box-shadow: var(--shadow-raised); }
 .simulacao-modal-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 24px; border-bottom: 1px solid var(--color-simulation-border); gap: 12px; }
 .simulacao-modal h2 { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 700; }
 .simulacao-eyebrow { font-size: 10px; font-weight: 700; color: var(--color-simulation-action); letter-spacing: 0; }

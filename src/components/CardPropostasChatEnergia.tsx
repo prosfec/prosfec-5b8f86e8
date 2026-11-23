@@ -28,9 +28,9 @@ export function CardPropostasChatEnergia({ lead, ofertaIds, assessor = false, au
         <div className="simulacao-card-top"><span className="simulacao-eyebrow">{o.tipo === "alugsol" ? "LOCAÇÃO · ALUGSOL" : "GERAÇÃO DISTRIBUÍDA"}</span>{selecionada && <span className="simulacao-selo"><CheckCircle2 size={14} /> Selecionada</span>}</div>
         <h3>{o.empresa}</h3>
         <div className="simulacao-indicadores">
-          {o.desconto && <div><span>{o.tipo === "gd" ? "Desconto estimado" : "Economia / Projeção"}</span><strong>{o.desconto}{o.tipo === "gd" && !String(o.desconto).includes("%") ? "%" : ""}</strong></div>}
-          {o.economia && <div><span>Economia mensal estimada</span><strong>{String(o.economia).includes("R$") ? o.economia : `R$ ${o.economia}`}</strong></div>}
-          {o.locacao && <div><span>Locação mensal</span><strong>{String(o.locacao).includes("R$") ? o.locacao : `R$ ${o.locacao}`}</strong></div>}
+          {typeof o.desconto === "string" && o.desconto && <div><span>{o.tipo === "gd" ? "Desconto estimado" : "Economia / Projeção"}</span><strong>{o.desconto}{o.tipo === "gd" && !o.desconto.includes("%") ? "%" : ""}</strong></div>}
+          {typeof o.economia === "string" && o.economia && <div><span>Economia mensal estimada</span><strong>{o.economia.includes("R$") ? o.economia : `R$ ${o.economia}`}</strong></div>}
+          {typeof o.locacao === "string" && o.locacao && <div><span>Locação mensal</span><strong>{o.locacao.includes("R$") ? o.locacao : `R$ ${o.locacao}`}</strong></div>}
         </div>
         <div className="simulacao-actions"><Button asChild variant="outline" size="sm" className="simulacao-button"><a href={o.pdfUrl} target="_blank" rel="noopener noreferrer"><Download /> Proposta PDF</a></Button></div>
         <details className="simulacao-regras"><summary><FileText size={14} /> Roteiro e regras operacionais</summary><p>{typeof o.regras === "string" ? o.regras : "Consulte a Mesa."}</p></details>

@@ -45,9 +45,15 @@ export interface OfertaEnergia {
 export function validarOfertasEnergia(ofertas: OfertaEnergia[]): string | null {
   if (!ofertas.length) return "Adicione pelo menos uma oferta.";
   for (const o of ofertas) {
-    if (!o.empresa.trim() || !o.regras.trim() || !urlPdfSegura(o.pdfUrl)) return "Toda oferta precisa de empresa, regras operacionais e PDF.";
+    if (typeof o?.empresa !== "string" || typeof o?.regras !== "string" || !o.empresa.trim() || !o.regras.trim() || !urlPdfSegura(o.pdfUrl)) return "Toda oferta precisa de empresa, regras operacionais e PDF.";
     if (o.empresa.length > 200 || o.regras.length > 10000) return "Reduza o nome da empresa ou as regras operacionais.";
     if (!["gd", "alugsol"].includes(o.tipo)) return "Tipo de oferta inválido.";
   }
   return null;
+}
+
+export function empresasFechamentoSimulacao(lead: LeadSolar, padrao: readonly string[]): string[] {
+  const anteriores = Array.isArray(lead['empresasFechamento']) ? lead['empresasFechamento'].filter((e: unknown): e is string => typeof e === "string" && !!e.trim()) : [];
+  const escolhida = lead['propostaEnergiaEscolhida']?.empresa;
+  return [...new Set([...padrao, ...anteriores, ...(typeof escolhida === "string" && escolhida.trim() ? [escolhida] : [])])];
 }

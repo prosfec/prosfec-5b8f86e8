@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { DesempenhoAssessorEnergia } from "./DesempenhoAssessorEnergia";
+import { CardPropostasChatEnergia, SolicitarCotacaoEnergia } from "./CardPropostasChatEnergia";
 import RaioXEnergeticoCard from "./RaioXEnergeticoCard";
 import { calcularRaioXEnergetico } from "../lib/raioXEnergetico";
 import { NIVEIS, classificarPorte, calibrarBusca, filtrarPorNivel, type FiltroNivel, type NivelEmpresa } from "../lib/porteEmpresa";
@@ -36,7 +37,6 @@ import { toast } from "sonner";
 import { FichaCnpjErrorBoundary } from "./FichaCnpjErrorBoundary";
 import { TermosDeUsoContent } from "./TermosDeUsoContent";
 import { AceiteContratoModal, TermoCapacitacaoEnergia, ContratoPrestacaoEnergia, contratoDefinitivoLiberado, diasDesdeCapacitacao, DIAS_CAPACITACAO_ENERGIA, etapaAssessorEnergia, MSG_RECUSA_ENERGIA } from "./AssessorEnergiaContratos";
-import EnergiaContratacaoModal from "./EnergiaContratacaoModal";
 import { resumoConcessionariaUF } from "../lib/concessionariaRegiao";
 import { FichaLeadErrorBoundary } from "./FichaLeadErrorBoundary";
 import FichaLeadEnergiaModal, { fichaDocumentosEnviados, fichaDocumentosTotal } from "./FichaLeadEnergiaModal";
@@ -1157,7 +1157,6 @@ export default function PartnerPortal({
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [qualificacaoPlace, setQualificacaoPlace] = useState<any | null>(null);
   const [expandedEnergiaLeadId, setExpandedEnergiaLeadId] = useState<string | null>(null);
-  const [propostaEnergiaLeadId, setPropostaEnergiaLeadId] = useState<string | null>(null);
   const [fichaEnergiaLeadId, setFichaEnergiaLeadId] = useState<string | null>(null);
   const [detalheEnergiaLeadId, setDetalheEnergiaLeadId] = useState<string | null>(null);
   const [detalheHuntPlaceId, setDetalheHuntPlaceId] = useState<string | null>(null);
@@ -2312,7 +2311,6 @@ export default function PartnerPortal({
                               const energiaFollowUp = precisaFollowUpEnergia(lead);
                               // Região sem link direto de concessionária: proposta sob demanda via Ficha & Documentos.
                               const regiaoSobDemanda = !!String(lead.estado || "").trim() && !resumoConcessionariaUF(lead.estado);
-                              const mostraGerarProposta = (statusKey === "novo" || statusKey === "atendimento") && !regiaoSobDemanda;
                               const cardCompleto = (
                                 <div key={lead.id} className="lead-dossie grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
                                   <div className="space-y-3 min-w-0">
@@ -2442,16 +2440,7 @@ export default function PartnerPortal({
                                         ℹ️ Região sob demanda (AlugSol, Mercado Livre ou usinas parceiras). Colete a fatura e os documentos na Ficha para cotação direta.
                                       </p>
                                     )}
-                                    <div className={`grid gap-1.5 ${lead.telefone && mostraGerarProposta ? "grid-cols-2" : "grid-cols-1"}`}>
-                                      {mostraGerarProposta && (
-                                      <button
-                                        type="button"
-                                        onClick={() => setPropostaEnergiaLeadId(lead.id)}
-                                        className="w-full px-2 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-all font-semibold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[32px]"
-                                      >
-                                        ⚡ Gerar Proposta
-                                      </button>
-                                      )}
+                                    <div className="grid gap-1.5 grid-cols-1">
                                       {lead.telefone && (
                                         <a
                                           href={energiaWa}
@@ -2563,6 +2552,7 @@ export default function PartnerPortal({
 
 
                                   <div className="chat-op">
+                                    <SolicitarCotacaoEnergia lead={lead} autor={currentPartner?.nome || "Assessor"} onUpdated={u => setEnergiaLeads(prev => prev.map(l => l.id === lead.id ? { ...l, ...u } : l))} />
                                     <div className="chat-op-head">
                                       <span className="flex items-center gap-2">
                                         <MessageSquare className="w-4 h-4" />
@@ -2572,6 +2562,7 @@ export default function PartnerPortal({
                                     </div>
                                     <div className="chat-op-body">
                                       {notas.length > 0 ? notas.map((nota: any, idx: number) => {
+                                        if (nota?.tipo === "simulacao") return <CardPropostasChatEnergia key={nota.id || idx} lead={lead} ofertaIds={nota.ofertaIds} assessor autor={currentPartner?.nome || "Assessor"} onUpdated={u => setEnergiaLeads(prev => prev.map(l => l.id === lead.id ? { ...l, ...u } : l))} />;
                                         const daMesa = (nota.papel || "adm") !== "parceiro";
                                         return (
                                           <div key={idx} className={`flex ${daMesa ? "justify-start" : "justify-end"}`}>
@@ -2609,7 +2600,6 @@ export default function PartnerPortal({
                                   </div>
                                 </div>
                               );
-                              const podeProposta = mostraGerarProposta;
                               return (
                                 <React.Fragment key={lead.id}>
                                   <LeadEnergiaCardCompacto
@@ -2617,9 +2607,8 @@ export default function PartnerPortal({
                                     novidade={energiaTemNovidade(lead)}
                                     onOpen={() => setDetalheEnergiaLeadId(lead.id)}
                                     whatsappUrl={lead.telefone ? energiaWa : null}
-                                    onProposta={podeProposta ? () => setPropostaEnergiaLeadId(lead.id) : null}
                                   />
-                                  {detalheEnergiaLeadId === lead.id && !propostaEnergiaLeadId && !fichaEnergiaLeadId && !activeCnpjModal && (
+                                  {detalheEnergiaLeadId === lead.id && !fichaEnergiaLeadId && !activeCnpjModal && (
                                     <LeadEnergiaDetalheModal titulo={lead.nomeEmpresa || "Lead"} onClose={() => setDetalheEnergiaLeadId(null)}>
                                       {cardCompleto}
                                     </LeadEnergiaDetalheModal>
@@ -2632,18 +2621,6 @@ export default function PartnerPortal({
                               );
                             })}
                           </div>
-                        )}
-                        {propostaEnergiaLeadId && (
-                          <EnergiaContratacaoModal
-                            open
-                            ocultarVideo
-                            voltarLabel={detalheEnergiaLeadId ? "Voltar ao Lead" : undefined}
-                            ufInicial={(() => {
-                              const l: any = energiaLeads.find((x: any) => x.id === propostaEnergiaLeadId);
-                              return l?.origem === "painel_oportunidades" ? l?.estado : undefined;
-                            })()}
-                            onClose={() => setPropostaEnergiaLeadId(null)}
-                          />
                         )}
                         {fichaEnergiaLeadId && energiaLeads.find((l: any) => l.id === fichaEnergiaLeadId) && (
                           <FichaLeadErrorBoundary key={fichaEnergiaLeadId} onClose={() => setFichaEnergiaLeadId(null)}>

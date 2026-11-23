@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Plus, Trash2, X, Send, Loader2, FileText, Zap } from "lucide-react";
 import { Button } from "./ui/button";
 import { publicarSimulacoes, type OfertaDraft } from "../lib/simulacoesEnergia";
@@ -22,11 +22,12 @@ export default function ModalCriarSimulacaoEnergia({ lead, onClose, onUpdated }:
     } catch (e) { setErro(e instanceof Error ? e.message : "Não foi possível enviar. Tente novamente."); }
     finally { setEnviando(false); }
   }
-  return createPortal(
-    <div className="simulacao-overlay" role="presentation">
-      <section role="dialog" aria-modal="true" aria-label="Montar pacote de simulações" className="simulacao-modal" translate="no">
+  return <DialogPrimitive.Root open onOpenChange={open => { if (!open && !enviando) onClose(); }}>
+    <DialogPrimitive.Portal>
+      <DialogPrimitive.Overlay className="simulacao-overlay" />
+      <DialogPrimitive.Content aria-describedby={undefined} className="simulacao-modal" translate="no" onPointerDownOutside={e => e.preventDefault()} onEscapeKeyDown={e => { if (enviando) e.preventDefault(); }}>
         <header className="simulacao-modal-head">
-          <div><p className="simulacao-eyebrow">MESA DE OPERAÇÕES</p><h2><Zap size={20} /> Montar simulações</h2><p className="simulacao-muted break-words">{String(lead['nomeEmpresa'] || lead['ficha']?.nomeCompleto || "Lead")}</p></div>
+          <div><p className="simulacao-eyebrow">MESA DE OPERAÇÕES</p><DialogPrimitive.Title asChild><h2><Zap size={20} /> Montar simulações</h2></DialogPrimitive.Title><p className="simulacao-muted break-words">{String(lead['nomeEmpresa'] || lead['ficha']?.nomeCompleto || "Lead")}</p></div>
           <Button type="button" variant="ghost" size="icon" title="Fechar" aria-label="Fechar simulações" disabled={enviando} onClick={onClose}><X /></Button>
         </header>
         <form onSubmit={enviar} className="simulacao-form">
@@ -52,7 +53,7 @@ export default function ModalCriarSimulacaoEnergia({ lead, onClose, onUpdated }:
           {erro && <p className="simulacao-error" role="alert">{erro}</p>}
           <footer className="simulacao-footer"><Button type="button" variant="outline" className="simulacao-button" disabled={enviando} onClick={onClose}>Cancelar</Button><Button type="submit" className="simulacao-primary whitespace-normal" disabled={enviando || !ofertas.length}>{enviando ? <Loader2 className="animate-spin" /> : <Send />} {enviando ? "Enviando PDFs e simulações…" : "Enviar simulações ao assessor"}</Button></footer>
         </form>
-      </section>
-    </div>, document.body,
-  );
+      </DialogPrimitive.Content>
+    </DialogPrimitive.Portal>
+  </DialogPrimitive.Root>;
 }

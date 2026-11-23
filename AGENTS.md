@@ -16,3 +16,5 @@
 - Credit diagnosis requests never call an external API: the server records the request, debits the partner and queues it for staff to attach the PDF, because reports now come from an offline external source.
 - The principal Assessoria/Avulso contract is discontinued; only already-signed ones are served, so historical signatures stay immutable while new contracts are only price-and-service documents.
 - The admin dashboard loads Firestore collections lazily per tab (once per session) with server-side counts for menu badges; never reintroduce a full-database load on login or open-ended onSnapshot listeners, because they drove Firestore reads far above the free quota.
+- Solar simulation PDFs and published offers are owned by the Mesa; store offers on the energy lead and reference their IDs from chat notes so lazy loading remains unchanged.
+- Requesting and selecting solar offers uses Firestore transactions and matching security-rule validation; preserve published simulation notes when clearing chat so proposals remain accessible.
