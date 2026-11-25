@@ -11,6 +11,6 @@
 - [x] Testes unitários e validação visual claro/escuro, computador/celular
 - [x] Publicar firestore.rules e storage.rules atualizadas — usuário confirmou publicação
 - [ ] Verificar envio de PDF e seleção com contas reais ADM/assessor — sem sessão autenticada disponível
-- [ ] Reformular /energiasolar com as dez seções institucionais aprovadas e SEO
-- [ ] Integrar indicação dos assessores, link copiável e QR Code
-- [ ] Implementar captação segura no Firestore e testar chegada no Kanban
+- [x] Reformular /energiasolar com as dez seções institucionais aprovadas e SEO
+- [x] Integrar indicação dos assessores, link copiável e QR Code
+- [x] Implementar captação segura no Firestore e testar chegada no Kanban
