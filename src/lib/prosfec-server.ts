@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { resumirHorario } from "./raioXEnergetico";
+import { registrarPortalEnergia } from "./portalEnergia.server";
 import { criarControleConsultaCnpj } from "./cnpjConsultaLimite";
 import { timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
@@ -2748,6 +2749,8 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
       throw new Error(`Firestore CREATE ${r.status}: ${detail.slice(0, 160)}`);
     }
   };
+
+  registrarPortalEnergia(app, { read: getDocRest, create: createDocAtPathRest, secret: () => optionalEnv("PROSFEC_SERVICE_PASSWORD") || "" });
 
   const changePartnerBalanceAtomic = async (partnerId: string, delta: number): Promise<number> => {
     const idToken = await getServiceIdToken();

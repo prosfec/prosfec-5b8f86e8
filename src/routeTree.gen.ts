@@ -19,6 +19,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ContratoLeadIdRouteImport } from './routes/contrato.$leadId'
 import { Route as PropostaLeadIdRouteImport } from './routes/proposta.$leadId'
+import { Route as ApiPublicLeadEnergiaRouteImport } from './routes/api/public/lead-energia'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,11 @@ const PropostaLeadIdRoute = PropostaLeadIdRouteImport.update({
   path: '/proposta/$leadId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLeadEnergiaRoute = ApiPublicLeadEnergiaRouteImport.update({
+  id: '/api/public/lead-energia',
+  path: '/api/public/lead-energia',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
   '/proposta/$leadId': typeof PropostaLeadIdRoute
+  '/api/public/lead-energia': typeof ApiPublicLeadEnergiaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
   '/proposta/$leadId': typeof PropostaLeadIdRoute
+  '/api/public/lead-energia': typeof ApiPublicLeadEnergiaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
   '/proposta/$leadId': typeof PropostaLeadIdRoute
+  '/api/public/lead-energia': typeof ApiPublicLeadEnergiaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/contrato/$leadId'
     | '/proposta/$leadId'
+    | '/api/public/lead-energia'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/contrato/$leadId'
     | '/proposta/$leadId'
+    | '/api/public/lead-energia'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/contrato/$leadId'
     | '/proposta/$leadId'
+    | '/api/public/lead-energia'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   ApiSplatRoute: typeof ApiSplatRoute
   ContratoLeadIdRoute: typeof ContratoLeadIdRoute
   PropostaLeadIdRoute: typeof PropostaLeadIdRoute
+  ApiPublicLeadEnergiaRoute: typeof ApiPublicLeadEnergiaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropostaLeadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/lead-energia': {
+      id: '/api/public/lead-energia'
+      path: '/api/public/lead-energia'
+      fullPath: '/api/public/lead-energia'
+      preLoaderRoute: typeof ApiPublicLeadEnergiaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSplatRoute: ApiSplatRoute,
   ContratoLeadIdRoute: ContratoLeadIdRoute,
   PropostaLeadIdRoute: PropostaLeadIdRoute,
+  ApiPublicLeadEnergiaRoute: ApiPublicLeadEnergiaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

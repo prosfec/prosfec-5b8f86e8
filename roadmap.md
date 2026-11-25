@@ -9,5 +9,8 @@
 - [x] Solicitação e seleção pelo assessor com validação de ficha/documentos e cards Fintech Premium
 - [x] Remover proposta Sunne incorporada somente do portal do assessor
 - [x] Testes unitários e validação visual claro/escuro, computador/celular
-- [ ] Publicar firestore.rules e storage.rules atualizadas — sem credencial de publicação disponível
+- [x] Publicar firestore.rules e storage.rules atualizadas — usuário confirmou publicação
 - [ ] Verificar envio de PDF e seleção com contas reais ADM/assessor — sem sessão autenticada disponível
+- [ ] Reformular /energiasolar com as dez seções institucionais aprovadas e SEO
+- [ ] Integrar indicação dos assessores, link copiável e QR Code
+- [ ] Implementar captação segura no Firestore e testar chegada no Kanban

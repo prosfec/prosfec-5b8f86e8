@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { DesempenhoAssessorEnergia } from "./DesempenhoAssessorEnergia";
+import LinkIndicacaoEnergia from "./LinkIndicacaoEnergia";
 import { CardPropostasChatEnergia, SolicitarCotacaoEnergia } from "./CardPropostasChatEnergia";
 import RaioXEnergeticoCard from "./RaioXEnergeticoCard";
 import { calcularRaioXEnergetico } from "../lib/raioXEnergetico";
@@ -2167,6 +2168,7 @@ export default function PartnerPortal({
                           </div>
                         </div>
 
+                        {currentPartner && <LinkIndicacaoEnergia partnerId={currentPartner.id} />}
                         {currentPartner && <DesempenhoAssessorEnergia partner={currentPartner} leads={energiaLeads as any[]} />}
 
                         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-3">

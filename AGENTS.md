@@ -18,3 +18,5 @@
 - The admin dashboard loads Firestore collections lazily per tab (once per session) with server-side counts for menu badges; never reintroduce a full-database load on login or open-ended onSnapshot listeners, because they drove Firestore reads far above the free quota.
 - Solar simulation PDFs and published offers are owned by the Mesa; store offers on the energy lead and reference their IDs from chat notes so lazy loading remains unchanged.
 - Requesting and selecting solar offers uses Firestore transactions and matching security-rule validation; preserve published simulation notes when clearing chat so proposals remain accessible.
+- Institutional energy capture uses the existing Firebase service identity over REST, signed same-origin submissions and create-only request IDs; never open anonymous Firestore writes or replace the existing CRM backend.
+- Public energy referral responses project only the assessor's public-facing name and WhatsApp; lead attribution is revalidated server-side and uses the existing solar Kanban field names.

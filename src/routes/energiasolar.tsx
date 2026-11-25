@@ -1,14 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import EnergiaSolarLanding from "@/components/EnergiaSolarLanding";
-import energySocialAsset from "@/assets/energia-social-hero.jpg.asset.json";
 
-const TITLE = "Energia Solar por Assinatura | Economize de 15% a 25% na Conta de Luz";
+const TITLE = "PROSFEC Energy | Inteligência Energética e Geração Compartilhada";
 const DESCRIPTION =
-  "Energia solar por assinatura sem obras, sem placas e sem investimento. Reduza de 15% a 25% o valor da sua conta de luz com geração compartilhada regulamentada pela Lei 14.300 e pela ANEEL.";
+  "Conheça geração compartilhada, fontes renováveis, mercado livre e alocação de usinas. Orientação independente de fornecedores e análise comercial do seu perfil com a PROSFEC Energy.";
 const URL = "https://prosfec.com.br/energiasolar";
-const SOCIAL_IMAGE_URL = `https://prosfec.com.br${energySocialAsset.url}`;
 
 export const Route = createFileRoute("/energiasolar")({
+  validateSearch: (search: Record<string, unknown>): { ref?: string } => typeof search["ref"] === "string" ? { ref: search["ref"] } : {},
   component: EnergiaSolarPage,
   head: () => ({
     meta: [
@@ -18,15 +17,15 @@ export const Route = createFileRoute("/energiasolar")({
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: URL },
-      { property: "og:image", content: SOCIAL_IMAGE_URL },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: SOCIAL_IMAGE_URL },
       { name: "theme-color", content: "#05070A" },
     ],
     links: [{ rel: "canonical", href: URL }],
+    scripts: [{ type: "application/ld+json", children: JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", name: "PROSFEC Energy", url: URL, description: DESCRIPTION, parentOrganization: { "@type": "Organization", name: "PROSFEC", url: "https://prosfec.com.br/" } }) }],
   }),
 });
 
 function EnergiaSolarPage() {
-  return <EnergiaSolarLanding />;
+  const { ref } = Route.useSearch();
+  return <EnergiaSolarLanding refId={ref || ""} />;
 }
