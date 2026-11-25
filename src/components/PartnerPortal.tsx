@@ -2326,6 +2326,9 @@ export default function PartnerPortal({
                                         </span>
                                       )}
                                       <p className="font-extrabold text-sm text-slate-800 line-clamp-1">{lead.nomeEmpresa}</p>
+{lead.faturaAnexada === true && (
+<span className="inline-flex items-center gap-1 mt-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase">⚡ Com fatura · pronto para cotação</span>
+)}
                                       {lead.razaoSocial && lead.razaoSocial !== lead.nomeEmpresa && (
                                         <p className="text-[10px] text-slate-500 font-semibold line-clamp-1">{lead.razaoSocial}</p>
                                       )}

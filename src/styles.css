@@ -122,6 +122,14 @@
 .energy-form-grid input:focus, .energy-form-grid select:focus { outline: 2px solid var(--color-energy-portal-action); outline-offset: 1px; }
 .energy-consent { display: flex; gap: 10px; align-items: flex-start; margin-block: 24px; font-size: 10px; line-height: 1.8; color: var(--color-energy-portal-muted); }
 .energy-consent input { margin-top: 3px; accent-color: var(--color-energy-portal-action); flex-shrink: 0; width: 15px; height: 15px; }
+.energy-fatura { padding: 14px; border: 1px dashed var(--color-energy-portal-action); border-radius: 6px; background: var(--color-energy-portal-soft); }
+.energy-fatura-titulo { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--color-energy-portal-ink); }
+.energy-fatura-titulo em { font-style: normal; font-weight: 500; color: var(--color-energy-portal-action); }
+.energy-fatura-ajuda { margin-top: 6px; font-size: 11px; line-height: 1.6; color: var(--color-energy-portal-muted); }
+.energy-fatura-botao { display: inline-flex; margin-top: 10px; padding: 9px 14px; border-radius: 5px; border: 1px solid var(--color-energy-portal-action); color: var(--color-energy-portal-action); font-size: 12px; font-weight: 700; cursor: pointer; background: var(--color-energy-portal-surface); }
+.energy-fatura-botao:hover { background: var(--color-energy-portal-action); color: var(--color-energy-portal-inverse); }
+.energy-fatura-arquivo { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 9px 12px; border-radius: 5px; background: var(--color-energy-portal-surface); font-size: 12px; color: var(--color-energy-portal-ink); word-break: break-all; }
+.energy-fatura-arquivo button { flex-shrink: 0; color: var(--color-energy-portal-danger); }
 .energy-honeypot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .energy-form-error { color: var(--color-energy-portal-danger); font-size: 12px; margin-bottom: 16px; }
 .energy-form-disclaimer { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 14px; font-size: 9px; color: var(--color-energy-portal-muted); }

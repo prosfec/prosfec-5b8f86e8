@@ -5173,6 +5173,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             <div className="dossie-card flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <p className="font-black text-sm text-slate-800 line-clamp-1">{lead.nomeEmpresa}</p>
+{lead.faturaAnexada === true && (
+<span className="inline-flex items-center gap-1 mt-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase">⚡ Com fatura · pronto para cotação</span>
+)}
                                 {lead.razaoSocial && lead.razaoSocial !== lead.nomeEmpresa && (
                                   <p className="text-[11px] text-slate-500 font-semibold line-clamp-1">{lead.razaoSocial}</p>
                                 )}

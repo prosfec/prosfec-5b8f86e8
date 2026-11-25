@@ -6,7 +6,18 @@ type Store = {
   read: (path: string) => Promise<Record<string, unknown> | null>;
   create: (path: string, data: unknown) => Promise<void>;
   secret: () => string;
+  upload?: (path: string, bytes: Uint8Array, contentType: string) => Promise<string>;
 };
+const FATURA_TIPOS: Record<string, string> = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+const FATURA_MAX = 15 * 1024 * 1024;
+function assinaturaValida(bytes: Uint8Array, tipo: string) {
+  const h = Array.from(bytes.slice(0, 12));
+  if (tipo === "application/pdf") return h[0] === 0x25 && h[1] === 0x50 && h[2] === 0x44 && h[3] === 0x46;
+  if (tipo === "image/jpeg") return h[0] === 0xff && h[1] === 0xd8;
+  if (tipo === "image/png") return h[0] === 0x89 && h[1] === 0x50 && h[2] === 0x4e && h[3] === 0x47;
+  if (tipo === "image/webp") return h[0] === 0x52 && h[1] === 0x49 && h[8] === 0x57 && h[9] === 0x45;
+  return false;
+}
 export function registrarPortalEnergia(app: MiniExpressApp, store: Store) {
   const tentativas = new Map<string, { inicio: number; total: number }>();
   const assinar = (texto: string) => {
@@ -41,8 +52,21 @@ export function registrarPortalEnergia(app: MiniExpressApp, store: Store) {
       const origin = String(req.headers?.origin || "");
       const allowed = ["https://prosfec.com.br", "https://www.prosfec.com.br", "https://prosfec.lovable.app", "https://id-preview--aa418b68-b669-401a-9959-d84246bcbbb6.lovable.app", "http://localhost:8080"];
       if (!allowed.includes(origin)) return res.status(403).json({ error: "Envie sua solicitação pelo portal PROSFEC Energy." });
-      if (String(req.rawBody || "").length > 12000) return res.status(413).json({ error: "Solicitação muito grande." });
-      const parsed = portalEnergiaSchema.safeParse(req.body);
+      if (String(req.rawBody || "").length > 21_000_000) return res.status(413).json({ error: "A conta anexada excede 15 MB." });
+      const { fatura: faturaBruta, ...corpo } = (req.body && typeof req.body === "object" ? req.body : {}) as Record<string, unknown>;
+      let fatura: { bytes: Uint8Array; tipo: string; nome: string } | null = null;
+      if (faturaBruta != null) {
+        const f = faturaBruta as Record<string, unknown>;
+        const tipo = String(f["tipo"] || "");
+        const base64 = String(f["base64"] || "");
+        if (!FATURA_TIPOS[tipo] || !base64 || !/^[A-Za-z0-9+/=]+$/.test(base64)) return res.status(400).json({ error: "Envie a conta em PDF ou foto (JPG, PNG ou WEBP)." });
+        let bytes: Uint8Array;
+        try { bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0)); } catch { return res.status(400).json({ error: "Não foi possível ler a conta anexada." }); }
+        if (bytes.length > FATURA_MAX) return res.status(413).json({ error: "A conta anexada excede 15 MB." });
+        if (!assinaturaValida(bytes, tipo)) return res.status(400).json({ error: "O arquivo anexado não é um PDF ou imagem válida." });
+        fatura = { bytes, tipo, nome: String(f["nome"] || "conta-de-luz").replace(/[^\w.\- ]/g, "_").slice(0, 100) };
+      }
+      const parsed = portalEnergiaSchema.safeParse(corpo);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || "Confira os dados informados." });
       const data = parsed.data;
       const [timestamp, nonce, signature] = data.challenge.split(".");
@@ -67,7 +91,20 @@ export function registrarPortalEnergia(app: MiniExpressApp, store: Store) {
       entry.total++; tentativas.set(ip, entry);
       const partner = data.ref ? await store.read(`parceiros/${data.ref}`) : null;
       if (data.ref && !assessorEnergiaDisponivel(partner)) return res.status(400).json({ error: "O assessor deste link não está disponível. Solicite um link atualizado." });
-      const lead = montarLeadPortalEnergia(data, partner, new Date(now).toISOString());
+      const agoraIso = new Date(now).toISOString();
+      const lead: Record<string, unknown> = montarLeadPortalEnergia(data, partner, agoraIso);
+      if (fatura && store.upload) {
+        try {
+          const arquivo = `documentos_energia/portal_${data.requestId}/contaLuz_${now}.${FATURA_TIPOS[fatura.tipo]}`;
+          const url = await store.upload(arquivo, fatura.bytes, fatura.tipo);
+          lead["documentos"] = { contaLuz: { url, path: arquivo, nome: fatura.nome, tipo: fatura.tipo, enviadoEm: agoraIso } };
+          lead["faturaAnexada"] = true;
+          (lead["anotacoes"] as unknown[]).push({ texto: "⚡ Conta de luz anexada pelo cliente no site — pronto para cotação.", autor: "Portal PROSFEC Energy", papel: "sistema", automatica: true, data: agoraIso });
+        } catch {
+          lead["faturaAnexada"] = false;
+          (lead["anotacoes"] as unknown[]).push({ texto: "Cliente tentou anexar a conta de luz, mas o arquivo não pôde ser salvo. Solicite pelo WhatsApp.", autor: "Portal PROSFEC Energy", papel: "sistema", automatica: true, data: agoraIso });
+        }
+      } else lead["faturaAnexada"] = false;
       try {
         await store.create(path, { ...lead, portalFingerprint: hash });
       } catch (error) {

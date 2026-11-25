@@ -2750,7 +2750,22 @@ Retorne OBRIGATORIAMENTE um JSON puro (sem marcação markdown extra) com a segu
     }
   };
 
-  registrarPortalEnergia(app, { read: getDocRest, create: createDocAtPathRest, secret: () => optionalEnv("PROSFEC_SERVICE_PASSWORD") || "" });
+  const uploadStorageRest = async (path: string, bytes: Uint8Array, contentType: string) => {
+    const idToken = await getServiceIdToken();
+    const bucket = (firebaseConfig as any).storageBucket;
+    const r = await fetch(`https://firebasestorage.googleapis.com/v0/b/${bucket}/o?name=${encodeURIComponent(path)}`, {
+      method: "POST",
+      headers: { Authorization: `Firebase ${idToken}`, "Content-Type": contentType },
+      body: bytes,
+    });
+    if (!r.ok) throw new Error(`Storage upload ${r.status}`);
+    const info: any = await r.json().catch(() => ({}));
+    const token = String(info?.downloadTokens || "").split(",")[0];
+    if (!token) throw new Error("Storage sem token de download.");
+    return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
+  };
+
+  registrarPortalEnergia(app, { read: getDocRest, create: createDocAtPathRest, upload: uploadStorageRest, secret: () => optionalEnv("PROSFEC_SERVICE_PASSWORD") || "" });
 
   const changePartnerBalanceAtomic = async (partnerId: string, delta: number): Promise<number> => {
     const idToken = await getServiceIdToken();
