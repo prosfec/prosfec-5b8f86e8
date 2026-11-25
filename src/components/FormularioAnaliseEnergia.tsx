@@ -65,13 +65,16 @@ export default function FormularioAnaliseEnergia({ referencia, onAssessor }: { r
   if (protocolo) return <div className="energy-confirmation" role="status"><CheckCircle2 size={42} /><h3>Sua análise foi solicitada.</h3><p>Recebemos suas informações para avaliar as possibilidades de energia para o seu perfil.</p><p className="energy-protocol">Protocolo: {protocolo}</p></div>;
   return <form onSubmit={enviar} className="energy-analysis-form">
     <div className="energy-form-grid">
+      <p className="energy-form-full energy-form-group"><span>01</span>Identificação e contato</p>
       <label className="energy-form-full">Nome completo<input name="nome" autoComplete="name" required minLength={5} maxLength={120} placeholder="Seu nome e sobrenome" /></label>
       <label>Tipo de consumidor<select name="tipo" required defaultValue="PF"><option value="PF">Pessoa física</option><option value="PJ">Pessoa jurídica</option></select></label>
       <label>WhatsApp com DDD<input name="telefone" type="tel" autoComplete="tel-national" required maxLength={18} placeholder="(98) 99999-9999" /></label>
       <label className="energy-form-full">E-mail<input name="email" type="email" autoComplete="email" required maxLength={254} placeholder="voce@exemplo.com.br" /></label>
-      <label>Estado<select name="estado" autoComplete="address-level1" defaultValue="" required><option value="" disabled>Selecione a UF</option>{UFS.map(uf => <option key={uf}>{uf}</option>)}</select></label>
+      <p className="energy-form-full energy-form-group"><span>02</span>Localização e distribuidora</p>
+      <label>Estado<select name="estado" autoComplete="off" defaultValue="" required><option value="">Selecione o estado</option>{UFS.map(uf => <option key={uf}>{uf}</option>)}</select></label>
       <label>Cidade<input name="cidade" autoComplete="address-level2" required minLength={2} maxLength={100} placeholder="Sua cidade" /></label>
       <label className="energy-form-full">Concessionária / Distribuidora<input name="concessionaria" required minLength={2} maxLength={100} placeholder="Distribuidora indicada na sua fatura" /></label>
+      <p className="energy-form-full energy-form-group"><span>03</span>Consumo e fatura</p>
       <label>Consumo médio mensal (kWh)<input name="consumoKwhMes" type="number" min="0.01" max="100000000" step="0.01" required placeholder="Ex.: 500" /></label>
       <label>Valor médio da conta (R$)<input name="mediaContaReais" type="number" min="0.01" max="100000000" step="0.01" required placeholder="Ex.: 600" /></label>
       <div className="energy-form-full energy-fatura">
