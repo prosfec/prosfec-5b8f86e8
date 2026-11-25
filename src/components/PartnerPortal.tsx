@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { DesempenhoAssessorEnergia } from "./DesempenhoAssessorEnergia";
 import LinkIndicacaoEnergia from "./LinkIndicacaoEnergia";
+import { LinkAssinaturaChat } from "./LinkAssinaturaChat";
 import { CardPropostasChatEnergia, SolicitarCotacaoEnergia } from "./CardPropostasChatEnergia";
 import RaioXEnergeticoCard from "./RaioXEnergeticoCard";
 import { calcularRaioXEnergetico } from "../lib/raioXEnergetico";
@@ -2575,6 +2576,7 @@ export default function PartnerPortal({
                                               <p className="chat-bolha-autor">{daMesa ? "Mesa PROSFEC" : (nota.autor || "Você")}</p>
                                               <p className="whitespace-pre-wrap break-words">{nota.texto}</p>
                                               {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
+                                              {nota.linkAssinatura && <LinkAssinaturaChat link={nota.linkAssinatura} assessor clienteNome={lead.responsavel || lead.nome || lead.nomeEmpresa || ""} clienteTelefone={lead.telefone || ""} assessorNome={currentPartner?.nome || ""} />}
                                               <p className="chat-bolha-hora">{nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}</p>
                                             </div>
                                           </div>

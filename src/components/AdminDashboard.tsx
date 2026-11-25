@@ -6,6 +6,8 @@ import { Button } from "./ui/button";
 import { empresasFechamentoSimulacao } from "../lib/validacaoFichaSolar";
 import { Trophy } from "lucide-react";
 import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
+import { LinkAssinaturaChat } from "./LinkAssinaturaChat";
+import { normalizarLinkAssinatura } from "../lib/linkAssinatura";
 import { FichaCnpjBotao } from "./FichaCnpjBotao";
 import { AdminPresencaAssessor, PresencaStatusBadge } from "./PresencaAssessor";
 import { RelatorioHorasAssessores } from "./RelatorioHorasAssessores";
@@ -499,6 +501,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [energiaSubTab, setEnergiaSubTab] = useState<"kanban" | "ciclo" | "ranking">("kanban");
   const [energiaNotaDraft, setEnergiaNotaDraft] = useState<Record<string, string>>({});
   const [energiaAnexoDraft, setEnergiaAnexoDraft] = useState<Record<string, File | null>>({});
+  const [energiaLinkDraft, setEnergiaLinkDraft] = useState<Record<string, string | undefined>>({});
   const [energiaSavingId, setEnergiaSavingId] = useState<string | null>(null);
   const [energiaLimparConfirmId, setEnergiaLimparConfirmId] = useState<string | null>(null);
   const [energiaParceiroFilter, setEnergiaParceiroFilter] = useState<string>("todos");
@@ -3391,13 +3394,17 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   const handleAddEnergiaNota = async (leadId: string) => {
     const arquivo = energiaAnexoDraft[leadId] || null;
-    const texto = (energiaNotaDraft[leadId] || "").trim() || (arquivo ? "Documento anexado pela Mesa" : "");
+    const linkBruto = (energiaLinkDraft[leadId] || "").trim();
+    const linkAssinatura = linkBruto ? normalizarLinkAssinatura(linkBruto) : null;
+    if (linkBruto && !linkAssinatura) { toast.error("Informe um link válido começando com https://"); return; }
+    const texto = (energiaNotaDraft[leadId] || "").trim() || (linkAssinatura ? "Link de assinatura do contrato" : arquivo ? "Documento anexado pela Mesa" : "");
     if (!texto) return;
     setEnergiaSavingId(leadId);
     try {
       const agora = new Date().toISOString();
       const alvo = leadsEnergia.find((l: any) => l.id === leadId);
       const novaNota: any = { texto, autor: "Mesa PROSFEC", papel: "adm", data: agora };
+      if (linkAssinatura) novaNota.linkAssinatura = linkAssinatura;
       if (arquivo) {
         const ext = (arquivo.name.split(".").pop() || "").toLowerCase();
         const path = `documentos_energia/${leadId}/chamado_${Date.now()}.${ext}`;
@@ -3423,6 +3430,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       ));
       setEnergiaNotaDraft(prev => ({ ...prev, [leadId]: "" }));
       setEnergiaAnexoDraft(prev => ({ ...prev, [leadId]: null }));
+      setEnergiaLinkDraft(prev => ({ ...prev, [leadId]: undefined }));
       toast.success("Anotação registrada e compartilhada com o parceiro.");
     } catch (error) {
       console.error("Erro ao registrar anotação de energia:", error);
@@ -5411,6 +5419,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                           <p className="chat-bolha-autor">{nota.autor || (doParceiro ? "Assessor" : "Mesa PROSFEC")}</p>
                                           <p className="whitespace-pre-wrap break-words">{nota.texto}</p>
                                           {nota.anexoUrl && <AnexoChamadoBotao url={nota.anexoUrl} nome={nota.anexoNome} tipo={nota.anexoTipo} />}
+                                          {nota.linkAssinatura && <LinkAssinaturaChat link={nota.linkAssinatura} />}
                                           <p className="chat-bolha-hora">{nota.data ? new Date(nota.data).toLocaleString("pt-BR") : ""}</p>
                                         </div>
                                       </div>
@@ -5440,14 +5449,21 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                                     }}
                                   />
                                 </label>
+                                <button type="button" title="Enviar link de assinatura de contrato" onClick={() => setEnergiaLinkDraft(prev => ({ ...prev, [lead.id]: prev[lead.id] === undefined ? "" : undefined }))} className="px-2 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[12px] cursor-pointer shrink-0">🔗</button>
                                 <button
                                   onClick={() => handleAddEnergiaNota(lead.id)}
-                                  disabled={energiaSavingId === lead.id || (!(energiaNotaDraft[lead.id] || "").trim() && !energiaAnexoDraft[lead.id])}
+                                  disabled={energiaSavingId === lead.id || (!(energiaNotaDraft[lead.id] || "").trim() && !energiaAnexoDraft[lead.id] && !(energiaLinkDraft[lead.id] || "").trim())}
                                   className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer disabled:opacity-40"
                                 >
                                   {energiaSavingId === lead.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Registrar
                                 </button>
                               </div>
+                              {energiaLinkDraft[lead.id] !== undefined && (
+                                <div className="flex items-center gap-1.5 px-3 pb-2">
+                                  <input type="url" autoFocus value={energiaLinkDraft[lead.id] || ""} onChange={(e) => setEnergiaLinkDraft(prev => ({ ...prev, [lead.id]: e.target.value }))} placeholder="Cole o link de assinatura (https://...)" className="flex-1 min-w-0 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-[12px] text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700" />
+                                  <button type="button" onClick={() => setEnergiaLinkDraft(prev => ({ ...prev, [lead.id]: undefined }))} className="text-slate-400 hover:text-red-600 cursor-pointer text-[12px]">✕</button>
+                                </div>
+                              )}
                               {energiaAnexoDraft[lead.id] && (
                                 <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold max-w-full">
                                   <span className="truncate">📎 {energiaAnexoDraft[lead.id]!.name}</span>
