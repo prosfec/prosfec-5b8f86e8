@@ -50,6 +50,8 @@ import { AnexoChamadoBotao } from "./AnexoChamadoBotao";
 import { LeadEnergiaCardCompacto, LeadEnergiaDetalheModal } from "./LeadEnergiaKanban";
 import DossieOportunidadeEnergia, { montarIntelOportunidade } from "./DossieOportunidadeEnergia";
 import { PresencaAssessorIndicador } from "./PresencaAssessor";
+import { ContratoParceriaComercialEnergia, isRepresentanteComercial } from "./ContratoParceriaComercialEnergia";
+import { VERSAO_CONTRATO_PARCERIA_COMERCIAL } from "@/lib/contratoParceriaComercial";
 import LeadRegisterForm from "./LeadRegisterForm";
 import Simulador from "./Simulador";
 import { LeadData, SimulationResult, SolicitacaoComissao } from "../types";
@@ -322,12 +324,12 @@ const getSubscriptionStatus = (partner: Partner) => {
   const isTeamMember = partner.isTeamMember === true || (partner.plano && (partner.plano.toUpperCase().includes("CONSULTOR") || partner.plano.toUpperCase().includes("EQUIPE")));
   const isAfiliado = !!(partner.plano && partner.plano.toUpperCase().includes("AFILIADO"));
 
-  if (isAssessorEnergia(partner.plano) && partner.statusManual !== "bloqueado" && partner.status !== "bloqueado") {
+  if ((isAssessorEnergia(partner.plano) || isRepresentanteComercial(partner.plano)) && partner.statusManual !== "bloqueado" && partner.status !== "bloqueado") {
     return {
       status: "ativa" as const,
       daysLeft: 9999,
       expiryDate: new Date(Date.now() + 9999 * 24 * 60 * 60 * 1000),
-      formattedExpiry: "Isento (Assessor de Energia)",
+      formattedExpiry: isRepresentanteComercial(partner.plano) ? "Isento (Representante Comercial)" : "Isento (Assessor de Energia)",
       isTrial: false,
       isExempt: true,
       isManualBlocked: false
@@ -575,6 +577,39 @@ export default function PartnerPortal({
       });
       setCurrentPartner(prev => (prev ? ({ ...prev, [campo]: agora } as Partner) : prev));
       toast.success("Aceite registrado com sucesso.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível registrar o aceite. Tente novamente.");
+    } finally {
+      setSalvandoAceiteEnergia(false);
+    }
+  };
+  const registrarAceiteRepresentante = async () => {
+    if (!currentPartner?.id || salvandoAceiteEnergia) return;
+    setSalvandoAceiteEnergia(true);
+    try {
+      const agora = new Date().toISOString();
+      let ip = "";
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 4000);
+        const r = await fetch("https://api.ipify.org?format=json", { signal: ctrl.signal });
+        clearTimeout(t);
+        if (r.ok) ip = String((await r.json())?.ip || "").slice(0, 64);
+      } catch { /* IP é complementar; o aceite não depende dele */ }
+      await updateDoc(doc(db, "parceiros", currentPartner.id), {
+        contratoParceriaComercialAceitoEm: agora,
+        contratoParceriaComercialVersao: VERSAO_CONTRATO_PARCERIA_COMERCIAL,
+        contratoParceriaComercialIp: ip,
+        contratoParceriaComercialUserAgent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : "",
+        contratoParceriaComercialDadosAceite: {
+          nome: currentPartner.nome || "", cpf: (currentPartner as any).cpf || "", cnpj: (currentPartner as any).cnpj || "",
+          email: currentPartner.email || "", whatsapp: (currentPartner as any).whatsapp || "", cidade: (currentPartner as any).cidade || "",
+          chavePix: (currentPartner as any).chavePix || "",
+        },
+      });
+      setCurrentPartner(prev => (prev ? ({ ...prev, contratoParceriaComercialAceitoEm: agora } as Partner) : prev));
+      toast.success("Contrato de Parceria Comercial aceito com sucesso.");
     } catch (err) {
       console.error(err);
       toast.error("Não foi possível registrar o aceite. Tente novamente.");
@@ -860,7 +895,11 @@ export default function PartnerPortal({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedUserRegistrationLink, setCopiedUserRegistrationLink] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "energia" | "terms" | "equipe" | "afiliados" | "caca-leads" | "servicos-contabilidade" | "perfil">("dashboard");
-  const isEnergiaOnly = isAssessorEnergia(currentPartner?.plano);
+  const isRepresentante = isRepresentanteComercial(currentPartner?.plano);
+  // Assessor de Energia e Representante Comercial usam o mesmo portal solar
+  const isEnergiaOnly = isAssessorEnergia(currentPartner?.plano) || isRepresentante;
+  // Fluxo de capacitação (22 dias, horas, avaliação) é exclusivo do Assessor de Energia
+  const isAssessorCapacitacao = isEnergiaOnly && !isRepresentante;
   // Assessor de Energia: abre direto em Leads Energia e nunca permanece em abas de crédito
   useEffect(() => {
     if (isEnergiaOnly && !["energia", "caca-leads", "perfil", "terms"].includes(activeTab)) {
@@ -6221,7 +6260,12 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               </header>
 
               {/* Aceite obrigatório dos termos do Assessor de Energia */}
-              {isEnergiaOnly && currentPartner && isProfileComplete(currentPartner) && (() => {
+              {isRepresentante && currentPartner && isProfileComplete(currentPartner) && !(currentPartner as any).contratoParceriaComercialAceitoEm && (
+                <AceiteContratoModal key="rep" titulo="Contrato de Parceria Comercial e Termo de Adesão — PROSFEC Energy" salvando={salvandoAceiteEnergia} onAceitar={registrarAceiteRepresentante}>
+                  <ContratoParceriaComercialEnergia parceiro={currentPartner as any} />
+                </AceiteContratoModal>
+              )}
+              {isAssessorCapacitacao && currentPartner && isProfileComplete(currentPartner) && (() => {
                 const cp: any = currentPartner;
                 const prestador = { nome: cp.nome, cpf: cp.cpf, cnpj: cp.cnpj, email: cp.email, whatsapp: cp.whatsapp, cidade: cp.cidade };
                 if (!cp.termoCapacitacaoEnergiaAceitoEm) {
@@ -6250,10 +6294,10 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 <div className="max-w-6xl mx-auto space-y-6">
-                {isEnergiaOnly && currentPartner?.id && (
+                {isAssessorCapacitacao && currentPartner?.id && (
                   <div className="flex justify-end"><PresencaAssessorIndicador partnerId={currentPartner.id} /></div>
                 )}
-                {isEnergiaOnly && currentPartner && (() => {
+                {isAssessorCapacitacao && currentPartner && (() => {
                   const et = etapaAssessorEnergia(currentPartner);
                   const msg = (currentPartner as any).avaliacaoEnergiaMensagem;
                   if (et.etapa === "recusado") {
@@ -9990,7 +10034,16 @@ _A simulação acima é de caráter estritamente informativo e não constitui of
                     <span>Contrato aceito eletronicamente via endereço IP seguro em: {currentPartner?.dataCriacao ? new Date(currentPartner.dataCriacao).toLocaleDateString("pt-BR") : "Ficha de Cadastro"}.</span>
                   </div>
 
-                  {isEnergiaOnly && currentPartner && (() => {
+                  {isRepresentante && currentPartner && (currentPartner as any).contratoParceriaComercialAceitoEm && (
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                      <h3 className="font-display font-extrabold text-base text-slate-800">Contrato de Parceria Comercial e Termo de Adesão</h3>
+                      <div className="border border-slate-200/60 rounded-2xl p-5 bg-slate-50 max-h-[60vh] overflow-y-auto pr-2">
+                        <ContratoParceriaComercialEnergia parceiro={currentPartner as any} aceitoEm={(currentPartner as any).contratoParceriaComercialAceitoEm} />
+                      </div>
+                      <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl text-xs text-emerald-800">Aceito eletronicamente em {new Date((currentPartner as any).contratoParceriaComercialAceitoEm).toLocaleString("pt-BR")}.</div>
+                    </div>
+                  )}
+                  {isAssessorCapacitacao && currentPartner && (() => {
                     const cp: any = currentPartner;
                     const prestador = { nome: cp.nome, cpf: cp.cpf, cnpj: cp.cnpj, email: cp.email, whatsapp: cp.whatsapp, cidade: cp.cidade };
                     const capEm = cp.termoCapacitacaoEnergiaAceitoEm;

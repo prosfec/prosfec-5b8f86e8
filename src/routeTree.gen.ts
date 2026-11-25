@@ -15,6 +15,7 @@ import { Route as ClubedebeneficiosRouteImport } from './routes/clubedebeneficio
 import { Route as CorretorEnergiaRouteImport } from './routes/corretor-energia'
 import { Route as EnergiasolarRouteImport } from './routes/energiasolar'
 import { Route as ParceirosRouteImport } from './routes/parceiros'
+import { Route as RepresentantecomercialRouteImport } from './routes/representantecomercial'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ContratoLeadIdRouteImport } from './routes/contrato.$leadId'
@@ -51,6 +52,11 @@ const ParceirosRoute = ParceirosRouteImport.update({
   path: '/parceiros',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RepresentantecomercialRoute = RepresentantecomercialRouteImport.update({
+  id: '/representantecomercial',
+  path: '/representantecomercial',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/corretor-energia': typeof CorretorEnergiaRoute
   '/energiasolar': typeof EnergiasolarRoute
   '/parceiros': typeof ParceirosRoute
+  '/representantecomercial': typeof RepresentantecomercialRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/corretor-energia': typeof CorretorEnergiaRoute
   '/energiasolar': typeof EnergiasolarRoute
   '/parceiros': typeof ParceirosRoute
+  '/representantecomercial': typeof RepresentantecomercialRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/corretor-energia': typeof CorretorEnergiaRoute
   '/energiasolar': typeof EnergiasolarRoute
   '/parceiros': typeof ParceirosRoute
+  '/representantecomercial': typeof RepresentantecomercialRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/$': typeof ApiSplatRoute
   '/contrato/$leadId': typeof ContratoLeadIdRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/corretor-energia'
     | '/energiasolar'
     | '/parceiros'
+    | '/representantecomercial'
     | '/sitemap.xml'
     | '/api/$'
     | '/contrato/$leadId'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/corretor-energia'
     | '/energiasolar'
     | '/parceiros'
+    | '/representantecomercial'
     | '/sitemap.xml'
     | '/api/$'
     | '/contrato/$leadId'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/corretor-energia'
     | '/energiasolar'
     | '/parceiros'
+    | '/representantecomercial'
     | '/sitemap.xml'
     | '/api/$'
     | '/contrato/$leadId'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   CorretorEnergiaRoute: typeof CorretorEnergiaRoute
   EnergiasolarRoute: typeof EnergiasolarRoute
   ParceirosRoute: typeof ParceirosRoute
+  RepresentantecomercialRoute: typeof RepresentantecomercialRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ContratoLeadIdRoute: typeof ContratoLeadIdRoute
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParceirosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/representantecomercial': {
+      id: '/representantecomercial'
+      path: '/representantecomercial'
+      fullPath: '/representantecomercial'
+      preLoaderRoute: typeof RepresentantecomercialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -262,6 +282,7 @@ const rootRouteChildren: RootRouteChildren = {
   CorretorEnergiaRoute: CorretorEnergiaRoute,
   EnergiasolarRoute: EnergiasolarRoute,
   ParceirosRoute: ParceirosRoute,
+  RepresentantecomercialRoute: RepresentantecomercialRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSplatRoute: ApiSplatRoute,
   ContratoLeadIdRoute: ContratoLeadIdRoute,

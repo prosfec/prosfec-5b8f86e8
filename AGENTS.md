@@ -20,3 +20,4 @@
 - Requesting and selecting solar offers uses Firestore transactions and matching security-rule validation; preserve published simulation notes when clearing chat so proposals remain accessible.
 - Institutional energy capture uses the existing Firebase service identity over REST, signed same-origin submissions and create-only request IDs; never open anonymous Firestore writes or replace the existing CRM backend.
 - Public energy referral responses project only the assessor's public-facing name and WhatsApp; lead attribution is revalidated server-side and uses the existing solar Kanban field names.
+- Representante Comercial shares the solar partner portal (isEnergiaOnly) but skips the Assessor 22-day training, hour tracking and evaluation; its contract acceptance is stored on the partner doc with version, because the commercial-partnership contract is autonomous (no subordination).

@@ -315,7 +315,7 @@ export const getSubscriptionStatus = (partner: Partner) => {
   const isTeamMember = partner.isTeamMember === true || (partner.plano && (partner.plano.toUpperCase().includes("CONSULTOR") || partner.plano.toUpperCase().includes("EQUIPE")));
   const isAfiliado = !!(partner.plano && partner.plano.toUpperCase().includes("AFILIADO"));
 
-  if (partner.plano && partner.plano.toUpperCase().includes("ASSESSOR DE ENERGIA") && partner.statusManual !== "bloqueado" && partner.status !== "bloqueado") {
+  if (partner.plano && (partner.plano.toUpperCase().includes("ASSESSOR DE ENERGIA") || partner.plano.toUpperCase().includes("REPRESENTANTE COMERCIAL")) && partner.statusManual !== "bloqueado" && partner.status !== "bloqueado") {
     return {
       status: "ativa" as const,
       daysLeft: 9999,
@@ -4935,6 +4935,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     >
                       <Zap className="w-3.5 h-3.5" /> Copiar Link de Corretor
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText("https://prosfec.com.br/representantecomercial");
+                        toast.success("Link de representante copiado!");
+                      }}
+                      className="ml-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5" /> Copiar Link de Representante
+                    </button>
                   </div>
                   {/* Totais executivos */}
                   <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -7590,7 +7600,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         );
                       }
 
-                      const valorAtual = planoUpper.includes("ASSESSOR DE ENERGIA")
+                      const valorAtual = planoUpper.includes("REPRESENTANTE COMERCIAL")
+                        ? "Representante Comercial"
+                        : planoUpper.includes("ASSESSOR DE ENERGIA")
                         ? "Assessor de Energia"
                         : planoUpper.includes("FRANQUIA") || planoUpper.includes("DIGITAL") || planoUpper.includes("MASTER") || planoUpper === "PLATINUM"
                           ? "MASTER PARTNER"
@@ -7617,6 +7629,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             <option value="Executive Partner PROSFEC">Executive Partner PROSFEC</option>
                             <option value="MASTER PARTNER">Master Partner</option>
                             <option value="Assessor de Energia">Assessor de Energia (Gratuito)</option>
+                            <option value="Representante Comercial">Representante Comercial (Gratuito)</option>
                           </select>
                         </div>
                       );

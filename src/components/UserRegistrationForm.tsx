@@ -29,6 +29,7 @@ interface UserRegistrationFormProps {
   onGoToLogin?: () => void;
   /** Link exclusivo /corretor-energia: plano travado em Assessor de Energia. */
   modoEnergia?: boolean;
+  modoRepresentante?: boolean;
 }
 
 // CPF Validator
@@ -62,7 +63,7 @@ function validatePhone(phone: string): boolean {
   return clean.length >= 10 && clean.length <= 11;
 }
 
-export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEnergia = false }: UserRegistrationFormProps) {
+export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEnergia = false, modoRepresentante = false }: UserRegistrationFormProps) {
   // Form fields
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -72,7 +73,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
   const [chavePix, setChavePix] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmSenha, setConfirmSenha] = useState("");
-  const [plano, setPlano] = useState<"Consultor Starter" | "Consultor Executive" | "Assessor de Energia">(modoEnergia ? "Assessor de Energia" : "Consultor Starter");
+  const [plano, setPlano] = useState<"Consultor Starter" | "Consultor Executive" | "Assessor de Energia" | "Representante Comercial">(modoRepresentante ? "Representante Comercial" : modoEnergia ? "Assessor de Energia" : "Consultor Starter");
   const [aceitouTermos, setAceitouTermos] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
@@ -259,16 +260,16 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
         chavePix: chavePix.trim() || "",
         authUid: novoAuthUid,
         plano: plano,                                  // Selected category: "Consultor Starter" or "Consultor Executive"
-        comissao: plano === "Assessor de Energia" ? 0 : isExecutive ? 1.5 : 0.5,             // Commission percentage: 0.5% or 1.5%
+        comissao: plano === "Assessor de Energia" || plano === "Representante Comercial" ? 0 : isExecutive ? 1.5 : 0.5,             // Commission percentage: 0.5% or 1.5%
         status: "ativo",                               // Immediately active, no subscription required!
         isTeamMember: veioDeConvite,
         parentPartnerId: vinculoMasterId,
         parentPartnerNome: masterNome || "",
         aceitouTermos: true,
-        duracaoDias: plano === "Assessor de Energia" ? 36500 : 3,                              // Teste grátis de 3 dias a partir da criação
+        duracaoDias: plano === "Assessor de Energia" || plano === "Representante Comercial" ? 36500 : 3,                              // Teste grátis de 3 dias a partir da criação
         dataCriacao: new Date().toISOString(),
         dataUltimoAcesso: new Date().toISOString(),
-        interesse: modoEnergia ? "corretor_energia" : "cadastro_usuario_direto"
+        interesse: modoRepresentante ? "representante_comercial" : modoEnergia ? "corretor_energia" : "cadastro_usuario_direto"
       };
 
       // Aguarda a gravação concluir de verdade antes de liberar o acesso ao painel
@@ -431,7 +432,7 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
                 </div>
 
                 <h1 className="text-xl sm:text-2xl font-display font-black text-white leading-tight">
-                  {modoEnergia ? "Credenciamento de Corretor de Energia" : "Criar Conta de Usuário"}
+                  {modoRepresentante ? "Credenciamento de Representante Comercial" : modoEnergia ? "Credenciamento de Corretor de Energia" : "Criar Conta de Usuário"}
                 </h1>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   Preencha os dados abaixo para se cadastrar na plataforma PROSFEC. Acesso gratuito, direto e sem vínculo de assinatura obrigatória.
@@ -533,8 +534,8 @@ export default function UserRegistrationForm({ onBackToHome, onGoToLogin, modoEn
                 {/* Plano de Repasse */}
                 {modoEnergia ? (
                   <div className="bg-emerald-950/40 border border-emerald-800/50 p-3.5 rounded-2xl text-xs text-emerald-200">
-                    <strong className="text-emerald-300 block">⚡ Corretor de Energia Solar — acesso gratuito</strong>
-                    <span>Sem mensalidade ou taxa de adesão. Foco exclusivo em Energia Solar por assinatura.</span>
+                    <strong className="text-emerald-300 block">{modoRepresentante ? "🤝 Representante Comercial — Parceria Comercial & Distribuição de Energia Solar" : "⚡ Corretor de Energia Solar — acesso gratuito"}</strong>
+                    <span>{modoRepresentante ? "Sem taxa de adesão e sem mensalidade. Atuação 100% autônoma, com remuneração variável conforme o Contrato de Parceria Comercial." : "Sem mensalidade ou taxa de adesão. Foco exclusivo em Energia Solar por assinatura."}</span>
                   </div>
                 ) : (
                 <div className="space-y-2 pt-1">
