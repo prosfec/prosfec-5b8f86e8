@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Plus, Trash2, X, Send, Loader2, FileText, Zap } from "lucide-react";
 import { Button } from "./ui/button";
 import { publicarSimulacoes, type OfertaDraft } from "../lib/simulacoesEnergia";
+import GeradorPropostaProsfec from "./GeradorPropostaProsfec";
 import { validarPdfSimulacao, type LeadSolar } from "../lib/validacaoFichaSolar";
 
 const novaOferta = (tipo: "gd" | "alugsol"): OfertaDraft => ({ id: crypto.randomUUID(), tipo, empresa: tipo === "alugsol" ? "AlugSol" : "", desconto: "", economia: "", locacao: "", regras: "", arquivo: null });
@@ -40,6 +41,7 @@ export default function ModalCriarSimulacaoEnergia({ lead, onClose, onUpdated }:
                   {o.tipo === "alugsol" && <label>Locação mensal (R$)<input value={o.locacao} maxLength={100} onChange={e => alterar(o.id, { locacao: e.target.value })} /></label>}
                   <label>{o.tipo === "gd" ? "Desconto (%)" : "Economia / Projeção"}<input maxLength={200} value={o.desconto} onChange={e => alterar(o.id, { desconto: e.target.value })} /></label>
                   <label>Economia mensal estimada (R$)<input maxLength={100} value={o.economia} onChange={e => alterar(o.id, { economia: e.target.value })} /></label>
+                  {o.tipo === "gd" && <GeradorPropostaProsfec lead={lead} desconto={o.desconto} onGerado={(arquivo, desconto, economia) => { setErro(""); alterar(o.id, { arquivo, desconto, economia }); }} />}
                   <label className="simulacao-full">Proposta em PDF<FileText size={16} /><input type="file" required={!o.arquivo} accept="application/pdf,.pdf" onChange={e => { const f = e.target.files?.[0]; if (!f) return; const error = validarPdfSimulacao(f); if (error) { setErro(error); e.target.value = ""; alterar(o.id, { arquivo: null }); return; } setErro(""); alterar(o.id, { arquivo: f }); }} />{o.arquivo && <span className="simulacao-muted break-words">{o.arquivo.name}</span>}</label>
                   <label className="simulacao-full">Roteiro e regras operacionais<textarea required rows={5} maxLength={10000} value={o.regras} onChange={e => alterar(o.id, { regras: e.target.value })} /></label>
                 </div>
