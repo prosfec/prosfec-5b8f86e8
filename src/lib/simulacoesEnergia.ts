@@ -1,6 +1,7 @@
 import { doc, runTransaction, arrayUnion, type Transaction } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { auth, db, storage } from "../firebase";
+import { prepararPropostaSolar, economiaPropostaSolar, type CamposPropostaSolar } from "./dadosSimulacaoProsfec";
 import { pendenciasFichaSolar, pendenciasSolicitacaoSolar, validarOfertasEnergia, validarPdfSimulacao, type OfertaEnergia, type LeadSolar } from "./validacaoFichaSolar";
 
 async function verificarSessao(adm: boolean) {
@@ -23,27 +24,48 @@ async function verificarDono(tx: Transaction, lead: LeadSolar, sessao: Awaited<R
   if (parceiro['authUid'] !== sessao.uid && (!sessao.email || parceiro['email']?.toLowerCase() !== sessao.email)) throw new Error("Você não tem acesso a este lead.");
 }
 
-export interface OfertaDraft { id: string; tipo: "gd" | "alugsol"; empresa: string; desconto: string; economia: string; locacao: string; regras: string; arquivo: File | null }
+export interface OfertaDraft { id: string; tipo: "gd" | "alugsol"; empresa: string; desconto: string; economia: string; locacao: string; regras: string; arquivo: File | null; proposta?: CamposPropostaSolar }
 export async function publicarSimulacoes(leadId: string, pacoteId: string, drafts: OfertaDraft[]) {
   await verificarSessao(true);
+  const anterior = await runTransaction(db, async tx => {
+    const snap = await tx.get(doc(db, "leads_energia", leadId));
+    if (!snap.exists()) throw new Error("Lead não encontrado.");
+    const lead = snap.data();
+    if (Object.values(lead['ofertasEnergia'] || {}).some((o: any) => o?.pacoteId === pacoteId)) return lead;
+    if (["concluido", "arquivado", "cancelado"].includes(lead['status'])) throw new Error("Este lead não está aberto para simulações.");
+    if (lead['propostaEnergiaEscolhida']) throw new Error("Este lead já tem uma proposta selecionada.");
+    return null;
+  });
+  if (anterior) return anterior;
   if (!drafts.length) throw new Error("Adicione pelo menos uma oferta.");
   for (const d of drafts) {
-    if (!d.empresa.trim() || !d.regras.trim() || !d.arquivo) throw new Error("Preencha empresa, regras e PDF de todas as ofertas.");
-    const erro = validarPdfSimulacao(d.arquivo);
-    if (erro) throw new Error(erro);
+    if (!d.empresa.trim() || !d.regras.trim()) throw new Error("Preencha empresa e regras de todas as ofertas.");
+    if (d.empresa.length > 200 || d.regras.length > 10000 || !["gd", "alugsol"].includes(d.tipo)) throw new Error("Revise empresa, tipo e regras das ofertas.");
+    if (d.arquivo) {
+      const erro = validarPdfSimulacao(d.arquivo);
+      if (erro) throw new Error(erro);
+    } else if (!d.proposta) throw new Error("Preencha os dados da proposta automática.");
   }
   const agora = new Date().toISOString();
+  // Validate every automatic proposal before generating files or performing any upload.
+  const snapshots = drafts.map(d => !d.arquivo && d.proposta ? prepararPropostaSolar(d.proposta, d, agora) : null);
   const ofertas: OfertaEnergia[] = [];
   const uploads: ReturnType<typeof ref>[] = [];
   let iniciouGravacao = false;
   try {
-    for (const d of drafts) {
-      const arquivo = d.arquivo;
-      if (!arquivo) throw new Error("PDF não informado.");
+    for (const [index, d] of drafts.entries()) {
+      const snapshot = snapshots[index];
+      let arquivo = d.arquivo;
+      if (!arquivo && snapshot) {
+        const { gerarPropostaProsfecPdf } = await import("./propostaProsfecPdf");
+        const bytes = await gerarPropostaProsfecPdf({ ...snapshot, emissao: new Date(snapshot.emissao) });
+        arquivo = new File([bytes as BlobPart], `Proposta_PROSFEC_${snapshot.cliente.replace(/[^\p{L}\d]+/gu, "_").slice(0, 60)}_${d.id}.pdf`, { type: "application/pdf" });
+      }
+      if (!arquivo) throw new Error("Não foi possível preparar o PDF da proposta.");
       const r = ref(storage, `documentos_energia/${leadId}/simulacao_${pacoteId}_${d.id}_${crypto.randomUUID()}.pdf`);
       await uploadBytes(r, arquivo, { contentType: "application/pdf" });
       uploads.push(r);
-      ofertas.push({ id: d.id, pacoteId, tipo: d.tipo, empresa: d.empresa.trim(), desconto: d.desconto.trim(), economia: d.economia.trim(), locacao: d.locacao.trim(), regras: d.regras.trim(), pdfUrl: await getDownloadURL(r), pdfNome: arquivo.name, criadaEm: agora });
+      ofertas.push({ id: d.id, pacoteId, tipo: d.tipo, empresa: d.empresa.trim(), desconto: d.desconto.trim(), economia: snapshot ? economiaPropostaSolar(snapshot) : d.economia.trim(), locacao: d.locacao.trim(), regras: d.regras.trim(), pdfUrl: await getDownloadURL(r), pdfNome: arquivo.name, criadaEm: agora, ...(snapshot ? { propostaProsfec: snapshot } : {}) });
     }
     const erro = validarOfertasEnergia(ofertas);
     if (erro) throw new Error(erro);

@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Automatizar PDF ao publicar simulações, tornar anexo opcional e destacar acesso no ADM
+- [x] Testar publicação automática, anexos próprios, cálculos, download e preservação das propostas (36 testes; formulário isolado e download no navegador)
+
 - [x] Home: formulário vira ficha cadastral, sem tela de resultado de simulação
 - [x] Remover simulação do Workspace (Passo 1), Passo 6 e link de acompanhamento
 - [x] Diagnóstico sem disparo RedeBE (mantém débito e upload do laudo pela Mesa)

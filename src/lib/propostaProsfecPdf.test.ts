@@ -13,6 +13,5 @@ describe("proposta PROSFEC", () => {
     const bytes = await gerarPropostaProsfecPdf({ cliente: "Karina Martins Cavalcanti dos Santos", documento: "***.499.389-**", cidadeUf: "São Luís - MA", distribuidora: "Equatorial Maranhão", consumoKwh: 1250, tarifa: 0.98, descontoPct: 20, disponibilidade: 68, iluminacao: 42, assessorNome: "João da Silva", assessorWhatsapp: "(98) 98735-3253", validadeDias: 10, numero: "1284", emissao: new Date("2026-11-26") });
     const { PDFDocument } = await import("pdf-lib");
     expect((await PDFDocument.load(bytes)).getPageCount()).toBe(4);
-    (await import("node:fs")).writeFileSync("/tmp/x/proposta.pdf", bytes);
   });
 });

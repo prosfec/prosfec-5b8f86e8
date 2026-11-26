@@ -5340,6 +5340,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                             {/* Ações */}
                             <div className="dossie-card flex items-center gap-2 flex-wrap">
+                              <Button size="sm" className="simulacao-primary whitespace-normal" disabled={["concluido", "arquivado", "cancelado"].includes(status) || !!lead.propostaEnergiaEscolhida} onClick={() => setSimulacaoEnergiaLeadId(lead.id)}><Zap /> Montar Proposta / Simulação</Button>
                               <select
                                 value={status}
                                 onChange={(e) => handleUpdateEnergiaStatus(lead.id, e.target.value)}
@@ -5395,7 +5396,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               <div className="simulacao-solicitar">
                                 {lead.cotacaoEnergiaStatus === "solicitada" && <p className="simulacao-muted mb-2">Cotação solicitada pelo assessor</p>}
                                 {lead.propostaEnergiaEscolhida && <p className="simulacao-muted mb-2">Proposta escolhida: {lead.propostaEnergiaEscolhida.empresa}</p>}
-                                <Button size="sm" className="simulacao-primary w-full whitespace-normal" disabled={["concluido", "arquivado", "cancelado"].includes(status) || !!lead.propostaEnergiaEscolhida} onClick={() => setSimulacaoEnergiaLeadId(lead.id)}><Zap /> Montar pacote de simulações</Button>
                               </div>
                               <div className="chat-op-head">
                                 <p className="flex items-center gap-1.5">

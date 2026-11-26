@@ -4,15 +4,16 @@ export interface DadosPropostaProsfec {
   cliente: string; documento: string; cidadeUf: string; distribuidora: string;
   consumoKwh: number; tarifa: number; descontoPct: number; disponibilidade: number; iluminacao: number;
   assessorNome: string; assessorWhatsapp: string; validadeDias: number; numero: string; emissao: Date;
+  empresa?: string; modalidade?: "gd" | "alugsol"; economiaMensalLocacao?: number; locacaoMensal?: number;
 }
 
-export function calcularPropostaProsfec(d: Pick<DadosPropostaProsfec, "consumoKwh" | "tarifa" | "descontoPct" | "disponibilidade" | "iluminacao">) {
+export function calcularPropostaProsfec(d: Pick<DadosPropostaProsfec, "consumoKwh" | "tarifa" | "descontoPct" | "disponibilidade" | "iluminacao" | "modalidade" | "economiaMensalLocacao" | "locacaoMensal">) {
   const r2 = (n: number) => Math.round(n * 100) / 100;
   const energia = r2(d.consumoKwh * d.tarifa);
-  const energiaComDesconto = r2(energia * (1 - d.descontoPct / 100));
+  const energiaComDesconto = d.modalidade === "alugsol" ? r2(energia - (d.economiaMensalLocacao || 0) - (d.locacaoMensal || 0)) : r2(energia * (1 - d.descontoPct / 100));
   const fixos = r2(d.disponibilidade + d.iluminacao);
   const totalAtual = r2(energia + fixos);
-  const totalNovo = r2(energiaComDesconto + fixos);
+  const totalNovo = r2(energiaComDesconto + fixos + (d.modalidade === "alugsol" ? d.locacaoMensal || 0 : 0));
   const economiaMensal = r2(totalAtual - totalNovo);
   return { energia, energiaComDesconto, totalAtual, totalNovo, economiaMensal, economiaAnual: r2(economiaMensal * 12) };
 }
@@ -48,10 +49,10 @@ export async function gerarPropostaProsfecPdf(d: DadosPropostaProsfec): Promise<
   logo(p, true);
   right(p, `ESTUDO EXECUTIVO Nº ${d.numero}`, W - M, H - 44, 8.5, b, C.lima);
   right(p, `Emissão ${d.emissao.toLocaleDateString("pt-BR")} · Validade ${validade.toLocaleDateString("pt-BR")}`, W - M, H - 58, 8, f, C.onDark);
-  txt(p, "PROPOSTA COMERCIAL", M, H - 170, 10, b, C.lima);
+  para(p, `PROPOSTA COMERCIAL${d.empresa ? ` · ${d.empresa}` : ""}`, M, H - 170, 10, W - 2 * M, C.lima, b);
   txt(p, "Estudo de Eficiência Energética", M, H - 210, 34, b, C.white);
   txt(p, "e Redução de Custos", M, H - 250, 34, b, C.white);
-  txt(p, "Geração compartilhada em conformidade com a Lei Federal nº 14.300/2022 e as regras da ANEEL.", M, H - 280, 11, f, C.onDark);
+  txt(p, d.modalidade === "alugsol" ? "Locação de usina solar · Condições comerciais informadas pela Mesa PROSFEC Energy." : "Geração compartilhada em conformidade com a Lei Federal nº 14.300/2022 e as regras da ANEEL.", M, H - 280, 11, f, C.onDark);
   p.drawRectangle({ x: M, y: 150, width: W - 2 * M, height: 78, color: C.dark2, borderColor: C.lima, borderWidth: 0.6, borderOpacity: 0.4 });
   const campos: [string, string][] = [["CLIENTE", d.cliente], ["DOCUMENTO", d.documento || "—"], ["CIDADE / UF", d.cidadeUf || "—"], ["DISTRIBUIDORA", d.distribuidora || "—"]];
   const cw = (W - 2 * M - 40) / 4;
@@ -64,7 +65,7 @@ export async function gerarPropostaProsfecPdf(d: DadosPropostaProsfec): Promise<
   // 2 — Raio-X financeiro
   p = pdf.addPage([W, H]);
   header(p, "02", "DIAGNÓSTICO TARIFÁRIO", "Comparativo de custo mensal e anual");
-  const kp: [string, string][] = [["CONSUMO MÉDIO MENSAL", `${num(d.consumoKwh)} kWh/mês`], ["TARIFA ESTIMADA", `${brl(d.tarifa).replace("R$ ", "R$ ")} / kWh`], ["DESCONTO APLICADO", `${num(d.descontoPct)}% sobre a energia`]];
+  const kp: [string, string][] = [["CONSUMO MÉDIO MENSAL", `${num(d.consumoKwh)} kWh/mês`], ["TARIFA ESTIMADA", `${brl(d.tarifa)} / kWh`], [d.modalidade === "alugsol" ? "LOCAÇÃO MENSAL" : "DESCONTO APLICADO", d.modalidade === "alugsol" ? brl(d.locacaoMensal || 0) : `${num(d.descontoPct)}% sobre a energia`]];
   const kw = (W - 2 * M - 24) / 3;
   kp.forEach(([k, v], i) => { const x = M + i * (kw + 12); box(p, x, 326, kw, 50); txt(p, k, x + 16, 356, 7.5, b, C.muted); txt(p, v, x + 16, 336, 14, b, C.ink); });
   const cardW = (W - 2 * M - 16) / 2;
@@ -76,7 +77,7 @@ export async function gerarPropostaProsfecPdf(d: DadosPropostaProsfec): Promise<
     txt(p, total[0], x + 18, 152, 10, b, C.ink); right(p, brl(total[1]), x + cardW - 18, 150, 15, b, destaque ? C.dark2 : C.ink);
   };
   cen(M, "CENÁRIO ATUAL · SEM A PROSFEC", [["Consumo de energia", calc.energia], ["Custo de disponibilidade", d.disponibilidade], ["Iluminação pública", d.iluminacao]], ["TOTAL ATUAL", calc.totalAtual], false);
-  cen(M + cardW + 16, "CENÁRIO OTIMIZADO · COM PROSFEC ENERGY", [[`Energia com desconto (${num(d.descontoPct)}%)`, calc.energiaComDesconto], ["Custo de disponibilidade", d.disponibilidade], ["Iluminação pública", d.iluminacao]], ["NOVO TOTAL MENSAL", calc.totalNovo], true);
+  cen(M + cardW + 16, "CENÁRIO OTIMIZADO · COM PROSFEC ENERGY", d.modalidade === "alugsol" ? [["Energia residual estimada", calc.energiaComDesconto], ["Locação da usina", d.locacaoMensal || 0], ["Disponibilidade + iluminação", d.disponibilidade + d.iluminacao]] : [[`Energia com desconto (${num(d.descontoPct)}%)`, calc.energiaComDesconto], ["Custo de disponibilidade", d.disponibilidade], ["Iluminação pública", d.iluminacao]], ["NOVO TOTAL MENSAL", calc.totalNovo], true);
   p.drawRectangle({ x: M, y: 52, width: W - 2 * M, height: 70, color: C.dark });
   p.drawRectangle({ x: M, y: 52, width: 5, height: 70, color: C.lima });
   txt(p, "SUA ECONOMIA ESTIMADA", M + 24, 100, 8, b, C.lima);

@@ -10,7 +10,8 @@ vi.mock("firebase/firestore", () => ({
   }),
 }));
 vi.mock("firebase/storage", () => ({ ref: (_s: unknown, path: string) => path, uploadBytes: async () => { state.uploads++; }, getDownloadURL: async () => "https://firebasestorage.googleapis.com/proposta.pdf", deleteObject: async () => {} }));
-import { escolherPropostaEnergia, publicarSimulacoes, solicitarCotacaoEnergia } from "./simulacoesEnergia";
+import { escolherPropostaEnergia, publicarSimulacoes, solicitarCotacaoEnergia, type OfertaDraft } from "./simulacoesEnergia";
+import { camposPropostaSolar } from "./dadosSimulacaoProsfec";
 
 const oferta = { id: "gd-1", tipo: "gd", empresa: "Usina Manual", regras: "Regras da usina", pdfUrl: "https://firebasestorage.googleapis.com/proposta.pdf" };
 const documento = { url: "https://firebasestorage.googleapis.com/doc.pdf" };
@@ -20,6 +21,59 @@ beforeEach(() => {
   state.lead = { parceiroId: "partner-1", status: "atendimento", ficha: { tipo: "PF", nomeCompleto: "Cliente Teste", cpf: "123", email: "cliente@example.com", telefone: "98999999999", estadoCivil: "Casado(a)", profissao: "Comerciante" }, documentos: { contaLuz: documento, rgFrente: documento, rgVerso: documento }, ofertasEnergia: { "gd-1": oferta, "gd-2": { ...oferta, id: "gd-2", empresa: "Outra Usina" } }, anotacoes: [] };
 });
 describe("transações de simulações", () => {
+  function ofertaAutomatica(): OfertaDraft {
+    return { id: "nova-gd", tipo: "gd", empresa: "Usina Regional", desconto: "20", economia: "", locacao: "", regras: "Condições da Mesa", arquivo: null, proposta: { ...camposPropostaSolar(state.lead), consumo: "1250", tarifa: "0,98", disponibilidade: "68", iluminacao: "42" } };
+  }
+  function mesa() { state.user.uid = "Nso5FBoBVHXNY60RDw6NNKeaCC23"; }
+  it("publica sem anexo manual, gera o PDF e congela os dados da proposta", async () => {
+    mesa();
+    const result = await publicarSimulacoes("lead-1", "pacote-novo", [ofertaAutomatica()]);
+    const gerada = result['ofertasEnergia']['nova-gd'];
+    expect(state.uploads).toBe(1);
+    expect(gerada.pdfUrl).toBe("https://firebasestorage.googleapis.com/proposta.pdf");
+    expect(gerada.economia).toBe("245,00");
+    expect(gerada.propostaProsfec.cliente).toBe("Cliente Teste");
+    expect(gerada.propostaProsfec.tarifa).toBe(0.98);
+    expect(gerada.propostaProsfec.descontoPct).toBe(20);
+    expect(result['ofertasEnergia']['gd-1']).toEqual(oferta);
+    expect(result['cotacaoEnergiaStatus']).toBe("respondida");
+    expect(result['anotacoes']).toHaveLength(1);
+  });
+  it("repetir envio do mesmo pacote não duplica upload nem publicação", async () => {
+    mesa();
+    await publicarSimulacoes("lead-1", "pacote-novo", [ofertaAutomatica()]);
+    await publicarSimulacoes("lead-1", "pacote-novo", [ofertaAutomatica()]);
+    expect(state.uploads).toBe(1);
+    expect(state.updates).toHaveLength(1);
+  });
+  it("mantém PDF próprio sem substituir pelo modelo PROSFEC", async () => {
+    mesa();
+    const arquivo = new File(["%PDF-1.7 teste"], "usina.pdf", { type: "application/pdf" });
+    const result = await publicarSimulacoes("lead-1", "pacote-proprio", [{ ...ofertaAutomatica(), arquivo }]);
+    expect(result['ofertasEnergia']['nova-gd'].pdfNome).toBe("usina.pdf");
+    expect(result['ofertasEnergia']['nova-gd'].propostaProsfec).toBeUndefined();
+  });
+  it("rejeita dados insuficientes antes de qualquer upload", async () => {
+    mesa();
+    const draft = ofertaAutomatica();
+    if (!draft.proposta) throw new Error("Fixture inválida");
+    draft.proposta.tarifa = "";
+    await expect(publicarSimulacoes("lead-1", "pacote-novo", [draft])).rejects.toThrow("tarifa");
+    expect(state.uploads).toBe(0);
+    expect(state.updates).toHaveLength(0);
+  });
+  it("não gera arquivos para lead encerrado", async () => {
+    mesa(); state.lead['status'] = "concluido";
+    await expect(publicarSimulacoes("lead-1", "pacote-novo", [ofertaAutomatica()])).rejects.toThrow("não está aberto");
+    expect(state.uploads).toBe(0);
+  });
+  it("gera AlugSol sem aplicar indevidamente desconto GD", async () => {
+    mesa();
+    const result = await publicarSimulacoes("lead-1", "pacote-alugsol", [{ ...ofertaAutomatica(), tipo: "alugsol", locacao: "200", economia: "300" }]);
+    expect(result['ofertasEnergia']['nova-gd'].propostaProsfec.modalidade).toBe("alugsol");
+    expect(result['ofertasEnergia']['nova-gd'].propostaProsfec.locacaoMensal).toBe(200);
+    expect(result['ofertasEnergia']['nova-gd'].economia).toBe("300,00");
+  });
   it("não permite assessor publicar ofertas da Mesa", async () => {
     await expect(publicarSimulacoes("lead-1", "pacote-1", [])).rejects.toThrow("Somente a Mesa");
     expect(state.uploads).toBe(0);

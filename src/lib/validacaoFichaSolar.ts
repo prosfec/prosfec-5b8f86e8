@@ -1,3 +1,4 @@
+import type { PropostaSolarSnapshot } from "./dadosSimulacaoProsfec";
 export type LeadSolar = Record<string, any>;
 export const MAX_PDF_SIMULACAO = 15 * 1024 * 1024;
 const titular = [
@@ -41,6 +42,7 @@ export interface OfertaEnergia {
   id: string; pacoteId: string; tipo: "gd" | "alugsol"; empresa: string;
   desconto: string; economia: string; locacao: string; regras: string;
   pdfUrl: string; pdfNome: string; criadaEm: string;
+  propostaProsfec?: PropostaSolarSnapshot;
 }
 export function validarOfertasEnergia(ofertas: OfertaEnergia[]): string | null {
   if (!ofertas.length) return "Adicione pelo menos uma oferta.";

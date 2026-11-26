@@ -3,14 +3,23 @@ import { CheckCircle2, Download, Lock, Zap, FileText, Loader2 } from "lucide-rea
 import { Button } from "./ui/button";
 import { pendenciasFichaSolar, pendenciasSolicitacaoSolar, urlPdfSegura, type LeadSolar, type OfertaEnergia } from "../lib/validacaoFichaSolar";
 import { escolherPropostaEnergia, solicitarCotacaoEnergia } from "../lib/simulacoesEnergia";
+import { baixarPropostaSolar } from "../lib/downloadPropostaSolar";
 
 export function CardPropostasChatEnergia({ lead, ofertaIds, assessor = false, autor = "Assessor", onUpdated }: { lead: LeadSolar; ofertaIds: unknown; assessor?: boolean; autor?: string; onUpdated: (lead: LeadSolar) => void }) {
   const [saving, setSaving] = useState("");
+  const [baixando, setBaixando] = useState("");
   const [error, setError] = useState("");
   const ids = Array.isArray(ofertaIds) ? ofertaIds.filter((id): id is string => typeof id === "string") : [];
   const pendencias = pendenciasFichaSolar(lead);
   const escolhido = lead['propostaEnergiaEscolhida']?.ofertaId;
   const fechado = ["concluido", "arquivado", "cancelado"].includes(lead['status']);
+  async function baixar(o: OfertaEnergia) {
+    if (baixando) return;
+    setBaixando(o.id); setError("");
+    try { await baixarPropostaSolar(o); }
+    catch (e) { setError(e instanceof Error ? e.message : "Não foi possível baixar a proposta."); }
+    finally { setBaixando(""); }
+  }
   async function escolher(o: OfertaEnergia) {
     if (saving || !window.confirm(`Confirmar a proposta de ${o.empresa}? A Mesa receberá sua escolha para dar continuidade ao contrato.`)) return;
     setSaving(o.id); setError("");
@@ -32,7 +41,7 @@ export function CardPropostasChatEnergia({ lead, ofertaIds, assessor = false, au
           {typeof o.economia === "string" && o.economia && <div><span>Economia mensal estimada</span><strong>{o.economia.includes("R$") ? o.economia : `R$ ${o.economia}`}</strong></div>}
           {typeof o.locacao === "string" && o.locacao && <div><span>Locação mensal</span><strong>{o.locacao.includes("R$") ? o.locacao : `R$ ${o.locacao}`}</strong></div>}
         </div>
-        <div className="simulacao-actions"><Button asChild variant="outline" size="sm" className="simulacao-button"><a href={o.pdfUrl} target="_blank" rel="noopener noreferrer"><Download /> Proposta PDF</a></Button></div>
+        <div className="simulacao-actions"><Button type="button" variant="outline" size="sm" className="simulacao-button" disabled={!!baixando} onClick={() => baixar(o)}>{baixando === o.id ? <Loader2 className="animate-spin" /> : <Download />} {baixando === o.id ? "Preparando PDF…" : "Proposta PDF"}</Button></div>
         <details className="simulacao-regras"><summary><FileText size={14} /> Roteiro e regras operacionais</summary><p>{typeof o.regras === "string" ? o.regras : "Consulte a Mesa."}</p></details>
         {assessor && !escolhido && !fechado && <>
           {pendencias.length > 0 && <details className="simulacao-pendencias"><summary><Lock size={14} /> {pendencias.length} pendências para selecionar</summary><ul>{pendencias.map(p => <li key={p}>{p}</li>)}</ul></details>}
