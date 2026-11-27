@@ -19,7 +19,17 @@ export async function arquivoPropostaSolar(oferta: OfertaEnergia): Promise<Blob>
 }
 
 export async function baixarPropostaSolar(oferta: OfertaEnergia) {
-  const blob = await arquivoPropostaSolar(oferta);
+  let blob: Blob;
+  try {
+    blob = await arquivoPropostaSolar(oferta);
+  } catch (err) {
+    // Sem snapshot (anexo da Mesa ou oferta antiga): abre o link direto, que não depende de CORS.
+    if (!urlPdfSegura(oferta.pdfUrl)) throw err;
+    const link = document.createElement("a");
+    link.href = oferta.pdfUrl; link.target = "_blank"; link.rel = "noopener noreferrer";
+    document.body.appendChild(link); link.click(); link.remove();
+    return;
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
