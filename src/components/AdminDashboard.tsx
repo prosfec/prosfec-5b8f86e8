@@ -5421,7 +5421,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               ) : (
                                 <div className="chat-op-body" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
                                   {notas.map((nota: any, idx: number) => {
-                                    if (nota?.tipo === "simulacao") return <CardPropostasChatEnergia key={nota.id || idx} lead={lead} ofertaIds={nota.ofertaIds} onUpdated={u => setLeadsEnergia(prev => prev.map(l => l.id === lead.id ? { ...l, ...u } : l))} />;
+                                    if (nota?.tipo === "simulacao") return <CardPropostasChatEnergia key={nota.id || idx} lead={lead} ofertaIds={nota.ofertaIds} mesa pacoteId={typeof nota.id === "string" ? nota.id : undefined} onUpdated={u => setLeadsEnergia(prev => prev.map(l => l.id === lead.id ? { ...l, ...u } : l))} />;
                                     const doParceiro = nota.papel === "parceiro";
                                     return (
                                       <div key={idx} className={`flex ${doParceiro ? "justify-start" : "justify-end"}`}>

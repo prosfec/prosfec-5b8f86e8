@@ -1,4 +1,4 @@
-import { doc, runTransaction, arrayUnion, type Transaction } from "firebase/firestore";
+import { doc, runTransaction, arrayUnion, deleteField, type Transaction } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { auth, db, storage } from "../firebase";
 import { prepararPropostaSolar, economiaPropostaSolar, type CamposPropostaSolar } from "./dadosSimulacaoProsfec";
@@ -136,4 +136,35 @@ export async function escolherPropostaEnergia(leadId: string, ofertaId: string, 
     tx.update(r, { ...updates, anotacoes: arrayUnion(nota) });
     return { ...lead, ...updates, anotacoes: [...(Array.isArray(lead['anotacoes']) ? lead['anotacoes'] : []), nota] };
   });
+}
+/** Mesa-only: removes a published simulation package from chat, offers and Storage so it can be redone. */
+export async function excluirSimulacaoEnergia(leadId: string, pacoteId: string) {
+  await verificarSessao(true);
+  const { lead, urls } = await runTransaction(db, async tx => {
+    const r = doc(db, "leads_energia", leadId);
+    const snap = await tx.get(r);
+    if (!snap.exists()) throw new Error("Lead não encontrado.");
+    const lead = snap.data();
+    if (lead['status'] === "concluido") throw new Error("Lead concluído: a simulação não pode ser excluída.");
+    const notas: any[] = Array.isArray(lead['anotacoes']) ? lead['anotacoes'] : [];
+    const nota = notas.find(n => n?.tipo === "simulacao" && n?.id === pacoteId);
+    const atuais: Record<string, any> = lead['ofertasEnergia'] || {};
+    const ids = new Set<string>([...(Array.isArray(nota?.ofertaIds) ? nota.ofertaIds : []), ...Object.keys(atuais).filter(k => atuais[k]?.pacoteId === pacoteId)]);
+    if (!nota && !ids.size) return { lead, urls: [] as string[] };
+    const urls = [...ids].map(id => atuais[id]?.pdfUrl).filter((u): u is string => typeof u === "string");
+    const ofertasEnergia = Object.fromEntries(Object.entries(atuais).filter(([k]) => !ids.has(k)));
+    const anotacoes = notas.filter(n => !(n?.tipo === "simulacao" && n?.id === pacoteId));
+    const agora = new Date().toISOString();
+    const updates: Record<string, unknown> = { ofertasEnergia, anotacoes, atualizadoEm: agora };
+    const limparEscolha = ids.has(lead['propostaEnergiaEscolhida']?.ofertaId);
+    if (limparEscolha) updates['propostaEnergiaEscolhida'] = deleteField();
+    if (!anotacoes.some(n => n?.tipo === "simulacao") && lead['cotacaoEnergiaStatus'] === "respondida") updates['cotacaoEnergiaStatus'] = "solicitada";
+    tx.update(r, updates);
+    const novo: Record<string, unknown> = { ...lead, ...updates };
+    if (limparEscolha) novo['propostaEnergiaEscolhida'] = null;
+    return { lead: novo, urls };
+  });
+  // Best effort: an orphan PDF is harmless, a failed delete must not undo the removal.
+  await Promise.allSettled(urls.map(u => deleteObject(ref(storage, u))));
+  return lead;
 }

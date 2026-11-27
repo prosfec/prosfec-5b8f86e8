@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { CheckCircle2, Download, Lock, Zap, FileText, Loader2 } from "lucide-react";
+import { CheckCircle2, Download, Lock, Zap, FileText, Loader2, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { pendenciasFichaSolar, pendenciasSolicitacaoSolar, urlPdfSegura, type LeadSolar, type OfertaEnergia } from "../lib/validacaoFichaSolar";
-import { escolherPropostaEnergia, solicitarCotacaoEnergia } from "../lib/simulacoesEnergia";
+import { escolherPropostaEnergia, excluirSimulacaoEnergia, solicitarCotacaoEnergia } from "../lib/simulacoesEnergia";
 import { baixarPropostaSolar } from "../lib/downloadPropostaSolar";
 
-export function CardPropostasChatEnergia({ lead, ofertaIds, assessor = false, autor = "Assessor", onUpdated }: { lead: LeadSolar; ofertaIds: unknown; assessor?: boolean; autor?: string; onUpdated: (lead: LeadSolar) => void }) {
+export function CardPropostasChatEnergia({ lead, ofertaIds, assessor = false, autor = "Assessor", pacoteId, mesa = false, onUpdated }: { lead: LeadSolar; ofertaIds: unknown; assessor?: boolean; pacoteId?: string; mesa?: boolean; autor?: string; onUpdated: (lead: LeadSolar) => void }) {
   const [saving, setSaving] = useState("");
   const [baixando, setBaixando] = useState("");
   const [error, setError] = useState("");
@@ -27,8 +27,15 @@ export function CardPropostasChatEnergia({ lead, ofertaIds, assessor = false, au
     catch (e) { setError(e instanceof Error ? e.message : "Não foi possível selecionar a proposta."); }
     finally { setSaving(""); }
   }
+  async function excluir() {
+    if (!pacoteId || saving || !window.confirm("Deseja excluir este pacote de simulações? O assessor deixará de ver estas opções e você poderá gerar uma nova.")) return;
+    setSaving("excluir"); setError("");
+    try { onUpdated(await excluirSimulacaoEnergia(String(lead['id']), pacoteId)); }
+    catch (e) { setError(e instanceof Error ? e.message : "Não foi possível excluir a simulação."); }
+    finally { setSaving(""); }
+  }
   return <div className="simulacoes-chat" translate="no">
-    <div className="simulacao-pacote-head"><Zap size={16} /><span>Simulações da Mesa</span><span className="simulacao-muted">{ids.length} ofertas</span></div>
+    <div className="simulacao-pacote-head"><Zap size={16} /><span>Simulações da Mesa</span><span className="simulacao-muted">{ids.length} ofertas</span>{mesa && pacoteId && lead['status'] !== "concluido" && <Button type="button" variant="ghost" size="sm" className="ml-auto text-red-600 hover:text-red-700" disabled={!!saving} onClick={excluir}>{saving === "excluir" ? <Loader2 className="animate-spin" /> : <Trash2 />} Excluir simulação</Button>}</div>
     {ids.map(id => {
       const o: OfertaEnergia | undefined = lead['ofertasEnergia']?.[id];
       if (!o || typeof o.empresa !== "string" || !urlPdfSegura(o.pdfUrl)) return <p key={id} className="simulacao-error">Proposta indisponível. Consulte a Mesa.</p>;
