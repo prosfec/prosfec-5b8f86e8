@@ -6,6 +6,8 @@ import { publicarSimulacoes, type OfertaDraft } from "../lib/simulacoesEnergia";
 import CamposPropostaAutomatica from "./CamposPropostaAutomatica";
 import { camposPropostaSolar } from "../lib/dadosSimulacaoProsfec";
 import { validarPdfSimulacao, type LeadSolar } from "../lib/validacaoFichaSolar";
+import PainelUsinasRecomendadas, { type PerfilPainel } from "./PainelUsinasRecomendadas";
+import { identificarDistribuidora, nomeDistribuidora, regrasOfertaUsina, type UsinaCompativel } from "../lib/catalogoUsinas";
 
 const novaOferta = (tipo: "gd" | "alugsol"): OfertaDraft => ({ id: crypto.randomUUID(), tipo, empresa: tipo === "alugsol" ? "AlugSol" : "", desconto: "", economia: "", locacao: "", regras: "", arquivo: null });
 export default function ModalCriarSimulacaoEnergia({ lead, onClose, onUpdated }: { lead: LeadSolar; onClose: () => void; onUpdated: (lead: LeadSolar) => void }) {
@@ -13,6 +15,26 @@ export default function ModalCriarSimulacaoEnergia({ lead, onClose, onUpdated }:
   const [pacoteId] = useState(() => crypto.randomUUID());
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
+  const [perfil, setPerfil] = useState<PerfilPainel>(() => {
+    const f = lead['ficha'] || {};
+    const fatura = Number(lead['mediaContaReais']);
+    return {
+      distribuidora: identificarDistribuidora(f.distribuidora) || identificarDistribuidora(f.concessionaria) || identificarDistribuidora(lead['concessionaria']) || identificarDistribuidora(lead['distribuidora']) || "",
+      consumo: lead['consumoKwhMes'] ? String(lead['consumoKwhMes']) : "",
+      placa: f.possuiPlacaSolar === "Sim",
+      ...(Number.isFinite(fatura) && fatura > 0 ? { valorFatura: fatura } : {}),
+    };
+  });
+  const gds = ofertas.filter(o => o.tipo === "gd");
+  const alvos = gds.map(o => ({ id: o.id, rotulo: `Oferta GD ${ofertas.indexOf(o) + 1}` }));
+  const [alvoSel, setAlvoSel] = useState("");
+  const alvo = alvos.some(a => a.id === alvoSel) ? alvoSel : (gds.find(o => !o.empresa.trim()) ?? gds[0])?.id ?? "";
+  const aplicarUsina = (u: UsinaCompativel) => {
+    const o = ofertas.find(x => x.id === alvo);
+    if (!o) return;
+    const distribuidora = perfil.distribuidora ? nomeDistribuidora(perfil.distribuidora) : "";
+    alterar(o.id, { empresa: u.nome, desconto: String(u.desconto), economia: "", regras: regrasOfertaUsina(u), proposta: { ...(o.proposta || camposPropostaSolar(lead)), ...(distribuidora ? { distribuidora } : {}), ...(perfil.consumo.trim() ? { consumo: perfil.consumo.trim() } : {}) } });
+  };
   const alterar = (id: string, updates: Partial<OfertaDraft>) => setOfertas(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
   async function enviar(event: React.FormEvent) {
     event.preventDefault();
@@ -33,6 +55,7 @@ export default function ModalCriarSimulacaoEnergia({ lead, onClose, onUpdated }:
           <Button type="button" variant="ghost" size="icon" title="Fechar" aria-label="Fechar simulações" disabled={enviando} onClick={onClose}><X /></Button>
         </header>
         <form onSubmit={enviar} className="simulacao-form">
+          <PainelUsinasRecomendadas perfil={perfil} onPerfil={setPerfil} alvos={alvos} alvo={alvo} onAlvo={setAlvoSel} onAplicar={aplicarUsina} disabled={enviando} />
           <div className="simulacao-ofertas">
             {ofertas.map((o, index) => (
               <fieldset key={o.id} disabled={enviando} className="simulacao-editor">

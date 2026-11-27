@@ -11,6 +11,7 @@ import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebas
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db, storage } from "../firebase";
 import { toast } from "sonner";
+import { DISTRIBUIDORAS, identificarDistribuidora, nomeDistribuidora } from "../lib/catalogoUsinas";
 
 /**
  * Ficha cadastral + documentos do lead solar (coleção leads_energia).
@@ -123,6 +124,7 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
       tipo: fichaTipo(lead),
       razaoSocial: lead?.ficha?.razaoSocial || cd.razao_social || cd.razaoSocial || "",
       cnpj: lead?.ficha?.cnpj || cd.cnpj || lead?.cnpj || "",
+      distribuidora: lead?.ficha?.distribuidora || (() => { const id = identificarDistribuidora(lead?.concessionaria); return id ? nomeDistribuidora(id) : ""; })(),
     };
   });
   const tipo = ficha.tipo === "PJ" ? "PJ" : "PF";
@@ -159,6 +161,8 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
     try {
       const limpa: Record<string, string> = { ...(lead?.ficha || {}), tipo };
       CAMPOS.forEach((c) => { limpa[c.key] = String(ficha[c.key] || "").trim(); });
+      limpa.distribuidora = String(ficha.distribuidora || "").trim();
+      limpa.possuiPlacaSolar = ficha.possuiPlacaSolar === "Sim" ? "Sim" : "Não";
       const completa = CAMPOS.every((c) => limpa[c.key]);
       const avanca = podeEditar && completa && (lead?.status || "novo") === "novo";
       const mov = movimento(avanca
@@ -360,6 +364,31 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
                     </label>
                   );
                 })}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <label className="block space-y-1.5 min-w-0">
+                  <span className="text-[11px] font-semibold" style={{ color: p.muted }}>Distribuidora de energia</span>
+                  {!podeEditar ? (
+                    <p className="text-sm font-medium rounded-xl border px-3.5 py-2.5 break-words" style={{ ...campoStyle, backgroundColor: p.bg }}>{ficha.distribuidora || <span style={{ color: p.soft }}>Não informado</span>}</p>
+                  ) : (
+                    <select value={ficha.distribuidora || ""} onChange={(e) => setFicha({ ...ficha, distribuidora: e.target.value })} className={inputCls} style={campoStyle}>
+                      <option value="">Selecione</option>
+                      {ficha.distribuidora && !DISTRIBUIDORAS.some((d) => d.nome === ficha.distribuidora) && <option value={ficha.distribuidora}>{ficha.distribuidora}</option>}
+                      {DISTRIBUIDORAS.map((d) => <option key={d.id} value={d.nome}>{d.nome} ({d.uf})</option>)}
+                    </select>
+                  )}
+                </label>
+                <label className="block space-y-1.5 min-w-0">
+                  <span className="text-[11px] font-semibold" style={{ color: p.muted }}>Possui placa solar?</span>
+                  {!podeEditar ? (
+                    <p className="text-sm font-medium rounded-xl border px-3.5 py-2.5" style={{ ...campoStyle, backgroundColor: p.bg }}>{ficha.possuiPlacaSolar === "Sim" ? "Sim" : "Não"}</p>
+                  ) : (
+                    <select value={ficha.possuiPlacaSolar === "Sim" ? "Sim" : "Não"} onChange={(e) => setFicha({ ...ficha, possuiPlacaSolar: e.target.value })} className={inputCls} style={campoStyle}>
+                      <option value="Não">Não</option>
+                      <option value="Sim">Sim</option>
+                    </select>
+                  )}
+                </label>
               </div>
               {podeEditar && (
                 <button type="button" onClick={salvarFicha} disabled={salvando} className="w-full h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-[0.98] disabled:opacity-60" style={btnPrim}>
