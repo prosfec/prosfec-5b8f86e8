@@ -28,7 +28,7 @@ describe("recomendarUsinas", () => {
   });
   it("Desconto Especial Serena acima de 1.000 kWh nas Usinas 28/121", () => {
     const r = recomendarUsinas({ distribuidora: "equatorial-go", consumoKwh: 6000, possuiPlaca: false });
-    expect(r.compativeis.find(u => u.nome === "Usina 121")?.desconto).toBe(27);
+    expect(r.compativeis.find(u => u.nome === "Usina 121")?.desconto).toBe(32);
     const ce = recomendarUsinas({ distribuidora: "enel-ce", consumoKwh: 3000, possuiPlaca: false });
     expect(ce.compativeis.find(u => u.nome === "Usina 28")?.desconto).toBe(25);
   });
@@ -47,5 +47,16 @@ describe("identificarDistribuidora", () => {
     expect(identificarDistribuidora("CEMIG-D")).toBe("cemig");
     expect(identificarDistribuidora("CPFL Piratininga")).toBe("cpfl-piratininga");
     expect(identificarDistribuidora("Equatorial")).toBeNull();
+  });
+});
+
+describe("Usina 121 — Equatorial GO", () => {
+  it("aplica 32% com ou sem fidelidade em qualquer faixa, sem mudar a Usina 28", () => {
+    for (const consumoKwh of [300, 1500, 12000]) {
+      const { compativeis } = recomendarUsinas({ distribuidora: "equatorial-go", consumoKwh, possuiPlaca: false });
+      expect(compativeis.find(u => u.nome === "Usina 121")?.desconto).toBe(32);
+    }
+    const { compativeis } = recomendarUsinas({ distribuidora: "equatorial-go", consumoKwh: 300, possuiPlaca: false });
+    expect(compativeis.find(u => u.nome === "Usina 28")?.desconto).toBe(20);
   });
 });

@@ -75,7 +75,7 @@ const faixa = <T,>(consumo: number, limites: number[], valores: T[]): T => {
   return (i === -1 ? valores[valores.length - 1] : valores[i]) as T;
 };
 
-// Usinas 28 e 121 compartilham a mesma tabela.
+// Tabela da Usina 28 (a 121 parte dela, com ajustes próprios).
 const PADRAO_28: Partial<Record<DistribuidoraId, [number, number, number]>> = {
   "neoenergia-pe": [30, 30, 30], "enel-ce": [25, 25, 25], "equatorial-go": [20, 24, 30], cemig: [18, 21, 28],
   "cpfl-paulista": [14, 16, 22], "enel-rj": [13, 15, 16], "energisa-mt": [12, 18, 25], "equatorial-pa": [12, 14, 16],
@@ -93,6 +93,20 @@ const desconto28 = (d: DistribuidoraId, consumo: number): Desconto | null => {
     return { pct, detalhe: "Desconto Especial Serena pela faixa de consumo", maximo: Math.max(pct, p[2]) };
   }
   return { pct: p[0], detalhe: "Desconto padrão sem fidelidade", maximo: p[2] };
+};
+// Usina 121: tabela própria (Equatorial GO tem desconto padrão de 32% com ou sem fidelidade).
+const PADRAO_121: Partial<Record<DistribuidoraId, [number, number, number]>> = { ...PADRAO_28, "equatorial-go": [32, 32, 32] };
+const SERENA_121: Partial<Record<DistribuidoraId, [number, number, number, number]>> = { ...SERENA_28 };
+delete SERENA_121["equatorial-go"];
+const desconto121 = (d: DistribuidoraId, consumo: number): Desconto | null => {
+  const p = PADRAO_121[d];
+  if (!p) return null;
+  const s = SERENA_121[d];
+  if (s && consumo >= 1000) {
+    const pct = faixa(consumo, [2000, 5000, 10000], s);
+    if (pct >= p[0]) return { pct, detalhe: "Desconto Especial Serena pela faixa de consumo", maximo: Math.max(pct, p[2]) };
+  }
+  return p[0] === p[2] ? { pct: p[0], detalhe: "Desconto padrão com ou sem fidelidade" } : { pct: p[0], detalhe: "Desconto padrão sem fidelidade", maximo: p[2] };
 };
 const REGRAS_28 = "Fatura única, sem portabilidade de titularidade. Exige obrigatoriamente login e senha da distribuidora, mantidos atualizados, para a usina pagar as tarifas mínimas. Desconto fixo (não muda com bandeira tarifária) sobre a tarifa COM impostos. Consulta Serasa/SPC e análise jurídica de CPF e CNPJ; pequenas dívidas podem ser aceitas se não forem críticas. Fidelidade de 1 ou 5 anos aumenta o desconto padrão. Comissão pela média dos últimos 12 meses.";
 
@@ -149,7 +163,7 @@ export const USINAS: Usina[] = [
     disponibilidade: Object.fromEntries(Object.entries(USINA_120).map(([d, v]) => [d, v[1]])),
     desconto: d => { const t = USINA_120[d]; return t ? { pct: t[0], detalhe: `Desconto máximo sem fidelidade · disponibilidade ${t[1].toLowerCase()}` } : null; },
   },
-  { nome: "Usina 121", consumoMinimo: 200, placa: { aceita: false }, fatura: "Fatura única sem portabilidade", regras: REGRAS_28, desconto: desconto28 },
+  { nome: "Usina 121", consumoMinimo: 200, placa: { aceita: false }, fatura: "Fatura única sem portabilidade", regras: REGRAS_28, desconto: desconto121 },
 ];
 
 export interface PerfilLeadUsina { distribuidora: DistribuidoraId | null; consumoKwh: number; possuiPlaca: boolean; valorFatura?: number }
