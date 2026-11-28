@@ -114,7 +114,6 @@ import {
   withoutMensalidades,
   onlyMensalidades,
   buildWhatsAppUrl,
-  buildEnergiaSolarWhatsAppMessage,
   etapaCicloEnergia,
   cicloComissaoEnergia,
   diasAteProximoDia,
@@ -5339,55 +5338,60 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             )}
 
                             {/* Ações */}
-                            <div className="dossie-card flex items-center gap-2 flex-wrap">
-                              <Button size="sm" className="simulacao-primary whitespace-normal" disabled={["concluido", "arquivado", "cancelado"].includes(status) || !!lead.propostaEnergiaEscolhida} onClick={() => setSimulacaoEnergiaLeadId(lead.id)}><Zap /> Montar Proposta / Simulação</Button>
-                              <select
-                                value={status}
-                                onChange={(e) => handleUpdateEnergiaStatus(lead.id, e.target.value)}
-                                disabled={energiaSavingId === lead.id}
-                                className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 cursor-pointer disabled:opacity-50"
+                            <div className="dossie-card grid grid-cols-1 gap-2">
+                              <label className="grid min-w-0 gap-1 text-xs font-semibold text-simulation-ink">
+                                Etapa
+                                <select
+                                  aria-label="Etapa do lead"
+                                  value={status}
+                                  onChange={(e) => handleUpdateEnergiaStatus(lead.id, e.target.value)}
+                                  disabled={energiaSavingId === lead.id}
+                                  className="h-10 w-full min-w-0 rounded-md border border-simulation-border bg-simulation-surface px-3 text-xs text-simulation-ink cursor-pointer focus-visible:outline-2 focus-visible:outline-simulation-action disabled:opacity-50"
+                                >
+                                  {ENERGIA_STATUS_OPTIONS.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                  ))}
+                                </select>
+                              </label>
+                              <Button
+                                variant="outline"
+                                onClick={() => setFichaEnergiaLeadId(lead.id)}
+                                className="simulacao-button h-auto min-h-10 w-full whitespace-normal text-xs"
                               >
-                                {ENERGIA_STATUS_OPTIONS.map(opt => (
-                                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                               </select>
+                                📋 Ficha & Documentos ({fichaDocumentosEnviados(lead)}/{fichaDocumentosTotal(lead)})
+                              </Button>
+                              <Button
+                                className="simulacao-primary h-auto min-h-10 w-full whitespace-normal text-xs"
+                                disabled={["concluido", "arquivado", "cancelado"].includes(status) || !!lead.propostaEnergiaEscolhida}
+                                onClick={() => setSimulacaoEnergiaLeadId(lead.id)}
+                              >
+                                <Zap /> Montar Proposta / Simulação
+                              </Button>
                               {status === "concluido" && energiaFechamentoLeadId !== lead.id && (
-                                <button
+                                <Button
+                                  variant="outline"
                                   onClick={() => {
                                     setEnergiaFechamentoLeadId(lead.id);
                                     setEnergiaFechamentoFatura(lead.consumoKwhMes ? String(lead.consumoKwhMes) : "");
                                     setEnergiaFechamentoComissao(lead.comissaoParceiro ? String(lead.comissaoParceiro) : "");
                                     setEnergiaFechamentoEmpresas(Array.isArray(lead.empresasFechamento) ? lead.empresasFechamento : []);
                                   }}
-                                  className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-lg font-extrabold text-[10px] cursor-pointer"
+                                  className="simulacao-button h-auto min-h-10 w-full whitespace-normal text-xs"
                                 >
                                   Editar valores
-                                </button>
+                                </Button>
                               )}
-                              <button
-                                onClick={() => setFichaEnergiaLeadId(lead.id)}
-                                className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 rounded-lg font-extrabold text-[10px] cursor-pointer"
-                              >
-                                📋 Ficha & Documentos ({fichaDocumentosEnviados(lead)}/{fichaDocumentosTotal(lead)})
-                              </button>
-                              {lead.telefone && (
-                                <a
-                                  href={buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa))}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer"
+                              <div className="mt-1 border-t border-simulation-border pt-3">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => handleDeleteEnergiaLead(lead.id, lead.nomeEmpresa)}
+                                  disabled={energiaSavingId === lead.id}
+                                  title="Excluir lead da base de Energia Solar"
+                                  className="h-auto min-h-10 w-full whitespace-normal border-simulation-danger/25 bg-simulation-danger/5 text-xs text-simulation-danger hover:bg-simulation-danger/10 hover:text-simulation-danger"
                                 >
-                                  <Send className="w-3 h-3" /> WhatsApp
-                                </a>
-                              )}
-                              <button
-                                onClick={() => handleDeleteEnergiaLead(lead.id, lead.nomeEmpresa)}
-                                disabled={energiaSavingId === lead.id}
-                                title="Excluir lead da base de Energia Solar"
-                                className="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-lg font-extrabold text-[10px] flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                              >
-                                <Trash2 className="w-3 h-3" /> Excluir
-                              </button>
+                                  <Trash2 /> Excluir Lead
+                                </Button>
+                              </div>
                             </div>
 
 
@@ -5490,7 +5494,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               lead={lead}
                               novidade={energiaNovidadeParceiro(lead)}
                               onOpen={() => setDetalheEnergiaLeadId(lead.id)}
-                              whatsappUrl={lead.telefone ? buildWhatsAppUrl(lead.telefone, buildEnergiaSolarWhatsAppMessage(lead.nomeEmpresa)) : null}
+                              whatsappUrl={null}
                             />
                             {detalheEnergiaLeadId === lead.id && !fichaEnergiaLeadId && (
                               <LeadEnergiaDetalheModal titulo={lead.nomeEmpresa || "Lead"} onClose={() => setDetalheEnergiaLeadId(null)}>

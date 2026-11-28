@@ -17,3 +17,5 @@
 - [x] Reformular /energiasolar com as dez seções institucionais aprovadas e SEO
 - [x] Integrar indicação dos assessores, link copiável e QR Code
 - [x] Implementar captação segura no Firestore e testar chegada no Kanban
+
+- [x] Organizar Central Operacional do ADM: Etapa, Ficha, Proposta, Editar valores e Excluir; remover WhatsApp do cliente somente no ADM
