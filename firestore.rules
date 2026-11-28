@@ -316,6 +316,8 @@ service cloud.firestore {
           request.resource.data.cotacaoEnergiaStatus == 'solicitada'
           && !(resource.data.get('status', 'novo') in ['concluido', 'arquivado', 'cancelado'])
           && resource.data.get('documentos', {}).get('contaLuz', {}).get('url', '').matches('https://.+')
+          && request.resource.data.get('ficha', {}).get('distribuidora', '') is string
+          && request.resource.data.get('ficha', {}).get('distribuidora', '').matches('.*[^ \\t\\r\\n].*')
         ));
     }
 

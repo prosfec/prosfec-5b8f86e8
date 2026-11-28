@@ -18,7 +18,7 @@ const documento = { url: "https://firebasestorage.googleapis.com/doc.pdf" };
 beforeEach(() => {
   state.user.uid = "assessor-uid"; state.user.email = "assessor@example.com";
   state.updates = []; state.uploads = 0;
-  state.lead = { parceiroId: "partner-1", status: "atendimento", ficha: { tipo: "PF", nomeCompleto: "Cliente Teste", cpf: "123", email: "cliente@example.com", telefone: "98999999999", estadoCivil: "Casado(a)", profissao: "Comerciante" }, documentos: { contaLuz: documento, rgFrente: documento, rgVerso: documento }, ofertasEnergia: { "gd-1": oferta, "gd-2": { ...oferta, id: "gd-2", empresa: "Outra Usina" } }, anotacoes: [] };
+  state.lead = { parceiroId: "partner-1", status: "atendimento", ficha: { tipo: "PF", nomeCompleto: "Cliente Teste", cpf: "123", email: "cliente@example.com", telefone: "98999999999", estadoCivil: "Casado(a)", profissao: "Comerciante", distribuidora: "Neoenergia PE (Celpe)" }, documentos: { contaLuz: documento, rgFrente: documento, rgVerso: documento }, ofertasEnergia: { "gd-1": oferta, "gd-2": { ...oferta, id: "gd-2", empresa: "Outra Usina" } }, anotacoes: [] };
 });
 describe("transações de simulações", () => {
   function ofertaAutomatica(): OfertaDraft {
@@ -115,6 +115,19 @@ describe("transações de simulações", () => {
     const result = await solicitarCotacaoEnergia("lead-1", "Assessor");
     await solicitarCotacaoEnergia("lead-1", "Assessor");
     expect(result['cotacaoEnergiaStatus']).toBe("solicitada");
+    expect(result['anotacoes'][0]).toMatchObject({ tipo: "solicitacao_cotacao", distribuidora: "Neoenergia PE (Celpe)", titular: "Cliente Teste" });
     expect(state.updates).toHaveLength(1);
+  });
+  it("revalida a distribuidora na transação antes de registrar cotação", async () => {
+    state.lead['ficha'].distribuidora = " ";
+    await expect(solicitarCotacaoEnergia("lead-1", "Assessor")).rejects.toThrow("Distribuidora de energia");
+    expect(state.updates).toHaveLength(0);
+  });
+  it("preserva cotação antiga já solicitada mesmo sem distribuidora", async () => {
+    state.lead['cotacaoEnergiaStatus'] = "solicitada";
+    delete state.lead['ficha'].distribuidora;
+    await solicitarCotacaoEnergia("lead-1", "Assessor");
+    expect(state.updates).toHaveLength(0);
+    expect(state.lead['cotacaoEnergiaStatus']).toBe("solicitada");
   });
 });

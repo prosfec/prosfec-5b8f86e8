@@ -64,8 +64,8 @@ export function CardPropostasChatEnergia({ lead, ofertaIds, assessor = false, au
 export function SolicitarCotacaoEnergia({ lead, autor, onUpdated }: { lead: LeadSolar; autor: string; onUpdated: (lead: LeadSolar) => void }) {
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
-  const pendencias = pendenciasSolicitacaoSolar(lead);
   const solicitada = lead['cotacaoEnergiaStatus'] === "solicitada";
+  const pendencias = solicitada ? [] : pendenciasSolicitacaoSolar(lead);
   if (["concluido", "arquivado", "cancelado"].includes(lead['status']) || lead['propostaEnergiaEscolhida']) return null;
   async function solicitar() {
     if (saving) return;

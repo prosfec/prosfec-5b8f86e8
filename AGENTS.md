@@ -23,4 +23,5 @@
 - Public energy referral responses project only the assessor's public-facing name and WhatsApp; lead attribution is revalidated server-side and uses the existing solar Kanban field names.
 - Representante Comercial shares the solar partner portal (isEnergiaOnly) but skips the Assessor 22-day training, hour tracking and evaluation; its contract acceptance is stored on the partner doc with version, because the commercial-partnership contract is autonomous (no subordination).
 - The partner-plant (usina) catalog and eligibility engine live in `src/lib/catalogoUsinas.ts` as code with tests; the Mesa recommendation only pre-fills offer fields and never blocks manual edits, because commercial terms change often and staff must keep the final say.
-- Lead `ficha.distribuidora` and `ficha.possuiPlacaSolar` are optional and excluded from ficha completeness, so adding them never re-locks leads already in progress.
+- Keep distributor and solar-panel fields outside full-dossier completeness; quotation requests validate their own prerequisites, preserving existing lead stages and requests.
+- Render quotation request events through a shared ADM/partner card and recognize only the exact legacy system message; this preserves history without converting ordinary conversation into events.

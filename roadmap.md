@@ -1,5 +1,10 @@
 # Roadmap
 
+- [x] Exigir distribuidora na solicitação de cotação e criar card Fintech Premium compartilhado, com atalho exclusivo da Mesa
+- [x] Validar requisitos, histórico legado e estados do card (125 testes; conferência visual isolada claro/escuro e celular); encaminhar regra Firebase atualizada
+- [ ] Publicar a regra de distribuidora obrigatória no Firebase — ação do usuário no Console
+- [ ] Validar solicitação, abertura do atalho e publicação com contas reais ADM/parceiro — sem sessão Firebase disponível
+
 - [x] Automatizar PDF ao publicar simulações, tornar anexo opcional e destacar acesso no ADM
 - [x] Testar publicação automática, anexos próprios, cálculos, download e preservação das propostas (36 testes; formulário isolado e download no navegador)
 

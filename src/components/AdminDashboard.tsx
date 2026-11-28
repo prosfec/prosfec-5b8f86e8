@@ -2,6 +2,8 @@
 import { RankingEquipeEnergia } from "./RankingEquipeEnergia";
 import ModalCriarSimulacaoEnergia from "./ModalCriarSimulacaoEnergia";
 import { CardPropostasChatEnergia } from "./CardPropostasChatEnergia";
+import { CardSolicitacaoCotacaoEnergia } from "./CardSolicitacaoCotacaoEnergia";
+import { ehSolicitacaoCotacaoSolar } from "../lib/solicitacaoCotacaoSolar";
 import { Button } from "./ui/button";
 import { empresasFechamentoSimulacao } from "../lib/validacaoFichaSolar";
 import { Trophy } from "lucide-react";
@@ -5425,6 +5427,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               ) : (
                                 <div className="chat-op-body" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
                                   {notas.map((nota: any, idx: number) => {
+                                    if (ehSolicitacaoCotacaoSolar(nota)) return <CardSolicitacaoCotacaoEnergia key={nota.id || idx} lead={lead} nota={nota} mesa onMontar={() => setSimulacaoEnergiaLeadId(lead.id)} />;
                                     if (nota?.tipo === "simulacao") return <CardPropostasChatEnergia key={nota.id || idx} lead={lead} ofertaIds={nota.ofertaIds} mesa pacoteId={typeof nota.id === "string" ? nota.id : undefined} onUpdated={u => setLeadsEnergia(prev => prev.map(l => l.id === lead.id ? { ...l, ...u } : l))} />;
                                     const doParceiro = nota.papel === "parceiro";
                                     return (

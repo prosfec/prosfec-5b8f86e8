@@ -26,6 +26,7 @@ export function pendenciasSolicitacaoSolar(lead: LeadSolar): string[] {
     !(f.nomeCompleto || lead['nomeRepresentante'] || lead['nomeEmpresa']) && "Nome",
     !(f.email || lead['email']) && "E-mail",
     !(f.telefone || lead['telefone']) && "Telefone",
+    !(typeof f.distribuidora === "string" && f.distribuidora.trim()) && "Distribuidora de energia",
     !urlPdfSegura(lead['documentos']?.contaLuz?.url) && "Conta de luz",
   ].filter((p): p is string => typeof p === "string");
 }

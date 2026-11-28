@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { pendenciasFichaSolar, pendenciasSolicitacaoSolar, validarOfertasEnergia, validarPdfSimulacao, empresasFechamentoSimulacao, type OfertaEnergia } from "./validacaoFichaSolar";
-const ficha = { tipo: "PF", nomeCompleto: "Cliente Teste", cpf: "12345678909", email: "cliente@example.com", telefone: "98999999999", estadoCivil: "Casado(a)", profissao: "Comerciante" };
+const ficha = { tipo: "PF", nomeCompleto: "Cliente Teste", cpf: "12345678909", email: "cliente@example.com", telefone: "98999999999", estadoCivil: "Casado(a)", profissao: "Comerciante", distribuidora: "Neoenergia PE (Celpe)" };
 const arquivo = { url: "https://firebasestorage.googleapis.com/documento.pdf" };
 const documentos = { contaLuz: arquivo, rgFrente: arquivo, rgVerso: arquivo };
 const oferta: OfertaEnergia = { id: "oferta-1", pacoteId: "pacote-1", tipo: "gd", empresa: "Usina cadastrada manualmente", desconto: "18", economia: "", locacao: "", regras: "Regras digitadas pela Mesa", pdfUrl: arquivo.url, pdfNome: "oferta.pdf", criadaEm: "2026-11-22T14:00:00Z" };
@@ -8,8 +8,19 @@ describe("simulações no chat solar", () => {
   it("mantém a usina manual como opção de fechamento sem classificá-la como Sunne", () => {
     expect(empresasFechamentoSimulacao({ propostaEnergiaEscolhida: { empresa: "Usina Solar Regional" } }, ["Sunne", "Serena", "AlugSol"])).toEqual(["Sunne", "Serena", "AlugSol", "Usina Solar Regional"]);
   });
-  it("permite pedir cotação com nome, e-mail, telefone e fatura, sem exigir documentos de identidade", () => {
+  it("permite pedir cotação com nome, e-mail, telefone, distribuidora e fatura, sem exigir documentos de identidade", () => {
     expect(pendenciasSolicitacaoSolar({ ficha, documentos: { contaLuz: arquivo } })).toEqual([]);
+  });
+  it("bloqueia cotação sem selecionar distribuidora na ficha mesmo com concessionária no lead", () => {
+    expect(pendenciasSolicitacaoSolar({ ficha: { ...ficha, distribuidora: "" }, concessionaria: "Enel CE", documentos })).toEqual(["Distribuidora de energia"]);
+  });
+  it("não aceita distribuidora preenchida apenas com espaços", () => {
+    expect(pendenciasSolicitacaoSolar({ ficha: { ...ficha, distribuidora: " \t " }, documentos })).toEqual(["Distribuidora de energia"]);
+  });
+  it("não altera a completude da ficha nem exige resposta sobre placa solar", () => {
+    const { distribuidora: _distribuidora, ...fichaAntiga } = ficha;
+    expect(pendenciasFichaSolar({ ficha: fichaAntiga, documentos })).toEqual([]);
+    expect(pendenciasSolicitacaoSolar({ ficha, documentos })).toEqual([]);
   });
   it("bloqueia solicitar cotação sem a fatura", () => {
     expect(pendenciasSolicitacaoSolar({ ficha })).toEqual(["Conta de luz"]);

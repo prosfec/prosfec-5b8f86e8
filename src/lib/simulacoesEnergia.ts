@@ -3,6 +3,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage
 import { auth, db, storage } from "../firebase";
 import { prepararPropostaSolar, economiaPropostaSolar, type CamposPropostaSolar } from "./dadosSimulacaoProsfec";
 import { pendenciasFichaSolar, pendenciasSolicitacaoSolar, validarOfertasEnergia, validarPdfSimulacao, type OfertaEnergia, type LeadSolar } from "./validacaoFichaSolar";
+import { TEXTO_SOLICITACAO_LEGADA } from "./solicitacaoCotacaoSolar";
 
 async function verificarSessao(adm: boolean) {
   await auth.authStateReady();
@@ -102,12 +103,12 @@ export async function solicitarCotacaoEnergia(leadId: string, autor: string) {
     if (!snap.exists()) throw new Error("Lead não encontrado.");
     const lead = snap.data();
     await verificarDono(tx, lead, sessao);
+    if (lead['cotacaoEnergiaStatus'] === "solicitada") return lead;
     const pendencias = pendenciasSolicitacaoSolar(lead);
     if (pendencias.length) throw new Error(`Pendente: ${pendencias.join(", ")}.`);
     if (["concluido", "arquivado", "cancelado"].includes(lead['status'])) throw new Error("Este lead não está aberto para cotação.");
-    if (lead['cotacaoEnergiaStatus'] === "solicitada") return lead;
     const agora = new Date().toISOString();
-    const nota = { texto: "Simulação solicitada à Mesa. Dados básicos e conta de luz disponíveis na ficha.", autor, papel: "parceiro", data: agora };
+    const nota = { tipo: "solicitacao_cotacao", texto: TEXTO_SOLICITACAO_LEGADA, autor, papel: "parceiro", data: agora, distribuidora: lead['ficha'].distribuidora.trim(), titular: lead['ficha']?.nomeCompleto || lead['nomeRepresentante'] || lead['nomeEmpresa'] || "" };
     const updates = { cotacaoEnergiaStatus: "solicitada", atualizadoEm: agora, ultimaMovimentacaoParceiroEm: agora };
     tx.update(r, { ...updates, anotacoes: arrayUnion(nota) });
     return { ...lead, ...updates, anotacoes: [...(Array.isArray(lead['anotacoes']) ? lead['anotacoes'] : []), nota] };

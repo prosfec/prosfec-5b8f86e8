@@ -2233,3 +2233,34 @@ select option {
 .usinas-selo { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--color-simulation-action); }
 .usinas-outras { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .usinas-vazio { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--color-simulation-danger); }
+
+/* Solicitação de cotação — evento institucional compartilhado pelo ADM e parceiro. */
+@theme {
+  --color-quotation-header: #0a3d2e;
+  --color-quotation-header-ink: #f4faf6;
+  --color-quotation-accent: #b7f34a;
+  --color-quotation-waiting: #805509;
+  --color-quotation-waiting-surface: #fff7df;
+}
+.dark { --color-quotation-waiting: #f3d283; --color-quotation-waiting-surface: #30291c; }
+.cotacao-evento { width: 100%; min-width: 0; flex-shrink: 0; margin-inline: auto; border: 1px solid var(--color-simulation-border); border-radius: 8px; background: var(--color-simulation-surface); color: var(--color-simulation-ink); box-shadow: var(--shadow-soft); overflow: hidden; font-family: Manrope, system-ui, sans-serif; letter-spacing: 0; }
+.cotacao-evento * { letter-spacing: 0; }
+.cotacao-evento-head { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--color-quotation-header); color: var(--color-quotation-header-ink); border-top: 3px solid var(--color-quotation-accent); }
+.cotacao-evento-icon { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 1px solid color-mix(in srgb, var(--color-quotation-accent) 35%, transparent); border-radius: 6px; color: var(--color-quotation-accent); }
+.cotacao-evento-icon svg { width: 19px; height: 19px; }
+.cotacao-evento .cotacao-evento-marca { display: block; font-size: 9px; font-weight: 650; line-height: 1.6; color: var(--color-quotation-accent); }
+.cotacao-evento .cotacao-evento-head h3 { font-size: 16px; font-weight: 750; line-height: 1.4; color: var(--color-quotation-header-ink); overflow-wrap: anywhere; }
+.cotacao-evento-body { display: grid; gap: 14px; padding: 16px; }
+.cotacao-evento .cotacao-evento-meta { font-size: 11px; line-height: 1.65; color: var(--color-simulation-muted); overflow-wrap: anywhere; }
+.cotacao-evento-meta strong { color: var(--color-simulation-ink); font-weight: 650; }
+.cotacao-evento-dados { display: grid; gap: 12px; }
+.cotacao-evento-dados dt { font-size: 10px; color: var(--color-simulation-muted); margin-bottom: 3px; }
+.cotacao-evento-dados dd { font-size: 13px; font-weight: 650; line-height: 1.5; color: var(--color-simulation-ink); overflow-wrap: anywhere; }
+.cotacao-evento .cotacao-evento-fatura { width: 100%; min-height: 40px; height: auto; white-space: normal; background: var(--color-simulation-ground); color: var(--color-simulation-ink); border-color: var(--color-simulation-border); font-size: 12px; border-radius: 6px; }
+.cotacao-evento .cotacao-evento-fatura:hover { background: var(--color-simulation-selected); }
+.cotacao-evento-status { display: flex; gap: 8px; align-items: center; padding: 11px 12px; border-radius: 6px; font-size: 11px; font-weight: 650; line-height: 1.5; background: var(--color-simulation-ground); color: var(--color-simulation-muted); }
+.cotacao-evento-status svg { width: 16px; height: 16px; flex-shrink: 0; }
+.cotacao-evento-status-pendente { background: var(--color-quotation-waiting-surface); color: var(--color-quotation-waiting); }
+.cotacao-evento-status-respondida, .cotacao-evento-status-concluida { background: var(--color-simulation-selected); color: var(--color-simulation-action); }
+.cotacao-evento .cotacao-evento-montar { width: 100%; min-height: 44px; height: auto; white-space: normal; background: var(--color-simulation-action); color: var(--color-simulation-on-action); font-size: 12px; font-weight: 700; border-radius: 6px; }
+.cotacao-evento .cotacao-evento-montar:hover { background: var(--color-simulation-action); filter: brightness(.95); }

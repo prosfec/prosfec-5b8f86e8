@@ -367,11 +367,11 @@ export default function FichaLeadEnergiaModal({ lead, podeEditar, onClose, onUpd
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <label className="block space-y-1.5 min-w-0">
-                  <span className="text-[11px] font-semibold" style={{ color: p.muted }}>Distribuidora de energia</span>
+                  <span className="text-[11px] font-semibold" style={{ color: p.muted }}>Distribuidora de energia * <span className="font-normal">(para solicitar cotação)</span></span>
                   {!podeEditar ? (
                     <p className="text-sm font-medium rounded-xl border px-3.5 py-2.5 break-words" style={{ ...campoStyle, backgroundColor: p.bg }}>{ficha.distribuidora || <span style={{ color: p.soft }}>Não informado</span>}</p>
                   ) : (
-                    <select value={ficha.distribuidora || ""} onChange={(e) => setFicha({ ...ficha, distribuidora: e.target.value })} className={inputCls} style={campoStyle}>
+                    <select aria-required="true" value={ficha.distribuidora || ""} onChange={(e) => setFicha({ ...ficha, distribuidora: e.target.value })} className={inputCls} style={campoStyle}>
                       <option value="">Selecione</option>
                       {ficha.distribuidora && !DISTRIBUIDORAS.some((d) => d.nome === ficha.distribuidora) && <option value={ficha.distribuidora}>{ficha.distribuidora}</option>}
                       {DISTRIBUIDORAS.map((d) => <option key={d.id} value={d.nome}>{d.nome} ({d.uf})</option>)}

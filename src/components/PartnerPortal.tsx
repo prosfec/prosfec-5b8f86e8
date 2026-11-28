@@ -3,6 +3,9 @@ import { DesempenhoAssessorEnergia } from "./DesempenhoAssessorEnergia";
 import LinkIndicacaoEnergia from "./LinkIndicacaoEnergia";
 import { LinkAssinaturaChat } from "./LinkAssinaturaChat";
 import { CardPropostasChatEnergia, SolicitarCotacaoEnergia } from "./CardPropostasChatEnergia";
+import { CardSolicitacaoCotacaoEnergia } from "./CardSolicitacaoCotacaoEnergia";
+import { ehSolicitacaoCotacaoSolar } from "../lib/solicitacaoCotacaoSolar";
+import { pendenciasSolicitacaoSolar } from "../lib/validacaoFichaSolar";
 import RaioXEnergeticoCard from "./RaioXEnergeticoCard";
 import { calcularRaioXEnergetico } from "../lib/raioXEnergetico";
 import { NIVEIS, classificarPorte, calibrarBusca, filtrarPorNivel, type FiltroNivel, type NivelEmpresa } from "../lib/porteEmpresa";
@@ -2367,7 +2370,7 @@ export default function PartnerPortal({
                                       )}
                                       <p className="font-extrabold text-sm text-slate-800 line-clamp-1">{lead.nomeEmpresa}</p>
 {lead.faturaAnexada === true && (
-<span className="inline-flex items-center gap-1 mt-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase">⚡ Com fatura · pronto para cotação</span>
+<span className="inline-flex items-center gap-1 mt-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-extrabold px-2 py-0.5 rounded-full text-[9px] uppercase">{pendenciasSolicitacaoSolar(lead).length === 0 ? "⚡ Com fatura · pronto para cotação" : "⚡ Com fatura anexada"}</span>
 )}
                                       {lead.razaoSocial && lead.razaoSocial !== lead.nomeEmpresa && (
                                         <p className="text-[10px] text-slate-500 font-semibold line-clamp-1">{lead.razaoSocial}</p>
@@ -2607,6 +2610,7 @@ export default function PartnerPortal({
                                     </div>
                                     <div className="chat-op-body">
                                       {notas.length > 0 ? notas.map((nota: any, idx: number) => {
+                                        if (ehSolicitacaoCotacaoSolar(nota)) return <CardSolicitacaoCotacaoEnergia key={nota.id || idx} lead={lead} nota={nota} />;
                                         if (nota?.tipo === "simulacao") return <CardPropostasChatEnergia key={nota.id || idx} lead={lead} ofertaIds={nota.ofertaIds} assessor autor={currentPartner?.nome || "Assessor"} onUpdated={u => setEnergiaLeads(prev => prev.map(l => l.id === lead.id ? { ...l, ...u } : l))} />;
                                         const daMesa = (nota.papel || "adm") !== "parceiro";
                                         return (
